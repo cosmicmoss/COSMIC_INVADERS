@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.190</title>
+<title>COSMIC INVADERS v7.191</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -152,6 +152,7 @@ body.stolen-fighter #cockpit-frame::after{background:rgba(255,30,20,.45)!importa
 #boss-hp-wrap .bhp-fill.crit{background:linear-gradient(90deg,#f00,#f44);animation:bhpFlash .2s infinite alternate}
 #boss-hp-wrap .bhp-value{font-size:9px;color:#faa;letter-spacing:2px;margin-top:2px}
 @keyframes bhpFlash{0%{filter:brightness(1)}100%{filter:brightness(1.5)}}
+@keyframes blizzardPulse{0%,100%{opacity:.10}45%,55%{opacity:.24}}
 /* Multi-boss (MS-R01 trio) layout */
 #boss-hp-wrap .bhp-row{margin-bottom:6px}
 
@@ -16864,11 +16865,11 @@ function startIcePlanetPhase3(){
             gateOpen:false,gateOpenY:0,gateFullyOpen:false,
             gatePhaseTriggered:false,complete:false,footprints:[],
             pilotHP:10,pilotMaxHP:10};// v7.168: pilot HP for bigfoot fight
-  // ── materials ──
-  const mW =new THREE.LineBasicMaterial({color:0x5a8aab,transparent:true,opacity:.65});
-  const mWd=new THREE.LineBasicMaterial({color:0x3a6a80,transparent:true,opacity:.45});
+  // ── materials ── v7.191: brighter cyan ice walls
+  const mW =new THREE.LineBasicMaterial({color:0x33ccee,transparent:true,opacity:.90});
+  const mWd=new THREE.LineBasicMaterial({color:0x1a99bb,transparent:true,opacity:.55});
   const mGt=new THREE.LineBasicMaterial({color:0xff4422,transparent:true,opacity:.9});
-  const mWB=new THREE.MeshBasicMaterial({color:0x070e17});
+  const mWB=new THREE.MeshBasicMaterial({color:0x050e1a});
   // ── snow ground (50 wide × 200 long, centred at z=-50) ──
   const gPl=new THREE.PlaneGeometry(50,200,6,16);
   const gBd=new THREE.Mesh(gPl,new THREE.MeshBasicMaterial({color:0x060e18}));
@@ -16885,6 +16886,51 @@ function startIcePlanetPhase3(){
       const we=new THREE.LineSegments(new THREE.EdgesGeometry(wg),mW);we.position.set(xp,h/2-0.5,zp);iceScene.add(we);
     }
   }
+  // ── v7.191: ice spikes / stalactites along valley walls ──
+  const mSpk=new THREE.LineBasicMaterial({color:0x44eeff,transparent:true,opacity:.92});
+  const mSpkB=new THREE.MeshBasicMaterial({color:0x040d18});
+  function _iceSpike(x,y,z,h,r,rx,rz){
+    const sg=new THREE.ConeGeometry(r,h,5);
+    const sm=new THREE.Mesh(sg,mSpkB);sm.position.set(x,y,z);
+    if(rx)sm.rotation.x=rx;if(rz)sm.rotation.z=rz;iceScene.add(sm);
+    const se=new THREE.LineSegments(new THREE.EdgesGeometry(sg),mSpk);
+    se.position.set(x,y,z);if(rx)se.rotation.x=rx;if(rz)se.rotation.z=rz;iceScene.add(se);
+  }
+  // Ground stalagmites along wall bases — tall jagged clusters
+  for(let s=-1;s<=1;s+=2){
+    for(let zi=0;zi<22;zi++){
+      const z=-zi*9-6+Math.random()*7;
+      const x=s*(20+Math.random()*3.5);
+      const h=2.5+Math.random()*5.5;
+      _iceSpike(x,h/2,z,h,0.28+Math.random()*0.55);
+      // secondary cluster spikes
+      if(Math.random()>.35){const h2=1.2+Math.random()*3;_iceSpike(x+s*(Math.random()*1.6),h2/2,z+Math.random()*3-1.5,h2,0.18+Math.random()*0.32);}
+      if(Math.random()>.6){const h3=0.8+Math.random()*2;_iceSpike(x+s*(Math.random()*0.8+0.4),h3/2,z-Math.random()*2,h3,0.12+Math.random()*0.2);}
+    }
+  }
+  // Wall-protruding spikes (horizontal, pointing inward — blade-like)
+  for(let s=-1;s<=1;s+=2){
+    for(let zi=0;zi<14;zi++){
+      const z=-zi*13+Math.random()*9;
+      const h=2+Math.random()*4;
+      const yw=1.5+Math.random()*8;
+      _iceSpike(s*25.5,yw,z,h,0.22+Math.random()*0.35,0,s*(-Math.PI/2+0.4*(Math.random()-.5)));
+    }
+  }
+  // Ceiling stalactites pointing down
+  for(let s=-1;s<=1;s+=2){
+    for(let zi=0;zi<16;zi++){
+      const z=-zi*11+Math.random()*8;
+      const h=2.5+Math.random()*7;
+      _iceSpike(s*(17+Math.random()*6),15.5-h/2,z,h,0.25+Math.random()*0.5,Math.PI,0);
+    }
+  }
+  // Large dramatic feature spikes mid-valley floor
+  [{x:-14,z:8},{x:16,z:-20},{x:-20,z:-46},{x:18,z:-72},{x:-15,z:-98},{x:12,z:-115}].forEach(function(p){
+    const h=5+Math.random()*6;_iceSpike(p.x,h/2,p.z,h,0.5+Math.random()*0.55);
+    const h2=h*.55+Math.random();_iceSpike(p.x+1.6,h2/2,p.z-1.8,h2,0.32+Math.random()*0.32);
+    const h3=h*.35+Math.random()*.5;_iceSpike(p.x-1.1,h3/2,p.z+1.2,h3,0.22+Math.random()*0.2);
+  });
   // ── distant ridge backdrop ──
   const mR=new THREE.LineBasicMaterial({color:0x2a4a5e,transparent:true,opacity:.5});
   for(let i=0;i<8;i++){
@@ -16934,12 +16980,30 @@ function startIcePlanetPhase3(){
   // ── pilot ──
   icePilot=makeIceTacticalPilot();icePilot.position.set(0,0,42);icePilot.rotation.y=Math.PI;
   iceScene.add(icePilot);
-  // ── snowfall (160 flakes) ──
-  const fc=160;const fp=new Float32Array(fc*3);
-  for(let i=0;i<fc;i++){fp[i*3]=(Math.random()-.5)*56;fp[i*3+1]=2+Math.random()*26;fp[i*3+2]=(Math.random()-.5)*100-40;}
+  // ── snowfall (600 flakes — v7.191 heavy blizzard) ──
+  const fc=600;const fp=new Float32Array(fc*3);
+  for(let i=0;i<fc;i++){fp[i*3]=(Math.random()-.5)*80;fp[i*3+1]=2+Math.random()*30;fp[i*3+2]=(Math.random()-.5)*120-40;}
   const fGeo=new THREE.BufferGeometry();fGeo.setAttribute('position',new THREE.BufferAttribute(fp,3));
-  iceSnowflakes=new THREE.Points(fGeo,new THREE.PointsMaterial({color:0xaaddff,size:.45,transparent:true,opacity:.75}));
+  iceSnowflakes=new THREE.Points(fGeo,new THREE.PointsMaterial({color:0xbbddff,size:.38,transparent:true,opacity:.85}));
   iceScene.add(iceSnowflakes);
+  // per-particle horizontal wind variance
+  iceState._p3windX=new Float32Array(fc);
+  for(let i=0;i<fc;i++)iceState._p3windX[i]=(Math.random()-.5)*3.5;
+  // ── Blizzard streak particles (fast horizontal gust lines) ──
+  const bfc=320;const bfp=new Float32Array(bfc*3);
+  for(let i=0;i<bfc;i++){bfp[i*3]=(Math.random()-.5)*80;bfp[i*3+1]=(Math.random()-.5)*10+5;bfp[i*3+2]=(Math.random()-.5)*120-40;}
+  const bGeo=new THREE.BufferGeometry();bGeo.setAttribute('position',new THREE.BufferAttribute(bfp,3));
+  const _bPts=new THREE.Points(bGeo,new THREE.PointsMaterial({color:0xddeeff,size:.22,transparent:true,opacity:.52}));
+  iceScene.add(_bPts);iceState._p3blizzardPts=_bPts;
+  // ── Blizzard fog — cuts visibility to ~25 units ──
+  scene.fog=new THREE.FogExp2(0x070e18,0.040);
+  // ── Blizzard haze CSS overlay ──
+  let _bvfx=document.getElementById('ice-blizzard-vfx');
+  if(!_bvfx){_bvfx=document.createElement('div');_bvfx.id='ice-blizzard-vfx';}
+  _bvfx.style.cssText='position:fixed;inset:0;z-index:50;pointer-events:none;'+
+    'background:radial-gradient(ellipse 150% 80% at 50% 35%,transparent 15%,rgba(170,215,255,0.06) 70%,rgba(150,205,255,0.16) 100%);'+
+    'animation:blizzardPulse 3.2s ease-in-out infinite';
+  document.body.appendChild(_bvfx);
   // ── camera ──
   camera.position.set(0,5,54);camera.lookAt(0,1.5,42);
   // ── HUD ──
@@ -17023,6 +17087,9 @@ function startIcePlanetPhase4(){
   // ── teardown previous ice scene ──
   if(iceScene){try{scene.remove(iceScene)}catch(_){}iceScene=null}
   iceTroopers=[];iceSnowflakes=null;
+  // v7.191: clear phase 3 blizzard fog + overlay
+  try{if(scene.fog)scene.fog=null;}catch(_){}
+  try{const _bvo=document.getElementById('ice-blizzard-vfx');if(_bvo)_bvo.remove();}catch(_){}
   ['ice-advance','ice-preview','ice-p3-hud','ice-p3-skip','ice-p4-hud','ice-p4-skip','ice-p5-hud','ice-p5-skip'].forEach(id=>{
     const e=document.getElementById(id);if(e)e.remove();
   });
@@ -19413,19 +19480,41 @@ function updateIcePlanet(dt){
   if(iceSnowflakes&&iceSnowflakes.geometry&&iceSnowflakes.geometry.attributes.position){
     const p=iceSnowflakes.geometry.attributes.position;
     const interior=(iceState&&iceState.phase===4);
-    const fallSpd=interior?0.35:2.5;
+    const bliz=(iceState&&iceState.phase===3);
+    const fallSpd=interior?0.35:(bliz?5.5:2.5);
     const swayAmp=interior?0.04:0.15;
+    const windX=bliz?9.0:0;
     const floor=interior?0.05:-1;
     for(let i=0;i<p.count;i++){
       p.array[i*3+1]-=fallSpd*dt;
-      p.array[i*3]+=Math.sin(iceState.t*0.8+i)*swayAmp*dt;
-      if(p.array[i*3+1]<floor){
-        p.array[i*3+1]=interior?(8+Math.random()*.5):(36+Math.random()*8);
-        p.array[i*3]=(camera.position.x||0)+(Math.random()-.5)*(interior?24:120);
+      if(bliz){
+        // strong horizontal wind + per-particle variance
+        p.array[i*3]+=windX*dt+(iceState._p3windX?iceState._p3windX[i%iceState._p3windX.length]:0);
+        p.array[i*3+1]+=Math.sin(iceState.t*2.2+i*0.25)*0.18*dt;
+      } else {
+        p.array[i*3]+=Math.sin(iceState.t*0.8+i)*swayAmp*dt;
+      }
+      if(p.array[i*3+1]<floor||(bliz&&p.array[i*3]>44)){
+        p.array[i*3+1]=bliz?(4+Math.random()*24):(interior?(8+Math.random()*.5):(36+Math.random()*8));
+        p.array[i*3]=bliz?((camera.position.x||0)-44+Math.random()*5):((camera.position.x||0)+(Math.random()-.5)*(interior?24:120));
         p.array[i*3+2]=(camera.position.z||0)+(Math.random()-.5)*(interior?18:60)+(interior?-9:-40);
       }
     }
     p.needsUpdate=true;
+  }
+  // v7.191: Phase 3 horizontal blizzard streak particles
+  if(iceState&&iceState.phase===3&&iceState._p3blizzardPts){
+    const bp=iceState._p3blizzardPts.geometry.attributes.position;
+    for(let i=0;i<bp.count;i++){
+      bp.array[i*3]+=16.0*dt;
+      bp.array[i*3+1]+=Math.sin(iceState.t*1.8+i*0.6)*0.06*dt;
+      if(bp.array[i*3]>48){
+        bp.array[i*3]=(camera.position.x||0)-46+Math.random()*5;
+        bp.array[i*3+1]=(camera.position.y||5)+(Math.random()-.5)*14;
+        bp.array[i*3+2]=(camera.position.z||0)+(Math.random()-.5)*60-20;
+      }
+    }
+    bp.needsUpdate=true;
   }
   // v7.124 ── Toppling ice pine updater (supports saber-direction Z tilt) ──
   if(iceState&&iceState.icePines){
