@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.194</title>
+<title>COSMIC INVADERS v7.195</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -19620,7 +19620,7 @@ function updateIcePlanet(dt){
     // v7.166: touch joystick for ice on-foot (same convention as forest)
     if(typeof touch!=='undefined'&&touch.stickActive){
       if(Math.abs(touch.stickX)>.12)icePilot.rotation.y-=touch.stickX*dt*3.0;
-      const fwdT=-touch.stickY;// push stick down = fwdT positive = go forward
+      const fwdT=touch.stickY;// v7.195: stick UP = forward (was inverted)
       if(Math.abs(fwdT)>.12){
         const fX2=-Math.sin(icePilot.rotation.y),fZ2=-Math.cos(icePilot.rotation.y);
         icePilot.position.x+=fX2*(fwdT>0?fwdT:fwdT*0.6)*spd;
@@ -21406,7 +21406,7 @@ function updateIcePlanet(dt){
       if(typeof touch!=='undefined'&&touch.stickActive){
         if(Math.abs(touch.stickX)>.12){atrt.rotation.y-=touch.stickX*dt*2.5;aMoving=true;}
         const afXT=-Math.sin(atrt.rotation.y),afZT=-Math.cos(atrt.rotation.y);
-        const fwdA=-touch.stickY;
+        const fwdA=touch.stickY;// v7.195: stick UP = forward
         if(Math.abs(fwdA)>.12){
           atrt.position.x+=afXT*(fwdA>0?fwdA:fwdA*.55)*aSpd;
           atrt.position.z+=afZT*(fwdA>0?fwdA:fwdA*.55)*aSpd;
@@ -26147,7 +26147,7 @@ function updateForestOnFoot(dt){
     if(Math.abs(touch.stickX)>.15){
       forestPilot.userData.targetRotY=(forestPilot.userData.targetRotY||forestPilot.rotation.y)-touch.stickX*dt*3.2;
     }
-    forward+=-touch.stickY;// stickY positive = down = forward on screen
+    forward+=touch.stickY;// v7.195: stick UP = forward (was inverted)
   }
   let moving=Math.abs(forward)>.1;
   if(moving){
