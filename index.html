@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.191</title>
+<title>COSMIC INVADERS v7.192</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -23360,12 +23360,19 @@ function startIcePlanetPhase1(){
   // Helper: add a mesh+edge group to chuteGrp and push to p1garbage
   function _addGarbage(grp){
     const gx=(Math.random()-.5)*6.2;
-    grp.position.set(gx,(Math.random()-.5)*4.2,-5-Math.random()*30);
+    // v7.192: spread wider z-range so pieces drift in from far back
+    grp.position.set(gx,(Math.random()-.5)*4.2,-8-Math.random()*50);
     grp.rotation.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,Math.random()*Math.PI*2);
     chuteGrp.add(grp);
-    p1garbage.push({mesh:grp,vz:7+Math.random()*8,x0:gx,
-      freq:0.3+Math.random()*.9,phase:Math.random()*Math.PI*2,
-      rx:(Math.random()-.5)*.65,rz:(Math.random()-.5)*.65,_hit:false});
+    p1garbage.push({mesh:grp,
+      vz:1.6+Math.random()*2.0,       // slow: 1.6–3.6 u/s (was 7–15)
+      vy:(Math.random()-.5)*0.5,       // gentle vertical float
+      x0:gx,
+      freq:0.15+Math.random()*.35,     // lazy sway
+      phase:Math.random()*Math.PI*2,
+      rx:(Math.random()-.5)*.18,       // slow tumble (was .65)
+      rz:(Math.random()-.5)*.18,
+      _hit:false});
   }
   function _gPiece(geo,col,ex,ey,ez,grp){
     const _gM=new THREE.MeshBasicMaterial({color:col});
@@ -23917,9 +23924,13 @@ function _updateIcePhase1(dt){
       if(st.p1garbage){
         st.p1garbage.forEach(gc=>{
           gc.mesh.position.z+=gc.vz*dt;
-          gc.mesh.position.x=gc.x0+Math.sin(st.t*gc.freq+gc.phase)*0.8;
+          // v7.192: graceful wide sway + gentle vertical float
+          gc.mesh.position.x=gc.x0+Math.sin(st.t*gc.freq+gc.phase)*2.2;
+          gc.mesh.position.y+=(gc.vy||0)*dt+Math.sin(st.t*(gc.freq||0.2)*0.6+gc.phase)*0.08*dt;
           gc.mesh.rotation.x+=gc.rx*dt;gc.mesh.rotation.z+=gc.rz*dt;
-          if(gc.mesh.position.z>7.5){gc.mesh.position.z=-22-Math.random()*12;gc._hit=false;}
+          // recycle far back so the stream is continuous and deep
+          if(gc.mesh.position.z>7.5){gc.mesh.position.z=-42-Math.random()*20;
+            gc.mesh.position.y=(Math.random()-.5)*4.2;gc._hit=false;}
           // Hit detection
           if(gc.mesh.position.z>4&&gc.mesh.position.z<7&&!gc._hit){
             if(Math.abs(gc.mesh.position.x-st.p1dodgeX*0.8)<1.4&&Math.abs(gc.mesh.position.y)<2.5){
