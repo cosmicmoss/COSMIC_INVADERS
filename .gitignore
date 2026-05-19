@@ -1,0 +1,5 @@
+# Old version archives
+index_v*.html
+
+# Claude Code config
+.claude/
