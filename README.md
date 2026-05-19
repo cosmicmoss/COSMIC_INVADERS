@@ -29,4 +29,4 @@ Open `index.html` in any modern browser, or visit the GitHub Pages link.
 
 ## Version
 
-v7.188
+v7.194

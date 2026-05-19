@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.193</title>
+<title>COSMIC INVADERS v7.194</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -39,6 +39,17 @@ canvas.no-click{pointer-events:none}
 #ice-ck-overlay .ck-label{position:absolute;top:6%;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(80,220,255,.7);font-family:monospace;letter-spacing:4px;}
 /* v7.189: stolen enemy fighter cockpit — red tint */
 body.stolen-fighter #cockpit-frame .corner{border-color:rgba(255,50,30,.55)!important}
+/* v7.194: baby alien mando panel */
+#baby-mando-panel{position:fixed;bottom:14%;left:50%;transform:translateX(-50%);z-index:155;
+  background:rgba(5,8,16,.88);border:1px solid rgba(255,160,40,.65);border-radius:8px;
+  padding:10px 18px;font-family:'Courier New',monospace;color:#ffcc88;text-align:center;
+  max-width:440px;min-width:280px;pointer-events:none;display:none;
+  box-shadow:0 0 16px rgba(255,120,0,.25)}
+#baby-mando-panel .bmp-alien{font-size:22px;letter-spacing:2px;color:#aaffaa;margin-bottom:4px}
+#baby-mando-panel .bmp-pilot{font-size:11px;letter-spacing:1px;color:#ffcc88;line-height:1.5}
+@keyframes bmpPop{0%{transform:translateX(-50%) scale(.8);opacity:0}
+  18%{transform:translateX(-50%) scale(1.05);opacity:1}
+  85%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(.95)}}
 body.stolen-fighter #cockpit-frame::before,
 body.stolen-fighter #cockpit-frame::after{background:rgba(255,30,20,.45)!important}
 /* Cockpit */
@@ -3700,83 +3711,116 @@ function _buildCockpitMaintenance(){
     {x:-2.6,y:.9},{x:2.6,y:.9},{x:-2.6,y:-1.1},{x:2.6,y:-1.1}],false);
   return cockpit}
 
-// STOLEN ENEMY INTERCEPTOR: Red angular Imperial/alien cockpit — low canopy, harsh dash
+// STOLEN ENEMY INTERCEPTOR: v7.194 colorful button-heavy alien cockpit — Mandalorian stolen fighter
 function _buildCockpitStolenFighter(){
   const cockpit=new THREE.Group();
-  const mFrm=new THREE.LineBasicMaterial({color:0xdd1100,transparent:true,opacity:.55});
-  const mAcc=new THREE.LineBasicMaterial({color:0xff3300,transparent:true,opacity:.70});
-  const mDim=new THREE.LineBasicMaterial({color:0x661100,transparent:true,opacity:.45});
-  const mWrn=new THREE.LineBasicMaterial({color:0xff8800,transparent:true,opacity:.65});
-  const mCk =new THREE.LineBasicMaterial({color:0x220808,transparent:true,opacity:.50});
-  // Targeting reticle (red)
+  // === MATERIAL PALETTE ===
+  const mFrm=new THREE.LineBasicMaterial({color:0xcc2200,transparent:true,opacity:.50});
+  const mBlue=new THREE.LineBasicMaterial({color:0x1188ff,transparent:true,opacity:.88});
+  const mRed =new THREE.LineBasicMaterial({color:0xff2200,transparent:true,opacity:.88});
+  const mYel =new THREE.LineBasicMaterial({color:0xffdd00,transparent:true,opacity:.88});
+  const mGrn =new THREE.LineBasicMaterial({color:0x00ff66,transparent:true,opacity:.88});
+  const mCyn =new THREE.LineBasicMaterial({color:0x00ffff,transparent:true,opacity:.88});
+  const mPur =new THREE.LineBasicMaterial({color:0xcc44ff,transparent:true,opacity:.88});
+  const mOrg =new THREE.LineBasicMaterial({color:0xff8800,transparent:true,opacity:.88});
+  const mDim =new THREE.LineBasicMaterial({color:0x334466,transparent:true,opacity:.40});
+  const BTN=[mBlue,mRed,mYel,mGrn,mCyn,mPur,mOrg];
+  // button helper — small box
+  function btn(x,y,z,mat,w=.10,h=.10){
+    const b=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,h,.06)),mat);
+    b.position.set(x,y,z);cockpit.add(b);}
+  // panel helper — thin backing plate
+  function panel(x,y,z,w,h,mat){
+    const p=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,h,.08)),mat);
+    p.position.set(x,y,z);cockpit.add(p);}
+
+  // === CANOPY FRAME ===
+  cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-2.2,1.1,-2),new THREE.Vector3(-.6,1.45,-2.5),
+    new THREE.Vector3(.6,1.45,-2.5),new THREE.Vector3(2.2,1.1,-2)]),mFrm));
+  [[-2.2,1.1,-2,-2.2,-.95,-2],[2.2,1.1,-2,2.2,-.95,-2]].forEach(p=>{
+    cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(p[0],p[1],p[2]),new THREE.Vector3(p[3],p[4],p[5])]),mFrm));});
+  [[-2.2,1.1,-2,0,.2,-5.5],[2.2,1.1,-2,0,.2,-5.5]].forEach(p=>{
+    cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(p[0],p[1],p[2]),new THREE.Vector3(p[3],p[4],p[5])]),mDim));});
+
+  // === MAIN DASHBOARD SHELF ===
+  panel(0,-.92,-2.4,4.6,.12,.18,mFrm);
+  // LED accent strips
+  [[0x0088ff,-.88],[0x00ff88,-.84]].forEach(([c,yy])=>{
+    const mL=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.65});
+    cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-2.2,yy,-2.30),new THREE.Vector3(2.2,yy,-2.30)]),mL));});
+
+  // === FAR-LEFT PANEL: 3 cols × 4 rows (red/orange) ===
+  panel(-1.88,-.68,-2.52,.74,.92,.10,mRed);
+  const flM=[mRed,mOrg,mYel,mRed];
+  for(let r=0;r<4;r++)for(let c=0;c<3;c++)btn(-2.10+c*.26,-.42-r*.20,-2.46,flM[(r+c)%4]);
+
+  // === LEFT-MID PANEL: 4 cols × 3 rows (blue/cyan) ===
+  panel(-.92,-.68,-2.52,.74,.74,.10,mBlue);
+  const lmM=[mBlue,mCyn,mBlue,mCyn];
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)btn(-1.28+c*.22,-.48-r*.22,-2.46,lmM[(r*2+c)%4]);
+
+  // === CENTER MAIN DISPLAY (cyan scan-line screen) ===
+  panel(0,-.54,-2.52,1.12,.90,.10,mCyn);
+  for(let sl=0;sl<5;sl++)cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-.48,-.22-sl*.13,-2.46),new THREE.Vector3(.48,-.22-sl*.13,-2.46)]),mCyn));
+  // Status LEDs across top of center display
+  [mRed,mYel,mGrn,mCyn,mBlue].forEach((m,i)=>btn(-.34+i*.17,-.16,-2.46,m,.09,.09));
+  // Big readout digits (2 boxes bottom center)
+  [-.22,.22].forEach(x=>{panel(x,-.92,-2.46,.28,.14,mCyn);});
+
+  // === RIGHT-MID PANEL: 4 cols × 3 rows (green/yellow) ===
+  panel(.92,-.68,-2.52,.74,.74,.10,mGrn);
+  const rmM=[mGrn,mYel,mGrn,mYel];
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)btn(.58+c*.22,-.48-r*.22,-2.46,rmM[(r+c)%4]);
+
+  // === FAR-RIGHT PANEL: 3 cols × 4 rows (purple/blue) ===
+  panel(1.88,-.68,-2.52,.74,.92,.10,mPur);
+  const frM=[mPur,mBlue,mOrg,mPur];
+  for(let r=0;r<4;r++)for(let c=0;c<3;c++)btn(1.58+c*.26,-.42-r*.20,-2.46,frM[(r+c)%4]);
+
+  // === BOTTOM BIG ENGAGEMENT BUTTONS (5 across) ===
+  [mRed,mYel,mGrn,mBlue,mPur].forEach((m,i)=>btn(-1.0+i*.50,-1.34,-2.48,m,.18,.13));
+
+  // === TOP STATUS LIGHTS STRIP (8 across) ===
+  [mRed,mYel,mGrn,mCyn,mBlue,mPur,mOrg,mRed].forEach((m,i)=>btn(-1.75+i*.50,-.50,-2.50,m,.09,.09));
+
+  // === UPPER-LEFT PANEL: 3×3 (blue/cyan/orange) ===
+  panel(-1.70,-.08,-2.52,.88,.54,.10,mBlue);
+  const ulM=[mBlue,mCyn,mOrg,mYel,mBlue,mCyn,mBlue,mGrn,mOrg];
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++)btn(-2.02+c*.28,.14-r*.20,-2.46,ulM[r*3+c]);
+
+  // === UPPER-RIGHT PANEL: 3×3 (purple/red/green) ===
+  panel(1.70,-.08,-2.52,.88,.54,.10,mPur);
+  const urM=[mPur,mRed,mOrg,mGrn,mPur,mRed,mPur,mOrg,mGrn];
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++)btn(1.38+c*.28,.14-r*.20,-2.46,urM[r*3+c]);
+
+  // === VERTICAL PANEL DIVIDERS ===
+  [[-.58],[.58]].forEach(([x])=>cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(x,-.36,-2.49),new THREE.Vector3(x,-1.40,-2.49)]),mDim)));
+
+  // === TARGETING RETICLE ===
   const ring=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.RingGeometry(.12,.15,6)),
     new THREE.LineBasicMaterial({color:0xff2200,transparent:true,opacity:.40}));
   ring.position.z=-5;cockpit.add(ring);
-  // === HEXAGONAL CANOPY FRAME (TIE-style angular panels) ===
-  // Top hex beam L→R
-  const hTop=new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-2.2,1.1,-2),new THREE.Vector3(-0.6,1.45,-2.5),
-    new THREE.Vector3(0.6,1.45,-2.5),new THREE.Vector3(2.2,1.1,-2)]),mFrm);
-  cockpit.add(hTop);
-  // Left & right angled pillars
-  [[-2.2,1.1,-2,-2.2,-0.95,-2],[2.2,1.1,-2,2.2,-0.95,-2]].forEach(p=>{
-    cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(p[0],p[1],p[2]),new THREE.Vector3(p[3],p[4],p[5])]),mFrm));});
-  // Diagonal brace top-to-side (hex feel)
-  [[-2.2,1.1,-2,-0.8,1.45,-2.6],[2.2,1.1,-2,0.8,1.45,-2.6]].forEach(p=>{
-    cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(p[0],p[1],p[2]),new THREE.Vector3(p[3],p[4],p[5])]),mDim));});
-  // Forward canopy edges converging to nose
-  [[-2.2,1.1,-2,0,0.2,-5.5],[2.2,1.1,-2,0,0.2,-5.5]].forEach(p=>{
-    cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(p[0],p[1],p[2]),new THREE.Vector3(p[3],p[4],p[5])]),mDim));});
-  // Cross brace at mid
-  cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-1.6,1.38,-2.4),new THREE.Vector3(1.6,1.38,-2.4)]),mDim));
-  // === LOW ANGULAR DASHBOARD ===
-  const dashMain=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(4.4,.12,.15)),mFrm);
-  dashMain.position.set(0,-0.95,-2.4);cockpit.add(dashMain);
-  // Center instrument block
-  const ctr=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.9,.25,.12)),mAcc);
-  ctr.position.set(0,-1.10,-2.5);cockpit.add(ctr);
-  // === ALIEN GLYPH DISPLAYS (side panels) ===
-  [-1.4,1.4].forEach(x=>{
-    const disp=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.6,.35,.10)),mDim);
-    disp.position.set(x,-1.0,-2.5);cockpit.add(disp);
-    // Fake alien text lines inside display
-    for(let r=0;r<3;r++){
-      const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x-.22,-0.88-r*.08,-2.44),new THREE.Vector3(x+(Math.random()>.5?.18:-.04),-0.88-r*.08,-2.44)]),mDim);
-      cockpit.add(ln);
-    }
-  });
-  // === WARNING LIGHTS (asymmetric, foreign feel) ===
-  [[-1.8,-0.7],[-0.4,-0.78],[1.2,-0.68],[1.9,-0.75]].forEach(([wx,wy])=>{
-    const wl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.09,.09,.04)),mWrn);
-    wl.position.set(wx,wy,-2.45);cockpit.add(wl);
-  });
-  // === CRACKED PANEL (battle-damage feel) ===
-  const crackPts=[
-    new THREE.Vector3(-1.8,0.2,-2.1),new THREE.Vector3(-1.2,-0.1,-2.3),
-    new THREE.Vector3(-1.5,-0.3,-2.2),new THREE.Vector3(-0.9,-0.6,-2.4)];
-  cockpit.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(crackPts),
-    new THREE.LineBasicMaterial({color:0xff4400,transparent:true,opacity:.35})));
-  // === SINGLE CENTER CANNON (enemy fighter style) ===
+
+  // === WING STUBS ===
+  [-4.5,4.5].forEach(x=>{
+    cockpit.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.8,.10,1.2)),mDim))
+      .position.set(x,-.35,-3.5);});
+
+  // === SINGLE CENTER CANNON ===
   const barGeo=new THREE.CylinderGeometry(.06,.06,2.0,5);barGeo.rotateX(Math.PI/2);
-  cockpit.add(new THREE.LineSegments(new THREE.EdgesGeometry(barGeo),mAcc))
-    .position.set(0,-0.15,-3.0);
-  // Muzzle point
+  cockpit.add(new THREE.LineSegments(new THREE.EdgesGeometry(barGeo),mRed))
+    .position.set(0,-.15,-3.0);
   const mg=new THREE.BufferGeometry();mg.setAttribute('position',new THREE.BufferAttribute(new Float32Array([0,0,0]),3));
   const mPt=new THREE.Points(mg,new THREE.PointsMaterial({color:0xff2200,size:0,sizeAttenuation:true}));
   mPt.position.z=-2;mPt.name='muzzleGlow';
-  const cg=new THREE.Group();cg.position.set(0,-0.15,-1);cg.add(mPt);cockpit.add(cg);
+  const cg=new THREE.Group();cg.position.set(0,-.15,-1);cg.add(mPt);cockpit.add(cg);
   cannonMuzzles.length=0;cannonMuzzles.push(mPt);
-  // === PERIPHERAL WING STUBS (foreign fighter silhouette) ===
-  [-4.5,4.5].forEach(x=>{
-    const stbGeo=new THREE.BoxGeometry(1.8,.10,1.2);
-    cockpit.add(new THREE.LineSegments(new THREE.EdgesGeometry(stbGeo),mDim))
-      .position.set(x,-.35,-3.5);
-  });
   return cockpit}
 
 function createCockpit3D(){
@@ -16203,6 +16247,8 @@ function startIcePlanetPhase2(){
   scene.add(iceScene);
   // v7.193: ice snow ground — icy blue grid
   try{_addIceAtmosphere(iceScene);}catch(_){}
+  // v7.194: spawn falling wreckage queue (animated after scene build)
+  try{_p2SpawnFallingDebris();}catch(_){}
   const mGround=new THREE.LineBasicMaterial({color:0x1a5878,transparent:true,opacity:.45});
   const groundBody=new THREE.MeshBasicMaterial({color:0x070f20});
   const groundGeo=new THREE.PlaneGeometry(220,220,16,16);
@@ -19498,6 +19544,8 @@ function updateIcePlanet(dt){
   if(iceState)iceState.t=(iceState.t||0)+dt;
   // v7.151: Phase 1 — garbage chute infiltration cinematic
   if(iceState&&iceState.phase===1){try{_updateIcePhase1(dt);}catch(_){}return;}
+  // v7.194: falling debris update — all Phase 2 steps (before early-return)
+  if(iceState&&iceState.phase===2){try{_updateIceP2FallingDebris(dt);}catch(_){}}
   // v7.172: Phase 2 emerge cinematic — pilot breaks out of garbage capsule
   if(iceState&&iceState.phase===2&&iceState.step==='emerge'){try{_updateIceP2Emerge(dt);}catch(_){}return;}
   // v7.119: drive saber-bisect half physics (gravity/tumble/fade) during ice phases
@@ -24068,6 +24116,108 @@ function _p1OpenHatchSFX(){
   }catch(_){}
   try{playComm('nav',_L('Hatch is open — GO NOW! Get inside!','ハッチが開いた — 今だ！入れ！'));}catch(_){}
   try{wfCineSubtitle('◆ GARBAGE HATCH OPEN ◆','#6cf');}catch(_){}
+}
+// v7.194 ── Phase 2 landing: falling wreckage ────────────────────────────────
+function _sfxDebrisThud(vol){
+  if(!sfx.ctx)return;const ac=sfx.ctx,t=ac.currentTime;
+  // deep bass impact
+  const o=ac.createOscillator();o.type='sine';
+  o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(22,t+.35);
+  const g=ac.createGain();g.gain.setValueAtTime((vol||.55),t);
+  g.gain.exponentialRampToValueAtTime(.001,t+.4);
+  o.connect(g);g.connect(sfx.g||ac.destination);o.start(t);o.stop(t+.42);
+  o.onended=()=>{try{g.disconnect()}catch(_){}};
+  // crunch noise
+  const nb=ac.createBuffer(1,Math.floor(ac.sampleRate*.18),ac.sampleRate);
+  const nd=nb.getChannelData(0);
+  for(let i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*(1-i/nd.length);
+  const ns=ac.createBufferSource();ns.buffer=nb;
+  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;
+  const ng=ac.createGain();ng.gain.setValueAtTime((vol||.55)*.7,t);
+  ng.gain.exponentialRampToValueAtTime(.001,t+.22);
+  ns.connect(lp);lp.connect(ng);ng.connect(sfx.g||ac.destination);
+  ns.start(t);ns.onended=()=>{try{ng.disconnect();lp.disconnect()}catch(_){}};
+}
+function _p2SpawnFallingDebris(){
+  if(!iceScene||!iceState)return;
+  const _dM=new THREE.MeshBasicMaterial({color:0x1a1e28});
+  const _dE=new THREE.LineBasicMaterial({color:0x4a5a70,transparent:true,opacity:.72});
+  function _dp(geo,x,y,z,g){
+    const m=new THREE.Mesh(geo,_dM);m.position.set(x,y,z);g.add(m);
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),_dE);e.position.set(x,y,z);g.add(e);
+  }
+  // 10 pieces, staggered start times 0.6–8.5s, placed around landing zone
+  const cfgs=[
+    {t:0.6, x:-8,  z:-8,  y0:24, type:'panel'},
+    {t:1.3, x:12,  z:-14, y0:30, type:'cyl'},
+    {t:2.0, x:-4,  z:-3,  y0:19, type:'box'},
+    {t:2.8, x:9,   z:-7,  y0:26, type:'arm'},
+    {t:3.6, x:-14, z:-20, y0:32, type:'panel'},
+    {t:4.5, x:6,   z:-26, y0:21, type:'box'},
+    {t:5.5, x:-10, z:-12, y0:28, type:'cyl'},
+    {t:6.2, x:14,  z:-18, y0:22, type:'arm'},
+    {t:7.1, x:-2,  z:-30, y0:25, type:'panel'},
+    {t:8.5, x:7,   z:-9,  y0:20, type:'box'},
+  ];
+  const items=[];
+  cfgs.forEach(c=>{
+    const g=new THREE.Group();
+    g.position.set(c.x,c.y0,c.z);
+    g.rotation.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,Math.random()*Math.PI*2);
+    if(c.type==='panel'){
+      _dp(new THREE.BoxGeometry(2.4,0.18,1.9),0,0,0,g);
+      _dp(new THREE.BoxGeometry(2.2,0.10,0.07),0,.10, .55,g);
+      _dp(new THREE.BoxGeometry(2.2,0.10,0.07),0,.10,-.55,g);
+      _dp(new THREE.BoxGeometry(0.07,0.10,1.8),-.8,.10,0,g);
+    } else if(c.type==='cyl'){
+      const L=1.4+Math.random()*.8;
+      _dp(new THREE.CylinderGeometry(.38,.38,L,7),0,0,0,g);
+      _dp(new THREE.SphereGeometry(.38,6,4),0,L/2,0,g);
+    } else if(c.type==='arm'){
+      _dp(new THREE.CylinderGeometry(.26,.30,1.2,6),0,0,0,g);
+      _dp(new THREE.CylinderGeometry(.19,.24,.95,6),0,-1.12,0,g);
+      _dp(new THREE.BoxGeometry(.48,.40,.48),0,-1.85,0,g);
+    } else {
+      _dp(new THREE.BoxGeometry(.9+Math.random()*.9,.7+Math.random()*.8,.6+Math.random()*.6),0,0,0,g);
+    }
+    iceScene.add(g);
+    items.push({mesh:g,startT:c.t,vy:0,landed:false,bounced:false,
+      rx:(Math.random()-.5)*2.5,rz:(Math.random()-.5)*1.8,idx:items.length});
+  });
+  iceState._fallingDebris=items;
+  iceState._debrisLandCount=0;
+}
+function _updateIceP2FallingDebris(dt){
+  if(!iceState||!iceState._fallingDebris)return;
+  const t=iceState.emergeT||iceState.t||0;
+  iceState._fallingDebris.forEach(function(d){
+    if(d.landed)return;
+    if(t<d.startT)return;
+    // gravity
+    d.vy-=16*dt;
+    d.mesh.position.y+=d.vy*dt;
+    d.mesh.rotation.x+=d.rx*dt;d.mesh.rotation.z+=d.rz*dt;
+    if(d.mesh.position.y<=-0.5){
+      if(!d.bounced){
+        d.bounced=true;
+        d.mesh.position.y=-0.5;
+        d.vy=-d.vy*.20;// small bounce
+        try{_sfxDebrisThud(.45+Math.random()*.25);}catch(_){}
+        // snow/dust spray
+        try{spawnP(d.mesh.position.clone().add(new THREE.Vector3(0,.5,0)),0xaaccdd,12,1.8,.6);}catch(_){}
+        // comm voice
+        iceState._debrisLandCount=(iceState._debrisLandCount||0)+1;
+        const cnt=iceState._debrisLandCount;
+        if(cnt===1)setTimeout(()=>{try{playComm('pilot',_L('Heads down! Debris still falling from the hatch!','頭を下げろ！ハッチからまだゴミが落ちてくる！'));}catch(_){}},200);
+        if(cnt===3)setTimeout(()=>{try{playComm('nav', _L('The battleship is still purging — keep moving!','戦艦がまだ廃棄を続けている — 前進しろ！'));}catch(_){}},200);
+        if(cnt===6)setTimeout(()=>{try{playComm('hq', _L('All that junk falling with you — good camouflage, #N!','一緒に落ちてきたゴミがいいカモフラージュになっているぞ！'));}catch(_){}},200);
+      } else {
+        d.mesh.position.y=-0.5;d.vy=0;
+        d.mesh.rotation.x=Math.round(d.mesh.rotation.x/(Math.PI/2))*(Math.PI/2);// settle flat-ish
+        d.landed=true;
+      }
+    }
+  });
 }
 function _p1StartChute(){
   if(!iceState)return;
@@ -33564,18 +33714,28 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
   }
   renderer.render(scene,camera)}
 
-// v7.189: Baby alien event — cute squeak + random button press effect
+// v7.194: Baby alien Mandalorian panel — show heartwarming dialogue bubble
+function _showBabyMandoPanel(alienTxt,pilotTxt,dur){
+  const p=document.getElementById('baby-mando-panel');if(!p)return;
+  p.innerHTML='<div class="bmp-alien">'+alienTxt+'</div><div class="bmp-pilot">'+pilotTxt+'</div>';
+  p.style.display='block';p.style.animation='none';void p.offsetWidth;
+  p.style.animation='bmpPop '+(dur||2.8)+'s ease-out forwards';
+  clearTimeout(p._hideT);
+  p._hideT=setTimeout(()=>{p.style.display='none';},(dur||2.8)*1000+80);}
+
+// v7.194: Baby alien Mandalorian/Grogu style heartwarming interaction events
 function _fireBabyAlienEvent(){
   if(!sfx||!sfx.ctx)return;
   const ac=sfx.ctx,now=ac.currentTime;
   // ── Baby squeak SFX ──
-  function _babySqueak(){
+  function _babySqueak(pitch){
+    pitch=pitch||1.0;
     for(let i=0;i<3;i++){
       const t2=now+i*.09;
       const g=ac.createGain();g.gain.setValueAtTime(.20,t2);g.gain.exponentialRampToValueAtTime(.001,t2+.13);g.connect(sfx.g);
       const o=ac.createOscillator();o.type='sine';
-      o.frequency.setValueAtTime(1100+Math.random()*350,t2);o.frequency.exponentialRampToValueAtTime(850+Math.random()*150,t2+.11);
-      // Vibrato LFO
+      o.frequency.setValueAtTime((1100+Math.random()*350)*pitch,t2);
+      o.frequency.exponentialRampToValueAtTime((850+Math.random()*150)*pitch,t2+.11);
       const lfo=ac.createOscillator();const lfog=ac.createGain();
       lfo.frequency.value=9;lfog.gain.value=55;lfo.connect(lfog);lfog.connect(o.frequency);
       lfo.start(t2);lfo.stop(t2+.14);
@@ -33584,71 +33744,127 @@ function _fireBabyAlienEvent(){
     }
   }
   _babySqueak();
-  // ── Pick random event ──
-  const ev=Math.floor(Math.random()*6);
+  // ── Pick random event (8 patterns) ──
+  const ev=Math.floor(Math.random()*8);
   switch(ev){
     case 0:
-      // ── Wrong button flash ──
+      // ── Button mashing — HUD hue flash ──
       try{
         var hf=document.getElementById('hud');
-        if(hf){hf.style.filter='hue-rotate(120deg) brightness(1.8)';
-          setTimeout(()=>{hf.style.filter='';},400);}
-        playComm('nav',_L('Hey!! The alien is pressing buttons!!','こら！！エイリアンがボタンを押してる！！'));
+        if(hf){hf.style.filter='hue-rotate(130deg) brightness(2.0)';
+          setTimeout(()=>{hf.style.filter='';},500);}
       }catch(_){}
+      _showBabyMandoPanel(
+        'ポチッ♪&nbsp; ポチッ♪&nbsp; ポチポチポチ♪ ✨',
+        _L('Hey!! Stop pressing ALL the buttons!!<br>…You\'re so cute I can\'t stay mad…',
+           'こら！！全部押すな！！<br>…でもかわいすぎてなぁ…どうしろってんだ…'));
+      try{playComm('nav',_L('The alien is pressing everything!!','エイリアンが全部押してる！！'));}catch(_){}
       break;
     case 1:
-      // ── Accidental speed surge ──
-      S._babyJitterT=1.8;
-      try{playComm('pilot',_L('Stop that! Don\'t touch the controls!','やめろ！操縦桿に触るな！'));}catch(_){}
-      // Brief thrust noise
-      try{const og=ac.createGain();og.gain.setValueAtTime(.18,now);og.gain.exponentialRampToValueAtTime(.001,now+.5);og.connect(sfx.g);
+      // ── Accidental control surge ──
+      S._babyJitterT=2.0;
+      _showBabyMandoPanel(
+        'ギュ〜〜っ！ 🎮',
+        _L('STOP THAT! Don\'t touch the controls!<br>I\'M BEGGING YOU!!',
+           'やめろ！操縦桿に触るな！<br>頼む！！お願いだから！！'));
+      try{
+        const og=ac.createGain();og.gain.setValueAtTime(.18,now);og.gain.exponentialRampToValueAtTime(.001,now+.5);og.connect(sfx.g);
         const on=ac.createOscillator();on.type='sawtooth';on.frequency.setValueAtTime(300,now);on.frequency.exponentialRampToValueAtTime(80,now+.5);
-        on.connect(og);on.start(now);on.stop(now+.52);on.onended=()=>{try{og.disconnect()}catch(_){}}}catch(_){}
+        on.connect(og);on.start(now);on.stop(now+.52);on.onended=()=>{try{og.disconnect()}catch(_){}};
+        playComm('pilot',_L('Hands off the controls!!','操縦桿から手を離せ！！'));
+      }catch(_){}
       break;
     case 2:
-      // ── Communications scramble ──
+      // ── Comm channel singing ──
       try{
-        const sg2=ac.createGain();sg2.gain.setValueAtTime(.15,now);sg2.gain.exponentialRampToValueAtTime(.001,now+.8);sg2.connect(sfx.g);
+        const sg=ac.createGain();sg.gain.setValueAtTime(.15,now);sg.gain.exponentialRampToValueAtTime(.001,now+.8);sg.connect(sfx.g);
         const sn=ac.createBufferSource();
         const sb=ac.createBuffer(1,Math.floor(ac.sampleRate*.8),ac.sampleRate);
         const sd=sb.getChannelData(0);for(let k=0;k<sd.length;k++)sd[k]=(Math.random()*2-1)*.6;
         const sbp=ac.createBiquadFilter();sbp.type='bandpass';sbp.frequency.value=1200;sbp.Q.value=3;
-        sn.buffer=sb;sn.connect(sbp);sbp.connect(sg2);sg2.connect(sfx.g);sn.start(now);
-        sn.onended=()=>{try{sg2.disconnect();sbp.disconnect()}catch(_){}};
+        sn.buffer=sb;sn.connect(sbp);sbp.connect(sg);sg.connect(sfx.g);sn.start(now);
+        sn.onended=()=>{try{sg.disconnect();sbp.disconnect()}catch(_){}};
       }catch(_){}
-      try{playComm('nav',_L('...KKZZT—alien on comm channel—KZZT—CUTE—KZZT','…KKZZT—エイリアンが通信に入り込んでる—KZZT—かわいい—KZZT'));}catch(_){}
+      _showBabyMandoPanel(
+        'ムムム♪&nbsp; ムムム♪ 📡',
+        _L('…KZZT— Is that the alien singing on comms??<br>…Weirdly moving…',
+           '…KKZZT—エイリアンが通信で歌ってる？？—KZZT—<br>…なんか感動する…'));
+      try{playComm('nav',_L('...KZZT—alien singing—KZZT—SO CUTE—KZZT','…KKZZT—エイリアンが通信で歌ってる—KZZT—かわいい—KZZT'));}catch(_){}
       break;
     case 3:
-      // ── Cockpit display flicker ──
+      // ── Display panel flicker ──
       try{
         var ck2=document.getElementById('cockpit-frame');
         if(ck2){var fi=0;var fiv=setInterval(()=>{
           ck2.style.opacity=(fi%2===0)?'0.3':'1.0';fi++;
           if(fi>6){clearInterval(fiv);ck2.style.opacity='1.0';}
         },80);}
-        playComm('pilot',_L('Baby alien touched the display panel!','ベイビーエイリアンがパネルを押した！'));
       }catch(_){}
+      setTimeout(()=>{try{_babySqueak(1.3);}catch(_){}},350);
+      _showBabyMandoPanel(
+        'キュキュキュッ！ ✨&nbsp; キュ！',
+        _L('You pressed the wrong panel AGAIN!<br>…This is fine. Everything is fine.',
+           'またパネル押した！！<br>…まあいい。全部いい。（遠い目）'));
+      try{playComm('pilot',_L('Display flickering—alien again!','ディスプレイが点滅—またエイリアン！'));}catch(_){}
       break;
     case 4:
-      // ── Missile misfire warning ──
+      // ── Missile system armed ──
       try{
         const mg2=ac.createGain();mg2.gain.setValueAtTime(.25,now);mg2.gain.exponentialRampToValueAtTime(.001,now+.3);mg2.connect(sfx.g);
         const mo=ac.createOscillator();mo.type='square';mo.frequency.setValueAtTime(880,now);mo.frequency.exponentialRampToValueAtTime(440,now+.25);
         mo.connect(mg2);mo.start(now);mo.stop(now+.32);mo.onended=()=>{try{mg2.disconnect()}catch(_){}};
-        // Warning beep ×2
         setTimeout(()=>{try{
           const mg3=ac.createGain();mg3.gain.setValueAtTime(.18,ac.currentTime);mg3.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.15);mg3.connect(sfx.g);
           const mo2=ac.createOscillator();mo2.type='square';mo2.frequency.value=1100;
           mo2.connect(mg3);mo2.start(ac.currentTime);mo2.stop(ac.currentTime+.16);mo2.onended=()=>{try{mg3.disconnect()}catch(_){}};
         }catch(_){}},180);
       }catch(_){}
-      try{playComm('nav',_L('MISSILE SYSTEM ARMED BY ALIEN!! Safety on!!','エイリアンがミサイルシステムを起動！！セーフティON！！'));}catch(_){}
+      _showBabyMandoPanel(
+        'ン！&nbsp; ン！&nbsp; ン！ 🚀',
+        _L('MISSILE SYSTEM ARMED BY THE ALIEN!!<br>I can\'t stay mad at this face…',
+           'エイリアンがミサイル起動！！<br>…この顔じゃ怒れないんだよなぁ…'));
+      try{playComm('nav',_L('MISSILE ARMED!! Safety on!!','ミサイル起動！！セーフティON！！'));}catch(_){}
       break;
     case 5:
-      // ── Baby plays with cannon fire button — double squeak + short burst ──
-      setTimeout(()=>{try{_babySqueak();}catch(_){}},320);
+      // ── Fires the cannon ──
+      setTimeout(()=>{try{_babySqueak(0.8);}catch(_){}},320);
       setTimeout(()=>{try{if(typeof fireBeam==='function')fireBeam();}catch(_){}},500);
-      try{playComm('pilot',_L('Woah it fired the cannon!! CUTE but DANGEROUS!!','発射した！！かわいいが危ない！！'));}catch(_){}
+      _showBabyMandoPanel(
+        'ポチーーーッ！！ 💥',
+        _L('WOAH IT FIRED THE CANNON!!<br>Cute. Dangerous. Both.',
+           'うわ発射した！！<br>かわいい。危ない。両方。'));
+      try{playComm('pilot',_L('It fired the cannon!! CUTE BUT DANGEROUS!!','撃った！！かわいいが危ない！！'));}catch(_){}
+      break;
+    case 6:
+      // ── Big red warp-core button found ──
+      setTimeout(()=>{try{_babySqueak(1.1);}catch(_){}},200);
+      setTimeout(()=>{try{_babySqueak(0.9);}catch(_){}},480);
+      _showBabyMandoPanel(
+        'ポチ♪&nbsp; ポチ♪&nbsp; ポチポチポチ♪ 🔴',
+        _L('That\'s the WARP CORE button!!<br>After this, you\'re getting a seat belt.',
+           'そこはワープコアのボタンだ！！<br>もうシート固定にする。絶対に。'),3.0);
+      try{
+        const wg=ac.createGain();wg.gain.setValueAtTime(.12,now);wg.gain.exponentialRampToValueAtTime(.001,now+1.2);wg.connect(sfx.g);
+        const wo=ac.createOscillator();wo.type='sawtooth';wo.frequency.setValueAtTime(80,now);
+        wo.frequency.linearRampToValueAtTime(160,now+.6);wo.frequency.exponentialRampToValueAtTime(30,now+1.2);
+        wo.connect(wg);wo.start(now);wo.stop(now+1.25);wo.onended=()=>{try{wg.disconnect()}catch(_){}};
+        playComm('nav',_L('Warp core fluctuating!! Alien!!','ワープコア揺らいでる！！エイリアン！！'));
+      }catch(_){}
+      break;
+    case 7:
+      // ── Baby falls asleep on the console ──
+      _showBabyMandoPanel(
+        'スヤァ... 💤&nbsp; ムニャ...',
+        _L('…It fell asleep on the console.<br>…I\'ll fly real gentle.',
+           '…コンソールの上で寝やがった。<br>…優しく飛んでやる。'),3.2);
+      // Soft lullaby tones
+      try{
+        [[440,0],[494,.22],[523,.44],[587,.66],[523,.88],[494,1.10]].forEach(([hz,t])=>{
+          const lg=ac.createGain();lg.gain.setValueAtTime(.06,now+t);lg.gain.exponentialRampToValueAtTime(.001,now+t+.30);lg.connect(sfx.g);
+          const lo=ac.createOscillator();lo.type='sine';lo.frequency.value=hz;
+          lo.connect(lg);lo.start(now+t);lo.stop(now+t+.32);lo.onended=()=>{try{lg.disconnect()}catch(_){}};
+        });
+      }catch(_){}
       break;
   }
 }
