@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.192</title>
+<title>COSMIC INVADERS v7.193</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -16160,6 +16160,29 @@ function _makeIceMazeGoal(x,z){
   g.userData.isGoalMarker=true;
   return g;
 }
+// v7.193: Sky atmosphere dome for all outdoor ice phases (image 2 style)
+function _addIceAtmosphere(sc){
+  // Deep night-blue dome
+  const _domM=new THREE.Mesh(new THREE.SphereGeometry(820,8,6),
+    new THREE.MeshBasicMaterial({color:0x020a1c,side:THREE.BackSide}));
+  sc.add(_domM);
+  // Upper mid-sky — slightly brighter blue
+  const _midM=new THREE.Mesh(new THREE.SphereGeometry(800,8,4,0,Math.PI*2,Math.PI*0.1,Math.PI*0.42),
+    new THREE.MeshBasicMaterial({color:0x040e2a,side:THREE.BackSide,transparent:true,opacity:.90}));
+  sc.add(_midM);
+  // Horizon atmospheric glow band — bright ice-blue
+  const _horizM=new THREE.Mesh(new THREE.SphereGeometry(780,12,4,0,Math.PI*2,Math.PI*0.40,Math.PI*0.22),
+    new THREE.MeshBasicMaterial({color:0x0a5090,side:THREE.BackSide,transparent:true,opacity:.80}));
+  sc.add(_horizM);
+  // Bright horizon rim line — pale cyan shimmer
+  const _rimM=new THREE.Mesh(new THREE.SphereGeometry(760,12,3,0,Math.PI*2,Math.PI*0.47,Math.PI*0.07),
+    new THREE.MeshBasicMaterial({color:0x2288cc,side:THREE.BackSide,transparent:true,opacity:.65}));
+  sc.add(_rimM);
+  // Nebula colour splash upper-left (purple hint, image 2 style)
+  const _nebM=new THREE.Mesh(new THREE.SphereGeometry(750,8,4,Math.PI*0.6,Math.PI*0.7,0,Math.PI*0.35),
+    new THREE.MeshBasicMaterial({color:0x1a0a44,side:THREE.BackSide,transparent:true,opacity:.35}));
+  sc.add(_nebM);
+}
 // ──────────────────────────────────────────────────────────────────────────
 function startIcePlanetPhase2(){
   try{wfCineEnd()}catch(_){}
@@ -16169,7 +16192,7 @@ function startIcePlanetPhase2(){
     if(typeof starField!=='undefined'&&starField)starField.visible=false;
     if(typeof speedLines!=='undefined'&&speedLines)speedLines.visible=false;
     if(typeof persistentFortMesh!=='undefined'&&persistentFortMesh)persistentFortMesh.visible=false;
-    scene.background=new THREE.Color(0x020304);// near-black — indoor garbage facility
+    scene.background=new THREE.Color(0x030a1e);// deep night blue — v7.193
   }catch(_){}
   S.phase='FOREST';// reuse the FOREST phase so the main animate loop ticks updateForestOnFoot,
                     // which will recognise our ice flag and route through updateIcePlanet instead
@@ -16178,9 +16201,10 @@ function startIcePlanetPhase2(){
   if(iceScene){try{scene.remove(iceScene)}catch(_){}iceScene=null}
   iceScene=new THREE.Group();iceScene.name='iceScene';
   scene.add(iceScene);
-  // v7.172 ★ GARBAGE FACILITY ground — industrial concrete, dirty olive grid
-  const mGround=new THREE.LineBasicMaterial({color:0x3a4a32,transparent:true,opacity:.38});
-  const groundBody=new THREE.MeshBasicMaterial({color:0x0f0f0c});
+  // v7.193: ice snow ground — icy blue grid
+  try{_addIceAtmosphere(iceScene);}catch(_){}
+  const mGround=new THREE.LineBasicMaterial({color:0x1a5878,transparent:true,opacity:.45});
+  const groundBody=new THREE.MeshBasicMaterial({color:0x070f20});
   const groundGeo=new THREE.PlaneGeometry(220,220,16,16);
   const groundMesh=new THREE.Mesh(groundGeo,groundBody);
   groundMesh.rotation.x=-Math.PI/2;groundMesh.position.y=-0.5;iceScene.add(groundMesh);
@@ -16857,10 +16881,11 @@ function startIcePlanetPhase3(){
   try{if(iceState&&iceState._p1DroneGain){const now=sfx.ctx.currentTime;iceState._p1DroneGain.gain.exponentialRampToValueAtTime(.001,now+.3);}}catch(_){}
   let bv=document.getElementById('ice-advance');if(bv)bv.remove();
   bv=document.getElementById('ice-preview');if(bv)bv.remove();
-  // ── scene setup ──
-  scene.background=new THREE.Color(0x050b14);
+  // ── scene setup ── v7.193: deep blue night sky
+  scene.background=new THREE.Color(0x030a1e);
   S.phase='FOREST';S.onFootMode=true;
   iceScene=new THREE.Group();iceScene.name='iceSceneP3';scene.add(iceScene);
+  try{_addIceAtmosphere(iceScene);}catch(_){}
   iceState={phase:3,t:0,shots:[],trooperShots:[],shotCD:0,saberCD:0,
             gateOpen:false,gateOpenY:0,gateFullyOpen:false,
             gatePhaseTriggered:false,complete:false,footprints:[],
@@ -16870,9 +16895,9 @@ function startIcePlanetPhase3(){
   const mWd=new THREE.LineBasicMaterial({color:0x1a99bb,transparent:true,opacity:.55});
   const mGt=new THREE.LineBasicMaterial({color:0xff4422,transparent:true,opacity:.9});
   const mWB=new THREE.MeshBasicMaterial({color:0x050e1a});
-  // ── snow ground (50 wide × 200 long, centred at z=-50) ──
+  // ── snow ground (50 wide × 200 long, centred at z=-50) ── v7.193 brighter ice
   const gPl=new THREE.PlaneGeometry(50,200,6,16);
-  const gBd=new THREE.Mesh(gPl,new THREE.MeshBasicMaterial({color:0x060e18}));
+  const gBd=new THREE.Mesh(gPl,new THREE.MeshBasicMaterial({color:0x071828}));
   gBd.rotation.x=-Math.PI/2;gBd.position.set(0,-0.5,-50);iceScene.add(gBd);
   const gEd=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(50,200,4,12)),mWd);
   gEd.rotation.x=-Math.PI/2;gEd.position.set(0,-0.49,-50);iceScene.add(gEd);
@@ -16995,8 +17020,8 @@ function startIcePlanetPhase3(){
   const bGeo=new THREE.BufferGeometry();bGeo.setAttribute('position',new THREE.BufferAttribute(bfp,3));
   const _bPts=new THREE.Points(bGeo,new THREE.PointsMaterial({color:0xddeeff,size:.22,transparent:true,opacity:.52}));
   iceScene.add(_bPts);iceState._p3blizzardPts=_bPts;
-  // ── Blizzard fog — cuts visibility to ~25 units ──
-  scene.fog=new THREE.FogExp2(0x070e18,0.040);
+  // ── Blizzard fog — cuts visibility to ~25 units, matches blue sky ──
+  scene.fog=new THREE.FogExp2(0x061428,0.040);
   // ── Blizzard haze CSS overlay ──
   let _bvfx=document.getElementById('ice-blizzard-vfx');
   if(!_bvfx){_bvfx=document.createElement('div');_bvfx.id='ice-blizzard-vfx';}
@@ -19235,9 +19260,10 @@ function startIcePlanetPhase5(){
   ['ice-advance','ice-preview','ice-p4-hud','ice-p4-skip','ice-p5-briefing','ice-p5-mobile-btns'].forEach(id=>{
     const e=document.getElementById(id);if(e)e.remove();
   });
-  scene.background=new THREE.Color(0x050b14);
+  scene.background=new THREE.Color(0x030a1e);// v7.193 deep blue night
   S.phase='FOREST';S.onFootMode=true;
   iceScene=new THREE.Group();iceScene.name='iceSceneP5';scene.add(iceScene);
+  try{_addIceAtmosphere(iceScene);}catch(_){}
   // v7.115: step='battle' — player AT-RT vs enemy walker from the start
   iceState={
     phase:5,t:0,shots:[],atrtShots:[],walkerShots:[],shotCD:0,
@@ -19259,15 +19285,15 @@ function startIcePlanetPhase5(){
   const mWkS=new THREE.MeshBasicMaterial({color:0x080e18});
   const mTr=new THREE.LineBasicMaterial({color:0xff6644,transparent:true,opacity:.8});
   const mTrS=new THREE.MeshBasicMaterial({color:0x180800});
-  // ── Ground — v7.117 deep snow ──
-  const gl=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshBasicMaterial({color:0x060e18}));
+  // ── Ground — v7.193 bright icy snow ──
+  const gl=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshBasicMaterial({color:0x081828}));
   gl.rotation.x=-Math.PI/2;gl.position.set(0,-0.5,-60);iceScene.add(gl);
   const ge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(200,200,12,12)),
-    new THREE.LineBasicMaterial({color:0x1a2e40,transparent:true,opacity:.35}));
+    new THREE.LineBasicMaterial({color:0x1a5878,transparent:true,opacity:.45}));
   ge.rotation.x=-Math.PI/2;ge.position.set(0,-0.49,-60);iceScene.add(ge);
-  // Snow drifts — scattered mounds for deep-snow appearance
-  const mDrF=new THREE.MeshBasicMaterial({color:0x070f1a});
-  const mDrE=new THREE.LineBasicMaterial({color:0x7ab4cc,transparent:true,opacity:.40});
+  // Snow drifts — icy blue mounds
+  const mDrF=new THREE.MeshBasicMaterial({color:0x0a1c30});
+  const mDrE=new THREE.LineBasicMaterial({color:0x44aacc,transparent:true,opacity:.50});
   for(let d=0;d<16;d++){
     const r=1.0+Math.random()*2.8,h=0.2+Math.random()*0.55;
     const dx=(Math.random()-.5)*160,dz=-6-Math.random()*90;
@@ -19275,9 +19301,9 @@ function startIcePlanetPhase5(){
     const dm=new THREE.Mesh(dg,mDrF);dm.position.set(dx,-0.5+h*.65,dz);iceScene.add(dm);
     const de=new THREE.LineSegments(new THREE.EdgesGeometry(dg),mDrE);de.position.copy(dm.position);iceScene.add(de);
   }
-  // ── Background ridges — v7.187: pushed far back so hangar visible ──
-  const mRidge=new THREE.MeshBasicMaterial({color:0x1a3050});
-  const mRidgeE=new THREE.LineBasicMaterial({color:0x3a6080,transparent:true,opacity:.65});
+  // ── Background ridges — v7.193 brighter ice-blue ──
+  const mRidge=new THREE.MeshBasicMaterial({color:0x0d2045});
+  const mRidgeE=new THREE.LineBasicMaterial({color:0x2a7aaa,transparent:true,opacity:.72});
   for(let i=0;i<9;i++){
     const h=20+Math.random()*28,w=30+Math.random()*26;
     const rg=new THREE.ConeGeometry(w*.5,h,5);
@@ -19287,8 +19313,8 @@ function startIcePlanetPhase5(){
     re.position.copy(r.position);iceScene.add(re);
   }
   // ── v7.176: RIGHT SIDE CANYON CLIFF ──
-  const mCliff=new THREE.MeshBasicMaterial({color:0x060c18});
-  const mCliffE=new THREE.LineBasicMaterial({color:0x1a2a3a,transparent:true,opacity:.6});
+  const mCliff=new THREE.MeshBasicMaterial({color:0x081828});
+  const mCliffE=new THREE.LineBasicMaterial({color:0x226688,transparent:true,opacity:.65});
   const cliffH=65, cliffD=120;
   const cliffMain=new THREE.Mesh(new THREE.BoxGeometry(18,cliffH,cliffD),mCliff);
   cliffMain.position.set(68,cliffH/2-0.5,-50);iceScene.add(cliffMain);
@@ -23291,38 +23317,55 @@ function startIcePlanetPhase1(){
   // ── Player ship ──
   const p1ship=_makeP1PlayerShip();p1ship.position.set(0,2,8);iceScene.add(p1ship);
   // ── Ice planet (distant) ──
-  // v7.177: Ice planet — opaque solid fill, renderOrder 100 draws over stars
-  const ipGeo=new THREE.SphereGeometry(52,10,8);
+  // v7.193: Ice planet — vivid glowing blue crystal (image 1 style)
+  const ipGeo=new THREE.SphereGeometry(52,20,14);// more segments → crystal facets
   const ipGrp=new THREE.Group();
-  // OPAQUE base sphere — renderOrder:100 draws AFTER stars, covering them
-  const _ipBase=new THREE.Mesh(ipGeo,new THREE.MeshBasicMaterial({color:0x0a1828,depthWrite:true}));
-  _ipBase.renderOrder=100; ipGrp.add(_ipBase);
-  // Surface wireframe at order 102
-  const _ipEdge=new THREE.LineSegments(new THREE.EdgesGeometry(ipGeo),new THREE.LineBasicMaterial({color:0x88ccee,transparent:true,opacity:.60}));
-  _ipEdge.renderOrder=102; ipGrp.add(_ipEdge);
-  // Ice cap — opaque, order 101
-  const capGeo=new THREE.SphereGeometry(52,8,4,0,Math.PI*2,0,0.45);
-  const _ipCap=new THREE.Mesh(capGeo,new THREE.MeshBasicMaterial({color:0xc8e0ee,depthWrite:true}));
-  _ipCap.renderOrder=101; ipGrp.add(_ipCap);
-  // Cloud band — OPAQUE (no more transparent which caused see-through)
-  const bandGeo=new THREE.SphereGeometry(52.5,8,3,0,Math.PI*2,1.1,0.4);
-  const _ipBand=new THREE.Mesh(bandGeo,new THREE.MeshBasicMaterial({color:0x1a3450,depthWrite:true}));
-  _ipBand.renderOrder=101; ipGrp.add(_ipBand);
-  for(let _ir=0;_ir<8;_ir++){
-    const _rA=(_ir/8)*Math.PI*2;
-    const _rLatA=0.6+Math.random()*0.8;
+  // Outer atmosphere halo (faint, largest)
+  const _ipHalo2=new THREE.Mesh(new THREE.SphereGeometry(62,8,6),
+    new THREE.MeshBasicMaterial({color:0x0033bb,transparent:true,opacity:.06}));
+  _ipHalo2.renderOrder=98;ipGrp.add(_ipHalo2);
+  // Inner glow shell
+  const _ipHalo1=new THREE.Mesh(new THREE.SphereGeometry(56,8,6),
+    new THREE.MeshBasicMaterial({color:0x0055dd,transparent:true,opacity:.13}));
+  _ipHalo1.renderOrder=99;ipGrp.add(_ipHalo1);
+  // OPAQUE base sphere — deep electric blue
+  const _ipBase=new THREE.Mesh(ipGeo,new THREE.MeshBasicMaterial({color:0x01112e,depthWrite:true}));
+  _ipBase.renderOrder=100;ipGrp.add(_ipBase);
+  // Inner core highlight — brighter blue, slightly smaller → illusion of internal glow
+  const _ipCore=new THREE.Mesh(new THREE.SphereGeometry(44,12,8),
+    new THREE.MeshBasicMaterial({color:0x0033aa,transparent:true,opacity:.55}));
+  _ipCore.renderOrder=101;ipGrp.add(_ipCore);
+  // Crystal surface wireframe — vivid cyan, high opacity
+  const _ipEdge=new THREE.LineSegments(new THREE.EdgesGeometry(ipGeo),
+    new THREE.LineBasicMaterial({color:0x22ccff,transparent:true,opacity:.82}));
+  _ipEdge.renderOrder=103;ipGrp.add(_ipEdge);
+  // Polar ice cap — bright blue-white
+  const capGeo=new THREE.SphereGeometry(52,10,4,0,Math.PI*2,0,0.42);
+  const _ipCap=new THREE.Mesh(capGeo,new THREE.MeshBasicMaterial({color:0x88ddff,depthWrite:true}));
+  _ipCap.renderOrder=101;ipGrp.add(_ipCap);
+  const _ipCapE=new THREE.LineSegments(new THREE.EdgesGeometry(capGeo),
+    new THREE.LineBasicMaterial({color:0xaaeeff,transparent:true,opacity:.75}));
+  _ipCapE.renderOrder=102;ipGrp.add(_ipCapE);
+  // Equatorial atmosphere band — electric blue
+  const bandGeo=new THREE.SphereGeometry(53.5,12,3,0,Math.PI*2,0.9,0.6);
+  const _ipBand=new THREE.Mesh(bandGeo,
+    new THREE.MeshBasicMaterial({color:0x0044bb,transparent:true,opacity:.40}));
+  _ipBand.renderOrder=102;ipGrp.add(_ipBand);
+  // Crystal ridge features on surface — 16 spikes with vivid edges
+  for(let _ir=0;_ir<16;_ir++){
+    const _rA=(_ir/16)*Math.PI*2;
+    const _rLatA=0.4+Math.random()*1.4;
     const _rrx=52*Math.sin(_rLatA)*Math.cos(_rA);
     const _rry=52*Math.cos(_rLatA);
     const _rrz=52*Math.sin(_rLatA)*Math.sin(_rA);
-    const _rdG=new THREE.ConeGeometry(4+Math.random()*3,8+Math.random()*6,4);
-    const _rdM=new THREE.Mesh(_rdG,new THREE.MeshBasicMaterial({color:0x1e3855,depthWrite:true}));
-    _rdM.renderOrder=101;
-    _rdM.position.set(_rrx,_rry,_rrz);
-    _rdM.lookAt(0,0,0);_rdM.rotateX(Math.PI/2);
+    const _rdG=new THREE.ConeGeometry(2.5+Math.random()*2.5,5+Math.random()*9,4);
+    const _rdM=new THREE.Mesh(_rdG,new THREE.MeshBasicMaterial({color:0x051a55,depthWrite:true}));
+    _rdM.renderOrder=102;
+    _rdM.position.set(_rrx,_rry,_rrz);_rdM.lookAt(0,0,0);_rdM.rotateX(Math.PI/2);
     ipGrp.add(_rdM);
-    const _rdE=new THREE.LineSegments(new THREE.EdgesGeometry(_rdG),new THREE.LineBasicMaterial({color:0x4a8aaa,transparent:true,opacity:.55}));
-    _rdE.renderOrder=102;
-    _rdE.position.copy(_rdM.position);_rdE.rotation.copy(_rdM.rotation);
+    const _rdE=new THREE.LineSegments(new THREE.EdgesGeometry(_rdG),
+      new THREE.LineBasicMaterial({color:0x44ccff,transparent:true,opacity:.82}));
+    _rdE.renderOrder=103;_rdE.position.copy(_rdM.position);_rdE.rotation.copy(_rdM.rotation);
     ipGrp.add(_rdE);
   }
   ipGrp.position.set(8,-22,-320);iceScene.add(ipGrp);
