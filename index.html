@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.201</title>
+<title>COSMIC INVADERS v7.202</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -11820,10 +11820,13 @@ function updateEnemies(dt){
       d.life-=dt;
       if(d.life<=0){scene.remove(d.mesh);window._bossDebris.splice(i,1)}}}
   // v6.70: Safety watchdog - if S.waveLeft is "stuck" above 0 but no enemies exist, force reset
-  // v7.199: ruins-stage only — space/other stages wait naturally for enemies to pass or be killed
+  // v7.199: ruins-only (1.5s). v7.202: restored universal — 1.5s ruins / 3.5s others.
+  // Needed because cleanupBossResidue (called by endBonus) clears enemies[] but historically
+  // left S.waveLeft positive, permanently blocking the wave-transition condition.
   if(S.phase==='PLAYING'&&enemies.filter(e=>!e.isBonus&&!e.isBoss).length===0&&S.waveLeft>0){
     S.ruinsStuckTimer=(S.ruinsStuckTimer||0)+dt;
-    if(S.ruinsStuckTimer>1.5&&selectedStage&&selectedStage.id==='ruins'){S.waveLeft=0;S.ruinsStuckTimer=0}
+    const _stuckT=(selectedStage&&selectedStage.id==='ruins')?1.5:3.5;
+    if(S.ruinsStuckTimer>_stuckT){S.waveLeft=0;S.ruinsStuckTimer=0}
   } else if(S.ruinsStuckTimer){S.ruinsStuckTimer=0}
   // Next wave / phase transition
   if(S.phase==='PLAYING'&&S.waveLeft<=0&&enemies.filter(e=>!e.isBonus).length===0){
@@ -11842,8 +11845,8 @@ function updateEnemies(dt){
       S.wave++;spawnWave(S.wave);
       return;
     }
-    // v7.199: 2.5s inter-wave gap — let player breathe between waves
-    if(S._waveGapT==null)S._waveGapT=2.5;
+    // v7.199: inter-wave gap (v7.202: 2.5s→1.5s, tighter pacing)
+    if(S._waveGapT==null)S._waveGapT=1.5;
     S._waveGapT-=dt;
     if(S._waveGapT<=0){
       S._waveGapT=null;
@@ -12216,6 +12219,10 @@ function cleanupBossResidue(){
     if(typeof enemies!=='undefined'&&enemies&&enemies.length){
       enemies.forEach(e=>{try{if(e&&e.mesh)scene.remove(e.mesh)}catch(er){}});
       enemies.length=0;
+      // v7.202 ★ CRITICAL: sync S.waveLeft when force-clearing enemies array.
+      // Without this, waveLeft stays > 0 after endBonus calls cleanupBossResidue,
+      // permanently blocking the S.waveLeft<=0 wave-transition condition (waves 3+ never spawn).
+      if(typeof S!=='undefined'&&S)S.waveLeft=Math.min(S.waveLeft,0);
     }
   }catch(e){}
   try{
