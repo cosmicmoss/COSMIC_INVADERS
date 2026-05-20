@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.199</title>
+<title>COSMIC INVADERS v7.200</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -23154,7 +23154,7 @@ function _buildIceEscapeHangar(){
   ladderG.add(lRail1);ladderG.add(lRail2);
   ladderG.position.set(0.7,-0.3,-0.8);// near cockpit right side
   ladderG.rotation.y=0.3;
-  sg.add(ladderG);
+  g.add(ladderG);// v7.200: ladder stays on ground, not attached to ship
   sg.scale.setScalar(1.7);
   sg.position.set(0,1.4,-117);
   sg.rotation.y=Math.PI;// nose toward entrance
@@ -23423,7 +23423,7 @@ function startIcePlanetPhase1(){
   if(iceScene){try{scene.remove(iceScene);}catch(_){}iceScene=null;}
   iceScene=new THREE.Group();iceScene.name='iceSceneP1';scene.add(iceScene);
   // ── Enemy battleship ──
-  const p1bs=_makeP1Battleship();p1bs.position.set(0,12,-58);iceScene.add(p1bs);
+  const p1bs=_makeP1Battleship();p1bs.position.set(0,16,-62);iceScene.add(p1bs);// v7.200: raised+pushed back for rear-view framing
   // Hatch doors (children of battleship, stored for animation)
   const hdMat=new THREE.MeshBasicMaterial({color:0x222830});
   const hdEdge=new THREE.LineBasicMaterial({color:0x4a5870,transparent:true,opacity:.88});
@@ -23752,125 +23752,145 @@ function startIcePlanetPhase1(){
 }
 
 function _makeP1Battleship(){
+  // v7.200: Complete redesign — massive rear-view warship, engines facing camera
   const g=new THREE.Group();g.name='p1battleship';
   const mH=new THREE.MeshBasicMaterial({color:0x1a1e28});
   const mE=new THREE.LineBasicMaterial({color:0x4a5878,transparent:true,opacity:.82});
   const mA=new THREE.MeshBasicMaterial({color:0x141820});
   const mAE=new THREE.LineBasicMaterial({color:0x3a4868,transparent:true,opacity:.70});
-  function addPart(geo,px,py,pz,fm,fe){
+  const mD=new THREE.MeshBasicMaterial({color:0x0e1218});
+  const mDE=new THREE.LineBasicMaterial({color:0x283848,transparent:true,opacity:.60});
+  function ap(geo,px,py,pz,fm,fe){
     const gr=new THREE.Group();gr.position.set(px||0,py||0,pz||0);
-    gr.add(new THREE.Mesh(geo,fm||mH));gr.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),fe||mE));
+    gr.add(new THREE.Mesh(geo,fm||mH));
+    gr.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),fe||mE));
     g.add(gr);return gr;
   }
-  addPart(new THREE.BoxGeometry(38,9,95));// main hull
-  addPart(new THREE.BoxGeometry(11,8,18),0,8.5,-22);// bridge tower
-  addPart(new THREE.BoxGeometry(6,3,30),0,5,0,mA,mAE);// dorsal spine
+  // ── Core hull (wide, rear-view orientation — engines at +Z face camera) ──
+  ap(new THREE.BoxGeometry(58,12,105));                     // main hull body
+  ap(new THREE.BoxGeometry(24,10,90),0,11,0,mA,mAE);      // dorsal raised spine
+  ap(new THREE.BoxGeometry(36,6,88),0,-9,0,mD,mDE);       // ventral keel band
+  // Hull bevelled bow cap (far from camera, gives depth to silhouette)
+  ap(new THREE.BoxGeometry(50,10,8),0,0,-54,mD,mDE);
+  ap(new THREE.BoxGeometry(38,7,6),0,0,-57,mD,mDE);
+  // ── Wide swept wings (no isolated fin boxes) ──
   [-1,1].forEach(sx=>{
-    addPart(new THREE.BoxGeometry(0.7,4,28),sx*19.3,1,-10,mA,mAE);
-    addPart(new THREE.BoxGeometry(0.7,4,18),sx*19.3,1,24,mA,mAE);
+    ap(new THREE.BoxGeometry(25,2.5,56),sx*41,0,4,mA,mAE);  // main wing slab
+    ap(new THREE.BoxGeometry(10,7,38),sx*57,2,8,mH,mE);      // wingtip pod
+    ap(new THREE.BoxGeometry(4.5,11,28),sx*50,-2,12,mA,mAE); // rear thrust strake
+    ap(new THREE.BoxGeometry(3,7,20),sx*36,4,-8,mD,mDE);     // forward dorsal rib
+    ap(new THREE.BoxGeometry(18,1.5,30),sx*41,8,2,mD,mDE);   // top wing surface panel
   });
-  // Engine pods
-  const ePG=new THREE.CylinderGeometry(1.2,1.6,4,6);
-  const eMat=new THREE.MeshBasicMaterial({color:0xff4400,transparent:true,opacity:.88});
-  [[-6,0,44],[-2,0,44],[2,0,44],[6,0,44]].forEach(([ex,ey,ez])=>{
-    const eGrp=new THREE.Group();eGrp.position.set(ex,ey,ez);
-    eGrp.add(new THREE.Mesh(ePG,mA));eGrp.add(new THREE.LineSegments(new THREE.EdgesGeometry(ePG),mAE));
-    const egG=new THREE.CylinderGeometry(.8,.8,1.5,5);
-    const egM=new THREE.Mesh(egG,eMat);egM.position.y=1.5;eGrp.add(egM);g.add(eGrp);
+  // ── Nacelle pods (mounted on top pylons, nozzles face camera) ──
+  [-1,1].forEach(sx=>{
+    ap(new THREE.BoxGeometry(14,11,50),sx*19,22,2,mH,mE);    // nacelle body
+    ap(new THREE.BoxGeometry(8,16,36),sx*19,10,0,mD,mDE);    // nacelle pylon
+    ap(new THREE.BoxGeometry(10,7,14),sx*19,18,-26,mA,mAE);  // nacelle bow armour
+    // Nacelle engine bell (rear, faces camera)
+    const nbG=new THREE.CylinderGeometry(4.8,4.0,5,10);
+    const nbM=new THREE.Mesh(nbG,mA);nbM.position.set(sx*19,22,27);nbM.rotation.x=Math.PI/2;g.add(nbM);
+    const nbE=new THREE.LineSegments(new THREE.EdgesGeometry(nbG),mAE);nbE.position.copy(nbM.position);nbE.rotation.copy(nbM.rotation);g.add(nbE);
+    // Nacelle main glow ring
+    const nGG=new THREE.CylinderGeometry(4.0,4.0,0.6,10);
+    const nGM=new THREE.Mesh(nGG,new THREE.MeshBasicMaterial({color:0xff5500,transparent:true,opacity:.90}));
+    nGM.position.set(sx*19,22,30.0);nGM.rotation.x=Math.PI/2;g.add(nGM);
+    // Nacelle inner glow
+    const nIG=new THREE.CylinderGeometry(2.5,2.5,0.4,8);
+    const nIM=new THREE.Mesh(nIG,new THREE.MeshBasicMaterial({color:0xff9900,transparent:true,opacity:.75}));
+    nIM.position.set(sx*19,22,30.5);nIM.rotation.x=Math.PI/2;g.add(nIM);
+    // Nacelle core point
+    const nCG=new THREE.CylinderGeometry(1.0,1.0,0.3,6);
+    const nCM=new THREE.Mesh(nCG,new THREE.MeshBasicMaterial({color:0xffffbb,transparent:true,opacity:.55}));
+    nCM.position.set(sx*19,22,30.8);nCM.rotation.x=Math.PI/2;g.add(nCM);
   });
-  // Garbage hatch recess (dark hole in hull bottom)
-  const rG=new THREE.BoxGeometry(8.6,1.1,6.6);
-  const rGrp=new THREE.Group();rGrp.position.set(0,-4.2,-8);
-  rGrp.add(new THREE.Mesh(rG,new THREE.MeshBasicMaterial({color:0x080c12})));
-  rGrp.add(new THREE.LineSegments(new THREE.EdgesGeometry(rG),new THREE.LineBasicMaterial({color:0x2a3848,transparent:true,opacity:.7})));
-  g.add(rGrp);
-  // Observation windows row
-  for(let wi=0;wi<6;wi++){
-    const wG=new THREE.BoxGeometry(.8,.8,.1);
-    const wGrp=new THREE.Group();wGrp.position.set(-12.5+wi*5,.5,-46.5);
-    wGrp.add(new THREE.Mesh(wG,new THREE.MeshBasicMaterial({color:0x113355,transparent:true,opacity:.9})));
-    g.add(wGrp);
+  // ── Bridge tower (command island, rear face visible) ──
+  ap(new THREE.BoxGeometry(22,15,28),0,20,-4,mH,mE);    // bridge lower block
+  ap(new THREE.BoxGeometry(14,10,20),0,32,-1,mA,mAE);   // bridge upper
+  ap(new THREE.BoxGeometry(7,7,12),0,40,1,mD,mDE);      // command spire
+  [-1,1].forEach(sx=>{
+    ap(new THREE.BoxGeometry(2,13,24),sx*12,25,-3,mA,mAE); // bridge side fins
+  });
+  // Rear observation windows (5 lit ports visible from behind)
+  for(let wi=0;wi<5;wi++){
+    const wG=new THREE.BoxGeometry(2.2,1.4,0.12);
+    const wM=new THREE.Mesh(wG,new THREE.MeshBasicMaterial({color:0x1155aa,transparent:true,opacity:.92}));
+    wM.position.set(-4.4+wi*2.2,26,11.0);g.add(wM);
+    // Window glow halo
+    const whG=new THREE.BoxGeometry(2.6,1.8,0.08);
+    const whM=new THREE.Mesh(whG,new THREE.MeshBasicMaterial({color:0x2277cc,transparent:true,opacity:.30}));
+    whM.position.set(-4.4+wi*2.2,26,10.9);g.add(whM);
   }
-  // ── v7.175 ★ Additional battleship detail ──
-  const _hullPanMat=new THREE.MeshBasicMaterial({color:0x1e222e});
-  const _hullEdgeMat=new THREE.LineBasicMaterial({color:0x2a3040});
-  const _panZOffsets=[-34,-16,2,20];
-  const _panXOffsets=[-9,9];
-  _panZOffsets.forEach(pz=>{ _panXOffsets.forEach(px=>{
-    const _pg=new THREE.BoxGeometry(8.2,0.3,17);
-    const _pm=new THREE.Mesh(_pg,_hullPanMat); _pm.position.set(px,4.7,pz); g.add(_pm);
-    const _pe=new THREE.LineSegments(new THREE.EdgesGeometry(_pg),_hullEdgeMat); _pe.position.copy(_pm.position); g.add(_pe);
-  })});
-  // Side armour strips
-  for(let _sai=0;_sai<6;_sai++){
-    const _saZ=-35+_sai*14;
-    [-19.2,19.2].forEach(sx=>{
-      const _sg=new THREE.BoxGeometry(0.22,3,13);
-      const _sm=new THREE.Mesh(_sg,_hullPanMat); _sm.position.set(sx,2,_saZ); g.add(_sm);
-      const _se=new THREE.LineSegments(new THREE.EdgesGeometry(_sg),_hullEdgeMat); _se.position.copy(_sm.position); g.add(_se);
+  // Bridge mast & dish (visible above bridge)
+  const _mG=new THREE.CylinderGeometry(0.18,0.18,10,4);
+  const _mM=new THREE.Mesh(_mG,new THREE.MeshBasicMaterial({color:0x28303c}));_mM.position.set(0,39,2);g.add(_mM);
+  const _dG=new THREE.SphereGeometry(3.2,6,5);
+  const _dM=new THREE.Mesh(_dG,new THREE.MeshBasicMaterial({color:0x222230}));_dM.position.set(0,45,3);_dM.scale.set(1,0.28,1);g.add(_dM);
+  const _dE=new THREE.LineSegments(new THREE.EdgesGeometry(_dG),new THREE.LineBasicMaterial({color:0x3a4550}));_dE.position.copy(_dM.position);_dE.scale.copy(_dM.scale);g.add(_dE);
+  // ── Rear engine bulkhead + 6 main nozzles (dominant rear face) ──
+  ap(new THREE.BoxGeometry(56,18,10),0,0,49,mA,mAE); // engine mount wall
+  ap(new THREE.BoxGeometry(36,12,6),0,-1,54,mD,mDE); // nozzle brace plate
+  const _eBase=new THREE.MeshBasicMaterial({color:0x07090f});
+  const _glow1=new THREE.MeshBasicMaterial({color:0xff5500,transparent:true,opacity:.92});
+  const _glow2=new THREE.MeshBasicMaterial({color:0xff9900,transparent:true,opacity:.78});
+  const _glow3=new THREE.MeshBasicMaterial({color:0xffffaa,transparent:true,opacity:.58});
+  // Top row: 3 large engines; Bottom row: 3 engines
+  [[-16,4,53],[0,4,53],[16,4,53],[-10,-5,51],[0,-5,51],[10,-5,51]].forEach(([ex,ey,ez])=>{
+    // Outer bell ring
+    const ogG=new THREE.CylinderGeometry(6.2,5.5,8,12);
+    const ogM=new THREE.Mesh(ogG,_eBase);ogM.position.set(ex,ey,ez);ogM.rotation.x=Math.PI/2;g.add(ogM);
+    const ogE=new THREE.LineSegments(new THREE.EdgesGeometry(ogG),mAE);ogE.position.copy(ogM.position);ogE.rotation.copy(ogM.rotation);g.add(ogE);
+    // Bright glow ring
+    const g1G=new THREE.CylinderGeometry(5.2,5.2,0.7,12);
+    const g1M=new THREE.Mesh(g1G,_glow1);g1M.position.set(ex,ey,ez+4.6);g1M.rotation.x=Math.PI/2;g.add(g1M);
+    // Mid glow
+    const g2G=new THREE.CylinderGeometry(3.6,3.6,0.5,10);
+    const g2M=new THREE.Mesh(g2G,_glow2);g2M.position.set(ex,ey,ez+5.1);g2M.rotation.x=Math.PI/2;g.add(g2M);
+    // Core
+    const g3G=new THREE.CylinderGeometry(1.7,1.7,0.3,8);
+    const g3M=new THREE.Mesh(g3G,_glow3);g3M.position.set(ex,ey,ez+5.3);g3M.rotation.x=Math.PI/2;g.add(g3M);
+  });
+  // ── Hull surface detail ──
+  const _pM=new THREE.MeshBasicMaterial({color:0x1e222e});
+  const _pE=new THREE.LineBasicMaterial({color:0x2a3040});
+  [-30,-14,2,18].forEach(pz=>{
+    [-1,1].forEach(px=>{
+      const pg=new THREE.BoxGeometry(11,0.3,14);
+      const pm=new THREE.Mesh(pg,_pM);pm.position.set(px*16,6.2,pz);g.add(pm);
+      const pe=new THREE.LineSegments(new THREE.EdgesGeometry(pg),_pE);pe.position.copy(pm.position);g.add(pe);
+    });
+  });
+  for(let si=0;si<5;si++){
+    const sz=-22+si*14;
+    [-29.5,29.5].forEach(sx=>{
+      const sg=new THREE.BoxGeometry(0.25,5,12);
+      const sm=new THREE.Mesh(sg,_pM);sm.position.set(sx,2,sz);g.add(sm);
+      const se=new THREE.LineSegments(new THREE.EdgesGeometry(sg),_pE);se.position.copy(sm.position);g.add(se);
     });
   }
-  // Antenna array at bow
-  const _antMat=new THREE.MeshBasicMaterial({color:0x28303c});
-  const _antEdge=new THREE.LineBasicMaterial({color:0x3a4550});
-  const _antMast=new THREE.CylinderGeometry(0.10,0.10,6.5,4);
-  const _antMm=new THREE.Mesh(_antMast,_antMat); _antMm.position.set(0,9.5,-42); g.add(_antMm);
-  const _antMe=new THREE.LineSegments(new THREE.EdgesGeometry(_antMast),_antEdge); _antMe.position.copy(_antMm.position); g.add(_antMe);
-  const _dishG=new THREE.SphereGeometry(1.3,5,4);
-  const _dishM=new THREE.Mesh(_dishG,_antMat); _dishM.position.set(0,12.5,-42); _dishM.scale.set(1,0.28,1); g.add(_dishM);
-  const _dishE=new THREE.LineSegments(new THREE.EdgesGeometry(_dishG),_antEdge); _dishE.position.copy(_dishM.position); _dishE.scale.copy(_dishM.scale); g.add(_dishE);
-  // Side antennae
-  [[-5,0.3],[5,-0.3],[-3,-0.2],[3,0.25]].forEach(([ax,ar])=>{
-    const _aag=new THREE.CylinderGeometry(0.05,0.05,3.5,4);
-    const _aam=new THREE.Mesh(_aag,_antMat); _aam.position.set(ax,7.5,-40); _aam.rotation.z=ar; g.add(_aam);
-    const _aae=new THREE.LineSegments(new THREE.EdgesGeometry(_aag),_antEdge); _aae.position.copy(_aam.position); _aae.rotation.z=ar; g.add(_aae);
+  // ── Side sensor pods ──
+  [-1,1].forEach(sx=>{
+    const spG=new THREE.SphereGeometry(2.2,6,5);
+    const spM=new THREE.Mesh(spG,new THREE.MeshBasicMaterial({color:0x222232}));spM.position.set(sx*34,4,-20);g.add(spM);
+    const spE=new THREE.LineSegments(new THREE.EdgesGeometry(spG),new THREE.LineBasicMaterial({color:0x303348}));spE.position.copy(spM.position);g.add(spE);
+    const eyeM=new THREE.Mesh(new THREE.SphereGeometry(0.6,5,4),new THREE.MeshBasicMaterial({color:0xff0000}));
+    eyeM.position.set(sx>0?sx*34+1.2:sx*34-1.2,4,-21.4);g.add(eyeM);
   });
-  // Sensor pods (port and starboard)
-  const _podMat=new THREE.MeshBasicMaterial({color:0x222232});
-  const _podEdge=new THREE.LineBasicMaterial({color:0x303348});
-  const _podEyeMat=new THREE.MeshBasicMaterial({color:0xff0000});
-  [-20,20].forEach(px=>{
-    const _podG=new THREE.SphereGeometry(1.1,6,5);
-    const _podM=new THREE.Mesh(_podG,_podMat); _podM.position.set(px,2,-15); g.add(_podM);
-    const _podE=new THREE.LineSegments(new THREE.EdgesGeometry(_podG),_podEdge); _podE.position.copy(_podM.position); g.add(_podE);
-    const _podAG=new THREE.CylinderGeometry(0.18,0.18,4,5);
-    const _podAM=new THREE.Mesh(_podAG,_podMat); _podAM.position.set(px>0?px-2:px+2,2,-15); _podAM.rotation.z=px>0?-0.5:0.5; g.add(_podAM);
-    const _eyeG=new THREE.SphereGeometry(0.28,5,4);
-    const _eyeM=new THREE.Mesh(_eyeG,_podEyeMat); _eyeM.position.set(px>0?px+0.8:px-0.8,2,-15.5); g.add(_eyeM);
+  // ── Hatch recess (belly, local y≈-4.3 for animation pivot compatibility) ──
+  const _hWL=[];
+  // Outer hatch frame ring
+  const _hfG=new THREE.BoxGeometry(10,7,0.4);
+  const _hfM=new THREE.Mesh(_hfG,new THREE.MeshBasicMaterial({color:0x0a0e14}));_hfM.position.set(0,-9.8,5);g.add(_hfM);
+  const _hfE=new THREE.LineSegments(new THREE.EdgesGeometry(_hfG),new THREE.LineBasicMaterial({color:0x202840}));_hfE.position.copy(_hfM.position);g.add(_hfE);
+  // Hatch recess inset
+  const _hrG=new THREE.BoxGeometry(8,5.5,2);
+  const _hrM=new THREE.Mesh(_hrG,new THREE.MeshBasicMaterial({color:0x060810}));_hrM.position.set(0,-9.8,5.8);g.add(_hrM);
+  // Warning light strips
+  const _hwM=new THREE.MeshBasicMaterial({color:0xff2200});
+  [[-4.5,-9.8,3.5],[4.5,-9.8,3.5],[-4.5,-9.8,6.5],[4.5,-9.8,6.5]].forEach(([wx,wy,wz])=>{
+    const hw=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.12,5.5),_hwM);hw.position.set(wx,wy,wz);g.add(hw);
+    _hWL.push(hw);
   });
-  // Enhanced hatch outer frame
-  const _hfMat=new THREE.MeshBasicMaterial({color:0x141820});
-  const _hfEdge=new THREE.LineBasicMaterial({color:0x202840});
-  const _hFrameG=new THREE.BoxGeometry(9.5,6.5,0.35);
-  const _hFrameM=new THREE.Mesh(_hFrameG,_hfMat); _hFrameM.position.set(0,-4.8,10); g.add(_hFrameM);
-  const _hFrameE=new THREE.LineSegments(new THREE.EdgesGeometry(_hFrameG),_hfEdge); _hFrameE.position.copy(_hFrameM.position); g.add(_hFrameE);
-  // Hatch inner recess
-  const _hRecessG=new THREE.BoxGeometry(7.8,5.0,1.8);
-  const _hRecessM=new THREE.Mesh(_hRecessG,new THREE.MeshBasicMaterial({color:0x0a0c12})); _hRecessM.position.set(0,-4.8,10.8); g.add(_hRecessM);
-  // Hatch inner lips
-  const _hlMat=new THREE.MeshBasicMaterial({color:0x181e28});
-  const _hlG=new THREE.BoxGeometry(3.7,0.18,5.7);
-  const _hlL=new THREE.Mesh(_hlG,_hlMat); _hlL.position.set(-2.0,-4.65,9.9); g.add(_hlL);
-  const _hlR=new THREE.Mesh(_hlG,_hlMat); _hlR.position.set(2.0,-4.65,9.9); g.add(_hlR);
-  // Warning light strips on hatch edges (stored for pulsing)
-  const _hwsMat=new THREE.MeshBasicMaterial({color:0xff2200});
-  const _bsHatchWarnLights=[];
-  const _hwsPositions=[[-4.5,-4.8,8.5],[4.5,-4.8,8.5],[-4.5,-4.8,12],[4.5,-4.8,12]];
-  _hwsPositions.forEach(([wx,wy,wz])=>{
-    const _hwg=new THREE.BoxGeometry(0.08,0.1,5.4);
-    const _hwm=new THREE.Mesh(_hwg,new THREE.MeshBasicMaterial({color:0xff2200})); _hwm.position.set(wx,wy,wz); g.add(_hwm);
-    _bsHatchWarnLights.push(_hwm);
-  });
-  g.userData._hatchWarnLights=_bsHatchWarnLights;
-  // Engine bell details
-  const _bellMat=new THREE.MeshBasicMaterial({color:0x1a1620});
-  const _bellGlowMat=new THREE.MeshBasicMaterial({color:0xff4400});
-  [[-6,-1,48],[-2,-1,48],[2,-1,48],[6,-1,48]].forEach(([bx,by,bz])=>{
-    const _bOG=new THREE.CylinderGeometry(2.2,1.6,1.2,8);
-    const _bOM=new THREE.Mesh(_bOG,_bellMat); _bOM.position.set(bx,by,bz); _bOM.rotation.x=Math.PI/2; g.add(_bOM);
-    const _bIG=new THREE.CylinderGeometry(1.4,0.9,1.0,8);
-    const _bIM=new THREE.Mesh(_bIG,_bellGlowMat); _bIM.position.set(bx,by,bz+0.1); _bIM.rotation.x=Math.PI/2; g.add(_bIM);
-  });
+  g.userData._hatchWarnLights=_hWL;
   return g;
 }
 
