@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.198</title>
+<title>COSMIC INVADERS v7.199</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -2425,6 +2425,15 @@ const JP_PHRASE_MAP={
   'You are safe now #N! I knew you would make it!':'もう安全よ！ あなたならやると信じてた！',
   'Your skills are WORTHY, pilot. We shall bestow upon you our ancient power!':'お前の腕は認めてやろう、パイロットよ。我らの古の力を授けよう！',
   'Zapped! Electric whip works wonders!':'ビリビリ！ 電気ムチは驚くほど効く！',
+  // v7.199: nav_damage lines
+  '#N, hull damage detected. Shield integrity dropping. Be careful!':'#N、船体ダメージ検知！ シールドが落ちてます！ 気をつけて！',
+  "#N, we've taken a hit. Shield systems fluctuating. Protect yourself!":'#N、被弾しました！ シールドが不安定です！ 身を守って！',
+  'Warning, #N. Structural damage. Please preserve your shields.':'#N、構造ダメージです。シールドを温存してください！',
+  '#N, damage report. Stay focused and stay alive.':'#N、ダメージ報告。集中して、生き延びてください！',
+  // v7.199: nav_status lines
+  'All systems nominal, #N. Weapons online.':'#N、全システム正常。武装ホットです。',
+  'Targeting computer calibrated. Fire when ready, #N.':'ターゲティングシステム調整完了。いつでも撃って、#N！',
+  'Shield integrity stable, #N.':'#N、シールド安定中。大丈夫ですよ！',
   // Partial phrase fragments
   'Listen carefully,':'よく聞いて、',
   'Navigator here,':'ナビゲーターです、',
@@ -11497,9 +11506,22 @@ function updateReinforcements(dt){
 
 // Time report (no weather) - used at mission start, post-boss, post-dock only
 function getTimeReport(){
+  // v7.199: bilingual — Haruka speaks Japanese time reports
+  const isHaruka=(typeof selectedNav!=='undefined'&&selectedNav&&selectedNav.lang==='ja-JP');
   const now=new Date();
   const h=now.getHours(),m=now.getMinutes();
   const hh=String(h).padStart(2,'0'),mm=String(m).padStart(2,'0');
+  if(isHaruka){
+    const period=h<6?'深夜':h<12?'午前':h<17?'午後':h<21?'夕方':'夜';
+    const templates=[
+      `現地時間${hh}時${mm}分です。`,
+      `${period}${hh}:${mm}、作戦継続中です。`,
+      `ミッションクロック${hh}:${mm}です。`,
+      `時刻は${hh}時${mm}分。引き続き頑張りましょう！`,
+      `地球時間${hh}:${mm}。ハルカも頑張ってます！`,
+    ];
+    return templates[Math.floor(Math.random()*templates.length)];
+  }
   const period=h<6?'early morning':h<12?'morning':h<17?'afternoon':h<21?'evening':'night';
   const templates=[
     `Earth time ${hh}:${mm}.`,
@@ -11518,6 +11540,18 @@ function announceWave(n){const el=document.getElementById('wave-announce');
   // Time announce ONLY on first wave of cycle (mission start)
   if(((n-1)%C.FORT_WAVES)===0){
     setTimeout(()=>playComm('nav',getTimeReport()),3200);
+  }
+  // v7.199: Haruka personality hooks
+  const isJpNav=(typeof selectedNav!=='undefined'&&selectedNav&&selectedNav.lang==='ja-JP');
+  if(isJpNav){
+    const waveInCycle=((n-1)%C.FORT_WAVES)+1;
+    if(waveInCycle===1){
+      // Wave 1 of a cycle — mission start enthusiasm
+      setTimeout(()=>playComm('nav','ウェーブ1！ ハルカも全力でサポートします！'),4800);
+    } else if(waveInCycle===C.FORT_WAVES){
+      // Boss wave — Haruka alert
+      setTimeout(()=>playComm('nav','やばい！ ボスが来ました！ #N、気をつけて！！'),1200);
+    }
   }
 }
 
@@ -11786,10 +11820,10 @@ function updateEnemies(dt){
       d.life-=dt;
       if(d.life<=0){scene.remove(d.mesh);window._bossDebris.splice(i,1)}}}
   // v6.70: Safety watchdog - if S.waveLeft is "stuck" above 0 but no enemies exist, force reset
+  // v7.199: ruins-stage only — space/other stages wait naturally for enemies to pass or be killed
   if(S.phase==='PLAYING'&&enemies.filter(e=>!e.isBonus&&!e.isBoss).length===0&&S.waveLeft>0){
-    // Only reset if we've been "stuck" for several frames
     S.ruinsStuckTimer=(S.ruinsStuckTimer||0)+dt;
-    if(S.ruinsStuckTimer>1.5){S.waveLeft=0;S.ruinsStuckTimer=0}
+    if(S.ruinsStuckTimer>1.5&&selectedStage&&selectedStage.id==='ruins'){S.waveLeft=0;S.ruinsStuckTimer=0}
   } else if(S.ruinsStuckTimer){S.ruinsStuckTimer=0}
   // Next wave / phase transition
   if(S.phase==='PLAYING'&&S.waveLeft<=0&&enemies.filter(e=>!e.isBonus).length===0){
@@ -11808,9 +11842,18 @@ function updateEnemies(dt){
       S.wave++;spawnWave(S.wave);
       return;
     }
-    const waveInCycle=((S.wave-1)%C.FORT_WAVES)+1;
-    if(waveInCycle>=C.FORT_WAVES){startFortressApproachCine()}// v7.35: cinema masks startFortress() freeze
-    else{S.wave++;spawnWave(S.wave)}}}
+    // v7.199: 2.5s inter-wave gap — let player breathe between waves
+    if(S._waveGapT==null)S._waveGapT=2.5;
+    S._waveGapT-=dt;
+    if(S._waveGapT<=0){
+      S._waveGapT=null;
+      const waveInCycle=((S.wave-1)%C.FORT_WAVES)+1;
+      if(waveInCycle>=C.FORT_WAVES){startFortressApproachCine()}// v7.35: cinema masks startFortress() freeze
+      else{S.wave++;spawnWave(S.wave)}
+    }
+  } else {
+    S._waveGapT=null; // reset timer whenever enemies are present
+  }}
 
 function spawnEnemyBeam(pos){const mesh=makeEnemyBeam();mesh.position.copy(pos);mesh.position.z+=1;scene.add(mesh);
   const dx=(camera.position.x-pos.x)*.25+(Math.random()-.5)*4;
@@ -11924,6 +11967,10 @@ function checkCollisions(){const camP=camera.position;
               }
               // Time announce post-boss
               setTimeout(()=>playComm('nav',getTimeReport()),10000);
+              // v7.199: Haruka post-boss personality line
+              if(typeof selectedNav!=='undefined'&&selectedNav&&selectedNav.lang==='ja-JP'){
+                setTimeout(()=>playComm('nav','やった！ ボス倒した！ ハルカちょっと震えてます…'),5500);
+              }
             }
           } else if(e.isCapsule){
             // GUARD: prevent multi-pickup (e.g. multiple beams hitting same frame)
@@ -12266,6 +12313,10 @@ function cleanupBossResidue(){
 function startFortressApproachCine(){
   S.phase='FORTRESS_APPROACH';
   S._fortApproachT=0;
+  // v7.199: Haruka fortress approach personality line
+  if(typeof selectedNav!=='undefined'&&selectedNav&&selectedNav.lang==='ja-JP'){
+    setTimeout(()=>playComm('nav','あれが要塞です。排気口、狙えますか…？ 信じてます！'),1500);
+  }
   S._fortApproachInited=false;
   S._fortApproachSub1=false;S._fortApproachSub2=false;
   // v7.105 ★ Boss residue refresh — wipe any debris/projectiles/particles left over
@@ -33564,6 +33615,7 @@ function actualStartGame(){
   S.phase='PLAYING';S.score=0;S.lives=S.shieldMax;S.power=0;S.kills=0;S.wave=1;S.waveLeft=0;
   S.nextBonus=C.BONUS_THR;S.invTimer=0;S.gameTime=0;S.fortTimer=0;S.coreHP=0;S.coreAlive=false;
   S.shakeT=0;S.cycle=0;S.heat=0;S.overheated=false;S.napalmAmmo=C.NAPALM_START;S.returnTimer=0;S.dockTimer=0;S.dockPhase=0;
+  S._waveGapT=null;// v7.199: inter-wave delay timer
   S.hasCrystalLaser=false;S.ruinsPhase=0;S.ruinsTrapsCleared=0;// v6.69: reset ruins mission on new game
   // v6.71: reset ruins post-mod state
   targetPracticeState=null;
