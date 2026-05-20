@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.202</title>
+<title>COSMIC INVADERS v7.204</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -16491,20 +16491,29 @@ function startIcePlanetPhase2(){
       _gunHP:2,_deadPhysics:false,_cooked:false,_eaten:false});
   });
   // v7.150: Maze mini-map radar canvas
+  // v7.204: larger 220px radar canvas — easier to read in blizzard conditions
   let _iceMR=document.getElementById('ice-maze-radar');
-  if(!_iceMR){_iceMR=document.createElement('canvas');_iceMR.id='ice-maze-radar';_iceMR.width=170;_iceMR.height=170;
-    Object.assign(_iceMR.style,{position:'fixed',bottom:'12px',right:'12px',width:'170px',height:'170px',
-      background:'rgba(0,18,36,0.82)',border:'1px solid #48b',borderRadius:'8px',zIndex:'300',imageRendering:'pixelated'});
+  if(!_iceMR){_iceMR=document.createElement('canvas');_iceMR.id='ice-maze-radar';_iceMR.width=220;_iceMR.height=220;
+    Object.assign(_iceMR.style,{position:'fixed',bottom:'12px',right:'12px',width:'220px',height:'220px',
+      background:'rgba(0,14,30,0.90)',border:'2px solid #2af',borderRadius:'10px',zIndex:'300',
+      imageRendering:'pixelated',boxShadow:'0 0 12px #06f8'});
     document.body.appendChild(_iceMR);
+  } else {
+    _iceMR.width=220;_iceMR.height=220;
+    Object.assign(_iceMR.style,{width:'220px',height:'220px',border:'2px solid #2af',
+      boxShadow:'0 0 12px #06f8'});
   }
   _iceMR.style.display='block';
-  // Label
+  // Label — more prominent
   let _iceMRLbl=document.getElementById('ice-maze-radar-lbl');
   if(!_iceMRLbl){_iceMRLbl=document.createElement('div');_iceMRLbl.id='ice-maze-radar-lbl';
-    Object.assign(_iceMRLbl.style,{position:'fixed',bottom:'184px',right:'12px',color:'#6cf',fontSize:'11px',
-      fontFamily:'monospace',zIndex:'301',textAlign:'right',textShadow:'0 0 4px #06f'});
-    _iceMRLbl.textContent='◆ MAZE RADAR ◆';document.body.appendChild(_iceMRLbl);
+    Object.assign(_iceMRLbl.style,{position:'fixed',bottom:'236px',right:'12px',color:'#4df',fontSize:'12px',
+      fontFamily:'monospace',zIndex:'301',textAlign:'right',textShadow:'0 0 6px #08f',
+      letterSpacing:'2px',fontWeight:'bold'});
+    document.body.appendChild(_iceMRLbl);
   }
+  _iceMRLbl.textContent='◆ TACTICAL RADAR ◆';
+  Object.assign(_iceMRLbl.style,{bottom:'236px',fontSize:'12px',color:'#4df'});
   // v7.172: radar hidden during emerge cinematic, revealed after
   _iceMRLbl.style.display='none';
   _iceMR.style.display='none';
@@ -16627,7 +16636,11 @@ function _updateIceP2Emerge(dt){
     const mr=iceState.mazeRadarEl;if(mr)mr.style.display='block';
     const mrl=document.getElementById('ice-maze-radar-lbl');if(mrl)mrl.style.display='block';
     try{wfCineSubtitle(_L('◆ PHASE 2 — A/D=TURN  W/S=MOVE  SPACE=FIRE ◆','◆ PHASE 2 — A/D=回転 W/S=移動 SPACE=発砲 ◆'),'#8cf');}catch(_){}
-    try{playComm('hq',_L('#N — clear the waste facility and advance to the beacon! Watch yourself!','#N — ゴミ処理場を抜けてビーコンまで進め！気をつけろ！'));}catch(_){}
+    // v7.204: pilot blizzard monologue + HQ push to beacon
+    try{playComm('pilot',_L('What a blizzard... I can\'t see a thing. I\'ll have to rely on the radar to find the base entrance.','すごい吹雪だ…何も見えない。レーダーを頼りに基地の入り口に向かおう。'));}catch(_){}
+    setTimeout(()=>{
+      try{playComm('hq',_L('#N — hostile contacts on radar. Clear the facility and advance to the beacon!','#N — レーダーに敵感知！施設を突破してビーコンまで進め！'));}catch(_){}
+    },4500);
   }
 }
 // v7.112 ★ Snow trooper — white-armor variant of the forest guard.
@@ -20055,61 +20068,89 @@ function updateIcePlanet(dt){
       const ctx2d=_mr.getContext('2d');
       const RW=_mr.width,RH=_mr.height;
       ctx2d.clearRect(0,0,RW,RH);
-      ctx2d.fillStyle='rgba(0,12,28,0.94)';ctx2d.fillRect(0,0,RW,RH);
-      // Coordinate mapping: world→canvas
-      // X: MX0..MX0+MCOLS*MCW → 0..RW
-      // Z: MZ0 (south, bottom of canvas) to MZ0-MROWS*MCH (north, top of canvas)
+      // v7.204: dark background with subtle grid lines
+      ctx2d.fillStyle='rgba(0,10,24,0.96)';ctx2d.fillRect(0,0,RW,RH);
       const _MCW=iceState.mazeCW,_MCH=iceState.mazeCH;
       const _MCOLS=iceState.mazeCols,_MROWS=iceState.mazeRows;
       const _MX0=iceState.mazeMX0,_MZ0=iceState.mazeMZ0;
-      const pad=6;
+      const pad=8;
       const mW=_MCOLS*_MCW,mH=_MROWS*_MCH;
       function w2m(wx,wz){return[(wx-_MX0)/mW*(RW-pad*2)+pad, (wz-_MZ0)/(-mH)*(RH-pad*2)+pad];}
-      // Draw maze walls
-      ctx2d.strokeStyle='#2277aa';ctx2d.lineWidth=1.5;
+      // v7.204: scan ring animation
+      const _scanAngle=(iceState.t*1.2)%(Math.PI*2);
+      if(icePilot){
+        const[spx,spy]=w2m(icePilot.position.x,icePilot.position.z);
+        const _scanR=Math.min(RW,RH)*0.45;
+        // sweep wedge
+        ctx2d.save();ctx2d.translate(spx,spy);
+        const _grad=ctx2d.createConicalGradient?null:null;
+        ctx2d.beginPath();ctx2d.moveTo(0,0);
+        ctx2d.arc(0,0,_scanR,_scanAngle-0.5,_scanAngle,false);
+        ctx2d.closePath();ctx2d.fillStyle='rgba(0,180,255,0.08)';ctx2d.fill();
+        // scan line
+        ctx2d.beginPath();ctx2d.moveTo(0,0);
+        ctx2d.lineTo(Math.cos(_scanAngle)*_scanR,Math.sin(_scanAngle)*_scanR);
+        ctx2d.strokeStyle='rgba(0,200,255,0.35)';ctx2d.lineWidth=1.5;ctx2d.stroke();
+        ctx2d.restore();
+      }
+      // Draw maze walls — brighter lines
+      ctx2d.strokeStyle='#1a6090';ctx2d.lineWidth=1.5;
       for(let rr=0;rr<_MROWS;rr++){
         for(let cc=0;cc<_MCOLS;cc++){
           const pass2=iceState.mazePass[rr][cc];
           const[x0,y0]=w2m(_MX0+cc*_MCW,_MZ0-rr*_MCH);
           const[x1,y1]=w2m(_MX0+(cc+1)*_MCW,_MZ0-(rr+1)*_MCH);
           ctx2d.beginPath();
-          if(!pass2.n&&rr===0){ctx2d.moveTo(x0,y0);ctx2d.lineTo(x1,y0);}// outer north
-          if(!pass2.s){ctx2d.moveTo(x0,y1);ctx2d.lineTo(x1,y1);}// south wall
-          if(!pass2.w&&cc===0){ctx2d.moveTo(x0,y0);ctx2d.lineTo(x0,y1);}// outer west
-          if(!pass2.e){ctx2d.moveTo(x1,y0);ctx2d.lineTo(x1,y1);}// east wall
-          if(!pass2.n&&rr>0){ctx2d.moveTo(x0,y0);ctx2d.lineTo(x1,y0);}// interior north
+          if(!pass2.n&&rr===0){ctx2d.moveTo(x0,y0);ctx2d.lineTo(x1,y0);}
+          if(!pass2.s){ctx2d.moveTo(x0,y1);ctx2d.lineTo(x1,y1);}
+          if(!pass2.w&&cc===0){ctx2d.moveTo(x0,y0);ctx2d.lineTo(x0,y1);}
+          if(!pass2.e){ctx2d.moveTo(x1,y0);ctx2d.lineTo(x1,y1);}
+          if(!pass2.n&&rr>0){ctx2d.moveTo(x0,y0);ctx2d.lineTo(x1,y0);}
           ctx2d.stroke();
         }
       }
       // Outer border
-      ctx2d.strokeStyle='#4499cc';ctx2d.lineWidth=2;ctx2d.strokeRect(pad,pad,RW-pad*2,RH-pad*2);
-      // Goal beacon
+      ctx2d.strokeStyle='#2af';ctx2d.lineWidth=2;ctx2d.strokeRect(pad,pad,RW-pad*2,RH-pad*2);
+      // Goal beacon — larger, brighter blinking triangle
       if(iceState.goalPos){
         const[gx,gy]=w2m(iceState.goalPos.x,iceState.goalPos.z);
-        ctx2d.fillStyle=Math.floor(iceState.t*4)%2===0?'#00ff88':'#80ffcc';
-        ctx2d.beginPath();ctx2d.moveTo(gx,gy-6);ctx2d.lineTo(gx+4,gy+3);ctx2d.lineTo(gx-4,gy+3);ctx2d.closePath();ctx2d.fill();
+        const _blink=Math.floor(iceState.t*3)%2===0;
+        ctx2d.fillStyle=_blink?'#00ff88':'#ffffff';
+        ctx2d.beginPath();ctx2d.moveTo(gx,gy-9);ctx2d.lineTo(gx+6,gy+4);ctx2d.lineTo(gx-6,gy+4);ctx2d.closePath();ctx2d.fill();
+        if(_blink){// glow ring
+          ctx2d.beginPath();ctx2d.arc(gx,gy,11,0,Math.PI*2);
+          ctx2d.strokeStyle='rgba(0,255,136,0.4)';ctx2d.lineWidth=2;ctx2d.stroke();
+        }
+        // GOAL label
+        ctx2d.fillStyle='#00ff88';ctx2d.font='bold 9px monospace';
+        ctx2d.fillText('GOAL',gx-12,gy-13);
       }
-      // Troopers (yellow)
-      ctx2d.fillStyle='#ffdd00';
+      // Troopers — bigger yellow diamond (6px)
       iceTroopers.forEach(tr=>{
         if(!tr.alive||!tr.mesh)return;
         const[ex,ey]=w2m(tr.mesh.position.x,tr.mesh.position.z);
-        ctx2d.fillRect(ex-2,ey-2,4,4);
+        ctx2d.fillStyle='#ffee00';
+        ctx2d.beginPath();ctx2d.moveTo(ex,ey-6);ctx2d.lineTo(ex+5,ey);ctx2d.lineTo(ex,ey+6);ctx2d.lineTo(ex-5,ey);ctx2d.closePath();ctx2d.fill();
       });
-      // Wolves (red dot)
-      ctx2d.fillStyle='#ff3311';
+      // Wolves — red circle with inner dot
       if(iceState.iceWolves)iceState.iceWolves.forEach(wf=>{
         if(!wf.alive||!wf.mesh)return;
         const[ex,ey]=w2m(wf.mesh.position.x,wf.mesh.position.z);
-        ctx2d.beginPath();ctx2d.arc(ex,ey,3.5,0,Math.PI*2);ctx2d.fill();
+        ctx2d.fillStyle='#ff3311';
+        ctx2d.beginPath();ctx2d.arc(ex,ey,5,0,Math.PI*2);ctx2d.fill();
+        ctx2d.fillStyle='#ff8866';
+        ctx2d.beginPath();ctx2d.arc(ex,ey,2,0,Math.PI*2);ctx2d.fill();
       });
-      // Player (white + direction arrow)
+      // Player — bright white circle + direction arrow (larger)
       if(icePilot){
         const[px2,py2]=w2m(icePilot.position.x,icePilot.position.z);
-        ctx2d.fillStyle='#ffffff';ctx2d.beginPath();ctx2d.arc(px2,py2,4.5,0,Math.PI*2);ctx2d.fill();
+        // glow
+        ctx2d.beginPath();ctx2d.arc(px2,py2,8,0,Math.PI*2);
+        ctx2d.fillStyle='rgba(255,255,255,0.15)';ctx2d.fill();
+        ctx2d.fillStyle='#ffffff';ctx2d.beginPath();ctx2d.arc(px2,py2,5,0,Math.PI*2);ctx2d.fill();
         const fa=icePilot.rotation.y;
-        ctx2d.strokeStyle='#ffffff';ctx2d.lineWidth=2;ctx2d.beginPath();
-        ctx2d.moveTo(px2,py2);ctx2d.lineTo(px2-Math.sin(fa)*9,py2-Math.cos(fa)*9);ctx2d.stroke();
+        ctx2d.strokeStyle='#88eeff';ctx2d.lineWidth=2.5;ctx2d.beginPath();
+        ctx2d.moveTo(px2,py2);ctx2d.lineTo(px2-Math.sin(fa)*14,py2-Math.cos(fa)*14);ctx2d.stroke();
       }
     }
   }
@@ -23441,8 +23482,12 @@ function startIcePlanetPhase1(){
   const hRG=new THREE.Group();
   hRG.add(new THREE.Mesh(hdG,hdMat));hRG.add(new THREE.LineSegments(new THREE.EdgesGeometry(hdG),hdEdge));
   hRG.position.set(2,-4.3,-8);p1bs.add(hRG);
-  // ── Player ship ──
-  const p1ship=_makeP1PlayerShip();p1ship.position.set(0,2,8);iceScene.add(p1ship);
+  // ── Player ship ── v7.203: tiny (1/8 scale) sneaking toward garbage hatch
+  const p1ship=_makeP1PlayerShip();
+  p1ship.position.set(2.4,9.2,-56);// below hull belly, approaching the hatch at world (0,11.7,-70)
+  p1ship.rotation.x=0.24;  // nose angled upward toward hatch opening
+  p1ship.rotation.y=-0.10; // slight left turn to aim at hatch center
+  iceScene.add(p1ship);
   // ── Ice planet (distant) ──
   // v7.193: Ice planet — vivid glowing blue crystal (image 1 style)
   const ipGeo=new THREE.SphereGeometry(52,20,14);// more segments → crystal facets
@@ -23748,12 +23793,14 @@ function startIcePlanetPhase1(){
   try{wfCineSubtitle(_L('◆ ICE PLANET — PHASE 1: INFILTRATION ◆','◆ ICE PLANET — PHASE 1: 潜入作戦 ◆'),'#8cf');}catch(_){}
   // Pre-briefing comm chain — use ['speaker','text'] array format (playCommChain requires it)
   try{
+    // v7.204: stealth fighter / radar-invisible / cargo hatch mission order
     playCommChain([
-      ['hq',  _L('URGENT MISSION BRIEFING. Enemy HQ confirmed on the ice planet.','緊急ミッション発令。敵の本拠地は氷の惑星にあることが判明した。')],
-      ['hq',  _L('Standard approach is impossible. Infiltrate via galactic freight — hide in cargo.','通常ルートでは突破不可能。銀河間物流の荷物に紛れて潜入せよ。')],
-      ['nav', _L('Cargo disguise complete. Initiating approach to the enemy station.','積荷コンテナへの偽装完了。ステーションへのアプローチを開始します。')],
-    ], function(){ if(typeof iceState!=='undefined'&&iceState) iceState.step='briefing'; }, 2800);
-  }catch(_){setTimeout(()=>{if(iceState&&iceState.step==='briefing_pre'){iceState.step='briefing';}},3000);}
+      ['hq', _L('MISSION CLASSIFIED — EYES ONLY.','ミッション機密指定。')],
+      ['hq', _L('That warship\'s radar cannot detect this stealth-class fighter. You are invisible to their sensors.','あの戦艦のレーダーにはこのステルス機は映らない。お前はゴーストだ。')],
+      ['hq', _L('The cargo hatch opens on a regular disposal cycle. Get inside and blend with the garbage.','貨物ハッチは定期的に開く。中に入り、ゴミに紛れろ。')],
+      ['hq', _L('Land on the ice planet. Find the enemy base. GO.','氷の惑星に降下し、敵基地を発見せよ。行け。')],
+    ], function(){ if(typeof iceState!=='undefined'&&iceState) iceState.step='briefing'; }, 2600);
+  }catch(_){setTimeout(()=>{if(iceState&&iceState.step==='briefing_pre'){iceState.step='briefing';}},4000);}
   // 3-part HQ briefing
   // (runs after step becomes 'briefing', triggered by the briefing case in _updateIcePhase1)
 }
@@ -23988,7 +24035,7 @@ function _makeP1PlayerShip(){
     ws(new THREE.CylinderGeometry(0.045,0.045,0.90,4),gx,-0.55,1.5,0,0,0,mDet);
     ws(new THREE.BoxGeometry(0.48,0.06,0.26),gx,-1.00,1.5,0,0,0,mDet);
   });
-  g.scale.setScalar(1.5);
+  g.scale.setScalar(0.1875);// v7.203: 1/8 size — tiny ship sneaking into garbage hatch
   return g;
 }
 
@@ -24005,6 +24052,12 @@ function _updateIcePhase1(dt){
       const _nozzle=Math.floor(i/4);
       m.material.opacity=_baseOp[_li]*(0.80+0.20*Math.sin(_eT*2.8+_nozzle*0.52+_li*0.35));
     });
+  }
+  // v7.203: Gentle hover drift for tiny player ship (makes it legible against hull)
+  if(st.p1playerShip&&st.phase===1){
+    const _hT=st.t||0;
+    st.p1playerShip.position.y=9.2+Math.sin(_hT*0.9)*0.18;
+    st.p1playerShip.rotation.z=Math.sin(_hT*0.55)*0.04;// subtle roll
   }
   // v7.176: Animate blizzard particles around the ice planet
   if(st.p1blizzardPts&&st.p1blizzardVel){
@@ -24034,9 +24087,9 @@ function _updateIcePhase1(dt){
         st._briefingFired=true;
         try{
           playCommChain([
-            ['hq',_L('#N — this is HQ. That ice planet is the enemy\'s garbage processing hub.','#N — 本部より緊急通達。あの氷の惑星は敵のゴミ処理場だ。')],
-            ['nav',_L('We can use the garbage hatch! The enemy battleship runs a regular disposal cycle.','ゴミのハッチから潜入できる！敵戦艦がゴミを定期的に廃棄している。')],
-            ['hq',_L('Trigger a decoy explosion, go dark as debris, and ride the hatch in. If they spot you — it\'s over.','偽装爆発でデブリに化けてハッチに入れ。気づかれたら終わりだ。')],
+            ['nav',_L('Decoy charge is armed. Waiting for the disposal cycle.','偽装炸薬セット完了。廃棄サイクルを待機中。')],
+            ['hq', _L('#N — watch the hatch. When it opens, detonate the decoy and go completely dark.','#N — ハッチを注視しろ。開いたら偽装爆発を起動し、完全に消えろ。')],
+            ['hq', _L('You are debris. You are garbage. Move.','お前はデブリだ。ゴミだ。行け。')],
           ],()=>{
             if(iceState&&iceState.step==='briefing'){
               iceState.step='cargo';iceState.p1cargoT=0;iceState.p1cargoCommFired=[false,false,false];
@@ -24045,8 +24098,8 @@ function _updateIcePhase1(dt){
           },3000);
         }catch(_){}
       }
-      // Auto-advance if comm chain finishes or 12s timeout
-      if(sT>=12&&!st._advBriefing){st._advBriefing=true;
+      // Auto-advance if comm chain finishes or 16s timeout (v7.204: extended for 3-comm chain)
+      if(sT>=16&&!st._advBriefing){st._advBriefing=true;
         st.step='cargo';st.p1cargoT=0;st.p1cargoCommFired=[false,false,false];
         try{wfCineSubtitle(_L('◆  [ SPACE ]  TRIGGER DECOY EXPLOSION!  ◆','◆  [ SPACE ]  偽装爆発を起動！  ◆'),'#fa4');}catch(_){}
       }
@@ -24103,42 +24156,48 @@ function _updateIcePhase1(dt){
       }
       break;
     case 'drift':
-      {// Ship drifts toward battleship hatch
+      {// v7.204: ship drifts from approach position (near hull) into hatch area
         if(st.p1playerShip){
-          const prog=Math.min(1,sT/4.2),ease=prog*prog*(3-2*prog);
+          const prog=Math.min(1,sT/4.8),ease=prog*prog*(3-2*prog);
+          const jitter=(1-ease)*0.12;// jitter fades as ship homes in on hatch
           st.p1playerShip.position.set(
-            (Math.random()-.5)*0.05,// slight jitter (debris tumble)
-            2+ease*10,             // rises toward hatch level (~12-4.3=7.7)
-            8-ease*57              // moves from z=8 to z=-49
+            2.4+(Math.random()-.5)*jitter,  // near center, jitter decays
+            9.2+ease*2.5,                    // rises toward hatch level (9.2→11.7)
+            -56+ease*(-14)                   // moves from z=-56 to z=-70 (hatch z)
           );
-          st.p1playerShip.rotation.x=ease*0.08;st.p1playerShip.rotation.z=Math.sin(sT*1.2)*0.04;
+          st.p1playerShip.rotation.x=ease*0.12;st.p1playerShip.rotation.z=Math.sin(sT*1.2)*0.04;
         }
         tgP.set(st.p1playerShip?st.p1playerShip.position.x:0,
                 st.p1playerShip?st.p1playerShip.position.y+8:10,
                 st.p1playerShip?st.p1playerShip.position.z+16:20);
         tgL.copy(st.p1playerShip?st.p1playerShip.position:new THREE.Vector3(0,8,-30));
-        if(sT>=3.8&&!st._hatchOpened){st._hatchOpened=true;st.step='hatch_enter';st.stepT=0;
+        if(sT>=4.6&&!st._hatchOpened){st._hatchOpened=true;st.step='hatch_enter';st.stepT=0;
           try{_p1OpenHatchSFX();}catch(_){}
         }
       }
       break;
     case 'hatch_enter':
-      {const hp=Math.min(1,sT/1.6);
-      if(st.p1hatchL)st.p1hatchL.rotation.z=-hp*1.2;
-      if(st.p1hatchR)st.p1hatchR.rotation.z=hp*1.2;
+      {// v7.204: heavy 4.5s hatch — ease-in-cubic (slow start, weight accelerates)
+      const _rawH=Math.min(1,sT/4.5);
+      const hp=_rawH*_rawH*_rawH;// cubic ease-in: starts very slow, then swings hard
+      if(st.p1hatchL)st.p1hatchL.rotation.z=-hp*1.25;
+      if(st.p1hatchR)st.p1hatchR.rotation.z=hp*1.25;
+      // Tiny ship homes in on open hatch slot
       if(st.p1playerShip){
-        st.p1playerShip.position.z-=5*dt;
-        st.p1playerShip.position.y=Math.min(st.p1playerShip.position.y+0.5*dt,7.8);
+        const _en=Math.min(1,sT/5.5);// ship enters hatch more slowly
+        st.p1playerShip.position.z=-70-_en*8;// slides in from hatch opening
+        st.p1playerShip.position.y=11.7-_en*0.5;// level with hatch, slight dip inside
       }
-      // Pulse hatch warning lights
+      // Pulse hatch warning lights — faster pulse as door opens wider
       if(st._p1HatchWarnLights&&st._p1HatchWarnLights.length){
-        const _hp=Math.sin(st.stepT*8)*0.5+0.5;
+        const _pulseRate=4+hp*8;// 4Hz → 12Hz as door opens
+        const _lp=Math.sin(st.stepT*_pulseRate)*0.5+0.5;
         st._p1HatchWarnLights.forEach(m=>{
-          m.material.color.setHex(_hp>0.5?0xff2200:0x441100);
+          m.material.color.setHex(_lp>0.5?0xff2200:0x441100);
         });
       }
-      tgP.set(0,-2,-44);tgL.set(0,7,-56);
-      if(sT>=3.0){st.step='chute';st.stepT=0;try{_p1StartChute();}catch(_){}}}
+      tgP.set(2,-2,-44);tgL.set(0,9,-62);// look up at hatch from below
+      if(sT>=6.5){st.step='chute';st.stepT=0;try{_p1StartChute();}catch(_){}}}
       break;
     case 'chute':
       // A/D dodge
@@ -24240,16 +24299,47 @@ function _p1TriggerExplosion(){
   try{playComm('pilot',_L('Detonating decoy. As of now — I am just garbage.','爆発起動。今から俺はゴミだ。'));}catch(_){}
 }
 function _p1OpenHatchSFX(){
+  // v7.204: heavy mechanical hatch — deep bass groan + hydraulic hiss + metal creak
   try{
     const ac=sfx.ctx,now=ac.currentTime;
-    const oh=ac.createOscillator();oh.type='sine';
-    oh.frequency.setValueAtTime(82,now);oh.frequency.linearRampToValueAtTime(34,now+.9);
-    const gh=ac.createGain();gh.gain.setValueAtTime(.38,now);gh.gain.exponentialRampToValueAtTime(.001,now+.95);
-    oh.connect(gh);gh.connect(sfx.g||ac.destination);oh.start(now);oh.stop(now+1.0);
-    try{sfx._n&&sfx._n(now,.85,.11,550,75);}catch(_){}
+    const _g=sfx.g||ac.destination;
+    // Layer 1: deep bass machinery rumble (4.5s — matches hatch open duration)
+    const o1=ac.createOscillator();o1.type='sawtooth';
+    o1.frequency.setValueAtTime(28,now);o1.frequency.linearRampToValueAtTime(18,now+4.5);
+    const g1=ac.createGain();g1.gain.setValueAtTime(.001,now);g1.gain.linearRampToValueAtTime(.55,now+.4);
+    g1.gain.linearRampToValueAtTime(.45,now+3.5);g1.gain.exponentialRampToValueAtTime(.001,now+4.8);
+    const lp1=ac.createBiquadFilter();lp1.type='lowpass';lp1.frequency.value=120;lp1.Q.value=2.5;
+    o1.connect(lp1);lp1.connect(g1);g1.connect(_g);o1.start(now);o1.stop(now+5.0);
+    // Layer 2: metal creak — higher sawtooth with resonance sweep
+    const o2=ac.createOscillator();o2.type='sawtooth';
+    o2.frequency.setValueAtTime(180,now+0.3);o2.frequency.linearRampToValueAtTime(65,now+4.0);
+    const g2=ac.createGain();g2.gain.setValueAtTime(.001,now+0.3);g2.gain.linearRampToValueAtTime(.28,now+0.8);
+    g2.gain.linearRampToValueAtTime(.22,now+3.2);g2.gain.exponentialRampToValueAtTime(.001,now+4.5);
+    const bp2=ac.createBiquadFilter();bp2.type='bandpass';bp2.frequency.value=400;bp2.Q.value=4;
+    o2.connect(bp2);bp2.connect(g2);g2.connect(_g);o2.start(now+0.3);o2.stop(now+4.6);
+    // Layer 3: hydraulic hiss (noise burst at start of motion)
+    try{
+      const nb=ac.createBuffer(1,Math.floor(ac.sampleRate*2.5),ac.sampleRate);
+      const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+      const ns=ac.createBufferSource();ns.buffer=nb;
+      const hp3=ac.createBiquadFilter();hp3.type='highpass';hp3.frequency.value=1800;
+      const g3=ac.createGain();g3.gain.setValueAtTime(.001,now+0.2);g3.gain.linearRampToValueAtTime(.18,now+0.5);
+      g3.gain.exponentialRampToValueAtTime(.001,now+2.0);
+      ns.connect(hp3);hp3.connect(g3);g3.connect(_g);ns.start(now+0.2);
+    }catch(_){}
+    // Layer 4: deep impact thud as the massive door starts to move (0.6s in)
+    const o4=ac.createOscillator();o4.type='sine';
+    o4.frequency.setValueAtTime(55,now+0.6);o4.frequency.exponentialRampToValueAtTime(18,now+1.3);
+    const g4=ac.createGain();g4.gain.setValueAtTime(.001,now+0.6);g4.gain.linearRampToValueAtTime(.70,now+0.7);
+    g4.gain.exponentialRampToValueAtTime(.001,now+1.5);
+    o4.connect(g4);g4.connect(_g);o4.start(now+0.6);o4.stop(now+1.6);
   }catch(_){}
-  try{playComm('nav',_L('Hatch is open — GO NOW! Get inside!','ハッチが開いた — 今だ！入れ！'));}catch(_){}
-  try{wfCineSubtitle('◆ GARBAGE HATCH OPEN ◆','#6cf');}catch(_){}
+  try{playComm('nav',_L('Hatch is opening — stand by...','ハッチが開き始めた…待機。'));}catch(_){}
+  setTimeout(()=>{
+    try{playComm('nav',_L('Hatch is fully open! GO NOW!','ハッチ全開！今すぐ入れ！'));}catch(_){}
+  },3800);
+  try{wfCineSubtitle('◆ GARBAGE HATCH OPENING... ◆','#6cf');}catch(_){}
+  setTimeout(()=>{try{wfCineSubtitle('◆ HATCH OPEN — ENTERING ◆','#4ff');}catch(_){}},4000);
 }
 // v7.194 ── Phase 2 landing: falling wreckage ────────────────────────────────
 function _sfxDebrisThud(vol){
