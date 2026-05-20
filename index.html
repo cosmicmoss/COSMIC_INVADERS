@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.200</title>
+<title>COSMIC INVADERS v7.201</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -23849,6 +23849,30 @@ function _makeP1Battleship(){
     const g3G=new THREE.CylinderGeometry(1.7,1.7,0.3,8);
     const g3M=new THREE.Mesh(g3G,_glow3);g3M.position.set(ex,ey,ez+5.3);g3M.rotation.x=Math.PI/2;g.add(g3M);
   });
+  // ── Star Trek–style blue-white exhaust jets (v7.201) ──
+  // CylinderGeometry(radiusTop, radiusBottom, height) + rotation.x=-π/2:
+  //   radiusBottom (at -y→-z) = base at nozzle, radiusTop (at +y→+z) = tip toward camera
+  const _exLayers=[];
+  [[-16,4,53],[0,4,53],[16,4,53],[-10,-5,51],[0,-5,51],[10,-5,51]].forEach(([ex,ey,ez])=>{
+    const eS=ez+5.6; // start just past outermost glow disk
+    // Layer 1 — outer diffuse haze (widest, most transparent)
+    const el1=new THREE.Mesh(new THREE.CylinderGeometry(0.5,5.8,34,10),
+      new THREE.MeshBasicMaterial({color:0x1a44bb,transparent:true,opacity:.12,depthWrite:false}));
+    el1.position.set(ex,ey,eS+17);el1.rotation.x=-Math.PI/2;el1.renderOrder=110;g.add(el1);_exLayers.push(el1);
+    // Layer 2 — mid blue-white cone
+    const el2=new THREE.Mesh(new THREE.CylinderGeometry(0.28,4.4,26,10),
+      new THREE.MeshBasicMaterial({color:0x5599ff,transparent:true,opacity:.26,depthWrite:false}));
+    el2.position.set(ex,ey,eS+13);el2.rotation.x=-Math.PI/2;el2.renderOrder=111;g.add(el2);_exLayers.push(el2);
+    // Layer 3 — inner bright cone
+    const el3=new THREE.Mesh(new THREE.CylinderGeometry(0.10,2.6,20,8),
+      new THREE.MeshBasicMaterial({color:0x99ccff,transparent:true,opacity:.48,depthWrite:false}));
+    el3.position.set(ex,ey,eS+10);el3.rotation.x=-Math.PI/2;el3.renderOrder=112;g.add(el3);_exLayers.push(el3);
+    // Layer 4 — core white-blue beam
+    const el4=new THREE.Mesh(new THREE.CylinderGeometry(0.03,1.1,14,6),
+      new THREE.MeshBasicMaterial({color:0xddeeff,transparent:true,opacity:.74,depthWrite:false}));
+    el4.position.set(ex,ey,eS+7);el4.rotation.x=-Math.PI/2;el4.renderOrder=113;g.add(el4);_exLayers.push(el4);
+  });
+  g.userData._exhaustLayers=_exLayers;
   // ── Hull surface detail ──
   const _pM=new THREE.MeshBasicMaterial({color:0x1e222e});
   const _pE=new THREE.LineBasicMaterial({color:0x2a3040});
@@ -23964,6 +23988,17 @@ function _makeP1PlayerShip(){
 function _updateIcePhase1(dt){
   if(!iceState||iceState.phase!==1)return;
   const st=iceState;
+  // v7.201: Animate battleship exhaust jets (pulsing blue-white glow)
+  if(st.p1battleship&&st.p1battleship.userData._exhaustLayers){
+    const _eT=st.t||0;
+    const _baseOp=[.12,.26,.48,.74];// base opacities for layers 1-4
+    st.p1battleship.userData._exhaustLayers.forEach(function(m,i){
+      const _li=i%4;
+      // Each nozzle (group of 4 layers) gets a slight phase offset
+      const _nozzle=Math.floor(i/4);
+      m.material.opacity=_baseOp[_li]*(0.80+0.20*Math.sin(_eT*2.8+_nozzle*0.52+_li*0.35));
+    });
+  }
   // v7.176: Animate blizzard particles around the ice planet
   if(st.p1blizzardPts&&st.p1blizzardVel){
     const _bAttr=st.p1blizzardPts.geometry.getAttribute('position');
