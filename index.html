@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.205</title>
+<title>COSMIC INVADERS v7.206</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -16975,11 +16975,11 @@ function showIceAdvanceButton(onClick){
   let b=document.getElementById('ice-advance');if(b)b.remove();
   b=document.createElement('button');b.id='ice-advance';b.type='button';
   b.textContent='▶ NEXT PHASE ◀';
-  b.style.cssText='position:fixed;bottom:20px;right:20px;z-index:280;padding:14px 26px;'+
+  b.style.cssText='position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:calc(20px + env(safe-area-inset-right,0px));z-index:280;padding:14px 26px;'+
     'background:rgba(0,30,50,0.9);border:2px solid #8cf;color:#cef;font-family:inherit;'+
     'font-size:14px;letter-spacing:3px;cursor:pointer;border-radius:8px;'+
     'box-shadow:0 0 14px rgba(140,200,255,0.6);text-shadow:0 0 6px #8cf;'+
-    '-webkit-appearance:none;touch-action:manipulation';
+    '-webkit-appearance:none;touch-action:manipulation';// v7.206: safe-area-inset
   b.onclick=()=>{try{b.remove()}catch(_){}if(onClick)onClick()};
   document.body.appendChild(b);
 }
@@ -17169,9 +17169,9 @@ function showIcePhase3HUD(){
   // Small skip button — bottom-right, for easy testing
   let sk=document.getElementById('ice-p3-skip');if(sk)sk.remove();
   sk=document.createElement('button');sk.id='ice-p3-skip';sk.textContent='⏭ SKIP TO PHASE 4';
-  sk.style.cssText='position:fixed;bottom:14px;right:14px;z-index:201;padding:7px 14px;'+
+  sk.style.cssText='position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));right:calc(14px + env(safe-area-inset-right,0px));z-index:201;padding:7px 14px;'+
     'background:rgba(0,10,30,0.7);border:1px solid #446;color:#67a;'+
-    'font-family:Courier New,monospace;font-size:10px;letter-spacing:2px;cursor:pointer;border-radius:4px';
+    'font-family:Courier New,monospace;font-size:10px;letter-spacing:2px;cursor:pointer;border-radius:4px';// v7.206
   sk.onclick=function(){
     let hh=document.getElementById('ice-p3-hud');if(hh)hh.remove();
     sk.remove();
@@ -17207,9 +17207,9 @@ function showIcePhase4HUD(){
   let sk=document.getElementById('ice-p4-skip');if(sk)sk.remove();
   sk=document.createElement('button');sk.id='ice-p4-skip';sk.type='button';
   sk.textContent='SKIP PHASE 4';
-  sk.style.cssText='position:fixed;bottom:16px;right:16px;z-index:280;padding:10px 20px;'+
+  sk.style.cssText='position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:calc(16px + env(safe-area-inset-right,0px));z-index:280;padding:10px 20px;'+
     'background:rgba(0,16,32,0.85);border:1px solid #8af;color:#adf;font-family:inherit;'+
-    'font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:4px';
+    'font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:4px';// v7.206
   sk.onclick=()=>{
     sk.remove();
     let hh=document.getElementById('ice-p4-hud');if(hh)hh.remove();
@@ -18057,9 +18057,9 @@ function showIcePhase5HUD(){
   let sk=document.getElementById('ice-p5-skip');if(sk)sk.remove();
   sk=document.createElement('button');sk.id='ice-p5-skip';sk.type='button';
   sk.textContent='SKIP PHASE 5';
-  sk.style.cssText='position:fixed;bottom:16px;right:16px;z-index:280;padding:10px 20px;'+
+  sk.style.cssText='position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:calc(16px + env(safe-area-inset-right,0px));z-index:280;padding:10px 20px;'+
     'background:rgba(0,16,32,0.85);border:1px solid #fca;color:#fec;font-family:inherit;'+
-    'font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:4px';
+    'font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:4px';// v7.206
   sk.onclick=()=>{
     sk.remove();let hh=document.getElementById('ice-p5-hud');if(hh)hh.remove();
     let mb=document.getElementById('ice-p5-mobile-btns');if(mb)mb.remove();
@@ -19367,9 +19367,9 @@ function showIceP5MobileButtons(){
   let b=document.getElementById('ice-p5-mobile-btns');if(b)b.remove();
   const hasTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
   if(!hasTouch)return;
-  // v7.205: weapon buttons — left side above joystick. VULCAN handled by touch-fire (right side).
+  // v7.206: weapon buttons — left side above joystick. safe-area-inset-bottom added for notched iPhones.
   b=document.createElement('div');b.id='ice-p5-mobile-btns';
-  b.style.cssText='position:fixed;bottom:320px;left:14px;z-index:250;'+
+  b.style.cssText='position:fixed;bottom:calc(320px + env(safe-area-inset-bottom,0px));left:14px;z-index:250;'+
     'display:flex;flex-direction:column;gap:10px;align-items:flex-start;pointer-events:none';
   const mk=(id,label,color,keyOn,keyOff)=>{
     const btn=document.createElement('button');btn.id=id;btn.type='button';
