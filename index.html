@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.204</title>
+<title>COSMIC INVADERS v7.205</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -18048,10 +18048,11 @@ function showIcePhase5HUD(){
   try{showIceP5MobileButtons();}catch(_){}
   // v7.166: show joystick on mobile (phase 5: FIRE=vulcan via keys, NAP=saber unused; action btns handle weapons)
   try{showTouchControls(true,'onfoot');}catch(_){}
-  // v7.196: on AT-RT phase mobile, hide SHOT/SABR buttons (ice-p5-mobile-btns handles all weapons)
+  // v7.205: touch-fire = VULCAN (Space key via onfoot mode), napalm hidden (unused in P5)
   if(isMob){try{
-    const fb=document.getElementById('touch-fire');if(fb)fb.style.display='none';
     const nb=document.getElementById('touch-napalm');if(nb)nb.style.display='none';
+    // touch-fire stays visible — it sends Space=VULCAN cannon via onfoot mode label
+    const fb=document.getElementById('touch-fire');if(fb){fb.textContent='💥 FIRE';fb.style.display='';}
   }catch(_){}}
   let sk=document.getElementById('ice-p5-skip');if(sk)sk.remove();
   sk=document.createElement('button');sk.id='ice-p5-skip';sk.type='button';
@@ -19366,27 +19367,28 @@ function showIceP5MobileButtons(){
   let b=document.getElementById('ice-p5-mobile-btns');if(b)b.remove();
   const hasTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
   if(!hasTouch)return;
+  // v7.205: weapon buttons — left side above joystick. VULCAN handled by touch-fire (right side).
   b=document.createElement('div');b.id='ice-p5-mobile-btns';
-  b.style.cssText='position:fixed;bottom:20px;right:14px;z-index:250;'+
-    'display:flex;flex-direction:column;gap:9px;align-items:flex-end;pointer-events:none';
+  b.style.cssText='position:fixed;bottom:320px;left:14px;z-index:250;'+
+    'display:flex;flex-direction:column;gap:10px;align-items:flex-start;pointer-events:none';
   const mk=(id,label,color,keyOn,keyOff)=>{
     const btn=document.createElement('button');btn.id=id;btn.type='button';
     btn.textContent=label;
-    btn.style.cssText='pointer-events:auto;padding:13px 16px;min-width:86px;border-radius:6px;'+
-      'font-family:"Courier New",monospace;font-size:13px;letter-spacing:2px;font-weight:bold;'+
+    btn.style.cssText='pointer-events:auto;padding:11px 14px;min-width:90px;border-radius:6px;'+
+      'font-family:"Courier New",monospace;font-size:12px;letter-spacing:2px;font-weight:bold;'+
       'cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;'+
       'user-select:none;border:2px solid '+color+';color:'+color+';'+
-      'background:rgba(0,0,0,0.75);box-shadow:0 0 12px '+color+'44;';
+      'background:rgba(0,0,0,0.80);box-shadow:0 0 10px '+color+'55;';
     btn.addEventListener('touchstart',function(e){e.preventDefault();keyOn();},{passive:false});
     btn.addEventListener('touchend',function(e){e.preventDefault();keyOff();},{passive:false});
     btn.addEventListener('touchcancel',function(e){e.preventDefault();keyOff();},{passive:false});
     return btn;
   };
   const k=(code,val)=>{if(typeof keys!=='undefined')keys[code]=val;};
+  // v7.205: 3 special weapons (VULCAN = touch-fire SPACE button on right side)
   b.appendChild(mk('ice-p5-btn-missile','🚀 MISSILE','#ffaa66',()=>k('KeyM',true),()=>k('KeyM',false)));
   b.appendChild(mk('ice-p5-btn-flame','🔥 FLAME','#ff6633',()=>k('Enter',true),()=>k('Enter',false)));
   b.appendChild(mk('ice-p5-btn-wire','⚙ WIRE','#00ccff',()=>k('ShiftLeft',true),()=>k('ShiftLeft',false)));
-  b.appendChild(mk('ice-p5-btn-vulcan','💥 VULCAN','#44aaff',()=>k('Space',true),()=>k('Space',false)));
   document.body.appendChild(b);
 }
 
@@ -23779,7 +23781,7 @@ function startIcePlanetPhase1(){
   _p1StatG.visible=false;
   iceScene.add(_p1StatG);
   icePilot=null;iceTroopers=[];iceSnowflakes=null;
-  iceState={phase:1,step:'briefing_pre',t:0,stepT:0,
+  iceState={phase:1,step:'flyby',t:0,stepT:0,// v7.205: 'flyby' replaces 'briefing_pre'
     shots:[],trooperShots:[],shotCD:0,saberCD:0,footprints:[],
     p1battleship:p1bs,p1playerShip:p1ship,p1hatchL:hLG,p1hatchR:hRG,
     p1garbage:p1garbage,p1icePlanet:ipGrp,p1chuteGrp:chuteGrp,
@@ -23788,21 +23790,11 @@ function startIcePlanetPhase1(){
     p1cargoT:0,p1cargoCommFired:[false,false,false],
     p1stationG:_p1StatG,
     _p1HatchWarnLights:p1bs.userData._hatchWarnLights||[],
-    p1blizzardPts:_bzPts,p1blizzardVel:_bzVel,p1blizzardPlanetPos:ipGrp.position.clone()};
-  try{camera.position.set(0,14,38);camera.lookAt(0,5,-40);}catch(_){}
-  try{wfCineSubtitle(_L('◆ ICE PLANET — PHASE 1: INFILTRATION ◆','◆ ICE PLANET — PHASE 1: 潜入作戦 ◆'),'#8cf');}catch(_){}
-  // Pre-briefing comm chain — use ['speaker','text'] array format (playCommChain requires it)
-  try{
-    // v7.204: stealth fighter / radar-invisible / cargo hatch mission order
-    playCommChain([
-      ['hq', _L('MISSION CLASSIFIED — EYES ONLY.','ミッション機密指定。')],
-      ['hq', _L('That warship\'s radar cannot detect this stealth-class fighter. You are invisible to their sensors.','あの戦艦のレーダーにはこのステルス機は映らない。お前はゴーストだ。')],
-      ['hq', _L('The cargo hatch opens on a regular disposal cycle. Get inside and blend with the garbage.','貨物ハッチは定期的に開く。中に入り、ゴミに紛れろ。')],
-      ['hq', _L('Land on the ice planet. Find the enemy base. GO.','氷の惑星に降下し、敵基地を発見せよ。行け。')],
-    ], function(){ if(typeof iceState!=='undefined'&&iceState) iceState.step='briefing'; }, 2600);
-  }catch(_){setTimeout(()=>{if(iceState&&iceState.step==='briefing_pre'){iceState.step='briefing';}},4000);}
-  // 3-part HQ briefing
-  // (runs after step becomes 'briefing', triggered by the briefing case in _updateIcePhase1)
+    p1blizzardPts:_bzPts,p1blizzardVel:_bzVel,p1blizzardPlanetPos:ipGrp.position.clone(),
+    _flybyFired:false,_flybyCommsFired:false};// v7.205 flyby flags
+  // v7.205: camera starts far for flyby — battleship appears as tiny dot
+  try{camera.position.set(0,50,165);camera.lookAt(0,16,-62);}catch(_){}
+  // 3-part HQ briefing fires during 'briefing' step (triggered by flyby timer)
 }
 
 function _makeP1Battleship(){
@@ -23969,6 +23961,36 @@ function _makeP1Battleship(){
     _hWL.push(hw);
   });
   g.userData._hatchWarnLights=_hWL;
+  // v7.205: nozzle exhaust particle system — fine blue-white particles from each nozzle
+  {const _NZP=[[-16,4,53],[0,4,53],[16,4,53],[-10,-5,51],[0,-5,51],[10,-5,51]];
+  const _NPP=80;// particles per nozzle
+  const _nTot=_NZP.length*_NPP;
+  const _nPos=new Float32Array(_nTot*3);
+  const _nCol=new Float32Array(_nTot*3);
+  const _nDat=[];
+  _NZP.forEach((nz)=>{
+    for(let _pi=0;_pi<_NPP;_pi++){
+      const _th=Math.random()*Math.PI*2,_r=Math.random()*1.3;
+      const _vz=8+Math.random()*7,_ml=1.0+Math.random()*0.9;
+      const _lp=Math.random()*_ml;// staggered start phase
+      _nDat.push({nx:nz[0],ny:nz[1],nzb:nz[2],// nozzle base
+        x:nz[0]+Math.cos(_th)*_r,y:nz[1]+Math.sin(_th)*_r,
+        vx:(Math.random()-.5)*0.7,vy:(Math.random()-.5)*0.7,vz:_vz,
+        life:_lp,maxLife:_ml});
+    }
+  });
+  _nDat.forEach((p,i)=>{
+    _nPos[i*3]=p.x;_nPos[i*3+1]=p.y;_nPos[i*3+2]=p.nzb+p.life*p.vz;
+    const _lr=p.life/p.maxLife;const _br=1.0-_lr*0.85;
+    _nCol[i*3]=_br*0.3;_nCol[i*3+1]=_br*0.7+0.3;_nCol[i*3+2]=1.0;
+  });
+  const _nGeo=new THREE.BufferGeometry();
+  _nGeo.setAttribute('position',new THREE.BufferAttribute(_nPos,3));
+  _nGeo.setAttribute('color',new THREE.BufferAttribute(_nCol,3));
+  const _nMat=new THREE.PointsMaterial({size:0.85,vertexColors:true,transparent:true,
+    opacity:0.55,depthWrite:false,sizeAttenuation:true});
+  const _nPts=new THREE.Points(_nGeo,_nMat);_nPts.renderOrder=116;g.add(_nPts);
+  g.userData._nozzleParticles={data:_nDat,geo:_nGeo,mat:_nMat};}
   return g;
 }
 
@@ -24053,6 +24075,27 @@ function _updateIcePhase1(dt){
       m.material.opacity=_baseOp[_li]*(0.80+0.20*Math.sin(_eT*2.8+_nozzle*0.52+_li*0.35));
     });
   }
+  // v7.205: Update nozzle exhaust particles (blue-white fine particles from each nozzle)
+  if(st.p1battleship&&st.p1battleship.userData._nozzleParticles){
+    const _np=st.p1battleship.userData._nozzleParticles;
+    const _pPos=_np.geo.getAttribute('position');
+    const _pCol=_np.geo.getAttribute('color');
+    _np.data.forEach((p,i)=>{
+      p.life+=dt;
+      if(p.life>=p.maxLife){
+        const _th=Math.random()*Math.PI*2,_r=Math.random()*1.3;
+        p.x=p.nx+Math.cos(_th)*_r;p.y=p.ny+Math.sin(_th)*_r;
+        p.vx=(Math.random()-.5)*0.7;p.vy=(Math.random()-.5)*0.7;
+        p.vz=8+Math.random()*7;p.life=0;p.maxLife=1.0+Math.random()*0.9;
+      } else {p.x+=p.vx*dt;p.y+=p.vy*dt;}
+      const _lr=p.life/p.maxLife;
+      _pPos.setXYZ(i,p.x,p.y,p.nzb+p.life*p.vz);
+      const _br=1.0-_lr*0.85;
+      _pCol.setXYZ(i,_br*0.3,_br*0.7+0.3,1.0);// white-cyan→dim blue
+    });
+    _pPos.needsUpdate=true;_pCol.needsUpdate=true;
+    _np.mat.opacity=0.45+0.15*Math.sin((st.t||0)*2.6);
+  }
   // v7.203: Gentle hover drift for tiny player ship (makes it legible against hull)
   if(st.p1playerShip&&st.phase===1){
     const _hT=st.t||0;
@@ -24073,13 +24116,54 @@ function _updateIcePhase1(dt){
     });
     _bAttr.needsUpdate=true;
   }
-  // briefing_pre: wait for pre-comm chain to finish, then advance to 'briefing'
-  if(st.step==='briefing_pre'){ st.t=(st.t||0)+dt; return; }
+  // v7.205: 'flyby' step handled in switch below (not early-return)
+  if(st.step==='briefing_pre'){st.step='flyby';st.stepT=0;}// migrate old saves
   st.stepT=(st.stepT||0)+dt;
   const sT=st.stepT;
   // Camera target (lerped each frame)
   const tgP=new THREE.Vector3(),tgL=new THREE.Vector3();
   switch(st.step){
+    // ── v7.205: Dramatic battleship flyby (approach → orbit → below hatch) ──────
+    case 'flyby':
+    {const _FKF=[
+        {t:0,  p:[0,50,165],   l:[0,16,-62]},// extreme far — tiny dot
+        {t:4,  p:[0,30,90],    l:[0,16,-62]},// approaching fast
+        {t:8,  p:[-85,25,-15], l:[0,16,-62]},// orbit left — wing/flank visible
+        {t:13, p:[-28,4,-52],  l:[0,12,-68]},// low angle below left side
+        {t:17, p:[6,-14,-56],  l:[0,11.5,-70]},// directly below hatch, looking up
+        {t:21, p:[6,-14,-56],  l:[0,11.5,-70]},// hold low angle
+      ];
+      let _kA=_FKF[0],_kB=_FKF[_FKF.length-1];
+      for(let _ki=0;_ki<_FKF.length-1;_ki++){
+        if(sT>=_FKF[_ki].t&&sT<_FKF[_ki+1].t){_kA=_FKF[_ki];_kB=_FKF[_ki+1];break;}
+      }
+      const _kRaw=(_kB.t>_kA.t)?(sT-_kA.t)/(_kB.t-_kA.t):1;
+      const _kT=Math.max(0,Math.min(1,_kRaw));
+      const _ease=_kT*_kT*(3-2*_kT);// smoothstep
+      tgP.set(_kA.p[0]+(_kB.p[0]-_kA.p[0])*_ease,
+              _kA.p[1]+(_kB.p[1]-_kA.p[1])*_ease,
+              _kA.p[2]+(_kB.p[2]-_kA.p[2])*_ease);
+      tgL.set(_kA.l[0]+(_kB.l[0]-_kA.l[0])*_ease,
+              _kA.l[1]+(_kB.l[1]-_kA.l[1])*_ease,
+              _kA.l[2]+(_kB.l[2]-_kA.l[2])*_ease);
+      // Villain music + initial subtitle
+      if(!st._flybyFired){st._flybyFired=true;
+        try{_sfxVillainReveal();}catch(_){}
+        try{wfCineSubtitle(_L('◆ ENEMY BATTLESHIP DETECTED ◆','◆ 敵 巨大戦艦 接近中 ◆'),'#f44');}catch(_){}
+        setTimeout(()=>{try{wfCineSubtitle(_L('◆ ICE PLANET — PHASE 1: INFILTRATION ◆','◆ ICE PLANET — PHASE 1: 潜入作戦 ◆'),'#8cf');}catch(_){}},4000);
+      }
+      // Fire mission briefing comms at t=6 (camera orbiting, good dramatic angle)
+      if(sT>=6&&!st._flybyCommsFired){st._flybyCommsFired=true;
+        try{playCommChain([
+          ['hq',_L('MISSION CLASSIFIED — EYES ONLY.','ミッション機密指定。')],
+          ['hq',_L('That warship\'s radar cannot detect this stealth-class fighter. You are a ghost to their sensors.','あの戦艦のレーダーにはこのステルス機は映らない。お前はゴーストだ。')],
+          ['hq',_L('The cargo hatch opens on a regular disposal cycle. Get inside and blend with the garbage.','貨物ハッチは定期的に開く。中に入れ。ゴミに紛れろ。')],
+          ['hq',_L('Land on the ice planet. Find the enemy base. GO.','氷の惑星に降下し、敵基地を発見せよ。行け。')],
+        ],function(){},2600);}catch(_){}
+      }
+      // At t=21s: transition to 'briefing' (decoy/timing instructions)
+      if(sT>=21){st.step='briefing';st.stepT=0;}}
+      break;
     case 'briefing':
       tgP.set(0,14,38);tgL.set(0,5,-40);
       // Fire the HQ briefing comm chain once
@@ -24297,6 +24381,38 @@ function _p1TriggerExplosion(){
     try{spawnP(pp,0x88aacc,14,3.2,1.3);}catch(_){}
   }
   try{playComm('pilot',_L('Detonating decoy. As of now — I am just garbage.','爆発起動。今から俺はゴミだ。'));}catch(_){}
+}
+// v7.205: Villain-reveal orchestral fanfare — DUN DUN DUN + descending run + ominous drone
+function _sfxVillainReveal(){
+  if(!sfx||!sfx.ctx)return;
+  const ac=sfx.ctx,now=ac.currentTime,_g=sfx.g||ac.destination;
+  function _brass(freq,t,dur,vol){
+    const o=ac.createOscillator();o.type='sawtooth';
+    o.frequency.setValueAtTime(freq,t);
+    const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1600;lp.Q.value=3.5;
+    const gn=ac.createGain();gn.gain.setValueAtTime(0.001,t);
+    gn.gain.linearRampToValueAtTime(vol,t+0.05);
+    gn.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(lp);lp.connect(gn);gn.connect(_g);o.start(t);o.stop(t+dur+0.1);
+  }
+  function _thud(t){// percussion
+    const o2=ac.createOscillator();o2.type='sine';
+    o2.frequency.setValueAtTime(68,t);o2.frequency.exponentialRampToValueAtTime(18,t+0.45);
+    const g2=ac.createGain();g2.gain.setValueAtTime(0.85,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+    o2.connect(g2);g2.connect(_g);o2.start(t);o2.stop(t+0.55);
+  }
+  function _hit(t,freqs,vol){freqs.forEach(f=>_brass(f,t,1.3,vol));}
+  // Three staccato DUN DUN DUN hits (minor chord)
+  _hit(now,    [73.4,110.0,146.8,220.0], 0.40);// D2 A2 D3 A3
+  _hit(now+0.68,[65.4, 98.0,130.8,196.0], 0.36);// C2 G2 C3 G3
+  _hit(now+1.08,[58.3, 87.3,116.5,175.0], 0.34);// Bb1 F2 Bb2 F3
+  _thud(now);_thud(now+0.68);_thud(now+1.08);
+  // Rapid descending chromatic run (t=1.55)
+  [261.6,246.9,233.1,220.0,207.7,196.0].forEach((f,i)=>{_brass(f,now+1.55+i*0.11,0.28,0.22);});
+  // Low ominous sustain chord (D minor drone, t=2.3)
+  [36.7,55.0,73.4,87.3].forEach(f=>_brass(f,now+2.3,4.0,0.30));// D1 A1 D2 F2
+  // Shimmer on top (high harmonics)
+  [587.3,622.3,659.3].forEach((f,i)=>_brass(f,now+2.5+i*0.15,1.8,0.08));
 }
 function _p1OpenHatchSFX(){
   // v7.204: heavy mechanical hatch — deep bass groan + hydraulic hiss + metal creak
