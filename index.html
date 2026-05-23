@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.217</title>
+<title>COSMIC INVADERS v7.218</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -4147,28 +4147,52 @@ function makeWallTurret(){
 // edited turret body. user-dialed: rotation (x=-0.37 slight tilt back, y=0.05 tiny twist) +
 // position (y=0.084, z=-1.513) + scale (1.00, 1.23, 0.72) for taller-narrower stance.
 function makeFloorTurret(){
+  // v7.218: Redesigned to match ice-planet Phase-5 turret (hex pedestal + column + collar +
+  // rotating head + dual barrel + red sensor eye). Fill mesh + wireframe edges, same as ice.
   const outer=new THREE.Group();
   const g=new THREE.Group();
-  const m=new THREE.LineBasicMaterial({color:0xff5500});
-  // Top mount box (the "上部の四角" the user requested)
-  const mount=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2,1.5,2)),m);
-  g.add(mount);
-  // Single barrel pointing forward (+Z toward player)
-  const barrel=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.3,.3,3.5,5)),m);
-  barrel.rotation.x=Math.PI/2;
-  barrel.position.set(0,0,2);
-  g.add(barrel);
-  // Tiny muzzle tip so muzzle-flash anchor still works visually
-  const muzzle=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(.3)),m);
-  muzzle.position.set(0,0,4);
-  g.add(muzzle);
-  // v7.105 ★ 対空姿勢 — barrel angled ~60° skyward (anti-aircraft style).
-  // Was v7.52 -0.3692 (~21° upward) which read as nearly horizontal. User feedback:
-  // 「対空が正解」 — make it visually unambiguous that this turret is pointing at incoming
-  // ships. -Math.PI/3 (= -60°) tilts the +Z-facing barrel up toward the sky.
-  g.rotation.set(-Math.PI/3, 0.0528, 0.0000);
-  g.position.set(0.0000, 0.4500, -0.8000);
-  g.scale.set(1.0000, 1.2300, 0.7200);
+  const mE=new THREE.LineBasicMaterial({color:0xff6644,transparent:true,opacity:.82});
+  const mS=new THREE.MeshBasicMaterial({color:0x180800});
+  const mRed=new THREE.LineBasicMaterial({color:0xff2200,transparent:true,opacity:.95});
+  function addSolid(geo,x,y,z){
+    const fm=new THREE.Mesh(geo,mS);fm.position.set(x,y,z);g.add(fm);
+    const fe=new THREE.LineSegments(new THREE.EdgesGeometry(geo),mE);fe.position.set(x,y,z);g.add(fe);
+  }
+  // ── Hex pedestal base ──
+  addSolid(new THREE.CylinderGeometry(1.4,1.9,0.50,6), 0,0.25,0);
+  // ── Central column ──
+  addSolid(new THREE.CylinderGeometry(0.55,0.72,2.8,8), 0,1.9,0);
+  // ── Collar ring ──
+  const rngE=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.78,.12,5,10)),mE);
+  rngE.rotation.x=Math.PI/2;rngE.position.y=3.40;g.add(rngE);
+  // ── Head (housing + wing plates + dual barrel + sensor eye) ──
+  const headGr=new THREE.Group();
+  // Flat wide housing
+  const hBox=new THREE.BoxGeometry(2.0,0.80,1.60);
+  headGr.add(new THREE.Mesh(hBox,mS));headGr.add(new THREE.LineSegments(new THREE.EdgesGeometry(hBox),mE));
+  // Side wing plates
+  [-1,1].forEach(function(sx){
+    const wp=new THREE.BoxGeometry(0.16,0.55,1.40);
+    const wg=new THREE.Group();wg.position.set(sx*1.06,0,0);
+    wg.add(new THREE.Mesh(wp,mS));wg.add(new THREE.LineSegments(new THREE.EdgesGeometry(wp),mE));
+    headGr.add(wg);
+  });
+  // Dual barrels pointing +Z (toward player)
+  [-1,1].forEach(function(sx){
+    const bg=new THREE.CylinderGeometry(0.09,0.13,2.50,6);
+    const bm=new THREE.LineSegments(new THREE.EdgesGeometry(bg),mE);
+    bm.rotation.x=Math.PI/2;bm.position.set(sx*0.33,0,1.65);headGr.add(bm);
+    const mrng=new THREE.CylinderGeometry(0.15,0.09,0.22,6);
+    const mr=new THREE.LineSegments(new THREE.EdgesGeometry(mrng),mE);
+    mr.rotation.x=Math.PI/2;mr.position.set(sx*0.33,0,2.90);headGr.add(mr);
+  });
+  // Red sensor eye
+  const eyeE=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.10,5,4)),mRed);
+  eyeE.position.set(0,0.22,0.84);headGr.add(eyeE);
+  // Tilt head ~40° upward — anti-aircraft stance toward incoming ships
+  headGr.rotation.x=-Math.PI*0.22;
+  headGr.position.set(0,3.85,0);
+  g.add(headGr);
   outer.add(g);
   return outer;
 }
