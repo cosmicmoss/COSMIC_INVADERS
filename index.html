@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.222</title>
+<title>COSMIC INVADERS v7.223</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -29772,17 +29772,17 @@ function enterForestSpeederEscape(){
   buildBikeScene();
   forestBike={
     state:'ride',
-    t:0,totalT:44,// v6.95: doubled (was 22s)
+    t:0,totalT:30,// v7.223: 44→30s (speedup)
     laneX:0,
     targetLaneX:0,
     shootCD:0,
     pursuers:[],
-    forwardSpeed:40,
+    forwardSpeed:58,// v7.223: 40→58 (faster)
     scrollPos:0,
     doctorAutoFireT:0,// v6.95: doctor auto-fire timer
     bikeShakeT:0,// v6.95: ram shake
-    nextWaveAt:18,// v6.95: spawn second wave at t=18s
-    nextWaveAt2:32,// v6.95: spawn third wave at t=32s
+    nextWaveAt:12,// v7.223: 18→12 (adjusted for shorter duration)
+    nextWaveAt2:22,// v7.223: 32→22
   };
   for(let i=0;i<3;i++){
     spawnBikePursuer(i);
@@ -29936,7 +29936,7 @@ function buildBikeScene(){
   // Stored in a child Group so we can spin it slowly during the chase.
   const starGroup=new THREE.Group();starGroup.name='bikeStarField';
   const starGeo=new THREE.BufferGeometry();
-  const starN=350;const starPos=new Float32Array(starN*3);
+  const starN=120;const starPos=new Float32Array(starN*3);// v7.223: 350→120 (1/3)
   for(let i=0;i<starN;i++){
     const ang=Math.random()*Math.PI*2;
     const r=80+Math.random()*120;// orbital ring radius
@@ -29947,7 +29947,7 @@ function buildBikeScene(){
   starGeo.setAttribute('position',new THREE.BufferAttribute(starPos,3));
   starGroup.add(new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:.6,sizeAttenuation:true,transparent:true,opacity:.95})));
   // Bigger sparkly stars (octahedrons)
-  for(let i=0;i<24;i++){
+  for(let i=0;i<8;i++){// v7.223: 24→8
     const star=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(.4+Math.random()*.4)),
       new THREE.LineBasicMaterial({color:Math.random()<.5?0xeeeeff:0x99ddff,transparent:true,opacity:.9}));
     const ang=Math.random()*Math.PI*2;
@@ -29965,17 +29965,18 @@ function buildBikeScene(){
   moon.position.set(40,55,-160);starGroup.add(moon);
   forestScene.add(starGroup);
   // v7.210: alien forest trees with wide branches + hanging moss + glowing mushrooms
+  // v7.223: 100→34 trees (1/3), second-tree probability .55→.20
   const mMoss=new THREE.LineBasicMaterial({color:0x228844,transparent:true,opacity:.65});
   const mLeavesTeal=new THREE.LineBasicMaterial({color:0x22aa88,transparent:true,opacity:.75});
-  for(let i=0;i<100;i++){
+  for(let i=0;i<34;i++){
     [-1,1].forEach(side=>{
-      const tz=-400+(i/100)*440;
+      const tz=-400+(i/34)*440;
       const tree=makeAlienForestTree(mTrunk,mLeavesTeal,mMoss);
       tree.position.set(side*(20+Math.random()*8),bikeTerrainHeight(tz),tz);
       tree.name='bikeTree';
       forestScene.add(tree);
       // Add second smaller tree nearby (depth layering)
-      if(Math.random()<.55){
+      if(Math.random()<.20){
         const tree2=makeAlienForestTree(mTrunkDk,mLeavesDk,mMoss);
         tree2.scale.setScalar(.65+Math.random()*.25);
         tree2.position.set(side*(28+Math.random()*8),bikeTerrainHeight(tz+5),tz+Math.random()*20-10);
@@ -29985,9 +29986,10 @@ function buildBikeScene(){
     });
   }
   // v7.210: Glowing alien mushrooms lining both sides of the path
-  for(let i=0;i<80;i++){
+  // v7.223: 80→27 mushrooms (1/3)
+  for(let i=0;i<27;i++){
     [-1,1].forEach(side=>{
-      const mz=-400+(i/80)*440;
+      const mz=-400+(i/27)*440;
       const mush=makeAlienMushroom();
       const mScale=0.8+Math.random()*1.4;
       mush.scale.setScalar(mScale);
@@ -30000,7 +30002,7 @@ function buildBikeScene(){
   // v6.97: COURSE OBSTACLES - smaller trees AND rocks placed in the lanes (x=-16..16) so the
   // player must dodge them while chasing. They share the bikeTree name so the scroll-recycle loop
   // moves them along with the side trees.
-  const obstacleCount=70;
+  const obstacleCount=23;// v7.223: 70→23 (1/3)
   for(let i=0;i<obstacleCount;i++){
     const isRock=Math.random()<.5;
     const obj=new THREE.Group();
