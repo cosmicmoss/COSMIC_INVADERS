@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.210</title>
+<title>COSMIC INVADERS v7.211</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -15154,18 +15154,18 @@ function wfCineShow(kind,duration,onDone){
     scene.add(modBayGroup);wfCineGroup=modBayGroup;
     camera.position.set(0,3,12);camera.rotation.set(0,0,0);camera.lookAt(0,-2,-10);
     wfCineSubtitle('◆ FLAMETHROWER MOD INSTALLATION ◆','#ff6622');
-    // Build the severed dragon head prop (smaller than the live boss)
+    // Build the severed dragon head prop (smaller than the live boss) — v7.211: orange-red
     const dragonHeadProp=new THREE.Group();
     const dh=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(1.4,2.8,8)),
-      new THREE.LineBasicMaterial({color:0x331100,transparent:true,opacity:1}));
+      new THREE.LineBasicMaterial({color:0xff4400,transparent:true,opacity:1}));
     dh.rotation.x=Math.PI/2;dragonHeadProp.add(dh);
-    const dhFill=new THREE.Mesh(new THREE.ConeGeometry(1.3,2.6,8),new THREE.MeshBasicMaterial({color:0x110600}));
+    const dhFill=new THREE.Mesh(new THREE.ConeGeometry(1.3,2.6,8),new THREE.MeshBasicMaterial({color:0x881a00}));
     dhFill.rotation.x=Math.PI/2;dragonHeadProp.add(dhFill);
-    // Horns
+    // Horns — orange
     for(let h=0;h<4;h++){
       const ang=(h/4)*Math.PI*2;
       const horn=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.2,1,4)),
-        new THREE.LineBasicMaterial({color:0x331100,transparent:true,opacity:1}));
+        new THREE.LineBasicMaterial({color:0xff6600,transparent:true,opacity:1}));
       horn.position.set(Math.cos(ang)*.8,Math.sin(ang)*.8,-.3);
       horn.rotation.x=-Math.PI/2;horn.rotation.z=ang;dragonHeadProp.add(horn);
     }
@@ -31519,89 +31519,115 @@ let firePilot_gun=null;
 
 // Fire Dragon boss model — head + body segments + wings + tail
 function makeFireDragonBoss(){
+  // v7.211: Flame-body dragon — vivid orange/red scales, glowing lava cracks, visible fill
   const dragon=new THREE.Group();
-  const dark=new THREE.LineBasicMaterial({color:0x331100,transparent:true,opacity:.95});
-  const emissive=new THREE.LineBasicMaterial({color:0xff3300,transparent:true,opacity:.9});
+  // v7.211: main body wireframe = bright orange-red (was near-black 0x331100)
+  const mScale=new THREE.LineBasicMaterial({color:0xff4400,transparent:true,opacity:.95});
+  const mScaleDk=new THREE.LineBasicMaterial({color:0xcc2200,transparent:true,opacity:.9});
+  const mLava=new THREE.LineBasicMaterial({color:0xffaa00,transparent:true,opacity:1});  // lava cracks
+  const mEmber=new THREE.LineBasicMaterial({color:0xff6600,transparent:true,opacity:.85});
   const eyeMat=new THREE.LineBasicMaterial({color:0xffee44,transparent:true,opacity:1});
+  const FILL_BODY=0x661100;   // dark red fill (was near-black)
+  const FILL_BODY2=0x881a00;  // mid red fill
+  const FILL_WING=0x992200;   // wing fill
   // Body segments (5 segments, tapering)
   const bodyGrp=new THREE.Group();
   for(let i=0;i<5;i++){
     const r=2.5-i*.3;
-    const seg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(r,1)),dark);
-    seg.position.z=-i*3;
-    bodyGrp.add(seg);
-    const segFill=new THREE.Mesh(new THREE.OctahedronGeometry(r*.95,1),new THREE.MeshBasicMaterial({color:0x110800}));
+    // Outer scale wireframe — alternate bright/mid-red per segment
+    const seg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(r,1)),i%2===0?mScale:mScaleDk);
+    seg.position.z=-i*3;bodyGrp.add(seg);
+    // Fill — dark red so body reads as solid, not transparent black
+    const segFill=new THREE.Mesh(new THREE.OctahedronGeometry(r*.93,1),new THREE.MeshBasicMaterial({color:i%2===0?FILL_BODY2:FILL_BODY}));
     segFill.position.z=-i*3;bodyGrp.add(segFill);
-    // Glowing crack along spine
-    const crack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.2,.4,r*1.5)),emissive);
-    crack.position.set(0,r*.5,-i*3);bodyGrp.add(crack);
+    // Glowing lava crack along spine (brighter + wider than before)
+    const crack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.3,.5,r*1.6)),mLava);
+    crack.position.set(0,r*.55,-i*3);bodyGrp.add(crack);
+    // Side lava veins (2 per segment)
+    for(let v=-1;v<=1;v+=2){
+      const vein=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.12,.2,r*1.1)),mEmber);
+      vein.position.set(v*r*.5,r*.3,-i*3);bodyGrp.add(vein);
+    }
   }
   bodyGrp.position.set(0,3,2);
   dragon.add(bodyGrp);
   // Tail (3 segments, smaller)
   for(let i=0;i<3;i++){
     const r=1.2-i*.3;
-    const t=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(r,0)),dark);
+    const t=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(r,0)),mScaleDk);
     t.position.set(0,3-i*.3,-12-i*1.5);dragon.add(t);
-    const tF=new THREE.Mesh(new THREE.OctahedronGeometry(r*.9,0),new THREE.MeshBasicMaterial({color:0x110800}));
+    const tF=new THREE.Mesh(new THREE.OctahedronGeometry(r*.9,0),new THREE.MeshBasicMaterial({color:FILL_BODY}));
     tF.position.copy(t.position);dragon.add(tF);
+    const tCrack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.15,.25,r)),mLava);
+    tCrack.position.copy(t.position);tCrack.position.y+=r*.4;dragon.add(tCrack);
   }
   // Head — large pointed cone with horns + teeth
   const head=new THREE.Group();
   head.name='dragonHead';
-  const headCone=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(2.2,4,8)),dark);
+  const headCone=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(2.2,4,8)),mScale);
   headCone.rotation.x=Math.PI/2;head.add(headCone);
-  const headFill=new THREE.Mesh(new THREE.ConeGeometry(2.0,3.8,8),new THREE.MeshBasicMaterial({color:0x110800}));
+  // Head fill — vivid dark red so the head isn't invisible
+  const headFill=new THREE.Mesh(new THREE.ConeGeometry(2.0,3.8,8),new THREE.MeshBasicMaterial({color:0x881a00}));
   headFill.rotation.x=Math.PI/2;head.add(headFill);
-  // Horns (6 small)
+  // Lava ridge along top of head
+  const headRidge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.25,.5,3.5)),mLava);
+  headRidge.position.set(0,.8,-.2);headRidge.rotation.x=Math.PI/2;head.add(headRidge);
+  // Horns (6 — orange-red)
   for(let h=0;h<6;h++){
     const ang=(h/6)*Math.PI*2;
-    const horn=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.3,1.6,5)),dark);
+    const horn=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.3,1.6,5)),mEmber);
     horn.position.set(Math.cos(ang)*1.2,Math.sin(ang)*1.2,-.5);
-    horn.rotation.x=-Math.PI/2;
-    horn.rotation.z=ang;
+    horn.rotation.x=-Math.PI/2;horn.rotation.z=ang;
     head.add(horn);
   }
-  // Teeth (4 fangs)
+  // Teeth (4 fangs — ivory/bone)
   for(let f=-1;f<=1;f+=2){
     for(let k=0;k<2;k++){
       const fang=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.15,.6,4)),
-        new THREE.LineBasicMaterial({color:0xddccbb,transparent:true,opacity:1}));
-      fang.position.set(f*.5,-.6-k*.15,1.8);
-      fang.rotation.x=Math.PI;
-      head.add(fang);
+        new THREE.LineBasicMaterial({color:0xffddaa,transparent:true,opacity:1}));
+      fang.position.set(f*.5,-.6-k*.15,1.8);fang.rotation.x=Math.PI;head.add(fang);
     }
   }
-  // Eyes (yellow glow)
+  // Eyes (yellow glow — bigger + brighter)
   for(let e=-1;e<=1;e+=2){
-    const eye=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(.25,0)),eyeMat);
+    const eye=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(.3,0)),eyeMat);
     eye.position.set(e*.7,.5,1);head.add(eye);
-    const eyeFill=new THREE.Mesh(new THREE.IcosahedronGeometry(.2,0),new THREE.MeshBasicMaterial({color:0xff6600}));
+    const eyeFill=new THREE.Mesh(new THREE.IcosahedronGeometry(.25,0),new THREE.MeshBasicMaterial({color:0xffaa00}));
     eyeFill.position.copy(eye.position);head.add(eyeFill);
+    // Eye glow halo
+    const eyeHalo=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.32,.05,4,10)),eyeMat);
+    eyeHalo.position.copy(eye.position);head.add(eyeHalo);
   }
   // Mouth inner glow (becomes visible during WINDUP/BREATH)
   const mouthGlow=new THREE.Mesh(new THREE.SphereGeometry(.8,8,6),new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0}));
-  mouthGlow.position.z=1.5;mouthGlow.name='mouthGlow';
-  head.add(mouthGlow);
+  mouthGlow.position.z=1.5;mouthGlow.name='mouthGlow';head.add(mouthGlow);
   head.position.set(0,4.5,5);
   dragon.add(head);
-  // Wings (folded triangles on the back)
+  // Wings — orange-red membrane with lava vein lines
   for(let w=-1;w<=1;w+=2){
-    const wing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(3,5,3)),dark);
-    wing.position.set(w*2.5,5.5,1);
-    wing.rotation.z=w*Math.PI*.4;
-    wing.rotation.x=Math.PI*.3;
+    const wing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(3,5,3)),mScaleDk);
+    wing.position.set(w*2.5,5.5,1);wing.rotation.z=w*Math.PI*.4;wing.rotation.x=Math.PI*.3;
     dragon.add(wing);
-    const wingFill=new THREE.Mesh(new THREE.ConeGeometry(2.8,4.8,3),new THREE.MeshBasicMaterial({color:0x220900,transparent:true,opacity:.7}));
+    // Fill — dark red, semi-transparent (membrane look)
+    const wingFill=new THREE.Mesh(new THREE.ConeGeometry(2.8,4.8,3),new THREE.MeshBasicMaterial({color:FILL_WING,transparent:true,opacity:.75}));
     wingFill.position.copy(wing.position);wingFill.rotation.copy(wing.rotation);dragon.add(wingFill);
+    // Lava veins on wing surface
+    for(let v=0;v<3;v++){
+      const vein=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.08,.08,2.5-v*.6)),mLava);
+      vein.position.set(w*(1.5-v*.4),5.5+v*.4,1-v*.3);vein.rotation.copy(wing.rotation);
+      dragon.add(vein);
+    }
   }
-  // Legs (4 short stout legs)
+  // Legs (4 short stout legs — orange-red)
   for(let lx=-1;lx<=1;lx+=2){
     for(let lz=0;lz<2;lz++){
-      const leg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.7,2.2,.7)),dark);
+      const leg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.7,2.2,.7)),mScale);
       leg.position.set(lx*2.2,1.2,-1-lz*4);dragon.add(leg);
-      const legF=new THREE.Mesh(new THREE.BoxGeometry(.6,2,.6),new THREE.MeshBasicMaterial({color:0x110800}));
+      const legF=new THREE.Mesh(new THREE.BoxGeometry(.6,2,.6),new THREE.MeshBasicMaterial({color:FILL_BODY}));
       legF.position.copy(leg.position);dragon.add(legF);
+      // Claw marks on leg
+      const claw=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.05,.3,.7)),mLava);
+      claw.position.set(lx*2.2,.1,-1-lz*4);dragon.add(claw);
     }
   }
   dragon.scale.setScalar(1.4);
@@ -31610,20 +31636,42 @@ function makeFireDragonBoss(){
   return dragon;
 }
 
-// Beam shield mesh — half-dome in front of pilot
+// Beam shield mesh — half-dome in front of pilot (v7.211: more vivid cyan/blue)
 function makeBeamShield(){
   const g=new THREE.Group();
-  const m=new THREE.LineBasicMaterial({color:0x66ddff,transparent:true,opacity:.7});
-  // Hexagonal pattern wireframe
-  const shieldGeo=new THREE.SphereGeometry(1.8,8,4,0,Math.PI*2,0,Math.PI*.5);
-  const shield=new THREE.LineSegments(new THREE.EdgesGeometry(shieldGeo),m);
+  // v7.211: brighter cyan wireframe + higher opacity fill so shield is clearly visible
+  const mEdge=new THREE.LineBasicMaterial({color:0x00eeff,transparent:true,opacity:.95});
+  const mRing=new THREE.LineBasicMaterial({color:0x88ffff,transparent:true,opacity:1});
+  const mHex=new THREE.LineBasicMaterial({color:0x44ccff,transparent:true,opacity:.8});
+  // Main dome (half-sphere)
+  const shieldGeo=new THREE.SphereGeometry(1.8,10,5,0,Math.PI*2,0,Math.PI*.5);
+  const shield=new THREE.LineSegments(new THREE.EdgesGeometry(shieldGeo),mEdge);
   g.add(shield);
-  const fill=new THREE.Mesh(shieldGeo,new THREE.MeshBasicMaterial({color:0x2266aa,transparent:true,opacity:.35,side:THREE.DoubleSide}));
+  // Fill — vivid cyan-blue, more opaque than before
+  const fill=new THREE.Mesh(shieldGeo,new THREE.MeshBasicMaterial({color:0x0066cc,transparent:true,opacity:.55,side:THREE.DoubleSide}));
   g.add(fill);
-  // Outer beam ring
-  const ring=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.8,.08,4,16)),
-    new THREE.LineBasicMaterial({color:0x99eeff,transparent:true,opacity:.9}));
-  ring.rotation.x=Math.PI/2;g.add(ring);
+  // Hexagonal grid overlay (adds sci-fi "energy field" texture)
+  const hexGeo=new THREE.SphereGeometry(1.82,6,3,0,Math.PI*2,0,Math.PI*.5);
+  const hexGrid=new THREE.LineSegments(new THREE.EdgesGeometry(hexGeo),mHex);
+  g.add(hexGrid);
+  // Outer bright rim ring (base of dome)
+  const rimRing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.8,.06,5,20)),mRing);
+  rimRing.rotation.x=Math.PI/2;g.add(rimRing);
+  // Second inner rim (concentric) — adds depth
+  const innerRing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.2,.04,4,16)),
+    new THREE.LineBasicMaterial({color:0xaaffff,transparent:true,opacity:.75}));
+  innerRing.rotation.x=Math.PI/2;innerRing.position.y=.9;g.add(innerRing);
+  // Vertical beam lines (pillar effect — 4 lines top to base)
+  for(let i=0;i<4;i++){
+    const ang=(i/4)*Math.PI*2;
+    const beam=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.04,.04,1.8)),mEdge);
+    beam.position.set(Math.cos(ang)*1.4,.7,Math.sin(ang)*1.4);
+    beam.rotation.y=-ang;beam.rotation.z=Math.atan2(1.8,1.4)*.5;
+    g.add(beam);
+  }
+  // Centre bright core spot
+  const core=new THREE.Mesh(new THREE.CircleGeometry(.25,8),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.65,side:THREE.DoubleSide}));
+  core.rotation.x=Math.PI/2;core.position.y=1.75;g.add(core);
   g.scale.set(1.2,1.4,1.0);
   return g;
 }
