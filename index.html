@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.220</title>
+<title>COSMIC INVADERS v7.221</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -17046,18 +17046,37 @@ function startIcePlanetPhase2(){
     peak.position.set(-50+i*22,8,-90);
     iceScene.add(peak);
   }
-  // Dust particles (garbage dust, not snowflakes)
-  const flakeGeo=new THREE.BufferGeometry();
-  const N=180;
+  // v7.221: Heavy blizzard snowflakes for Phase 2 (was 180 grey dust → 520 ice-blue flakes)
+  const N=520;
   const flakePos=new Float32Array(N*3);
   for(let i=0;i<N;i++){
     flakePos[i*3]=(Math.random()-.5)*120;
-    flakePos[i*3+1]=Math.random()*30;
-    flakePos[i*3+2]=(Math.random()-.5)*120;
+    flakePos[i*3+1]=2+Math.random()*32;
+    flakePos[i*3+2]=(Math.random()-.5)*100-20;
   }
+  const flakeGeo=new THREE.BufferGeometry();
   flakeGeo.setAttribute('position',new THREE.BufferAttribute(flakePos,3));
-  iceSnowflakes=new THREE.Points(flakeGeo,new THREE.PointsMaterial({color:0x888880,size:.4,transparent:true,opacity:.55}));
+  iceSnowflakes=new THREE.Points(flakeGeo,new THREE.PointsMaterial({color:0xbbddf8,size:.42,transparent:true,opacity:.88}));
   iceScene.add(iceSnowflakes);
+  // Per-particle horizontal wind variance (stored as local, added to iceState below)
+  const _p2wX=new Float32Array(N);
+  for(let i=0;i<N;i++)_p2wX[i]=(Math.random()-.5)*2.5;
+  // Horizontal blizzard streak particles (fast gusts)
+  const bN2=220;const bPos2=new Float32Array(bN2*3);
+  for(let i=0;i<bN2;i++){bPos2[i*3]=(Math.random()-.5)*100;bPos2[i*3+1]=(Math.random()-.5)*12+5;bPos2[i*3+2]=(Math.random()-.5)*100-20;}
+  const bGeo2=new THREE.BufferGeometry();bGeo2.setAttribute('position',new THREE.BufferAttribute(bPos2,3));
+  const _p2bPts=new THREE.Points(bGeo2,new THREE.PointsMaterial({color:0xddeeff,size:.18,transparent:true,opacity:.45}));
+  iceScene.add(_p2bPts);
+  // Blizzard fog — cuts visibility, matches Phase 3 intensity lightly
+  scene.fog=new THREE.FogExp2(0x061428,0.030);
+  // Blizzard haze CSS overlay
+  (function(){
+    let _bvfx=document.getElementById('ice-blizzard-vfx');
+    if(!_bvfx){_bvfx=document.createElement('div');_bvfx.id='ice-blizzard-vfx';document.body.appendChild(_bvfx);}
+    _bvfx.style.cssText='position:fixed;inset:0;z-index:50;pointer-events:none;'+
+      'background:radial-gradient(ellipse 150% 80% at 50% 35%,transparent 15%,rgba(170,215,255,0.04) 70%,rgba(150,205,255,0.12) 100%);'+
+      'animation:blizzardPulse 2.5s ease-in-out infinite;';
+  })();
   // v7.172 ★ Garbage capsule — disguised landing pod, sits in a garbage pile near pilot start
   const _p2cap=_makeGarbageCapsule();_p2cap.position.set(2.5,0,-2.5);iceScene.add(_p2cap);
   // Pilot — starts inside capsule (hidden), emerges during 'emerge' step
@@ -17125,7 +17144,8 @@ function startIcePlanetPhase2(){
     icePines:_icePines2,iceWolves:_iceWolves,goalReached:false,goalMesh:_goalMesh,
     goalPos:new THREE.Vector3(GOAL_X,0,GOAL_Z),
     mazePass:_mazePass,mazeCols:MCOLS,mazeRows:MROWS,mazeCW:MCW,mazeCH:MCH,mazeMX0:MX0,mazeMZ0:MZ0,
-    mazeRadarEl:_iceMR,_p2Capsule:_p2cap};
+    mazeRadarEl:_iceMR,_p2Capsule:_p2cap,
+    _p2windX:_p2wX,_p2blizzardPts:_p2bPts};// v7.221: blizzard particle refs
   // Camera: cinematic low angle at capsule for emerge sequence
   try{camera.position.set(2.5,3,10);camera.lookAt(2.5,1,0)}catch(_){}
   // emerge intro comm
@@ -20252,9 +20272,10 @@ function updateIcePlanet(dt){
     const p=iceSnowflakes.geometry.attributes.position;
     const interior=(iceState&&iceState.phase===4);
     const bliz=(iceState&&iceState.phase===3);
-    const fallSpd=interior?0.35:(bliz?5.5:2.5);
+    const bliz2=(iceState&&iceState.phase===2);// v7.221: Phase 2 heavy blizzard
+    const fallSpd=interior?0.35:(bliz?5.5:(bliz2?4.0:2.5));
     const swayAmp=interior?0.04:0.15;
-    const windX=bliz?9.0:0;
+    const windX=bliz?9.0:(bliz2?3.5:0);
     const floor=interior?0.05:-1;
     for(let i=0;i<p.count;i++){
       p.array[i*3+1]-=fallSpd*dt;
@@ -20262,12 +20283,16 @@ function updateIcePlanet(dt){
         // strong horizontal wind + per-particle variance
         p.array[i*3]+=windX*dt+(iceState._p3windX?iceState._p3windX[i%iceState._p3windX.length]:0);
         p.array[i*3+1]+=Math.sin(iceState.t*2.2+i*0.25)*0.18*dt;
+      } else if(bliz2){
+        // v7.221: medium blizzard wind + per-particle variance
+        p.array[i*3]+=windX*dt+(iceState._p2windX?iceState._p2windX[i%iceState._p2windX.length]:0);
+        p.array[i*3+1]+=Math.sin(iceState.t*1.8+i*0.3)*0.12*dt;
       } else {
         p.array[i*3]+=Math.sin(iceState.t*0.8+i)*swayAmp*dt;
       }
-      if(p.array[i*3+1]<floor||(bliz&&p.array[i*3]>44)){
-        p.array[i*3+1]=bliz?(4+Math.random()*24):(interior?(8+Math.random()*.5):(36+Math.random()*8));
-        p.array[i*3]=bliz?((camera.position.x||0)-44+Math.random()*5):((camera.position.x||0)+(Math.random()-.5)*(interior?24:120));
+      if(p.array[i*3+1]<floor||(bliz&&p.array[i*3]>44)||(bliz2&&p.array[i*3]>55)){
+        p.array[i*3+1]=bliz?(4+Math.random()*24):(bliz2?(2+Math.random()*32):(interior?(8+Math.random()*.5):(36+Math.random()*8)));
+        p.array[i*3]=bliz?((camera.position.x||0)-44+Math.random()*5):(bliz2?((camera.position.x||0)-55+Math.random()*5):((camera.position.x||0)+(Math.random()-.5)*(interior?24:120)));
         p.array[i*3+2]=(camera.position.z||0)+(Math.random()-.5)*(interior?18:60)+(interior?-9:-40);
       }
     }
@@ -20279,6 +20304,20 @@ function updateIcePlanet(dt){
     for(let i=0;i<bp.count;i++){
       bp.array[i*3]+=16.0*dt;
       bp.array[i*3+1]+=Math.sin(iceState.t*1.8+i*0.6)*0.06*dt;
+      if(bp.array[i*3]>48){
+        bp.array[i*3]=(camera.position.x||0)-46+Math.random()*5;
+        bp.array[i*3+1]=(camera.position.y||5)+(Math.random()-.5)*14;
+        bp.array[i*3+2]=(camera.position.z||0)+(Math.random()-.5)*60-20;
+      }
+    }
+    bp.needsUpdate=true;
+  }
+  // v7.221: Phase 2 horizontal blizzard streak particles (slower than Phase 3)
+  if(iceState&&iceState.phase===2&&iceState._p2blizzardPts){
+    const bp=iceState._p2blizzardPts.geometry.attributes.position;
+    for(let i=0;i<bp.count;i++){
+      bp.array[i*3]+=8.0*dt;
+      bp.array[i*3+1]+=Math.sin(iceState.t*1.5+i*0.5)*0.05*dt;
       if(bp.array[i*3]>48){
         bp.array[i*3]=(camera.position.x||0)-46+Math.random()*5;
         bp.array[i*3+1]=(camera.position.y||5)+(Math.random()-.5)*14;
