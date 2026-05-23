@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.215</title>
+<title>COSMIC INVADERS v7.216</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -22161,7 +22161,7 @@ function updateIcePlanet(dt){
         }
       }
       // ── AT-RT 2-leg bird gait + suspension (v7.145: chicken gait) ──
-      const aWalkFreq=aMoving?5.0:0.45;// v7.145: 3.2→5.0 for rapid chicken strut
+      const aWalkFreq=aMoving?10.0:0.45;// v7.216: 5.0→10.0 double speed
       iceState.atrtLegs.forEach(function(lg){
         const swing=Math.sin(iceState.t*aWalkFreq+lg.phase);
         lg.group.rotation.x+=(swing*0.60-lg.group.rotation.x)*Math.min(1,dt*8);// v7.145: 0.44→0.60 bigger hip swing
@@ -22424,7 +22424,7 @@ function updateIcePlanet(dt){
       if(aMoving){// v7.145: metallic ガシャン footstep
         iceState._atrtStepT=(iceState._atrtStepT||0)-dt;
         if(iceState._atrtStepT<=0){
-          iceState._atrtStepT=0.18+Math.random()*.02;// v7.145: 0.30→0.18 rapid steps
+          iceState._atrtStepT=0.09+Math.random()*.01;// v7.216: 0.18→0.09 double speed steps
           try{
             const ac=sfx.ctx,now=ac.currentTime;
             // METALLIC CLANK — square wave high steel ring
