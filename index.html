@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.226</title>
+<title>COSMIC INVADERS v7.227</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -73,7 +73,22 @@ body.stolen-fighter #cockpit-frame::after{background:rgba(255,30,20,.45)!importa
 #lu-tl{top:100px;left:40px}#lu-tr{top:100px;right:40px}
 #lu-bl{bottom:80px;left:40px}#lu-br{bottom:80px;right:40px}
 @keyframes ohFlash{50%{opacity:.4}}
-
+/* v7.227: cockpit power-up flash overlay */
+@keyframes ckPwSweep{0%{top:-2px;opacity:0}10%{opacity:1}90%{opacity:.8}100%{top:100%;opacity:0}}
+@keyframes ckPwLabel{0%{opacity:0;letter-spacing:12px}15%{opacity:1;letter-spacing:6px}80%{opacity:1}100%{opacity:0;letter-spacing:8px}}
+@keyframes ckPwCorner{0%{opacity:0}10%{opacity:1}70%{opacity:.9}100%{opacity:0}}
+#cockpit-pw-overlay{position:fixed;inset:0;z-index:58;pointer-events:none;display:none;overflow:hidden}
+#cockpit-pw-overlay .cpw-sweep{position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent 0%,currentColor 30%,currentColor 70%,transparent 100%);
+  animation:ckPwSweep .9s ease-out forwards;box-shadow:0 0 8px currentColor}
+#cockpit-pw-overlay .cpw-label{position:absolute;top:42%;left:50%;transform:translateX(-50%);
+  font-family:monospace;font-size:15px;font-weight:bold;letter-spacing:6px;white-space:nowrap;
+  animation:ckPwLabel 1.4s ease-out forwards;text-shadow:0 0 14px currentColor}
+#cockpit-pw-overlay .cpw-corner{position:absolute;width:60px;height:60px;animation:ckPwCorner 1.4s ease-out forwards}
+#cockpit-pw-overlay .cpw-tl{top:12px;left:12px;border-top:2px solid currentColor;border-left:2px solid currentColor}
+#cockpit-pw-overlay .cpw-tr{top:12px;right:12px;border-top:2px solid currentColor;border-right:2px solid currentColor}
+#cockpit-pw-overlay .cpw-bl{bottom:12px;left:12px;border-bottom:2px solid currentColor;border-left:2px solid currentColor}
+#cockpit-pw-overlay .cpw-br{bottom:12px;right:12px;border-bottom:2px solid currentColor;border-right:2px solid currentColor}
 /* Target Reticle - Cyberpunk Angular HUD */
 #reticle{position:fixed;z-index:60;pointer-events:none;display:none;
   width:110px;height:110px;
@@ -12433,8 +12448,48 @@ function addScore(pts){S.score+=pts;if(S.score>S.hiScore){S.hiScore=S.score;loca
 function checkPowerUp(){const nl=Math.min(C.MAX_POWER,Math.floor(S.kills/C.POWER_KILLS));
   if(nl>S.power){S.power=nl;sfx.powerUp();
     spawnP(camera.position.clone().add(new THREE.Vector3(0,0,-3)),PCOLORS[S.power],25,1.5);
+    try{cockpitPowerUpFlash(nl)}catch(_){}// v7.227: cockpit HUD reaction
     if(nl===C.MAX_POWER&&S.napalmAmmo===0){S.napalmAmmo=C.NAPALM_START;updateNapalmDisplay();
       document.getElementById('napalm-box').style.display='block'}}}
+
+// v7.227: Cockpit visual reaction to power-up — color-coded flash, scan line, LV label
+function cockpitPowerUpFlash(level){
+  const hex='#'+PCOLORS[Math.min(level,4)].toString(16).padStart(6,'0');
+  const labels=['','ARMED','ENHANCED','REINFORCED','MAXIMUM POWER'];
+  // Flash cockpit corners
+  const ck=document.getElementById('cockpit-frame');
+  if(ck&&ck.style.display!=='none'){
+    ck.querySelectorAll('.corner').forEach(c=>{
+      c.style.transition='none';c.style.borderColor=hex;c.style.boxShadow='0 0 16px '+hex;
+      setTimeout(()=>{c.style.transition='border-color 1.2s,box-shadow 1.2s';
+        c.style.borderColor='rgba(0,255,0,0.35)';c.style.boxShadow='none';},250);
+    });
+    // Flash laser units
+    ['lu-tl','lu-tr','lu-bl','lu-br'].forEach(id=>{
+      const el=document.getElementById(id);if(!el)return;
+      el.style.borderColor=hex;el.style.boxShadow='0 0 22px '+hex;el.style.color=hex;
+      setTimeout(()=>{el.style.transition='border-color 1s,box-shadow 1s,color 1s';
+        el.style.borderColor='';el.style.boxShadow='';el.style.color='';
+        setTimeout(()=>{el.style.transition=''},1000);},500);
+    });
+  }
+  // Overlay: scan sweep + LV label + corner flares
+  let ov=document.getElementById('cockpit-pw-overlay');
+  if(!ov){ov=document.createElement('div');ov.id='cockpit-pw-overlay';document.body.appendChild(ov);}
+  ov.innerHTML='';ov.style.color=hex;ov.style.display='block';
+  // Sweep line
+  const sw=document.createElement('div');sw.className='cpw-sweep';ov.appendChild(sw);
+  // Label
+  const lb=document.createElement('div');lb.className='cpw-label';
+  lb.textContent='◆ POWER LV.'+level+' — '+(labels[level]||'UPGRADED')+' ◆';
+  ov.appendChild(lb);
+  // Corner flares
+  ['cpw-tl','cpw-tr','cpw-bl','cpw-br'].forEach(cls=>{
+    const d=document.createElement('div');d.className='cpw-corner '+cls;ov.appendChild(d);
+  });
+  clearTimeout(ov._hideT);
+  ov._hideT=setTimeout(()=>{ov.style.display='none';ov.innerHTML=''},1500);
+}
 
 // ============ BONUS ============
 function triggerBonus(){S.phase='BONUS';S.bonusTimer=C.BONUS_DUR;S.nextBonus+=C.BONUS_THR;
