@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.209</title>
+<title>COSMIC INVADERS v7.210</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -29662,7 +29662,7 @@ function enterForestSpeederEscape(){
   forestGuards=[];
   forestBeams=[];
   forestDungeon=null;
-  scene.background=new THREE.Color(0x003311);
+  scene.background=new THREE.Color(0x001a22);// deep alien teal-black night
   buildBikeScene();
   forestBike={
     state:'ride',
@@ -29694,6 +29694,113 @@ function enterForestSpeederEscape(){
     }
   }
   try{updateForestHUD()}catch(e){}
+}
+
+// v7.210: Glowing alien mushroom for the forest bike chase sides
+function makeAlienMushroom(){
+  const g=new THREE.Group();
+  const palettes=[0x00ffcc,0x8844ff,0x0099ff,0xff44cc,0x44ffaa,0xcc44ff];
+  const c=palettes[Math.floor(Math.random()*palettes.length)];
+  const h=1.2+Math.random()*2.8;
+  const capR=0.9+Math.random()*1.4;
+  // Stalk
+  const mStalk=new THREE.LineBasicMaterial({color:0x223322,transparent:true,opacity:.85});
+  const stalk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.1+Math.random()*.06,.15+Math.random()*.08,h,6)),mStalk);
+  stalk.position.y=h/2;g.add(stalk);
+  // Cap wireframe (inverted broad cone)
+  const mCap=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.9});
+  const cap=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(capR,capR*.45,10)),mCap);
+  cap.rotation.x=Math.PI;cap.position.y=h+capR*.12;g.add(cap);
+  // Cap fill (glow)
+  const capFill=new THREE.Mesh(new THREE.ConeGeometry(capR*.88,capR*.38,10),
+    new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.18,side:THREE.DoubleSide}));
+  capFill.rotation.x=Math.PI;capFill.position.y=h+capR*.12;g.add(capFill);
+  // Underside glow rings (3 concentric)
+  const mRing=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.55});
+  for(let i=0;i<3;i++){
+    const ring=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(capR*(0.25+i*.22),.025,4,12)),mRing);
+    ring.position.y=h-.05;g.add(ring);
+  }
+  // Glowing spots on cap surface (4 dots)
+  const mSpot=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.5});
+  for(let i=0;i<4;i++){
+    const a=(i/4)*Math.PI*2,r=capR*.48;
+    const spot=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CircleGeometry(.07,5)),mSpot);
+    spot.position.set(Math.cos(a)*r,h+.08,Math.sin(a)*r);spot.rotation.x=-Math.PI/2;g.add(spot);
+  }
+  // Small baby mushrooms at base (1-2)
+  const babies=1+Math.floor(Math.random()*2);
+  for(let b=0;b<babies;b++){
+    const bh=.25+Math.random()*.4,br=.18+Math.random()*.2;
+    const ba=(b/babies)*Math.PI*2+Math.random();
+    const bs=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.04,.06,bh,5)),mStalk);
+    bs.position.set(Math.cos(ba)*(.35+Math.random()*.3),bh/2,Math.sin(ba)*(.35+Math.random()*.3));g.add(bs);
+    const bc=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(br,br*.4,7)),mCap);
+    bc.rotation.x=Math.PI;bc.position.set(Math.cos(ba)*(.35+Math.random()*.3),bh+br*.1,Math.sin(ba)*(.35+Math.random()*.3));g.add(bc);
+  }
+  return g;
+}
+
+// v7.210: Wide-branching alien tree with hanging moss (Avatar/Pandora style)
+function makeAlienForestTree(mTrunk,mLeaves,mMoss){
+  const g=new THREE.Group();
+  const h=5+Math.random()*5;// tall trees 5-10m
+  // Trunk (slightly tapered, more segments)
+  const trunk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.18,.38,h,.7,6)),mTrunk);
+  trunk.position.y=h/2;trunk.rotation.y=Math.random()*Math.PI*2;g.add(trunk);
+  // Fill trunk
+  const trunkFill=new THREE.Mesh(new THREE.CylinderGeometry(.16,.36,h,6),
+    new THREE.MeshBasicMaterial({color:0x1a0d05}));
+  trunkFill.position.y=h/2;g.add(trunkFill);
+  // 3-4 branch tiers spreading wide
+  const tiers=3+Math.floor(Math.random()*2);
+  for(let t=0;t<tiers;t++){
+    const yPos=h*(0.42+t*.17);
+    const tierSpread=2.5+Math.random()*2+t*1.2;
+    const bCount=4+Math.floor(Math.random()*3);
+    for(let b=0;b<bCount;b++){
+      const ang=(b/bCount)*Math.PI*2+Math.random()*.25+t*.3;
+      const bLen=tierSpread*(0.65+Math.random()*.5);
+      const ex=Math.cos(ang)*bLen,ez=Math.sin(ang)*bLen;
+      // Branch arm (thin box drooping slightly)
+      const branch=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.06,.1,bLen,.4,4)),mTrunk);
+      branch.rotation.z=Math.PI/2;branch.rotation.y=-ang;
+      branch.position.set(ex/2,yPos-bLen*.1,ez/2);g.add(branch);
+      // Leaf cluster at tip (sphere)
+      const ls=.7+Math.random()*.7;
+      const leaf=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(ls,5,4)),mLeaves);
+      leaf.position.set(ex*.88,yPos-.2,ez*.88);g.add(leaf);
+      // Secondary leaf at mid-branch
+      if(Math.random()<.6){
+        const ls2=.4+Math.random()*.4;
+        const leaf2=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(ls2,4,3)),mLeaves);
+        leaf2.position.set(ex*.5,yPos-.1,ez*.5);g.add(leaf2);
+      }
+      // Hanging moss strands (2-4 thin lines dropping from branch)
+      const mossN=2+Math.floor(Math.random()*3);
+      for(let m=0;m<mossN;m++){
+        const mLen=.4+Math.random()*1.6;
+        const mx=ex*(0.3+Math.random()*.55)+(Math.random()-.5)*.4;
+        const mz=ez*(0.3+Math.random()*.55)+(Math.random()-.5)*.4;
+        const moss=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.012,.008,mLen,3)),mMoss);
+        moss.position.set(mx,yPos-mLen/2-.3,mz);g.add(moss);
+        // Wispy tip
+        const tip=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(.06,3,3)),mMoss);
+        tip.position.set(mx,yPos-mLen-.35,mz);g.add(tip);
+      }
+    }
+  }
+  // A few long drooping root-buttresses at base
+  const rootN=3+Math.floor(Math.random()*3);
+  for(let r=0;r<rootN;r++){
+    const ra=(r/rootN)*Math.PI*2+Math.random()*.5;
+    const rLen=.8+Math.random()*1.2;
+    const pts=[new THREE.Vector3(0,.6,0),new THREE.Vector3(Math.cos(ra)*rLen*.7,.1,Math.sin(ra)*rLen*.7),
+      new THREE.Vector3(Math.cos(ra)*rLen,0,Math.sin(ra)*rLen)];
+    const rootLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mTrunk);
+    g.add(rootLine);
+  }
+  return g;
 }
 
 function buildBikeScene(){
@@ -29751,22 +29858,37 @@ function buildBikeScene(){
     new THREE.LineBasicMaterial({color:0xffffcc,transparent:true,opacity:.9}));
   moon.position.set(40,55,-160);starGroup.add(moon);
   forestScene.add(starGroup);
-  // v6.95: 120 trees per side (was 60), spread over 440m - SIDE TREES (lane edge) ===
-  for(let i=0;i<120;i++){
+  // v7.210: alien forest trees with wide branches + hanging moss + glowing mushrooms
+  const mMoss=new THREE.LineBasicMaterial({color:0x228844,transparent:true,opacity:.65});
+  const mLeavesTeal=new THREE.LineBasicMaterial({color:0x22aa88,transparent:true,opacity:.75});
+  for(let i=0;i<100;i++){
     [-1,1].forEach(side=>{
-      const tree=new THREE.Group();
-      const h=3+Math.random()*3;
-      const trunk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.25,.35,h*.6,5)),mTrunk);
-      trunk.position.y=h*.3;tree.add(trunk);
-      for(let l=0;l<3;l++){
-        const size=1.6-l*.3;
-        const cone=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(size,h*.5,6)),mLeaves);
-        cone.position.y=h*.6+l*h*.25;tree.add(cone);
-      }
-      const tz=-400+(i/120)*440;
-      tree.position.set(side*(22+Math.random()*6),bikeTerrainHeight(tz),tz);
+      const tz=-400+(i/100)*440;
+      const tree=makeAlienForestTree(mTrunk,mLeavesTeal,mMoss);
+      tree.position.set(side*(20+Math.random()*8),bikeTerrainHeight(tz),tz);
       tree.name='bikeTree';
       forestScene.add(tree);
+      // Add second smaller tree nearby (depth layering)
+      if(Math.random()<.55){
+        const tree2=makeAlienForestTree(mTrunkDk,mLeavesDk,mMoss);
+        tree2.scale.setScalar(.65+Math.random()*.25);
+        tree2.position.set(side*(28+Math.random()*8),bikeTerrainHeight(tz+5),tz+Math.random()*20-10);
+        tree2.name='bikeTree';
+        forestScene.add(tree2);
+      }
+    });
+  }
+  // v7.210: Glowing alien mushrooms lining both sides of the path
+  for(let i=0;i<80;i++){
+    [-1,1].forEach(side=>{
+      const mz=-400+(i/80)*440;
+      const mush=makeAlienMushroom();
+      const mScale=0.8+Math.random()*1.4;
+      mush.scale.setScalar(mScale);
+      // Mushrooms closer to the path than trees (x = 12-22)
+      mush.position.set(side*(12+Math.random()*9),bikeTerrainHeight(mz),mz);
+      mush.name='bikeTree';// recycles with trees
+      forestScene.add(mush);
     });
   }
   // v6.97: COURSE OBSTACLES - smaller trees AND rocks placed in the lanes (x=-16..16) so the
@@ -29787,16 +29909,12 @@ function buildBikeScene(){
         obj.add(rock);
       }
     } else {
-      // v7.01: BIG lane tree (per user feedback: 真ん中に出てくる木は大きい木に). Taller than the
-      // side trees so the player really has to dodge them. 5-8m trunk with 3 cone layers.
-      const h=5+Math.random()*3;
-      const trunk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.35,.55,h*.55,6)),Math.random()<.4?mTrunkDk:mTrunk);
-      trunk.position.y=h*.3;obj.add(trunk);
-      for(let l=0;l<3;l++){
-        const size=1.8-l*.35;
-        const cone=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(size,h*.45,7)),Math.random()<.3?mLeavesDk:mLeaves);
-        cone.position.y=h*.55+l*h*.22;obj.add(cone);
-      }
+      // v7.210: alien wide-branch trees as lane obstacles
+      const innerTree=makeAlienForestTree(Math.random()<.4?mTrunkDk:mTrunk,Math.random()<.3?mLeavesDk:mLeaves,
+        new THREE.LineBasicMaterial({color:0x228844,transparent:true,opacity:.65}));
+      innerTree.scale.setScalar(.85+Math.random()*.3);
+      innerTree.traverse(ch=>{ch.userData.preserveColor=true});
+      obj.add(innerTree);
     }
     // x in [-15..15] but bias slightly away from dead-center so single line is always traversable
     const lane=Math.random();
@@ -29865,19 +29983,30 @@ function makeSpeederBike(withRider,options){
     const grip=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.07,.06,.18,6)),mAcc);
     grip.rotation.z=Math.PI/2;grip.position.set(side*.5,.78,1.0);g.add(grip);
   });
-  // === TAIL REPULSOR STACK + EXHAUST ===
-  // Two stacked exhaust nozzles
-  [-.18,.18].forEach(yoff=>{
-    const nozzle=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.18,.22,.5,6)),mBodyDk);
-    nozzle.rotation.x=Math.PI/2;nozzle.position.set(0,.3+yoff*.3,-1.85);g.add(nozzle);
-    // Inner glow
-    const glow=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.13,.16,.45,5)),mGlowHot);
-    glow.rotation.x=Math.PI/2;glow.position.set(0,.3+yoff*.3,-1.95);g.add(glow);
+  // === TWIN JET EXHAUSTS (v7.210: blue ion drive style) ===
+  const mJet=new THREE.LineBasicMaterial({color:0x22aaff,transparent:true,opacity:.9});
+  const mJetCore=new THREE.LineBasicMaterial({color:0xaaeeff,transparent:true,opacity:.95});
+  const mJetOuter=new THREE.LineBasicMaterial({color:0x0055cc,transparent:true,opacity:.7});
+  [-.28,.28].forEach(xOff=>{
+    // Nozzle ring (the engine housing)
+    const noz=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.20,.16,.42,8)),mBodyDk);
+    noz.rotation.x=Math.PI/2;noz.position.set(xOff,.22,-1.85);g.add(noz);
+    // Inner bright ring at nozzle mouth
+    const nozMouth=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.16,.03,5,10)),mJetCore);
+    nozMouth.position.set(xOff,.22,-2.0);nozMouth.name='jetNozzle';g.add(nozMouth);
+    // Primary jet cone (long blue/cyan cone extending rearward)
+    const jet=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.18,1.6,8)),mJet);
+    jet.rotation.x=Math.PI/2;jet.position.set(xOff,.22,-2.75);jet.name='jetFlame';g.add(jet);
+    // Hot white core (inner bright jet)
+    const jetCore=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.09,.9,6)),mJetCore);
+    jetCore.rotation.x=Math.PI/2;jetCore.position.set(xOff,.22,-2.35);g.add(jetCore);
+    // Outer diffuse glow (larger, more transparent)
+    const jetOuter=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.28,2.0,6)),mJetOuter);
+    jetOuter.rotation.x=Math.PI/2;jetOuter.position.set(xOff,.22,-3.0);g.add(jetOuter);
+    // Glow disk at nozzle
+    const glowDisk=new THREE.Mesh(new THREE.CircleGeometry(.18,10),new THREE.MeshBasicMaterial({color:0x44ccff,transparent:true,opacity:.5,side:THREE.DoubleSide}));
+    glowDisk.rotation.x=Math.PI/2;glowDisk.position.set(xOff,.22,-2.02);g.add(glowDisk);
   });
-  // Trailing exhaust plume (cone)
-  const plume=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.3,.85,5)),
-    new THREE.LineBasicMaterial({color:0xff6622,transparent:true,opacity:.7}));
-  plume.position.set(0,.3,-2.4);plume.rotation.x=Math.PI/2;g.add(plume);
   // === REPULSOR DISKS (hover plates) - 4 instead of 2, with inner glow ring ===
   [[-.55,1.2],[.55,1.2],[-.55,-1.2],[.55,-1.2]].forEach(p=>{
     const disk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.32,.07,5,10)),mGlow);
@@ -30155,6 +30284,30 @@ function updateForestBike(dt){
   if(forestBike.bikeShakeT>0){
     forestBike.bikeShakeT-=dt;
     forestPilot.position.y+=Math.sin(forestBike.t*60)*.15;
+  }
+  // v7.210: twin jet exhaust particles — blue/cyan sparks from nozzle positions
+  if(forestPilot&&Math.random()<.7){
+    const jx=forestPilot.position.x,jy=forestPilot.position.y+.22,jz=forestPilot.position.z;
+    // Left jet
+    spawnP(new THREE.Vector3(jx-.28+((Math.random()-.5)*.1),jy,jz+1.9+(Math.random()*.5)),0x44ccff,3,.4);
+    // Right jet
+    spawnP(new THREE.Vector3(jx+.28+((Math.random()-.5)*.1),jy,jz+1.9+(Math.random()*.5)),0x22aaff,3,.4);
+    // Occasional white hot spark at nozzle mouth
+    if(Math.random()<.3){
+      spawnP(new THREE.Vector3(jx+((Math.random()-.5)*.55),jy,jz+1.85),0xaaeeff,2,.25);
+    }
+  }
+  // Animate jet flame cones (pulsing opacity/scale)
+  if(forestPilot){
+    forestPilot.traverse(ch=>{
+      if(ch.name==='jetFlame'&&ch.material){
+        ch.material.opacity=.65+Math.sin(forestBike.t*18)*.25;
+        ch.scale.z=.9+Math.sin(forestBike.t*22+ch.position.x)*.15;
+      }
+      if(ch.name==='jetNozzle'&&ch.material){
+        ch.material.opacity=.7+Math.sin(forestBike.t*25+.5)*.25;
+      }
+    });
   }
   forestBike.scrollPos+=forestBike.forwardSpeed*dt;
   // Scroll the environment
