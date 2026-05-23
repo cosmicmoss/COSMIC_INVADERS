@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.225</title>
+<title>COSMIC INVADERS v7.226</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -29846,6 +29846,28 @@ function makeAlienForestTree(mTrunk,mLeaves,mMoss){
   return g;
 }
 
+// v7.226: Lightweight conifer tree for bike-chase outer walls (7 objects: trunk + 3 cone tiers×edge+fill)
+function _makeBikeConiferTree(){
+  const g=new THREE.Group();
+  const h=7+Math.random()*5;
+  const mTrk=new THREE.LineBasicMaterial({color:0x553311,transparent:true,opacity:.8});
+  const mPin=new THREE.LineBasicMaterial({color:0x226633,transparent:true,opacity:.88});
+  const mFill=new THREE.MeshBasicMaterial({color:0x0d1f0f});
+  // Trunk
+  const trk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.1,.22,h*.32,4)),mTrk);
+  trk.position.y=h*.16;g.add(trk);
+  // 3 cone tiers (large at bottom → small at top)
+  for(let t=0;t<3;t++){
+    const yr=h*(0.30+t*.22);
+    const cr=1.5-t*.38+Math.random()*.15;
+    const ch=cr*1.5;
+    const ce=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(cr,ch,6)),mPin);
+    ce.position.y=yr;g.add(ce);
+    const cf=new THREE.Mesh(new THREE.ConeGeometry(cr*.9,ch*.92,6),mFill);
+    cf.position.y=yr;g.add(cf);
+  }
+  return g;
+}
 function buildBikeScene(){
   const mGround=new THREE.LineBasicMaterial({color:0x226633,transparent:true,opacity:.6});
   const mTrunk=new THREE.LineBasicMaterial({color:0x884422,transparent:true,opacity:.7});
@@ -29882,15 +29904,13 @@ function buildBikeScene(){
     new THREE.LineBasicMaterial({color:0xffffcc,transparent:true,opacity:.9}));
   moon.position.set(40,55,-160);starGroup.add(moon);
   forestScene.add(starGroup);
-  // v7.224: trees 34→10, no 2nd tree, mushrooms 27→8, obstacles 23→8 rocks-only
-  const mMoss=new THREE.LineBasicMaterial({color:0x228844,transparent:true,opacity:.65});
-  const mLeavesTeal=new THREE.LineBasicMaterial({color:0x22aa88,transparent:true,opacity:.75});
-  for(let i=0;i<10;i++){
+  // v7.226: outer conifer walls (20/side) at x±24-30 for speed-rush effect
+  for(let i=0;i<20;i++){
     [-1,1].forEach(side=>{
-      const tz=-400+(i/10)*440;
-      const tree=makeAlienForestTree(mTrunk,mLeavesTeal,mMoss);
-      tree.position.set(side*(20+Math.random()*8),bikeTerrainHeight(tz),tz);
-      tree.name='bikeTree';forestScene.add(tree);
+      const tz=-400+(i/20)*440;
+      const ct=_makeBikeConiferTree();
+      ct.position.set(side*(24+Math.random()*6),bikeTerrainHeight(tz),tz);
+      ct.name='bikeTree';forestScene.add(ct);
     });
   }
   for(let i=0;i<8;i++){
@@ -30281,15 +30301,7 @@ function updateForestBike(dt){
     forestBike.bikeShakeT-=dt;
     forestPilot.position.y+=Math.sin(forestBike.t*60)*.15;
   }
-  // v7.225: jet exhaust — 1/4 quantity, 1/2 size
-  if(forestPilot&&Math.random()<.175){
-    const jx=forestPilot.position.x,jy=forestPilot.position.y+.22,jz=forestPilot.position.z;
-    spawnP(new THREE.Vector3(jx-.28+((Math.random()-.5)*.1),jy,jz+1.9+(Math.random()*.5)),0x44ccff,1.5,.4);
-    spawnP(new THREE.Vector3(jx+.28+((Math.random()-.5)*.1),jy,jz+1.9+(Math.random()*.5)),0x22aaff,1.5,.4);
-    if(Math.random()<.075){
-      spawnP(new THREE.Vector3(jx+((Math.random()-.5)*.55),jy,jz+1.85),0xaaeeff,1,.25);
-    }
-  }
+  // v7.226: jet exhaust particles removed for performance
   // Animate jet flame cones (pulsing opacity/scale)
   if(forestPilot){
     forestPilot.traverse(ch=>{
