@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.228</title>
+<title>COSMIC INVADERS v7.229</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -30003,7 +30003,11 @@ function buildBikeScene(){
     new THREE.LineBasicMaterial({color:0xffffcc,transparent:true,opacity:.9}));
   moon.position.set(40,55,-160);starGroup.add(moon);
   forestScene.add(starGroup);
-  // v7.226: outer conifer walls (20/side) at x±24-30 for speed-rush effect
+  // v7.229: restore v7.220 counts — conifer outer wall + 100 alien trees/side + 80 mushrooms + 70 obstacles
+  // (geometry stays simplified from v7.224 for performance)
+  const mMoss=new THREE.LineBasicMaterial({color:0x228844,transparent:true,opacity:.65});
+  const mLeavesTeal=new THREE.LineBasicMaterial({color:0x22aa88,transparent:true,opacity:.75});
+  // Outer conifer speed-walls (v7.226)
   for(let i=0;i<20;i++){
     [-1,1].forEach(side=>{
       const tz=-400+(i/20)*440;
@@ -30012,35 +30016,56 @@ function buildBikeScene(){
       ct.name='bikeTree';forestScene.add(ct);
     });
   }
-  for(let i=0;i<8;i++){
+  // Inner alien trees (v7.220 count: 100/side + 55% second tree)
+  for(let i=0;i<100;i++){
     [-1,1].forEach(side=>{
-      const mz=-400+(i/8)*440;
+      const tz=-400+(i/100)*440;
+      const tree=makeAlienForestTree(mTrunk,mLeavesTeal,mMoss);
+      tree.position.set(side*(18+Math.random()*6),bikeTerrainHeight(tz),tz);
+      tree.name='bikeTree';forestScene.add(tree);
+      if(Math.random()<.55){
+        const tree2=makeAlienForestTree(mTrunkDk,mLeavesDk,mMoss);
+        tree2.scale.setScalar(.65+Math.random()*.25);
+        tree2.position.set(side*(26+Math.random()*6),bikeTerrainHeight(tz+5),tz+Math.random()*20-10);
+        tree2.name='bikeTree';forestScene.add(tree2);
+      }
+    });
+  }
+  // Mushrooms (v7.220 count: 80/side)
+  for(let i=0;i<80;i++){
+    [-1,1].forEach(side=>{
+      const mz=-400+(i/80)*440;
       const mush=makeAlienMushroom();
-      mush.scale.setScalar(0.8+Math.random()*1.2);
-      mush.position.set(side*(12+Math.random()*9),bikeTerrainHeight(mz),mz);
+      mush.scale.setScalar(0.8+Math.random()*1.4);
+      mush.position.set(side*(12+Math.random()*8),bikeTerrainHeight(mz),mz);
       mush.name='bikeTree';forestScene.add(mush);
     });
   }
-  // v7.224: 8 rock obstacles only (no tree obstacles)
-  const obstacleCount=8;
+  // Obstacles (v7.220 count: 70, mix of rocks and trees)
+  const obstacleCount=70;
   for(let i=0;i<obstacleCount;i++){
+    const isRock=Math.random()<.5;
     const obj=new THREE.Group();
-    {
-      // single boulder
-      const size=.8+Math.random()*.9;
-      const rock=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(size,0)),mRock);
-      rock.position.set(0,size*.55,0);rock.scale.y=.6+Math.random()*.4;obj.add(rock);
+    if(isRock){
+      const n=1+Math.floor(Math.random()*2);
+      for(let r=0;r<n;r++){
+        const size=.7+Math.random()*1.1;
+        const rock=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(size,0)),Math.random()<.4?mRockDk:mRock);
+        rock.position.set((Math.random()-.5)*1.2,size*.55,(Math.random()-.5)*1.2);
+        rock.scale.y=.6+Math.random()*.4;obj.add(rock);
+      }
+    } else {
+      const innerTree=makeAlienForestTree(Math.random()<.4?mTrunkDk:mTrunk,Math.random()<.3?mLeavesDk:mLeaves,mMoss);
+      innerTree.scale.setScalar(.85+Math.random()*.3);obj.add(innerTree);
     }
-    // x in [-15..15] but bias slightly away from dead-center so single line is always traversable
     const lane=Math.random();
     let ox;
-    if(lane<.3)ox=(Math.random()-.5)*4;// near centre
-    else if(lane<.65)ox=-15+Math.random()*8;// left lane
-    else ox=7+Math.random()*8;// right lane
+    if(lane<.3)ox=(Math.random()-.5)*4;
+    else if(lane<.65)ox=-15+Math.random()*8;
+    else ox=7+Math.random()*8;
     const oz=-380+(i/obstacleCount)*420;
     obj.position.set(ox,bikeTerrainHeight(oz),oz);
-    obj.name='bikeTree';// reuse the recycle path in updateForestBike
-    obj.userData.isObstacle=true;
+    obj.name='bikeTree';obj.userData.isObstacle=true;
     forestScene.add(obj);
   }
   if(forestPilot){try{forestScene.remove(forestPilot)}catch(e){}}
