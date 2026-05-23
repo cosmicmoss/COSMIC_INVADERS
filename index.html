@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.212</title>
+<title>COSMIC INVADERS v7.213</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -15728,15 +15728,36 @@ function closeTestStage(){
 // v7.208: Fire boss test (Options STORY TEST MODE → FIRE PLANET - GROUND BOSS)
 function launchFireBossTest(){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
+  // Force fire stage selection
   selectedStage=STAGES.find(s=>s.id==='fire')||STAGES[0];
   if(!S.callsign){
     const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
+  if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
+  // Hide all menus
+  ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.style.display='none';
+  });
+  try{sfx.init();sfx.resume()}catch(e){}
   S._testFromOptions=true;
+  // Full state init (same as launchForestPhaseTest)
+  S.phase='BRIDGE';
+  S.score=0;S.kills=0;S.wave=1;S.waveLeft=0;S.heat=0;S.overheated=false;S.invTimer=0;S.gameTime=0;
+  S.shieldMax=getDifficultyShieldMax();S.lives=S.shieldMax;
+  S.hasCrystalLaser=false;S.ruinsPhase=0;
+  // Clear scene residue
+  try{enemies.forEach(e=>{try{scene.remove(e.mesh)}catch(_){}});enemies.length=0}catch(e){}
+  try{pBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});pBeams.length=0}catch(e){}
+  try{eBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});eBeams.length=0}catch(e){}
+  try{particles.forEach(p=>{try{scene.remove(p.mesh)}catch(_){}});particles.length=0}catch(e){}
+  try{clearFireDragons()}catch(e){}
   try{closeOptions()}catch(e){}
-  // Jump straight into on-foot fire boss battle
-  setTimeout(()=>{try{startFirePlanetOnFoot()}catch(e){console.error('fire boss test:',e)}},300);
+  // Show test EXIT button after a tick
+  setTimeout(()=>{
+    try{startFirePlanetOnFoot()}catch(e){console.error('fire boss test:',e)}
+    try{showTestModeExitButton('fire-onfoot')}catch(e){}
+  },350);
 }
 function launchFlameModBayTest(){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
@@ -16008,8 +16029,15 @@ function exitTestModeToOptions(){
   try{if(typeof clearHarukaQueue==='function')clearHarukaQueue()}catch(e){}
   // v6.93: also clean up forest on-foot scene if active
   try{if(typeof endForestOnFoot==='function'&&forestScene)endForestOnFoot()}catch(e){}
+  // Clean up fire planet on-foot scene if active
+  try{if(typeof endFirePlanetOnFoot==='function'&&fireState&&fireState.active)endFirePlanetOnFoot()}catch(e){}
+  try{if(fireState){fireState.active=false;fireState.cleared=false}}catch(e){}
   // Clear any forest-mode overlays (destruct cinematic, elevator, etc.)
   ['forest-hud','forest-skip','forest-radar','forest-weapon-btn','forest-saber-btn','forest-elev','forest-destruct','forest-controls','forest-controls-toggle','forest-reticle','forest-onfoot','forest-landing'].forEach(id=>{
+    const e=document.getElementById(id);if(e)try{e.remove()}catch(er){}
+  });
+  // Clear fire planet HUDs
+  ['fire-onfoot-hud','fire-boss-bar','fire-landing-ov','fire-saber-ov'].forEach(id=>{
     const e=document.getElementById(id);if(e)try{e.remove()}catch(er){}
   });
   // Clear enemies / projectiles / particles / bosses
