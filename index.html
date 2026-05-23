@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.214</title>
+<title>COSMIC INVADERS v7.215</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -22082,7 +22082,7 @@ function updateIcePlanet(dt){
     // ── Player AT-RT steering ──
     if(atrt){
       const sprint=keys['ShiftLeft']||keys['ShiftRight'];
-      const aSpd=13.5*(sprint?1.4:1)*dt;// v7.145: 1.5× speed
+      const aSpd=27.0*(sprint?1.4:1)*dt;// v7.215: 2× speed (was 13.5)
       let aMoving=false;
       if(keys['KeyA']||keys['ArrowLeft']){atrt.rotation.y+=dt*2.2;aMoving=true;}
       if(keys['KeyD']||keys['ArrowRight']){atrt.rotation.y-=dt*2.2;aMoving=true;}
