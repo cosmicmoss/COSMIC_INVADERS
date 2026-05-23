@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.216</title>
+<title>COSMIC INVADERS v7.217</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -23685,6 +23685,7 @@ function _buildIceEscapeHangar(){
       const pe=new THREE.LineSegments(new THREE.EdgesGeometry(pg),mE);pe.position.set(sx*16,5.5,-114);g.add(pe);
     }
   });
+  g.position.z=-35;// v7.217: shift hangar 35 units further — past the rocky mountains
   iceScene.add(g);iceState._escapeHangar=g;
   // ═══ ENEMY INTERCEPTOR FIGHTER ═══
   const sg=new THREE.Group();sg.name='iceEscapeShip';
@@ -23771,7 +23772,7 @@ function _buildIceEscapeHangar(){
   ladderG.rotation.y=0.3;
   g.add(ladderG);// v7.200: ladder stays on ground, not attached to ship
   sg.scale.setScalar(1.7);
-  sg.position.set(0,1.4,-117);
+  sg.position.set(0,1.4,-152);// v7.217: shifted 35 units with hangar
   sg.rotation.y=Math.PI;// nose toward entrance
   sg.userData.baseColor=0x0d050a;
   iceScene.add(sg);iceState._escapeShip=sg;
@@ -23800,10 +23801,10 @@ function _updateIceEscapeCine(dt){
   // ─── escape_ride: AT-RT自動前進 (~10s) ───
   if(step==='escape_ride'){
     if(atrt){
-      atrt.position.z-=12*dt;
+      atrt.position.z-=16*dt;// v7.217: 12→16 to cover extra distance to far hangar
       atrt.rotation.y+=(0-atrt.rotation.y)*dt*3;
       if(iceState.atrtLegs){
-        const walkFreq=4.5;
+        const walkFreq=6.0;// v7.217: 4.5→6.0 matches faster ride speed
         iceState.atrtLegs.forEach(function(lg){
           const sw=Math.sin(et*walkFreq+lg.phase);
           if(lg.group)lg.group.rotation.x+=(sw*0.35-lg.group.rotation.x)*dt*12;
@@ -23819,7 +23820,7 @@ function _updateIceEscapeCine(dt){
     if(et>4&&et<4.1)try{playComm('pilot',_L('I can see the hangar!','格納庫が見えてきた！'));}catch(_){}
     if(et>=9.5){
       iceState.step='escape_board';iceState._escT=0;
-      if(atrt)atrt.position.z=Math.min(atrt.position.z,-106);
+      if(atrt)atrt.position.z=Math.min(atrt.position.z,-140);// v7.217: new hangar arrival position
       try{wfCineSubtitle(_L('◆ ENTERING HANGAR ◆','◆ 格納庫突入 ◆'),'#6ef');}catch(_){}
     }
   }
