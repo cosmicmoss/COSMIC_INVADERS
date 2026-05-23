@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.207</title>
+<title>COSMIC INVADERS v7.208</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1934,7 +1934,7 @@ class SFX{
           k.onended=()=>{try{kg.disconnect();k.disconnect()}catch(_){}}}}bar++};
     sched();this.bgmIv=setInterval(()=>{if(self.bgmOn)sched()},8*bt*1000)}
   // v7.207: crowd cheering SFX for victory celebrations
-  playCrowdCheer:function(duration){
+  playCrowdCheer(duration){
     if(!this.ctx)return;const ctx=this.ctx;
     try{
       const len=Math.ceil(ctx.sampleRate*Math.max(1,duration));
@@ -1951,7 +1951,7 @@ class SFX{
       src.start();src.stop(ctx.currentTime+duration);
       src.onended=()=>{try{src.disconnect();bp.disconnect();bp2.disconnect();g.disconnect()}catch(_){}};
     }catch(e){}
-  },
+  }
   stopBGM(){this.bgmOn=false;if(this.bgmIv){clearInterval(this.bgmIv);this.bgmIv=null}
     // v7.184: also stop boss BGM if running
     if(this._bossBGMiv){clearInterval(this._bossBGMiv);this._bossBGMiv=null}}
@@ -7302,6 +7302,14 @@ function updatePlayer(dt){
   if(keys['ArrowUp']||keys['KeyW'])player.y+=spd*yDir;
   if(keys['ArrowDown']||keys['KeyS'])player.y-=spd*yDir;
   applyTouchInput(dt);
+  // v7.208: SHIFT key = dragon-head flamethrower if unlocked (post fire-planet boss kill)
+  if(S.hasFlamethrower&&(keys['ShiftLeft']||keys['ShiftRight'])&&(S.phase==='PLAYING'||S.phase==='BONUS'||S.phase==='FORTRESS')){
+    S._flameCD=(S._flameCD||0)-dt;
+    if(S._flameCD<=0){
+      try{fireShipFlamethrower()}catch(e){}
+      S._flameCD=0.08;
+    }
+  }
   player.x=Math.max(-C.AREA_X,Math.min(C.AREA_X,player.x));
   player.y=Math.max(-C.AREA_Y*.6,Math.min(C.AREA_Y*.6,player.y));
   camera.position.x+=(player.x-camera.position.x)*6*dt;
@@ -7446,6 +7454,42 @@ function fireNapalm(){
     pBeams.push({mesh,vel:new THREE.Vector3(Math.cos(a)*10,Math.sin(a)*10,-C.BEAM_SPEED*.7),dmg:5,isNapalm:true})}
   spawnP(camera.position.clone().add(new THREE.Vector3(0,0,-5)),0xff8800,30,2);
   updateNapalmDisplay()}
+
+// v7.208: Dragon-head flamethrower — unlocked after defeating Fire Dragon boss.
+// Continuous narrow-cone forward jet, no ammo cost, rapid-fire (called every 0.08s).
+function fireShipFlamethrower(){
+  // 5 flame projectiles in a forward fan (±15°) — short range, high rate
+  for(let i=0;i<5;i++){
+    const ang=(i-2)*0.26;// ~±15° fan
+    const mesh=makeNapalmBeam();
+    if(mesh.material){
+      // Tint redder than standard napalm
+      if(mesh.material.color)mesh.material.color.setHex(0xff3300);
+    }
+    mesh.position.set(camera.position.x,camera.position.y,camera.position.z-3);
+    scene.add(mesh);
+    pBeams.push({
+      mesh,
+      vel:new THREE.Vector3(Math.sin(ang)*6,(Math.random()-.5)*1.5,-C.BEAM_SPEED*.85),
+      dmg:3,isNapalm:true,isFire:true,life:0.65
+    });
+  }
+  // Particle puff at nose
+  spawnP(camera.position.clone().add(new THREE.Vector3(0,0,-4)),0xff5500,4,1.5);
+  spawnP(camera.position.clone().add(new THREE.Vector3(0,0,-4)),0xffaa00,3,1.2);
+  // SFX: low whooshy thrum
+  try{
+    if(sfx.ctx){
+      const t=sfx.ctx.currentTime;
+      const o=sfx.ctx.createOscillator(),g=sfx.ctx.createGain(),f=sfx.ctx.createBiquadFilter();
+      o.type='sawtooth';o.frequency.setValueAtTime(110,t);
+      f.type='lowpass';f.frequency.value=900;
+      g.gain.setValueAtTime(.08,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);
+      o.connect(f);f.connect(g);g.connect(sfx.g);o.start(t);o.stop(t+.14);
+      o.onended=()=>{try{o.disconnect();f.disconnect();g.disconnect()}catch(_){}};
+    }
+  }catch(e){}
+}
 
 function updateHeatGauge(){const pct=S.heat/C.HEAT_MAX*100;
   const fill=document.getElementById('heat-fill');
@@ -12465,6 +12509,17 @@ function cleanupBossResidue(){
   // Also clear screen-flash + shake state so the next scene starts visually neutral
   try{if(typeof S!=='undefined'&&S){S.shakeT=0;S.shakeI=0}}catch(_){}
   try{const sf=document.getElementById('screen-flash');if(sf)sf.style.opacity='0'}catch(_){}
+  // v7.208: fire planet on-foot state cleanup (beams/flame particles/scene)
+  try{
+    if(typeof fireBeams!=='undefined'&&fireBeams&&fireBeams.length){
+      fireBeams.forEach(b=>{try{if(b&&b.mesh&&b.mesh.parent)b.mesh.parent.remove(b.mesh)}catch(_){}});
+      fireBeams.length=0;
+    }
+    if(typeof fireFlameParticles!=='undefined'&&fireFlameParticles&&fireFlameParticles.length){
+      fireFlameParticles.forEach(f=>{try{if(f&&f.mesh&&f.mesh.parent)f.mesh.parent.remove(f.mesh)}catch(_){}});
+      fireFlameParticles.length=0;
+    }
+  }catch(_){}
   // v7.105 ★ Fortress mesh refresh — user report (screenshot showed orange fort doors +
   // white fortress wireframe lingering during BONUS in waves 1-4): 「ボス、トレンチなどが
   // 残ったまま」. Remove the trench-run mesh + the escape mesh whenever a phase boundary is
@@ -13196,6 +13251,15 @@ let savedCamPos=new THREE.Vector3();
 let savedCamRot=new THREE.Euler();
 
 function triggerCoreDeath(){
+  // v7.208: Fire stage diverts to ground-combat against the Fire Dragon BEFORE marking cleared.
+  if(typeof shouldDivertFireStageToOnFoot==='function' && shouldDivertFireStageToOnFoot()){
+    S.coreAlive=false;
+    if(coreMesh){spawnMegaExplosion(coreMesh.position.clone(),.5);scene.remove(coreMesh);coreMesh=null}
+    try{sfx.bigExplosion();sfx.stopBGM()}catch(_){}
+    screenFlash(1.5);S.shakeT=2;S.shakeI=3;
+    setTimeout(()=>{try{startFireBossLandingCine()}catch(e){console.error('fire-land:',e)}},1800);
+    return;
+  }
   // v7.65: mark current stage as cleared for campaign progression.
   // v7.105 ★ Skip when in test-from-Options mode so trench-run testing does NOT advance the
   // campaign. User report: 「まだクリアしていないステージがすべて出てしまいます」.
@@ -13778,7 +13842,7 @@ const STAGES=[
 // feels like a real assignment from the bridge.
 const STAGE_BRIEFINGS={
   space: '#N, your mission: recon flight through Sector Alpha. Engage enemy fighters and disable the trench-run. Good hunting!',
-  fire:  '#N, FIRE PLANET assignment! Survey the corona-side approach. Watch for plasma fireballs. Mission critical.',
+  fire:  '#N, FIRE PLANET assignment! Clear the corona approach, then LAND for a face-off with the giant Fire Dragon on the volcanic surface. Bring back its head — we can mod it into a flamethrower for your ship!',
   ruins: '#N, SPACE RUINS expedition! Investigate the ancient derelict field. There are unknown AI remnants — be careful.',
   forest:'#N, FOREST PLANET drop! Master HK-CHINDERU MK is held captive in the underground base. Free him at any cost!',
   ice:   '#N, ICE PLANET infiltration. Enemy stronghold confirmed. Land in the snow forest, push through the cryo valley, and rescue the captive prisoner. Final mission before the moon!',
@@ -15021,6 +15085,113 @@ function wfCineShow(kind,duration,onDone){
       else endFn();
     })();
     return;
+  } else if(kind==='modbay_flame'){
+    // v7.208: Mod-bay variant — alien welds dragon head onto ship as a flamethrower module.
+    // Reuses makeCinModBay base scene + adds: dragon head prop + flame test fire at the end.
+    let modBayGroup;try{modBayGroup=makeCinModBay()}catch(e){modBayGroup=new THREE.Group()}
+    scene.add(modBayGroup);wfCineGroup=modBayGroup;
+    camera.position.set(0,3,12);camera.rotation.set(0,0,0);camera.lookAt(0,-2,-10);
+    wfCineSubtitle('◆ FLAMETHROWER MOD INSTALLATION ◆','#ff6622');
+    // Build the severed dragon head prop (smaller than the live boss)
+    const dragonHeadProp=new THREE.Group();
+    const dh=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(1.4,2.8,8)),
+      new THREE.LineBasicMaterial({color:0x331100,transparent:true,opacity:1}));
+    dh.rotation.x=Math.PI/2;dragonHeadProp.add(dh);
+    const dhFill=new THREE.Mesh(new THREE.ConeGeometry(1.3,2.6,8),new THREE.MeshBasicMaterial({color:0x110600}));
+    dhFill.rotation.x=Math.PI/2;dragonHeadProp.add(dhFill);
+    // Horns
+    for(let h=0;h<4;h++){
+      const ang=(h/4)*Math.PI*2;
+      const horn=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.2,1,4)),
+        new THREE.LineBasicMaterial({color:0x331100,transparent:true,opacity:1}));
+      horn.position.set(Math.cos(ang)*.8,Math.sin(ang)*.8,-.3);
+      horn.rotation.x=-Math.PI/2;horn.rotation.z=ang;dragonHeadProp.add(horn);
+    }
+    // Inner red glow (the flame nozzle)
+    const headGlow=new THREE.Mesh(new THREE.SphereGeometry(.4,8,6),new THREE.MeshBasicMaterial({color:0xff6600,transparent:true,opacity:.7}));
+    headGlow.position.z=1;dragonHeadProp.add(headGlow);
+    // Position the prop near the ship nose (will be moved during animation)
+    dragonHeadProp.position.set(-6,-1,-5);
+    modBayGroup.add(dragonHeadProp);
+    // Welding sparks helper
+    const spawnWeldSpark=(pos)=>{
+      for(let i=0;i<5;i++){
+        const sp=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.1,.1,.1)),
+          new THREE.LineBasicMaterial({color:Math.random()<.5?0xffee44:0xffffff,transparent:true,opacity:1}));
+        sp.position.copy(pos);sp.position.x+=(Math.random()-.5)*.5;sp.position.y+=(Math.random()-.5)*.5;
+        modBayGroup.add(sp);
+        // Auto-fade by piggybacking on particles? Use simple timeout:
+        const lifeMs=400+Math.random()*400;
+        const start=performance.now();
+        const fade=()=>{
+          const a=performance.now()-start;
+          if(a>lifeMs){try{modBayGroup.remove(sp)}catch(_){};return}
+          sp.position.y-=.01;
+          if(sp.material)sp.material.opacity=1-a/lifeMs;
+          requestAnimationFrame(fade);
+        };fade();
+      }
+    };
+    endFn=()=>{
+      // Set the unlock flag!
+      try{
+        S.hasFlamethrower=true;
+        if(typeof OPT!=='undefined'){OPT.hasFlamethrower=true;if(typeof saveOpt==='function')saveOpt()}
+      }catch(e){}
+      try{wfCineSubtitle('◆ FLAMETHROWER UNLOCKED — SHIFT KEY ◆','#ff8822')}catch(e){}
+      if(onDone)setTimeout(onDone,500);
+    };
+    // Voice lines
+    setTimeout(()=>{try{playComm('pilot','We got a dragon head, alien friend. Can you weld it to my ship?')}catch(e){}},800);
+    setTimeout(()=>{try{playComm('alien','HEHEHE! GREAT IDEA! BANZAI MODIFICATION!')}catch(e){}},3500);
+    setTimeout(()=>{try{playComm('alien','TEST FIRE! WATCH ZE FLAME!')}catch(e){}},8500);
+    setTimeout(()=>{try{playComm('hq','Outstanding! Shift key now fires the dragon-head flamethrower in space combat!')}catch(e){}},11500);
+    (function anim(){
+      const t=(performance.now()-startT)/1000;
+      // 0–2s: pilot carries head in, camera follows
+      if(t<2){
+        dragonHeadProp.position.x=-6+t*3;// moves toward ship
+        camera.position.set(-3+t*1.5,3+t*.3,12-t*.5);camera.lookAt(dragonHeadProp.position);
+      }
+      // 2–8s: head positioned at ship nose, welding sparks
+      else if(t<8){
+        dragonHeadProp.position.set(0,-1.5,-2);
+        dragonHeadProp.rotation.z=Math.sin(t*4)*.05;// vibration from welding
+        // Spawn occasional sparks at the joint
+        if(Math.random()<.4)spawnWeldSpark(new THREE.Vector3(0,-1.5,-2));
+        camera.position.set(4+Math.sin(t*.5)*1,2+Math.sin(t*.7)*.5,4);
+        camera.lookAt(0,-1.5,-2);
+      }
+      // 8–10s: test flame burst from the dragon head nozzle
+      else if(t<10){
+        // Spawn flame particles from the dragon head mouth
+        if(Math.random()<.85){
+          const flame=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(.4+Math.random()*.3,0)),
+            new THREE.LineBasicMaterial({color:Math.random()<.5?0xff2200:0xff8822,transparent:true,opacity:1}));
+          flame.position.set(0,-1.5,-3.5);
+          modBayGroup.add(flame);
+          const v=new THREE.Vector3((Math.random()-.5)*2,(Math.random()-.5)*1,-15);
+          const start=performance.now();
+          const fly=()=>{
+            const dt2=(performance.now()-start)/1000;
+            if(dt2>.8){try{modBayGroup.remove(flame)}catch(_){};return}
+            flame.position.addScaledVector(v,.016);
+            if(flame.material)flame.material.opacity=1-dt2/.8;
+            requestAnimationFrame(fly);
+          };fly();
+        }
+        camera.position.set(0,1,8);camera.lookAt(0,-1.5,-8);
+      }
+      // 10–14s: glory shot — slow orbit
+      else {
+        const p=(t-10)/4;
+        camera.position.set(Math.sin(p*Math.PI*.6)*8,2+p*.5,6+Math.cos(p*Math.PI*.6)*3);
+        camera.lookAt(0,-1,-2);
+      }
+      if(t<duration)wfCineAnimId=requestAnimationFrame(anim);
+      else endFn();
+    })();
+    return;
   }
   // Default timed end (for scenes without custom animator)
   setTimeout(()=>{if(endFn)endFn()},duration*1000);
@@ -15030,7 +15201,7 @@ function wfCineShow(kind,duration,onDone){
 function wfCinePlay(queue,isReplay){
   if(!queue||queue.length===0){if(isReplay)wfCineEnd();else showStageSelectOverlay();return}
   if(isReplay)wfCineShowExitButton(()=>{wfCineEnd();isReplay=null});
-  const durations={docking:3,disembark:16,elevator:7,bridge:3,modbay:26,cockpit_victory:4,hangar_welcome:6};// v7.207: +2 scenes
+  const durations={docking:3,disembark:16,elevator:7,bridge:3,modbay:26,cockpit_victory:4,hangar_welcome:6,modbay_flame:14};// v7.208: +modbay_flame
   const step=queue[0];
   wfCineShow(step,durations[step]||3,()=>{
     if(queue.length>1)wfCinePlay(queue.slice(1),isReplay);
@@ -15204,6 +15375,25 @@ function openTestStage(){
       '</button>';
   });
   html+='</div>';
+  // v7.208: FIRE PLANET on-foot test
+  html+='<div style="font-size:15px;color:#f84;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #f84">▼ '+(hk?'炎の惑星 - 地上ボス':'FIRE PLANET - GROUND BOSS')+' ▼</div>'+
+    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'ファイヤードラゴンと地上戦闘テスト':'Test the on-foot Fire Dragon boss battle')+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">'+
+    '<button type="button" onclick="launchFireBossTest()" '+
+      'style="padding:12px 16px;background:rgba(40,8,2,0.85);border:2px solid #f84;'+
+      'color:#f84;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #f8466;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'FIRE BOSS BATTLE':'FIRE BOSS BATTLE')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'ファイヤードラゴン地上戦闘へ直行':'Jump to on-foot dragon battle')+'</div>'+
+      '</button>'+
+    '<button type="button" onclick="launchFlameModBayTest()" '+
+      'style="padding:12px 16px;background:rgba(40,8,2,0.85);border:2px solid #fa6;'+
+      'color:#fa6;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #fa666;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'FLAME MOD-BAY CINE':'FLAME MOD-BAY CINE')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'火炎放射改造シネマ単体':'Just the modbay_flame cinematic')+'</div>'+
+      '</button>'+
+    '</div>';
   // v7.32: DIRECT PHASE TESTS — jump straight to FORTRESS (trench-run) or RETURN (asteroid belt
   // escape) without going through the normal wave progression. Per user 「テストステージに
   // トレンチラン、隕石群のウェーブステージを追加」.
@@ -15470,6 +15660,31 @@ function closeTestStage(){
 // v6.93: Launch directly into a specific forest-planet phase for testing.
 // phases: 'onfoot' (landing+wave1), 'guardian' (skip to gate guardian), 'dungeon' (skip to B3),
 // 'bike' (skip to speeder chase), 'destruct' (planet destruct cinematic)
+// v7.208: Fire boss test (Options STORY TEST MODE → FIRE PLANET - GROUND BOSS)
+function launchFireBossTest(){
+  const ov=document.getElementById('test-stage');if(ov)ov.remove();
+  selectedStage=STAGES.find(s=>s.id==='fire')||STAGES[0];
+  if(!S.callsign){
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    S.callsign=pool[Math.floor(Math.random()*pool.length)];
+  }
+  S._testFromOptions=true;
+  try{closeOptions()}catch(e){}
+  // Jump straight into on-foot fire boss battle
+  setTimeout(()=>{try{startFirePlanetOnFoot()}catch(e){console.error('fire boss test:',e)}},300);
+}
+function launchFlameModBayTest(){
+  const ov=document.getElementById('test-stage');if(ov)ov.remove();
+  S._testFromOptions=true;
+  try{closeOptions()}catch(e){}
+  setTimeout(()=>{
+    try{
+      S.phase='BRIDGE';
+      if(typeof wfCinePlay==='function')wfCinePlay(['modbay_flame','bridge'],false);
+    }catch(e){console.error('flame modbay test:',e)}
+  },300);
+}
+
 function launchForestPhaseTest(phase){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
   // Force Forest Planet selection
@@ -25066,6 +25281,10 @@ let forestGuards=[];
 let forestBeams=[];
 let forestCorpses=[];// v6.89: dead guards that topple + linger
 let forestState=null;
+// v7.208: fire planet on-foot boss battle state
+let fireState={active:false,cleared:false};
+let firePilot=null;let fireDragonBoss=null;let fireScene=null;
+let fireBeams=[];let fireFlameParticles=[];
 
 // v6.89: Kill a forest guard with topple-over motion. Body stays ~18s before removal.
 function killForestGuard(g){
@@ -30883,6 +31102,732 @@ function endForestOnFoot(){
   S.onFootMode=false;
 }
 
+// ============================================================
+// v7.208: FIRE PLANET ON-FOOT BOSS BATTLE
+// Big fire dragon boss vs. pilot in fireproof suit with beam shield + ice beam gun.
+// Triggered after fire-stage space combat ends. Victory unlocks ship flamethrower.
+// ============================================================
+
+// Intercept fire-stage clearance: divert to ground combat instead of immediate stage-clear.
+function shouldDivertFireStageToOnFoot(){
+  return (typeof selectedStage!=='undefined' && selectedStage && selectedStage.id==='fire'
+    && !fireState.cleared && !fireState.active && !S._testFromOptions);
+}
+
+// 3-second landing cinematic — freeze-frame style overlay + descent text
+function startFireBossLandingCine(){
+  fireState.active=true;
+  fireState.cleared=false;
+  // Cleanup space combat residue
+  try{cleanupBossResidue()}catch(_){}
+  try{cleanupSceneCompletely()}catch(_){}
+  S.phase='FIRE_LANDING';
+  // Hide HUD
+  ['hud','shield-gauge','heat-gauge','napalm-box','reticle','cockpit-frame','boss-hp-wrap','mini-radar','tp-timer','comm-box','asteroid-radar','target-radar','ds-countdown'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.style.display='none'});
+  // Overlay: orange-tinted full-screen with "LANDING ON FIRE PLANET SURFACE"
+  let ov=document.getElementById('fire-landing-ov');if(ov)ov.remove();
+  ov=document.createElement('div');ov.id='fire-landing-ov';
+  ov.style.cssText='position:fixed;inset:0;background:radial-gradient(ellipse at center,#ff5511 0%,#882200 60%,#220000 100%);z-index:280;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ffcc88;font-family:inherit;letter-spacing:3px;animation:firelandfade 3s ease-out forwards';
+  ov.innerHTML='<style>@keyframes firelandfade{0%{opacity:0}15%{opacity:1}85%{opacity:1}100%{opacity:0}}</style>'+
+    '<div style="font-size:34px;text-shadow:0 0 20px #ff4400">◆ LANDING ON FIRE PLANET ◆</div>'+
+    '<div style="font-size:14px;margin-top:18px;opacity:.7">DESCENDING TO VOLCANIC SURFACE</div>'+
+    '<div style="font-size:13px;margin-top:30px;color:#ff8844">FACE THE FIRE DRAGON</div>';
+  document.body.appendChild(ov);
+  try{sfx.bigExplosion();sfx.stopBGM()}catch(_){}
+  if(typeof playComm==='function'){
+    setTimeout(()=>{try{playComm('hq','Fire Dragon detected on the surface. Land and engage on foot, pilot!')}catch(e){}},400);
+    setTimeout(()=>{try{playComm('alien','Take the fireproof suit. Ice beam gun online. Beam shield engaged on Shift.')}catch(e){}},2000);
+  }
+  setTimeout(()=>{
+    const o=document.getElementById('fire-landing-ov');if(o)o.remove();
+    startFirePlanetOnFoot();
+  },3200);
+}
+
+// Main on-foot mode entry
+function startFirePlanetOnFoot(){
+  try{cleanupSceneCompletely()}catch(_){}
+  S.phase='FIRE_ONFOOT';
+  S.onFootMode=true;
+  // State
+  fireState={
+    active:true, cleared:false,
+    phase:'battle',
+    pilotHP:6, pilotMaxHP:6, pilotInvTimer:0,
+    shieldActive:false, shieldMesh:null,
+    bossHP:30, bossMaxHP:30, bossPhase:'PROWL', bossPhaseT:0, bossPhaseNext:3.5,
+    shotCooldown:0, saberCooldown:0,
+    finisherActive:false, finisherT:0,
+  };
+  fireBeams=[];fireFlameParticles=[];
+  // Hide spaceship HUD
+  ['hud','shield-gauge','heat-gauge','napalm-box','reticle','cockpit-frame','boss-hp-wrap','mini-radar','tp-timer','comm-box'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.style.display='none'});
+  // Detach cockpit
+  try{
+    if(cockpitObj&&cockpitObj.parent){
+      window._fireSavedCockpitParent=cockpitObj.parent;
+      cockpitObj.parent.remove(cockpitObj);
+    }
+  }catch(e){}
+  // Build scene
+  buildFireScene();
+  // Camera behind pilot
+  if(firePilot){
+    camera.position.set(firePilot.position.x,firePilot.position.y+4,firePilot.position.z+9);
+    camera.lookAt(firePilot.position.x,firePilot.position.y+2,firePilot.position.z-6);
+  }
+  // HUD
+  showFireOnFootHUD();
+  // Touch controls
+  try{showTouchControls(true,'onfoot')}catch(e){}
+  // Subtitle + voices
+  if(typeof wfCineSubtitle==='function')wfCineSubtitle('◆ FIRE PLANET — DRAGON COMBAT ◆','#ff6622');
+  setTimeout(()=>{try{playComm('pilot','Suit holding against the heat. Engaging the dragon.')}catch(e){}},700);
+  setTimeout(()=>{try{playComm('nav','Shield with SHIFT when it breathes fire! Ice beam works when it is stunned!')}catch(e){}},3500);
+  setTimeout(()=>{try{playComm('hq','Cut off its head with the saber to finish it, #N!')}catch(e){}},7500);
+}
+
+// 3D scene construction — volcanic surface, lava cracks, boulders, dragon, pilot
+function buildFireScene(){
+  fireScene=new THREE.Group();
+  scene.add(fireScene);
+  scene.background=new THREE.Color(0x220500);
+  scene.fog=new THREE.Fog(0x551100,30,90);
+  // Ground (dark volcanic)
+  const gndMat=new THREE.LineBasicMaterial({color:0x442211,transparent:true,opacity:.85});
+  const gnd=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(160,160,16,16)),gndMat);
+  gnd.rotation.x=-Math.PI/2;gnd.position.y=-2;fireScene.add(gnd);
+  // Solid ground fill
+  const gndFill=new THREE.Mesh(new THREE.PlaneGeometry(160,160),new THREE.MeshBasicMaterial({color:0x331108}));
+  gndFill.rotation.x=-Math.PI/2;gndFill.position.y=-2.02;fireScene.add(gndFill);
+  // Lava cracks (glowing red lines)
+  for(let i=0;i<14;i++){
+    const len=8+Math.random()*16;
+    const crack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(len,.05,.4+Math.random()*.6)),
+      new THREE.LineBasicMaterial({color:0xff3300,transparent:true,opacity:.9}));
+    crack.position.set((Math.random()-.5)*120,-1.95,(Math.random()-.5)*120);
+    crack.rotation.y=Math.random()*Math.PI;fireScene.add(crack);
+    const crackGlow=new THREE.Mesh(new THREE.PlaneGeometry(len,.6),new THREE.MeshBasicMaterial({color:0xff5500,transparent:true,opacity:.55,side:THREE.DoubleSide}));
+    crackGlow.rotation.x=-Math.PI/2;crackGlow.position.copy(crack.position);crackGlow.position.y=-1.97;
+    crackGlow.rotation.z=crack.rotation.y;fireScene.add(crackGlow);
+  }
+  // Rocky outcrops (dark obstacles with orange cracks)
+  const rockMat=new THREE.LineBasicMaterial({color:0x221108,transparent:true,opacity:.95});
+  const rockGlow=new THREE.LineBasicMaterial({color:0xff4400,transparent:true,opacity:.7});
+  for(let i=0;i<10;i++){
+    const rGrp=new THREE.Group();
+    const r=2+Math.random()*2.5;
+    const rk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.DodecahedronGeometry(r,0)),rockMat);
+    rGrp.add(rk);
+    const rkF=new THREE.Mesh(new THREE.DodecahedronGeometry(r*.95,0),new THREE.MeshBasicMaterial({color:0x110600}));
+    rGrp.add(rkF);
+    // Orange crack overlay
+    const ck=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(r*.6,0)),rockGlow);
+    rGrp.add(ck);
+    const ang=Math.random()*Math.PI*2;
+    const dist=10+Math.random()*30;
+    rGrp.position.set(Math.cos(ang)*dist,-2+r*.3,Math.sin(ang)*dist-5);
+    rGrp.rotation.y=Math.random()*Math.PI;
+    fireScene.add(rGrp);
+  }
+  // Distant volcano backdrop
+  const volMat=new THREE.LineBasicMaterial({color:0x551100,transparent:true,opacity:.7});
+  for(let v=0;v<3;v++){
+    const vol=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(8+v*3,12+v*4,8)),volMat);
+    vol.position.set((v-1)*25,4,-55-v*4);fireScene.add(vol);
+  }
+  // Pilot (with fireproof suit decorations)
+  firePilot=makeFirePilot();
+  firePilot.position.set(0,-2,5);
+  firePilot.rotation.y=0;
+  fireScene.add(firePilot);
+  // Dragon boss
+  fireDragonBoss=makeFireDragonBoss();
+  fireDragonBoss.position.set(0,0,-25);
+  fireDragonBoss.rotation.y=Math.PI;// face toward pilot
+  fireScene.add(fireDragonBoss);
+  // Ambient warm point light effect (faked by emissive overlay)
+  // Hide stars/fortress meshes
+  try{if(starField)starField.visible=false}catch(_){}
+  try{if(persistentFortMesh)persistentFortMesh.visible=false}catch(_){}
+  try{if(fireSunMesh)fireSunMesh.visible=false}catch(_){}
+}
+
+// Pilot with fireproof suit on top of the tactical pilot model
+function makeFirePilot(){
+  let p;try{p=makeForestTacticalPilot()}catch(e){p=new THREE.Group()}
+  // Recolor parts to fireproof-suit aesthetic
+  p.traverse(o=>{
+    if(o.material&&o.material.color){
+      // Skip eyes/visor by checking original color heuristics — leave bright cyans alone
+      const c=o.material.color.getHex();
+      // Reskin body greens/browns → bronze-red
+      if(c===0x4a6b3a||c===0x556633||c===0x445522){o.material.color.setHex(0x884422)}
+      // Reskin armor steels → silver/heat-reflective
+      else if(c===0x667788||c===0x556677||c===0x445566){o.material.color.setHex(0xccddee)}
+    }
+  });
+  // Backpack shield generator (blue glowing box)
+  const gen=new THREE.Group();
+  const genCore=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.8,1.2,.4)),
+    new THREE.LineBasicMaterial({color:0x44aaff,transparent:true,opacity:.95}));
+  gen.add(genCore);
+  const genFill=new THREE.Mesh(new THREE.BoxGeometry(.75,1.15,.35),new THREE.MeshBasicMaterial({color:0x113355}));
+  gen.add(genFill);
+  const genGlow=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.4,.4,.1)),
+    new THREE.LineBasicMaterial({color:0x66ddff,transparent:true,opacity:1}));
+  genGlow.position.z=-.18;gen.add(genGlow);
+  gen.position.set(0,1.2,.55);// back of torso
+  p.add(gen);
+  // Ice beam gun overlay (right-hand area) — small cyan add-on near rArmFore
+  try{
+    const rFore=p.getObjectByName('rArmFore')||p.getObjectByName('rArm');
+    if(rFore){
+      const gun=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.25,.18,.7)),
+        new THREE.LineBasicMaterial({color:0x88ccff,transparent:true,opacity:1}));
+      gun.position.set(0,-.6,0);
+      rFore.add(gun);
+      const gunGlow=new THREE.Mesh(new THREE.BoxGeometry(.15,.12,.5),new THREE.MeshBasicMaterial({color:0x44aaff}));
+      gunGlow.position.set(0,-.6,-.1);
+      rFore.add(gunGlow);
+      firePilot_gun=gun;
+    }
+  }catch(e){}
+  return p;
+}
+let firePilot_gun=null;
+
+// Fire Dragon boss model — head + body segments + wings + tail
+function makeFireDragonBoss(){
+  const dragon=new THREE.Group();
+  const dark=new THREE.LineBasicMaterial({color:0x331100,transparent:true,opacity:.95});
+  const emissive=new THREE.LineBasicMaterial({color:0xff3300,transparent:true,opacity:.9});
+  const eyeMat=new THREE.LineBasicMaterial({color:0xffee44,transparent:true,opacity:1});
+  // Body segments (5 segments, tapering)
+  const bodyGrp=new THREE.Group();
+  for(let i=0;i<5;i++){
+    const r=2.5-i*.3;
+    const seg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(r,1)),dark);
+    seg.position.z=-i*3;
+    bodyGrp.add(seg);
+    const segFill=new THREE.Mesh(new THREE.OctahedronGeometry(r*.95,1),new THREE.MeshBasicMaterial({color:0x110800}));
+    segFill.position.z=-i*3;bodyGrp.add(segFill);
+    // Glowing crack along spine
+    const crack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.2,.4,r*1.5)),emissive);
+    crack.position.set(0,r*.5,-i*3);bodyGrp.add(crack);
+  }
+  bodyGrp.position.set(0,3,2);
+  dragon.add(bodyGrp);
+  // Tail (3 segments, smaller)
+  for(let i=0;i<3;i++){
+    const r=1.2-i*.3;
+    const t=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(r,0)),dark);
+    t.position.set(0,3-i*.3,-12-i*1.5);dragon.add(t);
+    const tF=new THREE.Mesh(new THREE.OctahedronGeometry(r*.9,0),new THREE.MeshBasicMaterial({color:0x110800}));
+    tF.position.copy(t.position);dragon.add(tF);
+  }
+  // Head — large pointed cone with horns + teeth
+  const head=new THREE.Group();
+  head.name='dragonHead';
+  const headCone=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(2.2,4,8)),dark);
+  headCone.rotation.x=Math.PI/2;head.add(headCone);
+  const headFill=new THREE.Mesh(new THREE.ConeGeometry(2.0,3.8,8),new THREE.MeshBasicMaterial({color:0x110800}));
+  headFill.rotation.x=Math.PI/2;head.add(headFill);
+  // Horns (6 small)
+  for(let h=0;h<6;h++){
+    const ang=(h/6)*Math.PI*2;
+    const horn=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.3,1.6,5)),dark);
+    horn.position.set(Math.cos(ang)*1.2,Math.sin(ang)*1.2,-.5);
+    horn.rotation.x=-Math.PI/2;
+    horn.rotation.z=ang;
+    head.add(horn);
+  }
+  // Teeth (4 fangs)
+  for(let f=-1;f<=1;f+=2){
+    for(let k=0;k<2;k++){
+      const fang=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.15,.6,4)),
+        new THREE.LineBasicMaterial({color:0xddccbb,transparent:true,opacity:1}));
+      fang.position.set(f*.5,-.6-k*.15,1.8);
+      fang.rotation.x=Math.PI;
+      head.add(fang);
+    }
+  }
+  // Eyes (yellow glow)
+  for(let e=-1;e<=1;e+=2){
+    const eye=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(.25,0)),eyeMat);
+    eye.position.set(e*.7,.5,1);head.add(eye);
+    const eyeFill=new THREE.Mesh(new THREE.IcosahedronGeometry(.2,0),new THREE.MeshBasicMaterial({color:0xff6600}));
+    eyeFill.position.copy(eye.position);head.add(eyeFill);
+  }
+  // Mouth inner glow (becomes visible during WINDUP/BREATH)
+  const mouthGlow=new THREE.Mesh(new THREE.SphereGeometry(.8,8,6),new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0}));
+  mouthGlow.position.z=1.5;mouthGlow.name='mouthGlow';
+  head.add(mouthGlow);
+  head.position.set(0,4.5,5);
+  dragon.add(head);
+  // Wings (folded triangles on the back)
+  for(let w=-1;w<=1;w+=2){
+    const wing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(3,5,3)),dark);
+    wing.position.set(w*2.5,5.5,1);
+    wing.rotation.z=w*Math.PI*.4;
+    wing.rotation.x=Math.PI*.3;
+    dragon.add(wing);
+    const wingFill=new THREE.Mesh(new THREE.ConeGeometry(2.8,4.8,3),new THREE.MeshBasicMaterial({color:0x220900,transparent:true,opacity:.7}));
+    wingFill.position.copy(wing.position);wingFill.rotation.copy(wing.rotation);dragon.add(wingFill);
+  }
+  // Legs (4 short stout legs)
+  for(let lx=-1;lx<=1;lx+=2){
+    for(let lz=0;lz<2;lz++){
+      const leg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.7,2.2,.7)),dark);
+      leg.position.set(lx*2.2,1.2,-1-lz*4);dragon.add(leg);
+      const legF=new THREE.Mesh(new THREE.BoxGeometry(.6,2,.6),new THREE.MeshBasicMaterial({color:0x110800}));
+      legF.position.copy(leg.position);dragon.add(legF);
+    }
+  }
+  dragon.scale.setScalar(1.4);
+  dragon.userData.headRef=head;
+  dragon.userData.mouthGlowRef=mouthGlow;
+  return dragon;
+}
+
+// Beam shield mesh — half-dome in front of pilot
+function makeBeamShield(){
+  const g=new THREE.Group();
+  const m=new THREE.LineBasicMaterial({color:0x66ddff,transparent:true,opacity:.7});
+  // Hexagonal pattern wireframe
+  const shieldGeo=new THREE.SphereGeometry(1.8,8,4,0,Math.PI*2,0,Math.PI*.5);
+  const shield=new THREE.LineSegments(new THREE.EdgesGeometry(shieldGeo),m);
+  g.add(shield);
+  const fill=new THREE.Mesh(shieldGeo,new THREE.MeshBasicMaterial({color:0x2266aa,transparent:true,opacity:.35,side:THREE.DoubleSide}));
+  g.add(fill);
+  // Outer beam ring
+  const ring=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.8,.08,4,16)),
+    new THREE.LineBasicMaterial({color:0x99eeff,transparent:true,opacity:.9}));
+  ring.rotation.x=Math.PI/2;g.add(ring);
+  g.scale.set(1.2,1.4,1.0);
+  return g;
+}
+
+// HUD setup
+function showFireOnFootHUD(){
+  let hud=document.getElementById('fire-onfoot-hud');if(hud)hud.remove();
+  hud=document.createElement('div');hud.id='fire-onfoot-hud';
+  hud.style.cssText='position:fixed;top:14px;left:14px;z-index:260;color:#ffaa66;font-family:inherit;letter-spacing:1.5px;font-size:12px;text-shadow:0 0 8px #ff4400;padding:10px 14px;background:rgba(40,10,5,.55);border:1px solid #ff6622;border-radius:6px;min-width:180px';
+  hud.innerHTML=
+    '<div style="font-size:11px;color:#ff8844">◆ FIRE DRAGON ENCOUNTER ◆</div>'+
+    '<div id="fh-pilot-hp" style="margin-top:6px">PILOT HP: <span style="color:#8f8">6/6</span></div>'+
+    '<div id="fh-boss-hp" style="margin-top:4px">DRAGON HP: <span style="color:#f44">30/30</span></div>'+
+    '<div id="fh-phase" style="margin-top:6px;font-size:10px;color:#ffcc88">PHASE: PROWL</div>'+
+    '<div style="margin-top:8px;font-size:10px;color:#aaa;line-height:1.5">SHIFT = BEAM SHIELD<br>SPACE = ICE BEAM<br>ENTER = SABER (FINISHER)</div>';
+  document.body.appendChild(hud);
+  // Boss HP bar (top center)
+  let bar=document.getElementById('fire-boss-bar');if(bar)bar.remove();
+  bar=document.createElement('div');bar.id='fire-boss-bar';
+  bar.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:260;width:400px;max-width:80vw;color:#ff6622;font-family:inherit;text-align:center';
+  bar.innerHTML='<div style="font-size:13px;letter-spacing:3px;text-shadow:0 0 10px #ff2200">▼ FIRE DRAGON ▼</div>'+
+    '<div style="margin-top:6px;height:10px;background:rgba(40,8,0,.7);border:1px solid #ff4400;border-radius:5px;overflow:hidden">'+
+      '<div id="fire-boss-fill" style="height:100%;width:100%;background:linear-gradient(90deg,#ff2200,#ff8800);transition:width .2s"></div>'+
+    '</div>';
+  document.body.appendChild(bar);
+}
+
+function updateFireOnFootHUD(){
+  const ph=document.getElementById('fh-pilot-hp');
+  if(ph){const c=fireState.pilotHP<=2?'#f44':(fireState.pilotHP<=3?'#ff4':'#8f8');ph.innerHTML='PILOT HP: <span style="color:'+c+'">'+fireState.pilotHP+'/'+fireState.pilotMaxHP+'</span>'}
+  const bh=document.getElementById('fh-boss-hp');
+  if(bh)bh.innerHTML='DRAGON HP: <span style="color:#f44">'+Math.max(0,fireState.bossHP)+'/'+fireState.bossMaxHP+'</span>';
+  const phElem=document.getElementById('fh-phase');
+  if(phElem)phElem.textContent='PHASE: '+fireState.bossPhase;
+  const fill=document.getElementById('fire-boss-fill');
+  if(fill)fill.style.width=Math.max(0,fireState.bossHP/fireState.bossMaxHP)*100+'%';
+}
+
+// Per-frame update for the on-foot fire-planet boss battle
+function updateFirePlanetOnFoot(dt){
+  if(!fireState.active||!firePilot||!fireDragonBoss)return;
+  // Pilot input — same skeleton as forest mode (A/D rotate, W/S move forward/back)
+  if(fireState.phase==='battle'&&!fireState.finisherActive){
+    const turn=2.2*dt;
+    if(keys['KeyA']||keys['ArrowLeft'])firePilot.rotation.y+=turn;
+    if(keys['KeyD']||keys['ArrowRight'])firePilot.rotation.y-=turn;
+    const spd=6*dt;
+    const fwd=new THREE.Vector3(-Math.sin(firePilot.rotation.y),0,-Math.cos(firePilot.rotation.y));
+    if(keys['KeyW']||keys['ArrowUp']){firePilot.position.addScaledVector(fwd,spd)}
+    if(keys['KeyS']||keys['ArrowDown']){firePilot.position.addScaledVector(fwd,-spd*.6)}
+    // Clamp to play area
+    firePilot.position.x=Math.max(-25,Math.min(25,firePilot.position.x));
+    firePilot.position.z=Math.max(-15,Math.min(20,firePilot.position.z));
+    firePilot.position.y=-2;
+    // Walking animation
+    const moving=keys['KeyW']||keys['ArrowUp']||keys['KeyS']||keys['ArrowDown']||keys['KeyA']||keys['KeyD']||keys['ArrowLeft']||keys['ArrowRight'];
+    try{if(typeof animateForestPilotWalk==='function')animateForestPilotWalk(firePilot,moving,dt,moving?1:0)}catch(e){}
+    // Shield (Shift held)
+    const shieldKey=keys['ShiftLeft']||keys['ShiftRight'];
+    if(shieldKey){
+      fireState.shieldActive=true;
+      if(!fireState.shieldMesh){fireState.shieldMesh=makeBeamShield();fireScene.add(fireState.shieldMesh)}
+      fireState.shieldMesh.visible=true;
+      // Position in front of pilot
+      const fp=firePilot.position.clone().addScaledVector(fwd,1.6);
+      fp.y+=1.4;
+      fireState.shieldMesh.position.copy(fp);
+      fireState.shieldMesh.rotation.y=firePilot.rotation.y;
+      // Subtle pulsing
+      const pulse=1+Math.sin(performance.now()*.008)*.05;
+      fireState.shieldMesh.scale.set(1.2*pulse,1.4*pulse,1.0*pulse);
+    } else {
+      fireState.shieldActive=false;
+      if(fireState.shieldMesh)fireState.shieldMesh.visible=false;
+    }
+    // Ice beam (Space)
+    fireState.shotCooldown=Math.max(0,fireState.shotCooldown-dt);
+    if((keys['Space']||keys['KeyZ'])&&fireState.shotCooldown<=0){
+      fireIceBeam();
+      fireState.shotCooldown=.32;
+    }
+    // Pilot iframe decrement
+    if(fireState.pilotInvTimer>0)fireState.pilotInvTimer-=dt;
+  }
+  // Update boss state machine
+  updateFireDragonBoss(dt);
+  // Update beams
+  for(let i=fireBeams.length-1;i>=0;i--){
+    const b=fireBeams[i];
+    b.mesh.position.addScaledVector(b.vel,dt);
+    b.life-=dt;
+    if(b.mesh.material)b.mesh.material.opacity=Math.max(0,b.life/b.maxLife);
+    // Hit detection on dragon head
+    const head=fireDragonBoss.userData.headRef;
+    if(head){
+      const headWorld=new THREE.Vector3();head.getWorldPosition(headWorld);
+      const d=b.mesh.position.distanceTo(headWorld);
+      if(d<3.5&&!b.hit){
+        b.hit=true;b.life=0;
+        // Damage based on boss phase
+        let dmg=1;
+        if(fireState.bossPhase==='VULNERABLE')dmg=3;
+        else if(fireState.bossPhase==='STAGGER')dmg=2;
+        else dmg=0.3;// minor in PROWL/WINDUP/BREATH
+        fireState.bossHP=Math.max(0,fireState.bossHP-dmg);
+        // Frost particles on hit
+        try{
+          for(let k=0;k<6;k++)spawnP(headWorld.clone(),0xaaeeff,3,1.5);
+          spawnP(headWorld.clone(),0xffffff,3,1);
+        }catch(e){}
+        // Stagger when hit during VULNERABLE
+        if(fireState.bossPhase==='VULNERABLE'&&fireState.bossHP>0){
+          fireState.bossPhase='STAGGER';fireState.bossPhaseT=0;
+        }
+        // Finisher trigger
+        if(fireState.bossHP<=0&&!fireState.finisherActive){
+          startFireSaberFinisherCine();
+        }
+      }
+    }
+    if(b.life<=0){fireScene.remove(b.mesh);fireBeams.splice(i,1)}
+  }
+  // Update flame particles (dragon's breath)
+  for(let i=fireFlameParticles.length-1;i>=0;i--){
+    const f=fireFlameParticles[i];
+    f.mesh.position.addScaledVector(f.vel,dt);
+    f.life-=dt;
+    if(f.mesh.material)f.mesh.material.opacity=Math.max(0,f.life/f.maxLife);
+    // Hit pilot if no shield + in flame path
+    if(!fireState.shieldActive&&fireState.pilotInvTimer<=0){
+      const dx=f.mesh.position.x-firePilot.position.x;
+      const dy=f.mesh.position.y-(firePilot.position.y+1.5);
+      const dz=f.mesh.position.z-firePilot.position.z;
+      const dd=dx*dx+dy*dy+dz*dz;
+      if(dd<2.5){
+        fireState.pilotHP=Math.max(0,fireState.pilotHP-1);
+        fireState.pilotInvTimer=.9;
+        try{sfx.bigExplosion()}catch(e){}
+        // Pilot death → reset to bridge (game over forest-style)
+        if(fireState.pilotHP<=0){
+          fireState.active=false;
+          setTimeout(()=>{try{endFirePlanetOnFoot();triggerGameOver()}catch(e){}},800);
+        }
+      }
+    } else if(fireState.shieldActive){
+      // Shield absorbs flame — spawn deflect sparks
+      const dx=f.mesh.position.x-firePilot.position.x;
+      const dz=f.mesh.position.z-firePilot.position.z;
+      if(dx*dx+dz*dz<6){
+        try{spawnP(f.mesh.position.clone(),0xaaccff,2,1)}catch(e){}
+        f.life=0;
+      }
+    }
+    if(f.life<=0){fireScene.remove(f.mesh);fireFlameParticles.splice(i,1)}
+  }
+  // Camera follow pilot (third-person)
+  if(firePilot){
+    const camFwd=new THREE.Vector3(-Math.sin(firePilot.rotation.y),0,-Math.cos(firePilot.rotation.y));
+    const camTarget=firePilot.position.clone().addScaledVector(camFwd,-8);
+    camTarget.y=firePilot.position.y+4;
+    camera.position.lerp(camTarget,.12);
+    camera.lookAt(firePilot.position.x,firePilot.position.y+2,firePilot.position.z-6);
+  }
+  // Update finisher cinematic
+  if(fireState.finisherActive){
+    updateFireSaberFinisher(dt);
+  }
+  // HUD
+  updateFireOnFootHUD();
+}
+
+// Dragon boss state machine
+function updateFireDragonBoss(dt){
+  if(!fireDragonBoss||!fireState.active||fireState.finisherActive)return;
+  fireState.bossPhaseT+=dt;
+  const head=fireDragonBoss.userData.headRef;
+  const mouthGlow=fireDragonBoss.userData.mouthGlowRef;
+  switch(fireState.bossPhase){
+    case 'PROWL':
+      // Slow left-right sway + slowly approach pilot
+      fireDragonBoss.position.x=Math.sin(performance.now()*.0006)*6;
+      fireDragonBoss.position.z=Math.min(-12,fireDragonBoss.position.z+dt*0.3);
+      // Head looks toward pilot
+      if(head&&firePilot){
+        const dx=firePilot.position.x-fireDragonBoss.position.x;
+        head.rotation.y=Math.atan2(dx,15)*.6;
+      }
+      if(fireState.bossPhaseT>fireState.bossPhaseNext){
+        fireState.bossPhase='WINDUP';fireState.bossPhaseT=0;
+        try{playComm('nav','Dragon is winding up — SHIELD UP!')}catch(e){}
+      }
+      break;
+    case 'WINDUP':
+      // Head tilts back, mouth glow ramps up
+      if(head)head.rotation.x=Math.min(.4,-(fireState.bossPhaseT/1.2)*.5);
+      if(mouthGlow&&mouthGlow.material)mouthGlow.material.opacity=Math.min(1,fireState.bossPhaseT/1.2);
+      if(fireState.bossPhaseT>1.2){
+        fireState.bossPhase='FLAME_BREATH';fireState.bossPhaseT=0;
+        try{sfx.bigExplosion()}catch(e){}
+      }
+      break;
+    case 'FLAME_BREATH':
+      // Spawn flame stream toward pilot
+      if(head&&firePilot){
+        const hp=new THREE.Vector3();head.getWorldPosition(hp);
+        const dir=firePilot.position.clone().sub(hp).normalize();
+        // Multiple particles per frame
+        for(let k=0;k<3;k++){
+          const flameMat=new THREE.LineBasicMaterial({color:k===0?0xff2200:(k===1?0xff7722:0xffcc44),transparent:true,opacity:1});
+          const flame=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(.6+Math.random()*.4,0)),flameMat);
+          flame.position.copy(hp);
+          fireScene.add(flame);
+          const spread=(Math.random()-.5)*.3;
+          const vel=new THREE.Vector3(dir.x+spread,dir.y+(Math.random()-.5)*.2,dir.z+spread).normalize().multiplyScalar(18+Math.random()*6);
+          fireFlameParticles.push({mesh:flame,vel,life:1.2,maxLife:1.2});
+        }
+      }
+      if(fireState.bossPhaseT>2.5){
+        fireState.bossPhase='VULNERABLE';fireState.bossPhaseT=0;
+        if(head)head.rotation.x=.25;
+        if(mouthGlow&&mouthGlow.material)mouthGlow.material.opacity=.4;
+        try{playComm('nav','Now! Hit it with the ice beam!')}catch(e){}
+      }
+      break;
+    case 'VULNERABLE':
+      // Static low pose, glowing dim
+      if(head)head.rotation.x=.25+Math.sin(performance.now()*.005)*.04;
+      if(fireState.bossPhaseT>3.0){
+        fireState.bossPhase='PROWL';fireState.bossPhaseT=0;
+        fireState.bossPhaseNext=3.0+Math.random()*1.5;
+        if(head)head.rotation.x=0;
+        if(mouthGlow&&mouthGlow.material)mouthGlow.material.opacity=0;
+      }
+      break;
+    case 'STAGGER':
+      // Brief flinch
+      if(head)head.rotation.x=Math.sin(fireState.bossPhaseT*30)*.08+.25;
+      if(fireState.bossPhaseT>0.8){
+        fireState.bossPhase='VULNERABLE';fireState.bossPhaseT=Math.max(0,fireState.bossPhaseT-0.8);
+      }
+      break;
+  }
+  // Subtle wing flap idle
+  fireDragonBoss.traverse(o=>{
+    // Skip — wings are static for now
+  });
+}
+
+// Ice beam shot from pilot
+function fireIceBeam(){
+  if(!firePilot)return;
+  const fwd=new THREE.Vector3(-Math.sin(firePilot.rotation.y),0,-Math.cos(firePilot.rotation.y));
+  const origin=firePilot.position.clone();
+  origin.y+=1.5;origin.addScaledVector(fwd,1.0);
+  const beamMat=new THREE.LineBasicMaterial({color:0x88ccff,transparent:true,opacity:1});
+  const beam=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.25,.25,2)),beamMat);
+  beam.position.copy(origin);
+  // Orient along firing direction
+  beam.lookAt(origin.clone().add(fwd));
+  fireScene.add(beam);
+  fireBeams.push({mesh:beam,vel:fwd.clone().multiplyScalar(45),life:1.3,maxLife:1.3,hit:false});
+  // SFX: shimmery cyan
+  try{
+    if(sfx.ctx){
+      const t=sfx.ctx.currentTime;
+      const o=sfx.ctx.createOscillator(),g=sfx.ctx.createGain();
+      o.type='triangle';o.frequency.setValueAtTime(1800,t);
+      o.frequency.exponentialRampToValueAtTime(900,t+.12);
+      g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);
+      o.connect(g);g.connect(sfx.g);o.start(t);o.stop(t+.2);
+      o.onended=()=>{try{o.disconnect();g.disconnect()}catch(_){}};
+    }
+  }catch(e){}
+}
+
+// Saber finisher cinematic — auto-triggered when boss HP hits 0
+function startFireSaberFinisherCine(){
+  if(fireState.finisherActive)return;
+  fireState.finisherActive=true;
+  fireState.finisherT=0;
+  fireState.bossPhase='FINISHER';
+  // Disable inputs implicitly via finisherActive guard
+  try{wfCineSubtitle('◆ FINISHER ◆','#88ccff')}catch(e){}
+  try{playComm('pilot','Time to finish this!')}catch(e){}
+  // Spawn the lightsaber visual on pilot's hand
+  if(firePilot&&!fireState._saberMesh){
+    const saberMat=new THREE.LineBasicMaterial({color:0x88ddff,transparent:true,opacity:1});
+    const saber=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.18,2.6,.18)),saberMat);
+    const saberCore=new THREE.Mesh(new THREE.BoxGeometry(.14,2.5,.14),new THREE.MeshBasicMaterial({color:0xffffff}));
+    saber.add(saberCore);
+    try{
+      const rFore=firePilot.getObjectByName('rArmFore')||firePilot.getObjectByName('rArm');
+      if(rFore){saber.position.set(0,-1.5,0);rFore.add(saber)}
+      else{saber.position.copy(firePilot.position).add(new THREE.Vector3(0.5,1.8,0.3));fireScene.add(saber)}
+    }catch(e){}
+    fireState._saberMesh=saber;
+  }
+}
+
+function updateFireSaberFinisher(dt){
+  fireState.finisherT+=dt;
+  const t=fireState.finisherT;
+  const head=fireDragonBoss&&fireDragonBoss.userData.headRef;
+  // 0-1s: dragon collapses, pilot runs toward dragon
+  if(t<1.0){
+    if(head)head.rotation.x=Math.min(.8,.25+t*.6);
+    // Pilot moves toward dragon
+    if(firePilot){
+      const dz=(fireDragonBoss.position.z+8)-firePilot.position.z;
+      firePilot.position.z+=dz*Math.min(1,dt*2.5);
+      firePilot.position.x*=.92;// center
+      firePilot.rotation.y=Math.PI;// face dragon
+    }
+    // Camera close on dragon head
+    if(head){
+      const hp=new THREE.Vector3();head.getWorldPosition(hp);
+      camera.position.lerp(new THREE.Vector3(hp.x+3,hp.y+1,hp.z+5),.1);
+      camera.lookAt(hp);
+    }
+  }
+  // 1-2s: pilot leaps + saber overhead swing
+  else if(t<2.0){
+    const p=(t-1)/1;
+    if(firePilot){
+      firePilot.position.y=-2+Math.sin(p*Math.PI)*3.5;// jump arc
+    }
+    // Saber rotation (overhead swing)
+    if(fireState._saberMesh){
+      // mounted to forearm so move via rArmFore
+      try{
+        const rFore=firePilot.getObjectByName('rArmFore')||firePilot.getObjectByName('rArm');
+        if(rFore){rFore.rotation.x=-Math.PI/2+p*Math.PI*1.3}
+      }catch(e){}
+    }
+    // Slight slow-mo camera
+    if(firePilot){
+      camera.position.lerp(new THREE.Vector3(firePilot.position.x+5,firePilot.position.y+3,firePilot.position.z+5),.15);
+      camera.lookAt(firePilot.position.x,firePilot.position.y+1,firePilot.position.z-4);
+    }
+  }
+  // 2-2.5s: head decapitates + falls
+  else if(t<2.5){
+    if(head&&!fireState._headDetached){
+      // Detach head from dragon, give it falling motion
+      fireState._headDetached=true;
+      const hp=new THREE.Vector3();head.getWorldPosition(hp);
+      fireDragonBoss.remove(head);
+      head.position.copy(hp);
+      head.userData.vel=new THREE.Vector3(2,-2,3);
+      fireScene.add(head);
+      try{sfx.bigExplosion();spawnMegaExplosion(hp.clone(),.6)}catch(e){}
+    }
+    // Falling head physics
+    if(head&&head.userData.vel){
+      head.position.addScaledVector(head.userData.vel,dt*4);
+      head.userData.vel.y-=dt*8;
+      head.rotation.z+=dt*4;
+      head.rotation.x+=dt*2;
+    }
+    if(firePilot)firePilot.position.y=-2;
+  }
+  // 2.5-3.5s: victory pose
+  else if(t<3.5){
+    if(firePilot){
+      const rArm=firePilot.getObjectByName('rArm');
+      if(rArm)rArm.rotation.x=-Math.PI*1.2;// raised
+      const lArm=firePilot.getObjectByName('lArm');
+      if(lArm)lArm.rotation.x=-Math.PI*0.5;
+    }
+  }
+  // 3.5-5.0s: voice + transition
+  else if(t<5.0){
+    if(!fireState._victoryAnnounced){
+      fireState._victoryAnnounced=true;
+      try{playComm('pilot','We can mod this head into a flamethrower! Taking it back!')}catch(e){}
+      try{wfCineSubtitle('◆ DRAGON SLAIN — HEAD RECOVERED ◆','#ffcc44')}catch(e){}
+    }
+  }
+  // 5.0s: trigger return to station
+  else if(!fireState._returnTriggered){
+    fireState._returnTriggered=true;
+    setTimeout(()=>startFireVictoryReturn(),200);
+  }
+}
+
+// Victory return — clean up and return to station with the mod-bay flame cinematic
+function startFireVictoryReturn(){
+  fireState.cleared=true;
+  // Mark fire stage cleared
+  try{if(!S._testFromOptions&&typeof markStageCleared==='function')markStageCleared('fire')}catch(e){}
+  // Clean fire on-foot scene
+  endFirePlanetOnFoot();
+  // Start return cinematic: docking → modbay_flame → bridge
+  S.phase='BRIDGE';
+  try{
+    if(typeof wfCinePlay==='function'){
+      wfCinePlay(['docking','modbay_flame','bridge'],false);
+    } else if(typeof showStageSelectOverlay==='function'){
+      showStageSelectOverlay();
+    }
+  }catch(e){console.warn('fire victory return:',e)}
+}
+
+function endFirePlanetOnFoot(){
+  try{if(fireScene){scene.remove(fireScene);fireScene=null}}catch(e){}
+  firePilot=null;fireDragonBoss=null;
+  fireBeams=[];fireFlameParticles=[];
+  // Restore cockpit
+  try{
+    if(cockpitObj&&window._fireSavedCockpitParent&&!cockpitObj.parent){
+      window._fireSavedCockpitParent.add(cockpitObj);
+    }
+    window._fireSavedCockpitParent=null;
+  }catch(e){}
+  // Hide HUD
+  ['fire-onfoot-hud','fire-boss-bar','fire-landing-ov'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove()});
+  if(starField)starField.visible=true;
+  scene.background=null;scene.fog=null;
+  S.onFootMode=false;
+  fireState.active=false;
+}
+
 // v6.76: Auto-complete the forest mission (placeholder) and return to station
 function forestAutoCompleteAndReturn(){
   const ov=document.getElementById('forest-onfoot');if(ov)ov.remove();
@@ -32007,6 +32952,8 @@ const OPT={masterVol:0.55,bgmVol:1.0,sfxVol:1.0,voiceVol:0.6,sensitivity:1.0,
   sfxVariants:{laser:0,hit:0,explosion:0},
   // v7.65: Campaign progression
   campaignClear:[],
+  // v7.208: persistent flamethrower upgrade — unlocked after defeating fire dragon
+  hasFlamethrower:false,
   // v7.159: Character name overrides — editable from Options › CHARACTER NAMES
   charNames:{
     hq:'HQ COMMAND',         hqJp:'司令部',
@@ -34142,6 +35089,9 @@ function actualStartGame(){
   S.shakeT=0;S.cycle=0;S.heat=0;S.overheated=false;S.napalmAmmo=C.NAPALM_START;S.returnTimer=0;S.dockTimer=0;S.dockPhase=0;
   S._waveGapT=null;// v7.199: inter-wave delay timer
   S.hasCrystalLaser=false;S.ruinsPhase=0;S.ruinsTrapsCleared=0;// v6.69: reset ruins mission on new game
+  // v7.208: restore flamethrower upgrade from saved campaign progress (persists across runs)
+  S.hasFlamethrower=(typeof OPT!=='undefined'&&OPT.hasFlamethrower)||false;
+  if(typeof fireState!=='undefined'&&fireState){fireState.active=false;fireState.cleared=false}
   // v6.71: reset ruins post-mod state
   targetPracticeState=null;
   const tpEl=document.getElementById('tp-timer');if(tpEl)tpEl.style.display='none';
@@ -34303,6 +35253,8 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
     case 'EJECTING':updateEject(dt);updateParticles(dt);break;
     case 'CONTINUE':updateContinueScene(dt);updateParticles(dt);break;
     case 'FOREST':S.gameTime+=dt;try{updateForestOnFoot(dt)}catch(e){console.error('forest:',e)}updateParticles(dt);break;
+    case 'FIRE_ONFOOT':S.gameTime+=dt;try{updateFirePlanetOnFoot(dt)}catch(e){console.error('fire-onfoot:',e)}updateParticles(dt);break;
+    case 'FIRE_LANDING':S.gameTime+=dt;updateParticles(dt);break;
     case 'GAMEOVER':case 'VICTORY':updateParticles(dt);updateBeams(dt);break}
   updateStars(dt);updateSpeedLines(dt);updatePersistentFortress(dt);updateStageFilters();
   // v7.189: stolen fighter — baby alien button-mashing events
