@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.227</title>
+<title>COSMIC INVADERS v7.228</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1687,6 +1687,50 @@ class SFX{
   gameOver(){if(!this.ctx)return;const t=this.ctx.currentTime;
     [440,370,311,261,220,185,147].forEach((f,i)=>{this._o('sawtooth',f,t+i*.3,.45,.1);this._o('sine',f*.5,t+i*.3,.5,.07)})}
   stamp(){if(!this.ctx)return;const t=this.ctx.currentTime;this._n(t,.1,.3,5000,200);this._o('sine',250,t,.15,.2)}
+  // v7.228: Fire planet ambient SFX — ボワーーー / メラメラ / バチバチ
+  firePillarWhoosh(){if(!this.ctx)return;const t=this.ctx.currentTime;
+    // ボワーーー: low bass punch + upward whoosh roar
+    this._o('sawtooth',55,t,.45,.15);this._o('sine',38,t,.55,.12);
+    this._o('sawtooth',80,t+.05,.3,.10);
+    // Upward sweep (whoosh tail)
+    const o2=this.ctx.createOscillator();o2.type='sawtooth';
+    o2.frequency.setValueAtTime(120,t+.08);o2.frequency.exponentialRampToValueAtTime(35,t+1.8);
+    const g2=this.ctx.createGain();g2.gain.setValueAtTime(.22,t+.08);g2.gain.exponentialRampToValueAtTime(.001,t+1.8);
+    o2.connect(g2);g2.connect(this.g);o2.start(t+.08);o2.stop(t+1.9);
+    // Noise roar
+    const buf=this.ctx.createBuffer(1,Math.floor(this.ctx.sampleRate*2.2),this.ctx.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const ns=this.ctx.createBufferSource();ns.buffer=buf;
+    const bp=this.ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=220;bp.Q.value=0.4;
+    const ng=this.ctx.createGain();ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(.28,t+.06);
+    ng.gain.exponentialRampToValueAtTime(.001,t+2.2);
+    ns.connect(bp);bp.connect(ng);ng.connect(this.g);ns.start(t);ns.stop(t+2.3);}
+  fireCrackle(){if(!this.ctx)return;const t=this.ctx.currentTime;
+    // バチバチ: rapid sharp noise pops at random intervals
+    const nPops=4+Math.floor(Math.random()*5);
+    for(let k=0;k<nPops;k++){
+      const pt=t+k*.04+Math.random()*.10;
+      const buf=this.ctx.createBuffer(1,Math.floor(this.ctx.sampleRate*.05),this.ctx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const s=this.ctx.createBufferSource();s.buffer=buf;
+      const hp=this.ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=1500+Math.random()*2500;
+      const g=this.ctx.createGain();g.gain.setValueAtTime(.14+Math.random()*.12,pt);
+      g.gain.exponentialRampToValueAtTime(.001,pt+.05);
+      s.connect(hp);hp.connect(g);g.connect(this.g);s.start(pt);s.stop(pt+.06);}}
+  fireMeramera(){if(!this.ctx)return;const t=this.ctx.currentTime;
+    // メラメラ: flickering bandpass noise (medium burn)
+    const dur=1.0+Math.random()*1.2;
+    const buf=this.ctx.createBuffer(1,Math.floor(this.ctx.sampleRate*dur),this.ctx.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const s=this.ctx.createBufferSource();s.buffer=buf;
+    const bp1=this.ctx.createBiquadFilter();bp1.type='bandpass';bp1.frequency.value=380;bp1.Q.value=1.2;
+    const bp2=this.ctx.createBiquadFilter();bp2.type='bandpass';bp2.frequency.value=750;bp2.Q.value=.9;
+    const g=this.ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.10,t+.12);
+    // Flicker envelope
+    const steps=6+Math.floor(Math.random()*4);
+    for(let k=0;k<steps;k++){const kt=t+.12+k*(dur/steps);g.gain.setValueAtTime(.08+Math.random()*.07,kt);}
+    g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    s.connect(bp1);bp1.connect(bp2);bp2.connect(g);g.connect(this.g);s.start(t);s.stop(t+dur+.05);}
   bigExplosion(){if(!this.ctx)return;const t=this.ctx.currentTime;
     // v6.77: CATHARTIC EXPLOSION - designed around audio-psychology principles
     //   1) micro-silence gap (30ms) before the hit so the loud slap feels louder (contrast masking)
@@ -31526,7 +31570,41 @@ function buildFireScene(){
   fireDragonBoss.position.set(0,0,-25);
   fireDragonBoss.rotation.y=0;// v7.214: head (at local +Z) now faces +Z = toward pilot at z=5
   fireScene.add(fireDragonBoss);
-  // Ambient warm point light effect (faked by emissive overlay)
+  // v7.228: Ambient fire particle systems — 地表炎 + エンバー浮遊
+  // Layer 1: orange ground fire (150 pts)
+  const _afN=150;const _afPos=new Float32Array(_afN*3);const _afSpd=new Float32Array(_afN);
+  for(let i=0;i<_afN;i++){
+    _afPos[i*3]=(Math.random()-.5)*130;_afPos[i*3+1]=-2+Math.random()*2;_afPos[i*3+2]=(Math.random()-.5)*90-10;
+    _afSpd[i]=1.8+Math.random()*3.5;
+  }
+  const _afGeo=new THREE.BufferGeometry();_afGeo.setAttribute('position',new THREE.BufferAttribute(_afPos,3));
+  const _afPts=new THREE.Points(_afGeo,new THREE.PointsMaterial({color:0xff4400,size:.38,transparent:true,opacity:.75}));
+  fireScene.add(_afPts);
+  // Layer 2: yellow embers (80 pts)
+  const _emN=80;const _emPos=new Float32Array(_emN*3);const _emSpd=new Float32Array(_emN);
+  for(let i=0;i<_emN;i++){
+    _emPos[i*3]=(Math.random()-.5)*110;_emPos[i*3+1]=-2+Math.random()*6;_emPos[i*3+2]=(Math.random()-.5)*75-10;
+    _emSpd[i]=2.5+Math.random()*5;
+  }
+  const _emGeo=new THREE.BufferGeometry();_emGeo.setAttribute('position',new THREE.BufferAttribute(_emPos,3));
+  const _emPts=new THREE.Points(_emGeo,new THREE.PointsMaterial({color:0xffaa00,size:.22,transparent:true,opacity:.60}));
+  fireScene.add(_emPts);
+  // Layer 3: deep red embers near ground (60 pts)
+  const _rdN=60;const _rdPos=new Float32Array(_rdN*3);const _rdSpd=new Float32Array(_rdN);
+  for(let i=0;i<_rdN;i++){
+    _rdPos[i*3]=(Math.random()-.5)*100;_rdPos[i*3+1]=-2+Math.random()*1.2;_rdPos[i*3+2]=(Math.random()-.5)*70-10;
+    _rdSpd[i]=0.8+Math.random()*2;
+  }
+  const _rdGeo=new THREE.BufferGeometry();_rdGeo.setAttribute('position',new THREE.BufferAttribute(_rdPos,3));
+  const _rdPts=new THREE.Points(_rdGeo,new THREE.PointsMaterial({color:0xff2200,size:.28,transparent:true,opacity:.50}));
+  fireScene.add(_rdPts);
+  // Store refs for updateFirePlanetOnFoot
+  fireScene.userData._afPts=_afPts;fireScene.userData._afSpd=_afSpd;
+  fireScene.userData._emPts=_emPts;fireScene.userData._emSpd=_emSpd;
+  fireScene.userData._rdPts=_rdPts;fireScene.userData._rdSpd=_rdSpd;
+  // Start ambient crackling loop
+  setTimeout(()=>{try{sfx.fireMeramera()}catch(_){}},500);
+  setTimeout(()=>{try{sfx.fireCrackle()}catch(_){}},1800);
   // Hide stars/fortress meshes
   try{if(starField)starField.visible=false}catch(_){}
   try{if(persistentFortMesh)persistentFortMesh.visible=false}catch(_){}
@@ -31901,10 +31979,92 @@ function updateFirePlanetOnFoot(dt){
   if(fireState.finisherActive){
     updateFireSaberFinisher(dt);
   }
+  // v7.228: Animate ambient fire particle systems
+  if(fireScene&&fireScene.userData._afPts){
+    const t3=performance.now()*.001;
+    const _afP=fireScene.userData._afPts.geometry.attributes.position;
+    const _afS=fireScene.userData._afSpd;
+    for(let i=0;i<_afP.count;i++){
+      _afP.array[i*3+1]+=_afS[i]*dt;
+      _afP.array[i*3]+=(Math.random()-.5)*0.6*dt;
+      if(_afP.array[i*3+1]>9){
+        _afP.array[i*3]=(Math.random()-.5)*130;_afP.array[i*3+1]=-2+Math.random()*.4;
+        _afP.array[i*3+2]=(Math.random()-.5)*90-10;
+      }
+    }
+    _afP.needsUpdate=true;
+    const _emP=fireScene.userData._emPts.geometry.attributes.position;
+    const _emS=fireScene.userData._emSpd;
+    for(let i=0;i<_emP.count;i++){
+      _emP.array[i*3+1]+=_emS[i]*dt;
+      _emP.array[i*3]+=(Math.sin(t3*1.4+i)*.9)*dt;
+      if(_emP.array[i*3+1]>16){
+        _emP.array[i*3]=(Math.random()-.5)*110;_emP.array[i*3+1]=-2+Math.random()*.3;
+        _emP.array[i*3+2]=(Math.random()-.5)*75-10;
+      }
+    }
+    _emP.needsUpdate=true;
+    const _rdP=fireScene.userData._rdPts.geometry.attributes.position;
+    const _rdS=fireScene.userData._rdSpd;
+    for(let i=0;i<_rdP.count;i++){
+      _rdP.array[i*3+1]+=_rdS[i]*dt;
+      if(_rdP.array[i*3+1]>4){
+        _rdP.array[i*3]=(Math.random()-.5)*100;_rdP.array[i*3+1]=-2+Math.random()*.2;
+        _rdP.array[i*3+2]=(Math.random()-.5)*70-10;
+      }
+    }
+    _rdP.needsUpdate=true;
+    // Flicker opacity on fire layers
+    fireScene.userData._afPts.material.opacity=.65+Math.sin(t3*3.8)*.08;
+    fireScene.userData._emPts.material.opacity=.50+Math.sin(t3*5.2+1)*.09;
+  }
+  // v7.228: Fire pillar timer
+  if(fireState.active&&!fireState.finisherActive){
+    fireState._pillarT=(fireState._pillarT||0)+dt;
+    if(!fireState._pillarCD)fireState._pillarCD=5+Math.random()*5;
+    if(fireState._pillarT>=fireState._pillarCD){
+      fireState._pillarT=0;fireState._pillarCD=4+Math.random()*6;
+      const px=(Math.random()-.5)*40;
+      const pz=(Math.random()-.5)*28-5;
+      try{spawnFirePillar(px,pz)}catch(_){}
+      try{sfx.firePillarWhoosh()}catch(_){}
+    }
+    // Ambient crackle sound timer
+    fireState._crackleSfxT=(fireState._crackleSfxT||0)+dt;
+    if(fireState._crackleSfxT>=2+Math.random()*3){
+      fireState._crackleSfxT=0;
+      try{sfx.fireCrackle()}catch(_){}
+    }
+    // Meramera sound timer
+    fireState._merameraSfxT=(fireState._merameraSfxT||0)+dt;
+    if(fireState._merameraSfxT>=3.5+Math.random()*5){
+      fireState._merameraSfxT=0;
+      try{sfx.fireMeramera()}catch(_){}
+    }
+  }
   // HUD
   updateFireOnFootHUD();
 }
 
+// v7.228: Spawn a fire pillar at (px,pz) — column of rising orange/yellow spawnP particles
+function spawnFirePillar(px,pz){
+  const nLayers=10;
+  const colors=[0xff2200,0xff4400,0xff6600,0xffaa00,0xffdd44,0xffffff];
+  for(let l=0;l<nLayers;l++){
+    const y=-2+l*1.0;
+    const c=colors[Math.min(l,colors.length-1)];
+    const spread=Math.max(0.15,1.1-l*.09);
+    for(let k=0;k<5;k++){
+      const pos=new THREE.Vector3(px+(Math.random()-.5)*spread*2,y+(Math.random()-.5)*.3,pz+(Math.random()-.5)*spread*2);
+      const sz=2.5-l*.12+Math.random()*.8;
+      const life=1.0+l*.12+Math.random()*.4;
+      spawnP(pos,c,sz,life);
+    }
+  }
+  // Ground flash + shake
+  S.shakeT=.5;S.shakeI=1.0;
+  screenFlash(.28);
+}
 // Dragon boss state machine
 function updateFireDragonBoss(dt){
   if(!fireDragonBoss||!fireState.active||fireState.finisherActive)return;
