@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.230</title>
+<title>COSMIC INVADERS v7.231</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -30355,13 +30355,14 @@ function updateBikePursuerTumble(p,dt){
   p.mesh.rotation.x+=p._tumbleRX*dt;
   p.mesh.rotation.y+=p._tumbleRY*dt;
   p.mesh.rotation.z+=p._tumbleRZ*dt;
-  // Trail sparks every couple frames
+  // Trail sparks every couple frames (v7.231: half life .17)
   if((p._tumbleT*30|0)%4===0){
-    try{spawnP(p.mesh.position.clone(),0xff6622,2,.35)}catch(_){}
+    try{spawnP(p.mesh.position.clone(),0xff6622,2,.17)}catch(_){}
   }
-  // After tumble duration → explode + remove
+  // After tumble duration → explode + remove (v7.231: half-life bike explosion, no spawnMegaExplosion)
   if(p._tumbleT>=(p._tumbleDur||1.0)){
-    try{spawnMegaExplosion(p.mesh.position.clone());sfx.bigExplosion&&sfx.bigExplosion();forestScene.remove(p.mesh)}catch(_){}
+    const _bp=p.mesh.position.clone();
+    try{spawnP(_bp,0xff4400,30,1.5);spawnP(_bp,0xffff00,20,1.0);spawnP(_bp,0xffffff,15,2.0);sfx.bigExplosion&&sfx.bigExplosion();forestScene.remove(p.mesh)}catch(_){}
     p.mesh.parent=null;p._destroyed=true;
     p._tumbling=false;
     return false;
@@ -31650,17 +31651,58 @@ function makeFirePilot(){
       else if(c===0x667788||c===0x556677||c===0x445566){o.material.color.setHex(0xccddee)}
     }
   });
-  // Backpack shield generator (blue glowing box)
+  // v7.231: Shield generator backpack — detailed jet-pack style, higher position
   const gen=new THREE.Group();
-  const genCore=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.8,1.2,.4)),
-    new THREE.LineBasicMaterial({color:0x44aaff,transparent:true,opacity:.95}));
-  gen.add(genCore);
-  const genFill=new THREE.Mesh(new THREE.BoxGeometry(.75,1.15,.35),new THREE.MeshBasicMaterial({color:0x113355}));
-  gen.add(genFill);
-  const genGlow=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.4,.4,.1)),
-    new THREE.LineBasicMaterial({color:0x66ddff,transparent:true,opacity:1}));
-  genGlow.position.z=-.18;gen.add(genGlow);
-  gen.position.set(0,1.2,.55);// back of torso
+  const _pgMat=(col)=>new THREE.MeshBasicMaterial({color:col,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
+  // Main housing
+  const mGeo=new THREE.BoxGeometry(.92,1.38,.52);
+  gen.add(new THREE.Mesh(mGeo,_pgMat(0x1a3350)));
+  gen.add(new THREE.LineSegments(new THREE.EdgesGeometry(mGeo),new THREE.LineBasicMaterial({color:0x4488cc,transparent:true,opacity:.9})));
+  // Side fuel canisters (flanking the core)
+  for(const sx of[-1,1]){
+    const cGeo=new THREE.CylinderGeometry(.15,.15,.72,6);
+    const cFill=new THREE.Mesh(cGeo,_pgMat(0x0d1f33));
+    cFill.position.set(sx*.56,-.08,0);gen.add(cFill);
+    const cWire=new THREE.LineSegments(new THREE.EdgesGeometry(cGeo),new THREE.LineBasicMaterial({color:0x2266aa}));
+    cWire.position.copy(cFill.position);gen.add(cWire);
+    // Canister cap ring
+    const capGeo=new THREE.CylinderGeometry(.17,.17,.06,6);
+    for(const cy of[.33,-.33]){
+      const cap=new THREE.LineSegments(new THREE.EdgesGeometry(capGeo),new THREE.LineBasicMaterial({color:0x44aaff,transparent:true,opacity:.8}));
+      cap.position.set(sx*.56,cy,0);gen.add(cap);
+    }
+  }
+  // Top sensor mast + tip
+  const mastGeo=new THREE.CylinderGeometry(.03,.04,.58,4);
+  const mast=new THREE.Mesh(mastGeo,_pgMat(0xaaccee));
+  mast.position.set(0,.98,0);gen.add(mast);
+  const tipGeo=new THREE.BoxGeometry(.14,.14,.14);
+  const tipFill=new THREE.Mesh(tipGeo,_pgMat(0x003355));
+  tipFill.position.set(0,1.28,0);gen.add(tipFill);
+  gen.add(Object.assign(new THREE.LineSegments(new THREE.EdgesGeometry(tipGeo),new THREE.LineBasicMaterial({color:0x88ffff})),{position:tipFill.position.clone()}));
+  // Energy core panel (front face, bright cyan)
+  const coreGeo=new THREE.BoxGeometry(.44,.44,.09);
+  const cFill2=new THREE.Mesh(coreGeo,_pgMat(0x003366));
+  cFill2.position.z=-.3;gen.add(cFill2);
+  const cWire2=new THREE.LineSegments(new THREE.EdgesGeometry(coreGeo),new THREE.LineBasicMaterial({color:0x00eeff,transparent:true,opacity:1}));
+  cWire2.position.copy(cFill2.position);gen.add(cWire2);
+  // Inner cross-glow on core panel
+  const cCross=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.14,.44,.04)),new THREE.LineBasicMaterial({color:0x66ffff,transparent:true,opacity:.9}));
+  cCross.position.copy(cFill2.position);gen.add(cCross);
+  // Tech conduit strips (horizontal orange lines across housing)
+  for(const sy of[-.32,-.06,.20]){
+    const strip=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.90,.055,.06)),new THREE.LineBasicMaterial({color:0xff5500,transparent:true,opacity:.75}));
+    strip.position.set(0,sy,-.2);gen.add(strip);
+  }
+  // Dual exhaust nozzles (bottom)
+  for(const nx of[-.24,.24]){
+    const nGeo=new THREE.CylinderGeometry(.10,.14,.20,6);
+    const nFill=new THREE.Mesh(nGeo,_pgMat(0x221100));
+    nFill.position.set(nx,-.78,0);gen.add(nFill);
+    const nWire=new THREE.LineSegments(new THREE.EdgesGeometry(nGeo),new THREE.LineBasicMaterial({color:0xff4400,transparent:true,opacity:.9}));
+    nWire.position.copy(nFill.position);gen.add(nWire);
+  }
+  gen.position.set(0,2.05,.53);// raised to shoulder blade height
   p.add(gen);
   // Ice beam gun overlay (right-hand area) — small cyan add-on near rArmFore
   try{
@@ -34896,6 +34938,7 @@ const AUTO_REGISTRY=[
   {key:'gipsy_fist',      label:'Gipsy Detailed Fist', dist:5,  factory:()=>makeGipsyDetailedFist('rock')},
   {key:'golden_bomb',     label:'Golden Ball Bomb',    dist:5,  factory:()=>makeGoldenBallBomb()},
   {key:'fire_dragon_head',label:'Fire Dragon Head',    dist:8,  factory:()=>makeFireDragonHead(2.2)},
+  {key:'fire_dragon',     label:'Fire Dragon Boss',   dist:22, factory:()=>makeFireDragonBoss()},
 ];
 
 function autoRegisterPoses(){
