@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.229</title>
+<title>COSMIC INVADERS v7.230</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -31766,7 +31766,22 @@ function makeFireDragonBoss(){
   // Mouth glow
   const mouthGlow=new THREE.Mesh(new THREE.SphereGeometry(.8,8,6),new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0}));
   mouthGlow.position.z=1.5;mouthGlow.name='mouthGlow';head.add(mouthGlow);
-  head.position.set(0,4.5,5);dragon.add(head);
+  // v7.230: long neck — 4 segments from body to head
+  const _nRads=[1.15,0.98,0.82,0.68];
+  const _nZs  =[6.5, 9.0,11.5,13.8];
+  const _nYs  =[3.8, 4.2, 4.7, 5.1];
+  for(let n=0;n<4;n++){
+    const nr=_nRads[n];
+    const nGeo=new THREE.OctahedronGeometry(nr,0);
+    const nFill=new THREE.Mesh(nGeo,solidFill(0x882000));
+    nFill.position.set(0,_nYs[n],_nZs[n]);dragon.add(nFill);
+    const nSeg=new THREE.LineSegments(new THREE.EdgesGeometry(nGeo),mScale);
+    nSeg.position.copy(nFill.position);dragon.add(nSeg);
+    // Spine crack on neck
+    const nCrack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.18,.28,nr*1.9)),mLava);
+    nCrack.position.set(0,_nYs[n]+nr*.42,_nZs[n]);dragon.add(nCrack);
+  }
+  head.position.set(0,5.5,16.0);dragon.add(head);// v7.230: head at end of long neck
   // Wings (fully opaque fill, same-size)
   for(let w=-1;w<=1;w+=2){
     const wingGeo=new THREE.ConeGeometry(3,5,3);
@@ -31788,8 +31803,19 @@ function makeFireDragonBoss(){
     lf.position.set(lx*2.2,1.2,-1-lz*4);dragon.add(lf);
     const lw=new THREE.LineSegments(new THREE.EdgesGeometry(legGeo),mScale);
     lw.position.copy(lf.position);dragon.add(lw);
-    const claw=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.05,.3,.7)),mLava);
-    claw.position.set(lx*2.2,.1,-1-lz*4);dragon.add(claw);
+    // 3 fierce cone claws per foot, fanned outward
+    const _clawFan=[{a:-0.38,ox:lx*-.20,oz:.40},{a:0,ox:0,oz:.62},{a:0.38,ox:lx*.20,oz:.40}];
+    for(const cf of _clawFan){
+      const cGeo=new THREE.ConeGeometry(.13,.72,5);
+      const cFill=new THREE.Mesh(cGeo,solidFill(0x220800));
+      cFill.position.set(lx*2.2+cf.ox,-.05,-1-lz*4+cf.oz);
+      cFill.rotation.x=Math.PI*.58; cFill.rotation.z=cf.a;
+      dragon.add(cFill);
+      const cWire=new THREE.LineSegments(new THREE.EdgesGeometry(cGeo),mLava);
+      cWire.position.copy(cFill.position);
+      cWire.rotation.copy(cFill.rotation);
+      dragon.add(cWire);
+    }
   }}
   dragon.scale.setScalar(1.4);
   dragon.userData.headRef=head;
