@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.231</title>
+<title>COSMIC INVADERS v7.232</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -22082,7 +22082,7 @@ function updateIcePlanet(dt){
               const cg=iceState._robotArm.userData.clawGroup;const cwp=new THREE.Vector3();
               iceState._robotArm.updateMatrixWorld(true);cg.getWorldPosition(cwp);
               iceState._babyFigure.position.copy(cwp);
-              iceState._babyFigure.position.y-=0.18;
+              iceState._babyFigure.position.y-=1.6;// v7.232: hang well below claw tip
               iceState._babyFigure.visible=true;
             }catch(_){}
             try{screenFlash(.3);}catch(_){}
@@ -22118,7 +22118,7 @@ function updateIcePlanet(dt){
             try{
               const cg=iceState._robotArm.userData.clawGroup;const cwp=new THREE.Vector3();
               iceState._robotArm.updateMatrixWorld(true);cg.getWorldPosition(cwp);
-              iceState._babyFigure.position.copy(cwp);iceState._babyFigure.position.y-=0.18;
+              iceState._babyFigure.position.copy(cwp);iceState._babyFigure.position.y-=1.6;// v7.232
             }catch(_){}
           }
           // Camera follows arm motion
@@ -34939,6 +34939,7 @@ const AUTO_REGISTRY=[
   {key:'golden_bomb',     label:'Golden Ball Bomb',    dist:5,  factory:()=>makeGoldenBallBomb()},
   {key:'fire_dragon_head',label:'Fire Dragon Head',    dist:8,  factory:()=>makeFireDragonHead(2.2)},
   {key:'fire_dragon',     label:'Fire Dragon Boss',   dist:22, factory:()=>makeFireDragonBoss()},
+  {key:'ice_baby',        label:'Ice Baby (Alien)',   dist:4,  factory:()=>_makeBabyFigure()},
 ];
 
 function autoRegisterPoses(){
