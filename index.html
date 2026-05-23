@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.206</title>
+<title>COSMIC INVADERS v7.207</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1933,6 +1933,25 @@ class SFX{
           k.connect(kg);kg.connect(self.g);k.start(t);k.stop(t+.12);// v7.32: was k.connect(self.g) — pre-existing bug also fixed
           k.onended=()=>{try{kg.disconnect();k.disconnect()}catch(_){}}}}bar++};
     sched();this.bgmIv=setInterval(()=>{if(self.bgmOn)sched()},8*bt*1000)}
+  // v7.207: crowd cheering SFX for victory celebrations
+  playCrowdCheer:function(duration){
+    if(!this.ctx)return;const ctx=this.ctx;
+    try{
+      const len=Math.ceil(ctx.sampleRate*Math.max(1,duration));
+      const buf=ctx.createBuffer(1,len,ctx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ctx.createBufferSource();src.buffer=buf;
+      const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=700;bp.Q.value=0.6;
+      const bp2=ctx.createBiquadFilter();bp2.type='bandpass';bp2.frequency.value=280;bp2.Q.value=0.4;
+      const g=ctx.createGain();g.gain.setValueAtTime(0,ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.16,ctx.currentTime+1.0);
+      g.gain.setValueAtTime(0.16,ctx.currentTime+duration-0.6);
+      g.gain.linearRampToValueAtTime(0,ctx.currentTime+duration);
+      src.connect(bp);bp.connect(bp2);bp2.connect(g);g.connect(this.g||ctx.destination);
+      src.start();src.stop(ctx.currentTime+duration);
+      src.onended=()=>{try{src.disconnect();bp.disconnect();bp2.disconnect();g.disconnect()}catch(_){}};
+    }catch(e){}
+  },
   stopBGM(){this.bgmOn=false;if(this.bgmIv){clearInterval(this.bgmIv);this.bgmIv=null}
     // v7.184: also stop boss BGM if running
     if(this._bossBGMiv){clearInterval(this._bossBGMiv);this._bossBGMiv=null}}
@@ -6146,6 +6165,129 @@ function makeCinElevator(){
   });
   return g}
 
+// v7.207: Grand hangar welcome scene — massive bay with cranes, 40 cheering crew, starfighter entry
+function makeGrandHangarScene(parentGroup){
+  const g=parentGroup||new THREE.Group();
+  const mHull=new THREE.LineBasicMaterial({color:0x334455,transparent:true,opacity:.55});
+  const mWarm=new THREE.LineBasicMaterial({color:0xffa040,transparent:true,opacity:.65});
+  const mCrane=new THREE.LineBasicMaterial({color:0xffcc22,transparent:true,opacity:.75});
+  const mDark=new THREE.LineBasicMaterial({color:0x223344,transparent:true,opacity:.4});
+  const mGlow=new THREE.LineBasicMaterial({color:0xffeeaa,transparent:true,opacity:.8});
+  // Hull walls + ceiling + floor
+  const hull=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(50,22,70)),mHull);
+  hull.position.set(0,2,-20);g.add(hull);
+  // Floor grid
+  for(let x=-20;x<=20;x+=5){const l=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.08,.01,70)),mDark);l.position.set(x,-9,-20);g.add(l)}
+  for(let z=-55;z<=15;z+=5){const l=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(50,.01,.08)),mDark);l.position.set(0,-9,z);g.add(l)}
+  // Ceiling warm light strips
+  [-18,-9,0,9,18].forEach(x=>{
+    const strip=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.4,.1,60)),mGlow);
+    strip.position.set(x,12,-20);g.add(strip);
+  });
+  // 3 overhead industrial cranes
+  [-16,0,16].forEach((cx,ci)=>{
+    const cg=new THREE.Group();
+    // Main beam spanning full width
+    const beam=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(52,1.2,1.2)),mCrane);
+    beam.position.set(0,10.5,-18-ci*10);cg.add(beam);
+    // Vertical supports at both ends
+    [-24,24].forEach(sx=>{
+      const sup=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,4,1)),mCrane);
+      sup.position.set(sx,8.5,-18-ci*10);cg.add(sup);
+    });
+    // Trolley on beam
+    const trolley=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3,1.5,2)),mCrane);
+    trolley.position.set(cx-5,10,-18-ci*10);cg.add(trolley);
+    // Hook chain
+    for(let h=0;h<5;h++){const ch=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.3,.8,.3)),mCrane);ch.position.set(cx-5,8-h,-18-ci*10);cg.add(ch)}
+    // Hook
+    const hook=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.6,.15,4,8)),mCrane);
+    hook.position.set(cx-5,4.5,-18-ci*10);cg.add(hook);
+    g.add(cg);
+  });
+  // Space opening at the back (starfield effect)
+  const opening=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(30,20,.5)),mDark);
+  opening.position.set(0,2,-55);g.add(opening);
+  // Stars behind opening
+  for(let s=0;s<60;s++){
+    const star=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.3,.3,.3)),
+      new THREE.LineBasicMaterial({color:0xaaccff,transparent:true,opacity:.6+Math.random()*.4}));
+    star.position.set((Math.random()-.5)*28,( Math.random()-.5)*18,-58-Math.random()*10);
+    g.add(star);
+  }
+  // Starfighter entering from the opening
+  try{const ship=makeStarfighterN1();ship.scale.setScalar(1.2);ship.position.set(0,-2,-50);ship.name='hangarShip';g.add(ship)}catch(e){}
+  // 40 cheering crew members (armsUp) in colorful uniforms lining the central corridor
+  const crewColors=[0xff6644,0xff4466,0x66aaff,0x44ffaa,0xffcc44,0xff88ff,0x88ffcc,0xffaa66];
+  const crewPositions=[];
+  // Sides: 5 rows × 2 sides × 4 deep = 40
+  for(let row=0;row<5;row++){
+    for(const side of[-1,1]){
+      for(let col=0;col<4;col++){
+        crewPositions.push([side*(7+col*2.8),-9.5,-10+row*8]);
+      }
+    }
+  }
+  crewPositions.forEach((p,i)=>{
+    try{
+      const st=makeStaffFigure(crewColors[i%crewColors.length],{armsUp:true});
+      st.scale.setScalar(0.55);
+      st.position.set(p[0],p[1],p[2]);
+      st.rotation.y=(p[0]<0?Math.PI*0.3:-Math.PI*0.3)+Math.sin(i)*.4;
+      st.name='hangarCrew';
+      g.add(st);
+    }catch(e){}
+  });
+  return g;
+}
+
+// v7.207: Cockpit victory close-up scene — pilot stands up raising fist, confetti falls
+function makeCockpitVictoryScene(parentGroup){
+  const g=parentGroup||new THREE.Group();
+  const mFrame=new THREE.LineBasicMaterial({color:0x223344,transparent:true,opacity:.8});
+  const mGlass=new THREE.LineBasicMaterial({color:0x44aaff,transparent:true,opacity:.25});
+  const mAccent=new THREE.LineBasicMaterial({color:0xff8822,transparent:true,opacity:.6});
+  // Cockpit rim / frame
+  const rim=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(5,3,4)),mFrame);
+  rim.position.set(0,-5.5,0);g.add(rim);
+  // Cockpit side walls
+  [-2.3,2.3].forEach(sx=>{
+    const wall=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.3,5,4)),mFrame);
+    wall.position.set(sx,-4.5,0);g.add(wall);
+  });
+  // Canopy glass arcs
+  [0,Math.PI/6,-Math.PI/6].forEach((ry,i)=>{
+    const arc=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(2.2,.1,3,12,Math.PI)),mGlass);
+    arc.rotation.z=Math.PI;arc.rotation.y=ry;arc.position.set(0,-4,0);g.add(arc);
+  });
+  // Instrument panel glow
+  const panel=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(4.5,.3,1.5)),mAccent);
+  panel.position.set(0,-6,-1.5);g.add(panel);
+  // Pilot (seated at start, will animate up)
+  let pilot=null;
+  try{
+    pilot=makeForestTacticalPilot();
+    pilot.scale.setScalar(0.52);
+    pilot.position.set(0,-7,0);
+    pilot.name='victoryPilot';
+    // Initial seated pose — arms down
+    const lArm=pilot.getObjectByName('lArm');const rArm=pilot.getObjectByName('rArm');
+    if(lArm)lArm.rotation.x=0.3;
+    if(rArm)rArm.rotation.x=0.3;
+    g.add(pilot);
+  }catch(e){}
+  // Blurred crowd background (simplified rows of silhouettes)
+  const crowdColors=[0x334466,0x443355,0x335544,0x554433];
+  for(let row=0;row<4;row++){
+    for(let col=-5;col<=5;col++){
+      const sil=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.4,1.2,.1)),
+        new THREE.LineBasicMaterial({color:crowdColors[row%4],transparent:true,opacity:.35-row*.05}));
+      sil.position.set(col*.9,-6.5+row*.4,-3-row*.5);g.add(sil);
+    }
+  }
+  return {group:g, pilot};
+}
+
 function makeCinBridge(){
   const g=new THREE.Group();
   const mFloor=new THREE.LineBasicMaterial({color:0x00aaff,transparent:true,opacity:.6});
@@ -7098,11 +7240,44 @@ function spawnMegaExplosion(pos,intensity){
   spawnP(pos,0xffff00,Math.max(1,Math.round(40*inten)),2);
   spawnP(pos,0xffffff,Math.max(1,Math.round(30*inten)),4)}
 
+// v7.207: confetti particles that fall downward (celebration scenes)
+function spawnConfetti(origin,count){
+  if(!_particleEdges)_particleEdges=new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1));
+  const colors=[0xffd700,0xff4444,0x4488ff,0x44ff88,0xff88ff,0xffffff];
+  const n=count||50;
+  for(let i=0;i<n;i++){
+    const c=colors[Math.floor(Math.random()*colors.length)];
+    const mat=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:1});
+    const mesh=new THREE.LineSegments(_particleEdges,mat);
+    const ox=origin?origin.x:0,oy=origin?origin.y:0,oz=origin?origin.z:0;
+    mesh.position.set(ox+(Math.random()-.5)*12, oy+2+Math.random()*5, oz+(Math.random()-.5)*12);
+    mesh.scale.setScalar(0.04+Math.random()*0.07);
+    mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);
+    scene.add(mesh);
+    const life=3+Math.random()*3;
+    particles.push({
+      mesh,
+      vel:new THREE.Vector3((Math.random()-.5)*1.5,-1.5-Math.random()*2,(Math.random()-.5)*1.5),
+      life,maxLife:life,isConfetti:true,
+      rotSpd:new THREE.Vector3((Math.random()-.5)*3,(Math.random()-.5)*3,(Math.random()-.5)*3)
+    });
+  }
+}
+
 function updateParticles(dt){for(let i=particles.length-1;i>=0;i--){const p=particles[i];
   if(p.isExp){p.mesh.scale.addScalar(p.expRate*dt);p.mesh.rotation.y+=dt}
+  else if(p.isConfetti){
+    p.vel.y-=1.5*dt;// gravity
+    p.mesh.position.add(p.vel.clone().multiplyScalar(dt));
+    if(p.rotSpd){p.mesh.rotation.x+=p.rotSpd.x*dt;p.mesh.rotation.y+=p.rotSpd.y*dt;p.mesh.rotation.z+=p.rotSpd.z*dt}
+    const r=Math.max(0,p.life/p.maxLife);
+    p.mesh.material.opacity=p.life<2?r*0.8:0.9;
+  }
   else{p.mesh.position.add(p.vel.clone().multiplyScalar(dt))}
-  p.life-=dt;const r=Math.max(0,p.life/p.maxLife);p.mesh.material.opacity=r;
-  if(!p.isExp)p.mesh.scale.setScalar(r);if(p.life<=0){scene.remove(p.mesh);particles.splice(i,1)}}}
+  p.life-=dt;const r=Math.max(0,p.life/p.maxLife);
+  if(!p.isExp&&!p.isConfetti)p.mesh.material.opacity=r;
+  if(!p.isExp&&!p.isConfetti)p.mesh.scale.setScalar(r);
+  if(p.life<=0){scene.remove(p.mesh);particles.splice(i,1)}}}
 
 // ============ PLAYER ============
 const player={x:0,y:0,cooldown:0};
@@ -13625,6 +13800,9 @@ function startPilotDisembarkCinematic(){
   // v6.69: Start 3D wireframe cinema sequence (respects OPT.cine* toggles)
   const queue=[];
   if(OPT.cineDocking!==false)queue.push('docking');
+  // v7.207: cockpit victory + grand hangar welcome (after docking, before disembark)
+  queue.push('cockpit_victory');
+  queue.push('hangar_welcome');
   if(OPT.cineDisembark!==false)queue.push('disembark');
   if(OPT.cineElevator!==false)queue.push('elevator');
   // Bridge is always required (stage select lives here)
@@ -14764,6 +14942,85 @@ function wfCineShow(kind,duration,onDone){
       }
     })();
     return;
+  } else if(kind==='cockpit_victory'){
+    // v7.207: Close-up of pilot standing in open cockpit, fist raised, confetti falls
+    const g=new THREE.Group();
+    scene.add(g);wfCineGroup=g;
+    const sceneResult=makeCockpitVictoryScene(g);
+    const pilot=sceneResult&&sceneResult.pilot?sceneResult.pilot:g.getObjectByName('victoryPilot');
+    camera.position.set(0,-5.5,5);camera.lookAt(0,-5,0);
+    endFn=()=>{if(onDone)onDone()};
+    try{sfx.playCrowdCheer(duration)}catch(e){}
+    wfCineSubtitle('◆ MISSION COMPLETE ◆','#ffd700');
+    (function anim(){
+      const t=(performance.now()-startT)/1000;
+      // t 0.5–1.8s: pilot stands up (position rises) and raises right arm
+      if(t>0.5&&pilot){
+        const prog=Math.min(1,(t-0.5)/1.3);
+        pilot.position.y=-7+prog*0.9;
+        const rArm=pilot.getObjectByName('rArm');
+        if(rArm)rArm.rotation.x=0.3-prog*Math.PI*1.1;
+        const lArm=pilot.getObjectByName('lArm');
+        if(lArm)lArm.rotation.x=0.3+Math.sin(t*2)*0.3;
+      }
+      // t 1.6s: confetti burst
+      if(t>1.6&&t<1.7)try{spawnConfetti(new THREE.Vector3(0,-1,0),80)}catch(e){}
+      if(t>2.8&&t<2.9)try{spawnConfetti(new THREE.Vector3(0,-1,0),50)}catch(e){}
+      // Gentle camera sway
+      camera.position.x=Math.sin(t*0.45)*0.25;
+      camera.position.y=-5.5+Math.cos(t*0.3)*0.18;
+      camera.lookAt(0,-4.5,0);
+      if(t<duration)wfCineAnimId=requestAnimationFrame(anim);
+      else endFn();
+    })();
+    return;
+  } else if(kind==='hangar_welcome'){
+    // v7.207: Grand hangar scene — ceiling cranes, 40 cheering crew, ship entering, confetti
+    const g=new THREE.Group();
+    scene.add(g);wfCineGroup=g;
+    makeGrandHangarScene(g);
+    const hangarShip=g.getObjectByName('hangarShip');
+    camera.position.set(0,-5,16);camera.lookAt(0,-3,-8);
+    endFn=()=>{if(onDone)onDone()};
+    try{sfx.playCrowdCheer(duration)}catch(e){}
+    wfCineSubtitle('◆ WELCOME HOME, PILOT ◆','#ffa040');
+    // Initial confetti burst
+    try{spawnConfetti(new THREE.Vector3(0,7,-10),120)}catch(e){}
+    // Animate crew arms wave (gentle sine)
+    const crewList=[];g.traverse(o=>{if(o.name==='hangarCrew')crewList.push(o)});
+    crewList.forEach((c,i)=>{c.userData._ph=i*0.4;c.userData._homeY=c.position.y});
+    (function anim(){
+      const t=(performance.now()-startT)/1000;
+      // Ship slowly glides in from back
+      if(hangarShip){hangarShip.position.z=Math.min(-8,-50+t*7)}
+      // Crew celebrate: arms wave, gentle bounce
+      crewList.forEach(c=>{
+        const ph=c.userData._ph||0;
+        const lA=c.getObjectByName('lArm'),rA=c.getObjectByName('rArm');
+        if(lA)lA.rotation.x=-Math.PI/2+Math.sin(t*2.2+ph)*0.35;
+        if(rA)rA.rotation.x=-Math.PI/2+Math.sin(t*2.2+ph+1)*0.35;
+        c.position.y=(c.userData._homeY||0)+Math.abs(Math.sin(t*1.8+ph))*0.15;
+      });
+      // Extra confetti bursts
+      if(t>2.5&&t<2.6)try{spawnConfetti(new THREE.Vector3(-8,8,-5),60)}catch(e){}
+      if(t>4.5&&t<4.6)try{spawnConfetti(new THREE.Vector3(8,8,-20),60)}catch(e){}
+      // Camera: crowd view (0–2s) → tilt up to cranes (2–4s) → track ship entering (4–6s)
+      if(t<2){
+        camera.position.set(Math.sin(t*0.4)*1.5,-5+t*0.4,16-t*1.5);
+        camera.lookAt(0,-2,-10);
+      } else if(t<4){
+        const p=(t-2)/2;
+        camera.position.set(Math.sin(t*0.3)*2,-5+p*11,16-3-p*8);
+        camera.lookAt(0,8+p*4,-5-p*10);
+      } else {
+        const p=(t-4)/2;
+        camera.position.set(p*3-1.5,-1+p*0.5,-3-p*4);
+        camera.lookAt(0,-2,-22-p*8);
+      }
+      if(t<duration)wfCineAnimId=requestAnimationFrame(anim);
+      else endFn();
+    })();
+    return;
   }
   // Default timed end (for scenes without custom animator)
   setTimeout(()=>{if(endFn)endFn()},duration*1000);
@@ -14773,7 +15030,7 @@ function wfCineShow(kind,duration,onDone){
 function wfCinePlay(queue,isReplay){
   if(!queue||queue.length===0){if(isReplay)wfCineEnd();else showStageSelectOverlay();return}
   if(isReplay)wfCineShowExitButton(()=>{wfCineEnd();isReplay=null});
-  const durations={docking:3,disembark:16,elevator:7,bridge:3,modbay:26};// v7.105: 14→16 — staff greet pause +0.5s each (1.0s → 1.5s)
+  const durations={docking:3,disembark:16,elevator:7,bridge:3,modbay:26,cockpit_victory:4,hangar_welcome:6};// v7.207: +2 scenes
   const step=queue[0];
   wfCineShow(step,durations[step]||3,()=>{
     if(queue.length>1)wfCinePlay(queue.slice(1),isReplay);
