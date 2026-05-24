@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.237</title>
+<title>COSMIC INVADERS v7.238</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -4248,8 +4248,8 @@ function makeFloorTurret(){
   // Red sensor eye
   const eyeE=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.10,5,4)),mRed);
   eyeE.position.set(0,0.22,0.84);headGr.add(eyeE);
-  // Tilt head ~40° upward — anti-aircraft stance toward incoming ships
-  headGr.rotation.x=-Math.PI*0.22;
+  // v7.238: No upward tilt — head points straight forward (+Z toward player)
+  headGr.rotation.x=0;
   headGr.position.set(0,3.85,0);
   g.add(headGr);
   outer.userData.head=headGr;// v7.219: cache for per-frame Y-rotation tracking
