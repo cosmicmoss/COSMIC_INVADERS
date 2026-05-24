@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.239</title>
+<title>COSMIC INVADERS v7.240</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -22014,7 +22014,7 @@ function updateIcePlanet(dt){
         const dz=p.mesh.position.z-pr.position.z;
         if(dx*dx+dz*dz<16){// 4-unit radius — easier to reach from corridor
           iceState._rescueCineActive=true;iceState._rescuePod=p;
-          iceState._rescueT=0;iceState._rescueStep='opening';
+          iceState._rescueT=0;iceState._rescueStep='opening';iceState._babyDetached=false;
           try{wfCineSubtitle(_L('◆ SCAN COMPLETE — OPENING POD! ◆','◆ スキャン完了 — ポッドを開放する！ ◆'),'#fa0');}catch(_){}
           // Cryo-hiss SFX
           try{
@@ -22073,17 +22073,34 @@ function updateIcePlanet(dt){
             const prog=Math.min(1,rt/2.8);const ease=prog*prog*(3-2*prog);
             ua.rotation.z=startRz*(1-ease);
           }
-          // Baby figure appears in claw at t=2.0
+          // v7.240: Animate claw fingers — spread open as arm descends, close on grab
+          try{
+            const cg=iceState._robotArm.userData.clawGroup;
+            if(cg&&cg.children.length>=4){
+              if(rt<2.0){
+                // Fingers spread open as arm descends toward pod
+                const openProg=Math.min(1,rt/2.0);
+                cg.children[1].rotation.z= openProg*0.38;
+                cg.children[3].rotation.z=-openProg*0.38;
+              } else if(iceState._babyFigure){
+                // Fingers close firmly around baby after grab
+                const closeProg=Math.min(1,(rt-2.0)/0.5);
+                cg.children[1].rotation.z= 0.38+closeProg*0.22;// 0.38→0.60 closed
+                cg.children[3].rotation.z=-(0.38+closeProg*0.22);
+              }
+            }
+          }catch(_){}
+          // v7.240: Baby figure appears IN claw at t=2.0 — parented to clawGroup so it rides naturally
           if(rt>2.0&&!iceState._babyFigure){
             try{
+              const cg=iceState._robotArm.userData.clawGroup;
               iceState._babyFigure=_makeBabyFigure();
-              iceState._babyFigure.scale.setScalar(2.2);// v7.176: make it visible
-              iceScene.add(iceState._babyFigure);
-              const cg=iceState._robotArm.userData.clawGroup;const cwp=new THREE.Vector3();
-              iceState._robotArm.updateMatrixWorld(true);cg.getWorldPosition(cwp);
-              iceState._babyFigure.position.copy(cwp);
-              iceState._babyFigure.position.y-=1.6;// v7.232: hang well below claw tip
+              iceState._babyFigure.scale.setScalar(1.8);// v7.240: proportional to arm
+              // Parent baby directly to clawGroup — position in local claw space
+              iceState._babyFigure.position.set(0,-0.20,0);// body centre inside finger grip
+              iceState._babyFigure.rotation.set(0,0,0);
               iceState._babyFigure.visible=true;
+              cg.add(iceState._babyFigure);// rides with arm automatically
             }catch(_){}
             try{screenFlash(.3);}catch(_){}
             try{spawnP(rp.mesh.position.clone().setY(2.5),0xffddaa,14,1.5,.8);}catch(_){}
@@ -22113,14 +22130,7 @@ function updateIcePlanet(dt){
           const tx=icePilot.position.x,tz=icePilot.position.z;
           iceState._robotArm.position.x=sx+(tx-sx)*ease;
           iceState._robotArm.position.z=sz+(tz-sz)*ease;
-          // Baby follows claw world position
-          if(iceState._babyFigure){
-            try{
-              const cg=iceState._robotArm.userData.clawGroup;const cwp=new THREE.Vector3();
-              iceState._robotArm.updateMatrixWorld(true);cg.getWorldPosition(cwp);
-              iceState._babyFigure.position.copy(cwp);iceState._babyFigure.position.y-=1.6;// v7.232
-            }catch(_){}
-          }
+          // v7.240: Baby is parented to clawGroup — rides with arm naturally, no tracking needed
           // Camera follows arm motion
           const camT=new THREE.Vector3(iceState._robotArm.position.x+(rp.side==='L'?5:-5),4.5,iceState._robotArm.position.z+5);
           camera.position.lerp(camT,dt*1.4);camera.lookAt(iceState._robotArm.position.x,2.5,iceState._robotArm.position.z);
@@ -22140,6 +22150,22 @@ function updateIcePlanet(dt){
 
       // ── STEP: pilot_receive (0–4.5s) — baby lowered to pilot arms then 抱っこ close-up ──
       if(iceState._rescueStep==='pilot_receive'){
+        // v7.240: Detach baby from clawGroup to world scene for descent animation
+        if(iceState._babyFigure&&!iceState._babyDetached){
+          iceState._babyDetached=true;
+          try{
+            const worldPos=new THREE.Vector3();
+            iceState._babyFigure.getWorldPosition(worldPos);
+            if(iceState._babyFigure.parent)iceState._babyFigure.parent.remove(iceState._babyFigure);
+            iceState._babyFigure.position.copy(worldPos);
+            iceScene.add(iceState._babyFigure);
+            // Claw releases — fingers open slightly as it lets go
+            if(iceState._robotArm){
+              const cg=iceState._robotArm.userData.clawGroup;
+              if(cg&&cg.children.length>=4){cg.children[1].rotation.z=0.22;cg.children[3].rotation.z=-0.22;}
+            }
+          }catch(_){}
+        }
         if(icePilot){
           // Phase A (0–2s): baby descends from claw, pilot turns to face camera
           icePilot.rotation.y+=(Math.PI-icePilot.rotation.y)*dt*3.5;// turn to face camera
