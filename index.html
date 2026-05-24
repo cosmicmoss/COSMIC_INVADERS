@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.235</title>
+<title>COSMIC INVADERS v7.236</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -31498,6 +31498,8 @@ function startFirePlanetOnFoot(){
     bossHP:30, bossMaxHP:30, bossPhase:'PROWL', bossPhaseT:0, bossPhaseNext:3.5,
     shotCooldown:0, saberCooldown:0,
     finisherActive:false, finisherT:0,
+    _severedHead:null, _skyOrbit:0,
+    _headSettled:false, _headPickedUp:false, _skyThrust:false,
   };
   fireBeams=[];fireFlameParticles=[];
   // Hide spaceship HUD
@@ -32328,27 +32330,22 @@ function updateFireSaberFinisher(dt){
 
   // ── Phase 1 (0-2.5s): Dragon staggers, pilot approaches slowly ──
   if(t<2.5){
-    // Dragon head droops progressively, body sways weakly
     if(head)head.rotation.x=Math.min(.85,.22+t*.25);
     if(body){body.rotation.z=Math.sin(t*2.2)*.07*Math.max(0,1-t*.3);}
-    // Smoke/fire from wounds
     if(Math.random()<.25&&body){
       const wp=body.position.clone().add(new THREE.Vector3((Math.random()-.5)*3,3,(Math.random()-.5)*2));
       try{spawnP(wp,t<1.2?0xff5500:0x884400,2,.9,.25)}catch(_){}
     }
-    // Pilot walks slowly toward dragon
     if(firePilot&&body){
       const tgz=body.position.z+7;
       firePilot.position.z+=(tgz-firePilot.position.z)*Math.min(1,dt*1.4);
       firePilot.position.x*=.95;
       firePilot.rotation.y=Math.PI;
     }
-    // Voice line at t=0.6
     if(t>0.6&&t<0.7&&!fireState._f1v){
       fireState._f1v=true;
       try{playComm('pilot','This ends NOW.')}catch(e){}
     }
-    // Camera: side angle, dragon head drooping — show suffering
     if(head){
       const hp=new THREE.Vector3();head.getWorldPosition(hp);
       camera.position.lerp(new THREE.Vector3(hp.x-7,hp.y+1,hp.z+3),.055);
@@ -32358,27 +32355,22 @@ function updateFireSaberFinisher(dt){
 
   // ── Phase 2 (2.5-5.5s): Saber raise — slow tension buildup ──
   else if(t<5.5){
-    const p=(t-2.5)/3.0;// 0→1 over 3 seconds
-    // Dragon still drooping, occasional shudder
+    const p=(t-2.5)/3.0;
     if(head)head.rotation.x=.85+Math.sin(t*8)*.03;
     if(body)body.rotation.z=Math.sin(t*1.5)*.03;
-    // Pilot leaps at p=0.3 (t=3.4), peaks at p=0.5 (t=4.0)
     if(firePilot){
-      const jumpP=Math.max(0,(p-.28)/.22);// 0→1 during jump rise
-      const jumpArc=Math.sin(Math.min(1,jumpP)*Math.PI*.5);// 0→1 rise only
+      const jumpP=Math.max(0,(p-.28)/.22);
+      const jumpArc=Math.sin(Math.min(1,jumpP)*Math.PI*.5);
       firePilot.position.y=-2+(jumpArc*4.5)*(p<0.7?1:Math.max(0,1-(p-.7)/.1));
-      // Center under dragon neck
       if(body)firePilot.position.x+=(body.position.x-firePilot.position.x)*dt*1.5;
     }
-    // Saber arm rises S-L-O-W-L-Y overhead (p=0→0.6), then holds (p=0.6→1.0)
     try{
       const rFore=firePilot.getObjectByName('rArmFore')||firePilot.getObjectByName('rArm');
       if(rFore){
         const riseP=Math.min(1,p/0.6);
-        rFore.rotation.x=-Math.PI*.42-riseP*Math.PI*.78;// -76° → -220° overhead
+        rFore.rotation.x=-Math.PI*.42-riseP*Math.PI*.78;
       }
     }catch(e){}
-    // Saber glow particles during raise
     if(p>.2&&Math.random()<.18&&fireState._saberMesh){
       try{
         const sp=new THREE.Vector3();
@@ -32386,12 +32378,10 @@ function updateFireSaberFinisher(dt){
         spawnP(sp,0x88ccff,1,0.6,.15);
       }catch(_){}
     }
-    // Subtitle when arm is fully raised
     if(p>.62&&p<.68&&!fireState._f2v){
       fireState._f2v=true;
-      try{wfCineSubtitle('◆ FINISHER ◆','#88ccff')}catch(e){}
+      try{wfCineSubtitle('◆ NOW ◆','#ffffff')}catch(e){}
     }
-    // Camera: low angle looking up at raised saber silhouette
     if(firePilot){
       const pp=firePilot.position;
       camera.position.lerp(new THREE.Vector3(pp.x+3,pp.y-2,pp.z+7),.08);
@@ -32399,21 +32389,18 @@ function updateFireSaberFinisher(dt){
     }
   }
 
-  // ── Phase 3 (5.5-8.0s): Slow saber sweep through neck — THE CUT ──
+  // ── Phase 3 (5.5-8.0s): Saber sweep through neck — THE CUT ──
   else if(t<8.0){
-    const p=(t-5.5)/2.5;// 0→1 over 2.5 seconds
-    // Dragon head: still drooping, neck exposed
+    const p=(t-5.5)/2.5;
     if(head)head.rotation.x=.88;
     if(body)body.rotation.z=0;
-    // Saber sweeps down — very slowly, deliberately
     try{
       const rFore=firePilot.getObjectByName('rArmFore')||firePilot.getObjectByName('rArm');
       if(rFore){
-        const ease=p*p*(3-2*p);// smooth ease-in-out
-        rFore.rotation.x=(-Math.PI*.42-Math.PI*.78)+ease*Math.PI*1.5;// sweep from overhead → below
+        const ease=p*p*(3-2*p);
+        rFore.rotation.x=(-Math.PI*.42-Math.PI*.78)+ease*Math.PI*1.5;
       }
     }catch(e){}
-    // Saber trail particles during cut
     if(Math.random()<.4&&fireState._saberMesh){
       try{
         const sp=new THREE.Vector3();
@@ -32422,33 +32409,40 @@ function updateFireSaberFinisher(dt){
         spawnP(sp.clone(),0xffffff,1,.3,.08);
       }catch(_){}
     }
-    // At p=0.35: saber contacts neck — flash + sound
+    // Cut contact — MASSIVE flash + neck fire burst
     if(p>.33&&p<.38&&!fireState._cutContact){
       fireState._cutContact=true;
-      try{screenFlash(.35)}catch(e){}
-      try{spawnP(head?head.position.clone():body.position.clone().add(new THREE.Vector3(0,5,0)),0xffffff,18,.7,.15)}catch(e){}
-      try{spawnP(head?head.position.clone():body.position.clone().add(new THREE.Vector3(0,5,0)),0x88ccff,12,1.2,.2)}catch(e){}
+      const neckPos=head?head.position.clone():body.position.clone().add(new THREE.Vector3(0,5,0));
+      try{screenFlash(1.2);S.shakeT=0.6;S.shakeI=2.5}catch(e){}
+      try{spawnP(neckPos.clone(),0xffffff,30,.5,.1)}catch(e){}
+      try{spawnP(neckPos.clone(),0x88ccff,20,.8,.15)}catch(e){}
+      try{spawnP(neckPos.clone(),0xff5500,25,1.2,.2)}catch(e){}
+      try{spawnP(neckPos.clone(),0xffaa00,15,1.5,.25)}catch(e){}
       try{sfx.shootCrystal&&sfx.shootCrystal();sfx.shoot&&sfx.shoot()}catch(e){}
+      try{sfx.bigExplosion&&sfx.bigExplosion()}catch(e){}
     }
-    // At p=0.65: head begins slowly separating
+    // Head separates
     if(p>.63&&!fireState._headDetached){
       fireState._headDetached=true;
       if(head){
         const hp=new THREE.Vector3();head.getWorldPosition(hp);
         fireDragonBoss.remove(head);
         head.position.copy(hp);
-        head.userData.vel=new THREE.Vector3(.8,-.4,1.5);// slow initial drift
+        head.userData.vel=new THREE.Vector3((Math.random()-.5)*3, 2, 4);// ejects up+forward
         fireScene.add(head);
+        fireState._severedHead=head;// keep reference for Phase 5
+        // neck stump fire geyser
+        for(let _ns=0;_ns<3;_ns++){
+          setTimeout(()=>{try{spawnP(body.position.clone().add(new THREE.Vector3(0,7,14)),0xff6600,20,1.5,.4)}catch(_){}},_ns*80);
+        }
       }
     }
-    // Falling head: slow tumble
     if(head&&head.userData.vel){
       head.position.addScaledVector(head.userData.vel,dt*1.8);
-      head.userData.vel.y-=dt*3.5;
-      head.rotation.z+=dt*1.2;
-      head.rotation.x+=dt*.8;
+      head.userData.vel.y-=dt*4.5;
+      head.rotation.z+=dt*2.0;
+      head.rotation.x+=dt*1.4;
     }
-    // Camera: close on the cut zone, tracking saber arc
     if(firePilot){
       const pp=firePilot.position;
       camera.position.lerp(new THREE.Vector3(pp.x+4,pp.y+2,pp.z+6),.07);
@@ -32456,104 +32450,221 @@ function updateFireSaberFinisher(dt){
     }
   }
 
-  // ── Phase 4 (8.0-11.0s): Dragon crashes — BATTAAN! ──
+  // ── Phase 4 (8.0-11.0s): Dragon body CRASHES — BATTAAN! ──
   else if(t<11.0){
-    const p=(t-8.0)/3.0;// 0→1 over 3 seconds
-    // Head continues falling
-    if(head&&head.userData.vel){
-      head.position.addScaledVector(head.userData.vel,dt*1.8);
-      head.userData.vel.y-=dt*3.5;
-      head.rotation.z+=dt*1.2;
-      head.rotation.x+=dt*.8;
+    const p=(t-8.0)/3.0;
+    // Head tumbles then settles on ground
+    const sh=fireState._severedHead||head;
+    if(sh&&sh.userData.vel&&!fireState._headSettled){
+      sh.position.addScaledVector(sh.userData.vel,dt*1.8);
+      sh.userData.vel.y-=dt*4.5;
+      sh.rotation.z+=dt*1.5;sh.rotation.x+=dt*.9;
+      if(sh.position.y<-2){
+        sh.position.y=-2;sh.userData.vel.set(0,0,0);
+        fireState._headSettled=true;
+        try{spawnP(sh.position.clone(),0x664422,15,1.5,.4)}catch(e){}
+        try{S.shakeT=.4;S.shakeI=1.0}catch(e){}
+      }
     }
-    // Pilot lands, stands back
+    // Pilot lands
     if(firePilot){
       firePilot.position.y+=((-2)-firePilot.position.y)*dt*4;
     }
-    // Dragon body: teeter (p=0→0.35), then pitch forward and CRASH (p=0.35→0.75), settle (p=0.75→1)
+    // Body crashes
     if(body){
       if(p<0.35){
-        // Teetering — losing balance
         const tp=p/0.35;
         body.rotation.z=Math.sin(tp*Math.PI*4)*.18*(1-tp*.5);
         body.rotation.x=tp*.18;
-        // Groaning particles
         if(Math.random()<.3){
           const wpos=body.position.clone().add(new THREE.Vector3((Math.random()-.5)*5,4,(Math.random()-.5)*4));
           try{spawnP(wpos,0x331100,3,1.2,.3)}catch(_){}
         }
       } else if(p<0.75){
-        // CRASHING FORWARD — dramatic pitch
         const fp=(p-0.35)/0.40;
-        const crashEase=fp*fp;// ease-in — accelerates as it falls
+        const crashEase=fp*fp;
         body.rotation.x=.18+crashEase*Math.PI*.48;
         body.rotation.z=Math.sin(fp*Math.PI)*.08;
         body.position.y=Math.max(-10,-crashEase*10);
         body.position.z+=crashEase*.3*dt*60;
-        // Rumble SFX at fp=0.5
         if(fp>.48&&fp<.54&&!fireState._crash1){
           fireState._crash1=true;
           try{sfx.damage&&sfx.damage();S.shakeT=0.4;S.shakeI=1.2}catch(e){}
         }
       } else {
-        // IMPACT — body hits ground
         const ip=(p-0.75)/0.25;
-        body.rotation.x=.18+Math.PI*.48;// fully fallen
+        body.rotation.x=.18+Math.PI*.48;
         body.position.y=-10;
-        // Ground impact at start of this sub-phase
         if(!fireState._groundImpact){
           fireState._groundImpact=true;
           try{
-            screenFlash(.6);
-            S.shakeT=1.8;S.shakeI=3.2;
+            screenFlash(.8);S.shakeT=2.2;S.shakeI=4.0;
             sfx.bigExplosion();
             const bpos=body.position.clone();
             spawnMegaExplosion(bpos.clone(),1.4);
-            // Multiple dust bursts around body
-            for(let _di=0;_di<5;_di++){
+            for(let _di=0;_di<6;_di++){
               setTimeout(()=>{
-                try{spawnP(bpos.clone().add(new THREE.Vector3((Math.random()-.5)*12,0,(Math.random()-.5)*10)),0x664422,20,2.5,.6)}catch(_){}
-              },_di*120);
+                try{spawnP(bpos.clone().add(new THREE.Vector3((Math.random()-.5)*14,0,(Math.random()-.5)*12)),0x664422,25,3,.7)}catch(_){}
+              },_di*100);
             }
             setTimeout(()=>{try{spawnMegaExplosion(bpos.clone().add(new THREE.Vector3(3,-2,2)),.8)}catch(_){}},300);
+            setTimeout(()=>{try{spawnMegaExplosion(bpos.clone().add(new THREE.Vector3(-4,-2,-3)),.7)}catch(_){}},500);
           }catch(e){}
         }
-        // Settling debris particles
         if(ip<.8&&Math.random()<.2){
           try{spawnP(body.position.clone().add(new THREE.Vector3((Math.random()-.5)*8,Math.random()*3,(Math.random()-.5)*6)),0x443322,3,2,.5)}catch(_){}
         }
       }
     }
-    // Camera: wide shot pulling back to reveal full fallen dragon scale
     camera.position.lerp(new THREE.Vector3(10,8,22),.04);
     if(body)camera.lookAt(body.position.x,body.position.y+4,body.position.z-4);
   }
 
-  // ── Phase 5 (11.0-12.5s): Victory pose ──
-  else if(t<12.5){
-    if(!fireState._victoryPose){
-      fireState._victoryPose=true;
-      if(firePilot){
-        const rArm=firePilot.getObjectByName('rArm');
-        if(rArm)rArm.rotation.x=-Math.PI*1.2;
-        const lArm=firePilot.getObjectByName('lArm');
-        if(lArm)lArm.rotation.x=-Math.PI*.5;
-      }
-      try{playComm('pilot','We can mod this head into a flamethrower! Taking it back!')}catch(e){}
-      try{wfCineSubtitle('◆ DRAGON SLAIN — HEAD RECOVERED ◆','#ffcc44')}catch(e){}
+  // ── Phase 5 (11.0-13.5s): Pilot strides to fallen head and picks it up ──
+  else if(t<13.5){
+    const p=(t-11.0)/2.5;// 0→1
+    const sh=fireState._severedHead||head;
+    // Pilot faces & walks toward the head (p=0→0.5)
+    if(p<0.5&&firePilot&&sh){
+      const tx=sh.position.x;
+      const tz=sh.position.z+3.5;
+      firePilot.position.x+=(tx-firePilot.position.x)*dt*3.5;
+      firePilot.position.z+=(tz-firePilot.position.z)*dt*3.5;
+      const dx=sh.position.x-firePilot.position.x;
+      const dz=sh.position.z-firePilot.position.z;
+      firePilot.rotation.y=Math.atan2(dx,dz)+Math.PI;
     }
-    // Camera: medium shot of pilot silhouette against the fallen giant
+    // Crouch down to grab (p=0.42→0.62)
+    if(p>0.42&&p<0.62&&firePilot){
+      const cp=(p-0.42)/0.20;
+      firePilot.position.y=-2-cp*1.8;
+      try{
+        const rArm=firePilot.getObjectByName('rArm');
+        const lArm=firePilot.getObjectByName('lArm');
+        if(rArm)rArm.rotation.x=cp*Math.PI*.55;// reach down
+        if(lArm)lArm.rotation.x=cp*Math.PI*.40;
+      }catch(e){}
+    }
+    // Lift moment — pilot stands back up with head (p=0.62→1.0)
+    if(p>0.62&&firePilot){
+      const lp=(p-0.62)/0.38;
+      firePilot.position.y=-2-1.8*(1-lp);// stand up
+      try{
+        const rArm=firePilot.getObjectByName('rArm');
+        const lArm=firePilot.getObjectByName('lArm');
+        if(rArm)rArm.rotation.x=Math.PI*.55-lp*Math.PI*.55;// arm returns to side
+        if(lArm)lArm.rotation.x=Math.PI*.40-lp*Math.PI*.55;
+      }catch(e){}
+      // Head follows pilot as if being carried (lerps to hip level)
+      if(sh){
+        const holdPos=firePilot.position.clone().add(new THREE.Vector3(.7,1.2+lp*.5,.2));
+        sh.position.lerp(holdPos,dt*6);
+        sh.rotation.z+=(0-sh.rotation.z)*dt*4;
+        sh.rotation.x+=(0-sh.rotation.x)*dt*4;
+      }
+    }
+    // Voice + subtitle at pickup
+    if(p>0.63&&!fireState._f5v){
+      fireState._f5v=true;
+      try{playComm('pilot','Got you.')}catch(e){}
+      try{wfCineSubtitle('◆ HEAD RECOVERED ◆','#ffaa44')}catch(e){}
+    }
+    // Camera: close behind pilot, tracking the pickup
     if(firePilot){
       const pp=firePilot.position;
-      camera.position.lerp(new THREE.Vector3(pp.x+5,pp.y+3,pp.z+11),.035);
-      camera.lookAt(pp.x,pp.y+.5,pp.z-5);
+      camera.position.lerp(new THREE.Vector3(pp.x+5,pp.y+2,pp.z+9),.07);
+      camera.lookAt(pp.x,pp.y+1,pp.z-3);
     }
   }
 
-  // ── Phase 6 (12.5s+): Trigger return ──
+  // ── Phase 6 (13.5-18.0s): SKY THRUST — 進撃の巨人クライマックス ──
+  else if(t<18.0){
+    const p=(t-13.5)/4.5;// 0→1
+    const sh=fireState._severedHead||head;
+    // One-time setup: pose + SFX + fire pillars
+    if(!fireState._skyThrust){
+      fireState._skyThrust=true;
+      fireState._skyOrbit=0;
+      if(firePilot){
+        firePilot.position.y=-2;
+        try{
+          const rArm=firePilot.getObjectByName('rArm');
+          const lArm=firePilot.getObjectByName('lArm');
+          if(rArm)rArm.rotation.x=-Math.PI*1.15;// full overhead thrust
+          if(lArm)lArm.rotation.x=-Math.PI*.95;
+        }catch(e){}
+      }
+      try{screenFlash(1.0);S.shakeT=1.5;S.shakeI=2.5}catch(e){}
+      try{sfx.bigExplosion&&sfx.bigExplosion()}catch(e){}
+      // 6 fire pillars erupt in a ring around pilot
+      if(firePilot){
+        for(let _pi=0;_pi<6;_pi++){
+          const ang=(_pi/6)*Math.PI*2;
+          const px=firePilot.position.x+Math.cos(ang)*9;
+          const pz=firePilot.position.z+Math.sin(ang)*9;
+          const _pv=new THREE.Vector3(px,-2,pz);
+          setTimeout(()=>{
+            try{spawnMegaExplosion(_pv,.7)}catch(_){}
+            for(let _fi=0;_fi<4;_fi++){
+              setTimeout(()=>{try{spawnP(_pv.clone().add(new THREE.Vector3((Math.random()-.5)*2,Math.random()*2,(Math.random()-.5)*2)),0xff4400,8,2.5,.5)}catch(_){}},_fi*60);
+            }
+          },_pi*180);
+        }
+      }
+      // Voice + subtitle — the climax line
+      setTimeout(()=>{
+        try{playComm('pilot','WITNESS THIS!! THE DRAGON FALLS!!')}catch(e){}
+      },400);
+      setTimeout(()=>{
+        try{playComm('hq','Outstanding... the pilot has slain the dragon. A legend is born.')}catch(e){}
+      },4500);
+      try{wfCineSubtitle('◆ DRAGON SLAYER ◆','#ff8800')}catch(e){}
+      // Second subtitle after a beat
+      setTimeout(()=>{
+        try{wfCineSubtitle('◆ DRAGON SLAIN — FLAMETHROWER UPGRADE INCOMING ◆','#ffcc44')}catch(e){}
+      },2800);
+    }
+    // Head held high — follows raised arm tip
+    if(sh&&firePilot){
+      const thrustPos=firePilot.position.clone().add(new THREE.Vector3(0.5,5.8+Math.sin(t*1.2)*.15,.2));
+      sh.position.lerp(thrustPos,dt*5);
+      sh.rotation.z+=(0-sh.rotation.z)*dt*3;
+      sh.rotation.x+=(-.3-sh.rotation.x)*dt*3;// slight tilt, mouth down
+    }
+    // Ongoing ambient fire + embers around pilot
+    if(Math.random()<.35&&firePilot){
+      const ang=Math.random()*Math.PI*2;
+      const r=4+Math.random()*7;
+      try{spawnP(
+        firePilot.position.clone().add(new THREE.Vector3(Math.cos(ang)*r,-2+Math.random()*2,Math.sin(ang)*r)),
+        Math.random()<.6?0xff4400:0xffaa00,4,2,.4
+      )}catch(e){}
+    }
+    // CINEMATIC CAMERA: slow 270° orbit, rising angle — Attack on Titan style
+    if(firePilot){
+      const pp=firePilot.position;
+      fireState._skyOrbit+=dt*.38;// orbit speed
+      const orbitR=13-p*2.5;// tightens slightly
+      const camX=pp.x+Math.sin(fireState._skyOrbit)*orbitR;
+      const camZ=pp.z+Math.cos(fireState._skyOrbit)*orbitR;
+      const camY=pp.y-3+p*7;// starts at ground level, rises dramatically
+      camera.position.lerp(new THREE.Vector3(camX,camY,camZ),.055);
+      camera.lookAt(pp.x,pp.y+4,pp.z);// always look up at raised head
+    }
+    // Saber glow on the elevated head
+    if(Math.random()<.12&&sh){
+      try{
+        const hp=new THREE.Vector3();sh.getWorldPosition(hp);
+        spawnP(hp,0xff6600,2,.9,.18);
+        spawnP(hp.clone().add(new THREE.Vector3((Math.random()-.5)*.6,Math.random()*.5,(Math.random()-.5)*.6)),0xffcc88,1,1.2,.2);
+      }catch(e){}
+    }
+  }
+
+  // ── Phase 7 (18.0s+): Trigger return ──
   else if(!fireState._returnTriggered){
     fireState._returnTriggered=true;
-    setTimeout(()=>startFireVictoryReturn(),200);
+    setTimeout(()=>startFireVictoryReturn(),300);
   }
 }
 
