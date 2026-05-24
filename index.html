@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.236</title>
+<title>COSMIC INVADERS v7.237</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -23965,17 +23965,29 @@ function _updateIceEscapeCine(dt){
   const et=iceState._escT;
   const atrt=iceState.playerATRT;
   const step=iceState.step;
-  // ─── escape_ride: AT-RT自動前進 (~10s) ───
+  // ─── escape_ride: AT-RT自動前進 — v7.237: 格納庫前で減速停止 ───
   if(step==='escape_ride'){
     if(atrt){
-      atrt.position.z-=16*dt;// v7.217: 12→16 to cover extra distance to far hangar
+      // Distance-based deceleration: brake zone starts 32 units from target
+      const _targetZ=-140;
+      const _dist=atrt.position.z-_targetZ;// positive = haven't arrived yet
+      let _spd=16;
+      if(_dist<=32&&_dist>0){_spd=Math.max(1.2,16*(_dist/32));}// smooth brake
+      if(_dist>0.1){atrt.position.z-=_spd*dt;}
+      else{atrt.position.z=_targetZ;}// clamp at stop position
       atrt.rotation.y+=(0-atrt.rotation.y)*dt*3;
       if(iceState.atrtLegs){
-        const walkFreq=6.0;// v7.217: 4.5→6.0 matches faster ride speed
+        const _moving=_spd>0.6;
         iceState.atrtLegs.forEach(function(lg){
-          const sw=Math.sin(et*walkFreq+lg.phase);
-          if(lg.group)lg.group.rotation.x+=(sw*0.35-lg.group.rotation.x)*dt*12;
-          if(lg.knee)lg.knee.rotation.x+=(Math.max(0,sw)*0.38-lg.knee.rotation.x)*dt*10;
+          if(_moving){
+            const sw=Math.sin(et*6.0+lg.phase);
+            if(lg.group)lg.group.rotation.x+=(sw*0.35-lg.group.rotation.x)*dt*12;
+            if(lg.knee)lg.knee.rotation.x+=(Math.max(0,sw)*0.38-lg.knee.rotation.x)*dt*10;
+          } else {
+            // legs settle to rest when stopped
+            if(lg.group)lg.group.rotation.x*=0.88;
+            if(lg.knee)lg.knee.rotation.x*=0.88;
+          }
         });
       }
       const tgx=atrt.position.x,tgy=atrt.position.y+7,tgz=atrt.position.z+18;
@@ -23985,10 +23997,24 @@ function _updateIceEscapeCine(dt){
       camera.lookAt(atrt.position.x,atrt.position.y+2,atrt.position.z-8);
     }
     if(et>4&&et<4.1)try{playComm('pilot',_L('I can see the hangar!','格納庫が見えてきた！'));}catch(_){}
-    if(et>=9.5){
+    // v7.237: trigger arrival voice + subtitle when AT-RT reaches hangar entrance
+    const _az=atrt?atrt.position.z:-999;
+    if(!iceState._rideArrived&&_az<=-138){
+      iceState._rideArrived=true;
+      try{wfCineSubtitle(_L('◆ ENTERING HANGAR — DISMOUNT! ◆','◆ 格納庫突入 — 降機！ ◆'),'#6ef');}catch(_){}
+      try{playComm('pilot',_L('Stopping here! Dismount — get to the ship!','ここで止まる！降りろ — 宇宙船へ急げ！'));}catch(_){}
+    }
+    // v7.237: transition after 1.1s pause once stopped at target
+    if(_az<=-139.5){
+      iceState._rideHoldT=(iceState._rideHoldT||0)+dt;
+      if(iceState._rideHoldT>=1.1){
+        iceState.step='escape_board';iceState._escT=0;
+      }
+    }
+    // Safety fallback: if somehow still in ride after 14s, force transition
+    if(et>=14&&iceState.step==='escape_ride'){
       iceState.step='escape_board';iceState._escT=0;
-      if(atrt)atrt.position.z=Math.min(atrt.position.z,-140);// v7.217: new hangar arrival position
-      try{wfCineSubtitle(_L('◆ ENTERING HANGAR ◆','◆ 格納庫突入 ◆'),'#6ef');}catch(_){}
+      if(atrt)atrt.position.z=Math.min(atrt.position.z,-140);
     }
   }
   // ─── escape_board: 降機→搭乗 (~9s) ───
@@ -24225,7 +24251,7 @@ function startIcePlanetPhase1(){
   iceScene.add(p1ship);
   // ── Ice planet (distant) ──
   // v7.193: Ice planet — vivid glowing blue crystal (image 1 style)
-  const ipGeo=new THREE.SphereGeometry(52,20,14);// more segments → crystal facets
+  const ipGeo=new THREE.SphereGeometry(52,28,18);// v7.237: more segments → finer crystal facets
   const ipGrp=new THREE.Group();
   // Outer atmosphere halo (faint, largest)
   const _ipHalo2=new THREE.Mesh(new THREE.SphereGeometry(62,8,6),
@@ -24988,8 +25014,9 @@ function _updateIcePhase1(dt){
                 st.p1playerShip?st.p1playerShip.position.y+8:10,
                 st.p1playerShip?st.p1playerShip.position.z+16:20);
         tgL.copy(st.p1playerShip?st.p1playerShip.position:new THREE.Vector3(0,8,-30));
-        if(sT>=4.6&&!st._hatchOpened){st._hatchOpened=true;st.step='hatch_enter';st.stepT=0;
-          try{_p1OpenHatchSFX();}catch(_){}
+        // v7.237: skip hatch_enter — decoy explosion blows ship into chute directly
+        if(sT>=4.6&&!st._hatchOpened){st._hatchOpened=true;st.step='chute';st.stepT=0;
+          try{_p1StartChute();}catch(_){}
         }
       }
       break;
@@ -25047,14 +25074,14 @@ function _updateIcePhase1(dt){
       if(sT>=6.5){st.step='eject';st.stepT=0;try{_p1Eject();}catch(_){};}
       break;
     case 'eject':
-      {// v7.173 ★ Eject capsule drifts toward ice planet surrounded by garbage
+      {// v7.237: Eject capsule drifts toward ice planet — 2× slower, aurora shimmer added
         const cap=st._p1EjectCap,cloud=st._p1GarbCloud;
-        // Planet grows
-        if(st.p1icePlanet){st.p1icePlanet.scale.setScalar(1+Math.min(1,sT/4.5)*3.5);}
-        // Capsule drifts toward planet (negative z), slow tumble
+        // Planet grows — 2× slower (9s instead of 4.5s)
+        if(st.p1icePlanet){st.p1icePlanet.scale.setScalar(1+Math.min(1,sT/9.0)*3.5);}
+        // Capsule drifts toward planet — half speed (1.75 instead of 3.5)
         if(cap){
-          cap.position.z-=3.5*dt;// drift forward
-          cap.rotation.y+=0.04*dt;// slow yaw tumble
+          cap.position.z-=1.75*dt;
+          cap.rotation.y+=0.04*dt;
           cap.rotation.x+=0.02*dt;
         }
         // Garbage cloud follows capsule + individual piece tumble
@@ -25063,28 +25090,46 @@ function _updateIcePhase1(dt){
           const rxS=cloud.userData.rxS||[];const ryS=cloud.userData.ryS||[];const rzS=cloud.userData.rzS||[];
           let pi=0;
           cloud.children.forEach(ch=>{
-            const idx=Math.floor(pi/2);// 2 children per piece (mesh + edges share index)
+            const idx=Math.floor(pi/2);
             if(rxS[idx]!=null){ch.rotation.x+=rxS[idx]*dt;ch.rotation.y+=(ryS[idx]||0)*dt;ch.rotation.z+=(rzS[idx]||0)*dt;}
             pi++;
           });
         }
+        // Aurora shimmer around the approaching planet
+        if(Math.random()<.14&&st.p1icePlanet){
+          const _sc=st.p1icePlanet.scale.x;
+          const _pp=st.p1icePlanet.position;
+          const _ar=Math.random()*Math.PI*2;
+          const _br=(55)*_sc*(0.9+Math.random()*.25);
+          try{spawnP(new THREE.Vector3(_pp.x+Math.cos(_ar)*_br,_pp.y+(Math.random()-.5)*_br*.3,_pp.z+Math.sin(_ar)*_br),
+            Math.random()<.55?0x44ccff:0x22ffaa,2,3.8,.5);}catch(_){}
+        }
         // Camera: behind-above capsule, looking past it toward planet
         const capZ=cap?cap.position.z:-12;
         tgP.set(0,3,capZ+14);
-        tgL.set(0,-2,capZ-40);// look past capsule toward planet
-        if(sT>=5.0){st.step='land';st.stepT=0;}
+        tgL.set(0,-2,capZ-40);
+        if(sT>=10.0){st.step='land';st.stepT=0;}// v7.237: 2× duration (was 5.0)
       }
       break;
     case 'land':
       {const cap=st._p1EjectCap,cloud=st._p1GarbCloud;
-        if(st.p1icePlanet){st.p1icePlanet.scale.setScalar(4.5+sT*2.5);}
-        // Continue drift + faster tumble as atmosphere hits
-        if(cap){cap.position.z-=6*dt;cap.rotation.y+=0.12*dt;cap.rotation.x+=0.08*dt;}
+        // v7.237: 2× slower final approach — planet fills screen over 4s (was 2s)
+        if(st.p1icePlanet){st.p1icePlanet.scale.setScalar(4.5+sT*1.25);}
+        if(cap){cap.position.z-=3*dt;cap.rotation.y+=0.12*dt;cap.rotation.x+=0.08*dt;}
         if(cloud&&cap){cloud.position.copy(cap.position);}
+        // More aurora at final approach
+        if(Math.random()<.22&&st.p1icePlanet){
+          const _sc=st.p1icePlanet.scale.x;
+          const _pp=st.p1icePlanet.position;
+          const _ar=Math.random()*Math.PI*2;
+          const _br=55*_sc*(0.8+Math.random()*.3);
+          try{spawnP(new THREE.Vector3(_pp.x+Math.cos(_ar)*_br,_pp.y+(Math.random()-.5)*_br*.2,_pp.z+Math.sin(_ar)*_br),
+            Math.random()<.5?0x55ddff:0x33ffcc,3,2.5,.6);}catch(_){}
+        }
         const capZ=cap?cap.position.z:-20;
         tgP.set(0,1,capZ+10);tgL.set(0,-1,capZ-20);
       }
-      if(sT>=2.0&&!st._phase1Done){
+      if(sT>=4.0&&!st._phase1Done){// v7.237: 2× duration (was 2.0)
         st._phase1Done=true;
         try{screenFlash(.95);}catch(_){}
         setTimeout(()=>{try{startIcePlanetPhase2();}catch(e){console.error('p1→p2:',e);}},900);
