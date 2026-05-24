@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.234</title>
+<title>COSMIC INVADERS v7.235</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -11929,16 +11929,7 @@ function updateEnemies(dt){
       e.mesh.position.y=e.baseY+Math.sin(e.spiralA)*e.spiralR}
     else{e.mesh.position.x=e.baseX+Math.sin(e.sinePhase)*e.sineAmp}
     if(!e.isBoss)e.mesh.position.z+=e.speedZ*dt;
-    // v7.219: Floor turret head tracks player in Y axis (smooth lerp)
-    if(e.isFloorTurret){
-      const _fth=e.mesh.userData.head;
-      if(_fth){
-        const _fdx=player.x-e.mesh.position.x;
-        const _fdz=(camera.position.z||0)-e.mesh.position.z;
-        const _fty=Math.atan2(_fdx,Math.max(0.5,_fdz));
-        _fth.rotation.y+=(_fty-_fth.rotation.y)*Math.min(1,dt*3.5);
-      }
-    }
+    // v7.235: Floor turret head is fixed — no rotation (removed player-tracking)
     if(e.isBoss){
       // === BOSS ANIMATION + PATTERN AI ===
       e.poseTime=(e.poseTime||0)+dt;
