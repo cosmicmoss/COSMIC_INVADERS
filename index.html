@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.238</title>
+<title>COSMIC INVADERS v7.239</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -12577,8 +12577,17 @@ function updateBonus(dt){S.bonusTimer-=dt;document.getElementById('bonus-timer')
 
 function endBonus(){S.phase='PLAYING';document.getElementById('bonus-overlay').style.display='none';
   for(let i=enemies.length-1;i>=0;i--){if(enemies[i].isBonus){scene.remove(enemies[i].mesh);enemies.splice(i,1)}}
-  // v7.105 ★ Mandatory transient-FX refresh on BONUS→PLAYING transition.
-  try{cleanupBossResidue()}catch(_){}
+  // v7.239 ★ FX-only cleanup on BONUS→PLAYING — do NOT wipe enemies[].
+  // Previously called cleanupBossResidue() which sets enemies.length=0, causing wave enemies
+  // frozen during bonus (phase==='BONUS' branch) to instantly vanish when the bonus timer
+  // expired. Now we clean only stale projectiles/particles so the wave enemies resume combat.
+  try{
+    if(typeof pBeams!=='undefined'&&pBeams.length){pBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(er){}});pBeams.length=0;}
+    if(typeof eBeams!=='undefined'&&eBeams.length){eBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(er){}});eBeams.length=0;}
+    if(typeof particles!=='undefined'&&particles.length){particles.forEach(p=>{try{scene.remove(p.mesh)}catch(er){}});particles.length=0;}
+    if(window._bossDebris&&window._bossDebris.length){window._bossDebris.forEach(d=>{try{scene.remove(d.mesh)}catch(er){}});window._bossDebris.length=0;}
+    if(typeof megaBossProjectiles!=='undefined'&&megaBossProjectiles.length){megaBossProjectiles.forEach(p=>{try{if(p.mesh)scene.remove(p.mesh)}catch(er){}});megaBossProjectiles.length=0;}
+  }catch(_){}
 }
 
 // ============ FORTRESS ============
@@ -13444,9 +13453,9 @@ function triggerCoreDeath(){
   // v7.208: Fire stage diverts to ground-combat against the Fire Dragon BEFORE marking cleared.
   if(typeof shouldDivertFireStageToOnFoot==='function' && shouldDivertFireStageToOnFoot()){
     S.coreAlive=false;
-    if(coreMesh){spawnMegaExplosion(coreMesh.position.clone(),.5);scene.remove(coreMesh);coreMesh=null}
+    if(coreMesh){spawnMegaExplosion(coreMesh.position.clone(),.4);scene.remove(coreMesh);coreMesh=null}// v7.239 -20%
     try{sfx.bigExplosion();sfx.stopBGM()}catch(_){}
-    screenFlash(1.5);S.shakeT=2;S.shakeI=3;
+    screenFlash(1.2);S.shakeT=1.6;S.shakeI=2.4;// v7.239 -20%
     setTimeout(()=>{try{startFireBossLandingCine()}catch(e){console.error('fire-land:',e)}},1800);
     return;
   }
@@ -13462,9 +13471,9 @@ function triggerCoreDeath(){
   coreDeathPos=coreMesh?coreMesh.position.clone():new THREE.Vector3(0,0,-60);
   savedCamPos.copy(camera.position);
   savedCamRot.copy(camera.rotation);
-  if(coreMesh){spawnMegaExplosion(coreMesh.position.clone(),.5);scene.remove(coreMesh);coreMesh=null}// v7.07: half-density wires for fortress destruct
-  sfx.bigExplosion();sfx.stopBGM();screenFlash(1.5);
-  S.shakeT=2;S.shakeI=3;
+  if(coreMesh){spawnMegaExplosion(coreMesh.position.clone(),.4);scene.remove(coreMesh);coreMesh=null}// v7.239 -20%
+  sfx.bigExplosion();sfx.stopBGM();screenFlash(1.2);// v7.239 -20%
+  S.shakeT=1.6;S.shakeI=2.4;// v7.239 -20%
   // v6.76: Spawn a visible player-ship stand-in for the orbit replay camera
   try{
     if(window._replayShip){scene.remove(window._replayShip)}
@@ -13490,10 +13499,10 @@ function triggerCoreDeath(){
   // Enter REPLAY phase (slow-mo multi-camera)
   S.phase='REPLAY';S.replayTimer=0;S.replayCut=0;
   document.getElementById('replay-overlay').style.display='block';
-  // Spawn secondary explosions over time
-  for(let i=1;i<=4;i++){setTimeout(()=>{
+  // v7.239: Secondary explosions — 4→3 count (-25%), scale .5→.4 (-20%), flash .5→.4 (-20%)
+  for(let i=1;i<=3;i++){setTimeout(()=>{
     const p=coreDeathPos.clone().add(new THREE.Vector3((Math.random()-.5)*15,(Math.random()-.5)*15,(Math.random()-.5)*10));
-    spawnMegaExplosion(p,.5);sfx.bigExplosion();screenFlash(.5);// v7.07: half-density
+    spawnMegaExplosion(p,.4);sfx.bigExplosion();screenFlash(.4);
   },i*2000)}}
 
 function updateReplay(dt){
