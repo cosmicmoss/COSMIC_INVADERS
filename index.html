@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.232</title>
+<title>COSMIC INVADERS v7.233</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -31587,15 +31587,11 @@ function buildFireScene(){
     vol.position.set((v-1)*25,4,-55-v*4);fireScene.add(vol);
   }
   // Pilot (with fireproof suit decorations)
-  firePilot=makeFirePilot();
-  firePilot.position.set(0,-2,5);
-  firePilot.rotation.y=0;
-  fireScene.add(firePilot);
+  try{firePilot=makeFirePilot();}catch(e){console.error('makeFirePilot:',e);firePilot=new THREE.Group();}
+  firePilot.position.set(0,-2,5);firePilot.rotation.y=0;fireScene.add(firePilot);
   // Dragon boss
-  fireDragonBoss=makeFireDragonBoss();
-  fireDragonBoss.position.set(0,0,-25);
-  fireDragonBoss.rotation.y=0;// v7.214: head (at local +Z) now faces +Z = toward pilot at z=5
-  fireScene.add(fireDragonBoss);
+  try{fireDragonBoss=makeFireDragonBoss();}catch(e){console.error('makeFireDragonBoss:',e);fireDragonBoss=new THREE.Group();}
+  fireDragonBoss.position.set(0,0,-25);fireDragonBoss.rotation.y=0;fireScene.add(fireDragonBoss);
   // v7.228: Ambient fire particle systems — 地表炎 + エンバー浮遊
   // Layer 1: orange ground fire (150 pts)
   const _afN=150;const _afPos=new Float32Array(_afN*3);const _afSpd=new Float32Array(_afN);
@@ -31679,7 +31675,7 @@ function makeFirePilot(){
   const tipGeo=new THREE.BoxGeometry(.14,.14,.14);
   const tipFill=new THREE.Mesh(tipGeo,_pgMat(0x003355));
   tipFill.position.set(0,1.28,0);gen.add(tipFill);
-  gen.add(Object.assign(new THREE.LineSegments(new THREE.EdgesGeometry(tipGeo),new THREE.LineBasicMaterial({color:0x88ffff})),{position:tipFill.position.clone()}));
+  const tipWire=new THREE.LineSegments(new THREE.EdgesGeometry(tipGeo),new THREE.LineBasicMaterial({color:0x88ffff}));tipWire.position.set(0,1.28,0);gen.add(tipWire);
   // Energy core panel (front face, bright cyan)
   const coreGeo=new THREE.BoxGeometry(.44,.44,.09);
   const cFill2=new THREE.Mesh(coreGeo,_pgMat(0x003366));
@@ -31722,32 +31718,23 @@ function makeFirePilot(){
 }
 let firePilot_gun=null;
 
-// Fire Dragon boss model — head + body segments + wings + tail
+// Fire Dragon boss model — wireframe-only (v7.233)
 function makeFireDragonBoss(){
-  // v7.212: polygonOffset fills — same-size as wireframe, no gaps, fully opaque body
   const dragon=new THREE.Group();
-  // Helper: solid fill material using polygonOffset so wireframe sits on top without z-fighting
-  const solidFill=(col)=>new THREE.MeshBasicMaterial({color:col,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
   const mScale =new THREE.LineBasicMaterial({color:0xff4400,transparent:true,opacity:.98});
   const mScaleDk=new THREE.LineBasicMaterial({color:0xcc2200,transparent:true,opacity:.95});
   const mLava  =new THREE.LineBasicMaterial({color:0xffaa00,transparent:true,opacity:1});
   const mEmber =new THREE.LineBasicMaterial({color:0xff6600,transparent:true,opacity:.9});
   const eyeMat =new THREE.LineBasicMaterial({color:0xffee44,transparent:true,opacity:1});
-  // Body segments (5, tapering) — fill same radius as wireframe
+  // Body segments (5, tapering) — wireframe only
   const bodyGrp=new THREE.Group();
   for(let i=0;i<5;i++){
     const r=2.5-i*.3;
     const geo=new THREE.OctahedronGeometry(r,1);
-    // FILL first (rendered before wireframe → polygonOffset pushes it back slightly)
-    const fill=new THREE.Mesh(geo,solidFill(i%2===0?0x992200:0x771500));
-    fill.position.z=-i*3;bodyGrp.add(fill);
-    // Wireframe on top
     const seg=new THREE.LineSegments(new THREE.EdgesGeometry(geo),i%2===0?mScale:mScaleDk);
     seg.position.z=-i*3;bodyGrp.add(seg);
-    // Spine lava crack
     const crack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.3,.5,r*1.6)),mLava);
     crack.position.set(0,r*.55,-i*3);bodyGrp.add(crack);
-    // Side ember veins
     for(let v=-1;v<=1;v+=2){
       const vein=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.12,.2,r*1.1)),mEmber);
       vein.position.set(v*r*.5,r*.3,-i*3);bodyGrp.add(vein);
@@ -31757,105 +31744,68 @@ function makeFireDragonBoss(){
   // Tail (3 segments)
   for(let i=0;i<3;i++){
     const r=1.2-i*.3;
-    const geo=new THREE.OctahedronGeometry(r,0);
-    const tFill=new THREE.Mesh(geo,solidFill(0x771500));
-    tFill.position.set(0,3-i*.3,-12-i*1.5);dragon.add(tFill);
-    const t=new THREE.LineSegments(new THREE.EdgesGeometry(geo),mScaleDk);
-    t.position.copy(tFill.position);dragon.add(t);
+    const t=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(r,0)),mScaleDk);
+    t.position.set(0,3-i*.3,-12-i*1.5);dragon.add(t);
     const tCrack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.15,.25,r)),mLava);
-    tCrack.position.copy(tFill.position);tCrack.position.y+=r*.4;dragon.add(tCrack);
+    tCrack.position.set(0,3-i*.3+r*.4,-12-i*1.5);dragon.add(tCrack);
   }
   // Head
   const head=new THREE.Group();head.name='dragonHead';
   const headGeo=new THREE.ConeGeometry(2.2,4,8);
-  // Fill first, wireframe on top
-  const headFill=new THREE.Mesh(headGeo,solidFill(0x991a00));
-  headFill.rotation.x=Math.PI/2;head.add(headFill);
   const headCone=new THREE.LineSegments(new THREE.EdgesGeometry(headGeo),mScale);
   headCone.rotation.x=Math.PI/2;head.add(headCone);
-  // Lava ridge on top of head
-  const ridgeGeo=new THREE.BoxGeometry(.3,.55,3.6);
-  head.add(new THREE.Mesh(ridgeGeo,solidFill(0xaa3300)));
-  const headRidge=new THREE.LineSegments(new THREE.EdgesGeometry(ridgeGeo),mLava);
+  const headRidge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.3,.55,3.6)),mLava);
   head.add(headRidge);
-  // Horns (6, with fill)
+  // Horns (6)
   for(let h=0;h<6;h++){
     const ang=(h/6)*Math.PI*2;
-    const hornGeo=new THREE.ConeGeometry(.3,1.6,5);
-    const hf=new THREE.Mesh(hornGeo,solidFill(0xaa2200));
-    hf.position.set(Math.cos(ang)*1.2,Math.sin(ang)*1.2,-.5);hf.rotation.x=-Math.PI/2;hf.rotation.z=ang;head.add(hf);
-    const hw=new THREE.LineSegments(new THREE.EdgesGeometry(hornGeo),mEmber);
-    hw.position.copy(hf.position);hw.rotation.copy(hf.rotation);head.add(hw);
+    const hw=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.3,1.6,5)),mEmber);
+    hw.position.set(Math.cos(ang)*1.2,Math.sin(ang)*1.2,-.5);hw.rotation.x=-Math.PI/2;hw.rotation.z=ang;head.add(hw);
   }
   // Teeth
   for(let f=-1;f<=1;f+=2){for(let k=0;k<2;k++){
-    const fg=new THREE.ConeGeometry(.15,.6,4);
-    const ff=new THREE.Mesh(fg,solidFill(0xeeddaa));
-    ff.position.set(f*.5,-.6-k*.15,1.8);ff.rotation.x=Math.PI;head.add(ff);
-    const fw=new THREE.LineSegments(new THREE.EdgesGeometry(fg),new THREE.LineBasicMaterial({color:0xffddaa}));
-    fw.position.copy(ff.position);fw.rotation.copy(ff.rotation);head.add(fw);
+    const fw=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.15,.6,4)),new THREE.LineBasicMaterial({color:0xffddaa}));
+    fw.position.set(f*.5,-.6-k*.15,1.8);fw.rotation.x=Math.PI;head.add(fw);
   }}
-  // Eyes (yellow, with fill + halo)
+  // Eyes (yellow wireframe + halo ring)
   for(let e=-1;e<=1;e+=2){
-    const eg=new THREE.IcosahedronGeometry(.3,0);
-    const ef=new THREE.Mesh(eg,solidFill(0xffaa00));
-    ef.position.set(e*.7,.5,1);head.add(ef);
-    const ew=new THREE.LineSegments(new THREE.EdgesGeometry(eg),eyeMat);
-    ew.position.copy(ef.position);head.add(ew);
+    const ew=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(.3,0)),eyeMat);
+    ew.position.set(e*.7,.5,1);head.add(ew);
     const eh=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.32,.05,4,10)),eyeMat);
-    eh.position.copy(ef.position);head.add(eh);
+    eh.position.set(e*.7,.5,1);head.add(eh);
   }
-  // Mouth glow
+  // Mouth glow (Mesh kept — needed for FLAME_BREATH animation)
   const mouthGlow=new THREE.Mesh(new THREE.SphereGeometry(.8,8,6),new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0}));
   mouthGlow.position.z=1.5;mouthGlow.name='mouthGlow';head.add(mouthGlow);
-  // v7.230: long neck — 4 segments from body to head
+  // Neck — 4 segments (long neck, v7.230)
   const _nRads=[1.15,0.98,0.82,0.68];
   const _nZs  =[6.5, 9.0,11.5,13.8];
   const _nYs  =[3.8, 4.2, 4.7, 5.1];
   for(let n=0;n<4;n++){
     const nr=_nRads[n];
-    const nGeo=new THREE.OctahedronGeometry(nr,0);
-    const nFill=new THREE.Mesh(nGeo,solidFill(0x882000));
-    nFill.position.set(0,_nYs[n],_nZs[n]);dragon.add(nFill);
-    const nSeg=new THREE.LineSegments(new THREE.EdgesGeometry(nGeo),mScale);
-    nSeg.position.copy(nFill.position);dragon.add(nSeg);
-    // Spine crack on neck
+    const nSeg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(nr,0)),mScale);
+    nSeg.position.set(0,_nYs[n],_nZs[n]);dragon.add(nSeg);
     const nCrack=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.18,.28,nr*1.9)),mLava);
     nCrack.position.set(0,_nYs[n]+nr*.42,_nZs[n]);dragon.add(nCrack);
   }
-  head.position.set(0,5.5,16.0);dragon.add(head);// v7.230: head at end of long neck
-  // Wings (fully opaque fill, same-size)
+  head.position.set(0,5.5,16.0);dragon.add(head);
+  // Wings
   for(let w=-1;w<=1;w+=2){
-    const wingGeo=new THREE.ConeGeometry(3,5,3);
-    const wingFill=new THREE.Mesh(wingGeo,solidFill(0xaa2200));
-    wingFill.position.set(w*2.5,5.5,1);wingFill.rotation.z=w*Math.PI*.4;wingFill.rotation.x=Math.PI*.3;
-    dragon.add(wingFill);
-    const wingW=new THREE.LineSegments(new THREE.EdgesGeometry(wingGeo),mScaleDk);
-    wingW.position.copy(wingFill.position);wingW.rotation.copy(wingFill.rotation);dragon.add(wingW);
-    // Lava veins
+    const wingW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(3,5,3)),mScaleDk);
+    wingW.position.set(w*2.5,5.5,1);wingW.rotation.z=w*Math.PI*.4;wingW.rotation.x=Math.PI*.3;dragon.add(wingW);
     for(let v=0;v<3;v++){
       const vein=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.08,.08,2.5-v*.6)),mLava);
-      vein.position.set(w*(1.5-v*.4),5.5+v*.4,1-v*.3);vein.rotation.copy(wingFill.rotation);dragon.add(vein);
+      vein.position.set(w*(1.5-v*.4),5.5+v*.4,1-v*.3);vein.rotation.copy(wingW.rotation);dragon.add(vein);
     }
   }
-  // Legs
+  // Legs + 3-claw feet (v7.230)
   for(let lx=-1;lx<=1;lx+=2){for(let lz=0;lz<2;lz++){
-    const legGeo=new THREE.BoxGeometry(.7,2.2,.7);
-    const lf=new THREE.Mesh(legGeo,solidFill(0x881500));
-    lf.position.set(lx*2.2,1.2,-1-lz*4);dragon.add(lf);
-    const lw=new THREE.LineSegments(new THREE.EdgesGeometry(legGeo),mScale);
-    lw.position.copy(lf.position);dragon.add(lw);
-    // 3 fierce cone claws per foot, fanned outward
+    const lw=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.7,2.2,.7)),mScale);
+    lw.position.set(lx*2.2,1.2,-1-lz*4);dragon.add(lw);
     const _clawFan=[{a:-0.38,ox:lx*-.20,oz:.40},{a:0,ox:0,oz:.62},{a:0.38,ox:lx*.20,oz:.40}];
     for(const cf of _clawFan){
-      const cGeo=new THREE.ConeGeometry(.13,.72,5);
-      const cFill=new THREE.Mesh(cGeo,solidFill(0x220800));
-      cFill.position.set(lx*2.2+cf.ox,-.05,-1-lz*4+cf.oz);
-      cFill.rotation.x=Math.PI*.58; cFill.rotation.z=cf.a;
-      dragon.add(cFill);
-      const cWire=new THREE.LineSegments(new THREE.EdgesGeometry(cGeo),mLava);
-      cWire.position.copy(cFill.position);
-      cWire.rotation.copy(cFill.rotation);
+      const cWire=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.13,.72,5)),mLava);
+      cWire.position.set(lx*2.2+cf.ox,-.05,-1-lz*4+cf.oz);cWire.rotation.x=Math.PI*.58;cWire.rotation.z=cf.a;
       dragon.add(cWire);
     }
   }}
@@ -31865,43 +31815,45 @@ function makeFireDragonBoss(){
   return dragon;
 }
 
-// Beam shield mesh — half-dome in front of pilot (v7.211: more vivid cyan/blue)
+// Beam shield mesh — kite-war-shield shape (v7.233)
 function makeBeamShield(){
   const g=new THREE.Group();
-  // v7.211: brighter cyan wireframe + higher opacity fill so shield is clearly visible
   const mEdge=new THREE.LineBasicMaterial({color:0x00eeff,transparent:true,opacity:.95});
-  const mRing=new THREE.LineBasicMaterial({color:0x88ffff,transparent:true,opacity:1});
-  const mHex=new THREE.LineBasicMaterial({color:0x44ccff,transparent:true,opacity:.8});
-  // Main dome (half-sphere)
-  const shieldGeo=new THREE.SphereGeometry(1.8,10,5,0,Math.PI*2,0,Math.PI*.5);
-  const shield=new THREE.LineSegments(new THREE.EdgesGeometry(shieldGeo),mEdge);
-  g.add(shield);
-  // Fill — vivid cyan-blue, more opaque than before
-  const fill=new THREE.Mesh(shieldGeo,new THREE.MeshBasicMaterial({color:0x0066cc,transparent:true,opacity:.55,side:THREE.DoubleSide}));
-  g.add(fill);
-  // Hexagonal grid overlay (adds sci-fi "energy field" texture)
-  const hexGeo=new THREE.SphereGeometry(1.82,6,3,0,Math.PI*2,0,Math.PI*.5);
-  const hexGrid=new THREE.LineSegments(new THREE.EdgesGeometry(hexGeo),mHex);
-  g.add(hexGrid);
-  // Outer bright rim ring (base of dome)
-  const rimRing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.8,.06,5,20)),mRing);
-  rimRing.rotation.x=Math.PI/2;g.add(rimRing);
-  // Second inner rim (concentric) — adds depth
-  const innerRing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.2,.04,4,16)),
-    new THREE.LineBasicMaterial({color:0xaaffff,transparent:true,opacity:.75}));
-  innerRing.rotation.x=Math.PI/2;innerRing.position.y=.9;g.add(innerRing);
-  // Vertical beam lines (pillar effect — 4 lines top to base)
-  for(let i=0;i<4;i++){
-    const ang=(i/4)*Math.PI*2;
-    const beam=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.04,.04,1.8)),mEdge);
-    beam.position.set(Math.cos(ang)*1.4,.7,Math.sin(ang)*1.4);
-    beam.rotation.y=-ang;beam.rotation.z=Math.atan2(1.8,1.4)*.5;
-    g.add(beam);
+  const mGlow=new THREE.LineBasicMaterial({color:0x88ffff,transparent:true,opacity:1});
+  const mFill=new THREE.MeshBasicMaterial({color:0x004488,transparent:true,opacity:.38,side:THREE.DoubleSide});
+  // Main rectangular body
+  const bodyGeo=new THREE.BoxGeometry(2.4,2.0,.1);
+  g.add(new THREE.Mesh(bodyGeo,mFill));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(bodyGeo),mEdge));
+  // Bottom diamond point (4-sided cone rotated 45°)
+  const ptGeo=new THREE.ConeGeometry(1.2,.85,4);
+  const ptFill=new THREE.Mesh(ptGeo,mFill);ptFill.position.y=-1.42;ptFill.rotation.z=Math.PI/4;g.add(ptFill);
+  const ptWire=new THREE.LineSegments(new THREE.EdgesGeometry(ptGeo),mEdge);
+  ptWire.position.copy(ptFill.position);ptWire.rotation.copy(ptFill.rotation);g.add(ptWire);
+  // Top arch
+  const arch=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.2,.04,4,10,Math.PI)),mGlow);
+  arch.position.y=1.0;arch.rotation.z=Math.PI;g.add(arch);
+  // Horizontal energy stripes (3)
+  for(const sy of[.75,.0,-.65]){
+    const s=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2.38,.04,.06)),mGlow);
+    s.position.y=sy;g.add(s);
   }
-  // Centre bright core spot
-  const core=new THREE.Mesh(new THREE.CircleGeometry(.25,8),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.65,side:THREE.DoubleSide}));
-  core.rotation.x=Math.PI/2;core.position.y=1.75;g.add(core);
-  g.scale.set(1.2,1.4,1.0);
+  // Center cross emblem
+  const crossH=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.2,.04,.06)),mGlow);g.add(crossH);
+  const crossV=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.04,1.2,.06)),mGlow);g.add(crossV);
+  // Center core diamond
+  const coreGeo=new THREE.OctahedronGeometry(.28,0);
+  g.add(new THREE.Mesh(coreGeo,new THREE.MeshBasicMaterial({color:0x88ffff,transparent:true,opacity:.85})));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(coreGeo),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:1})));
+  // Corner brackets
+  for(const [cx,cy] of[[-1.2,1.0],[1.2,1.0],[-1.2,-.95],[1.2,-.95]]){
+    const br=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.32,.32,.12)),mGlow);
+    br.position.set(cx,cy,0);g.add(br);
+  }
+  // Outer glow border
+  const outWire=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2.52,2.08,.06)),new THREE.LineBasicMaterial({color:0x44ccff,transparent:true,opacity:.5}));
+  g.add(outWire);
+  g.scale.set(1,1.2,1);
   return g;
 }
 
