@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.233</title>
+<title>COSMIC INVADERS v7.234</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -31528,8 +31528,8 @@ function startFirePlanetOnFoot(){
   }
   // HUD
   showFireOnFootHUD();
-  // Touch controls
-  try{showTouchControls(true,'onfoot')}catch(e){}
+  // Touch controls (v7.234: fire_onfoot mode → SHLD button instead of SABR)
+  try{showTouchControls(true,'fire_onfoot')}catch(e){}
   // Subtitle + voices
   if(typeof wfCineSubtitle==='function')wfCineSubtitle('◆ FIRE PLANET — DRAGON COMBAT ◆','#ff6622');
   setTimeout(()=>{try{playComm('pilot','Suit holding against the heat. Engaging the dragon.')}catch(e){}},700);
@@ -31907,8 +31907,18 @@ function updateFirePlanetOnFoot(dt){
     firePilot.position.x=Math.max(-25,Math.min(25,firePilot.position.x));
     firePilot.position.z=Math.max(-15,Math.min(20,firePilot.position.z));
     firePilot.position.y=-2;
+    // v7.234: Touch joystick support (same pattern as ice/forest on-foot)
+    if(typeof touch!=='undefined'&&touch.stickActive){
+      if(Math.abs(touch.stickX)>.12)firePilot.rotation.y-=touch.stickX*dt*3.0;
+      const fwdT=touch.stickY;
+      if(Math.abs(fwdT)>.12){
+        const fX2=-Math.sin(firePilot.rotation.y),fZ2=-Math.cos(firePilot.rotation.y);
+        firePilot.position.x+=fX2*(fwdT>0?fwdT:fwdT*0.6)*6*dt;
+        firePilot.position.z+=fZ2*(fwdT>0?fwdT:fwdT*0.6)*6*dt;
+      }
+    }
     // Walking animation
-    const moving=keys['KeyW']||keys['ArrowUp']||keys['KeyS']||keys['ArrowDown']||keys['KeyA']||keys['KeyD']||keys['ArrowLeft']||keys['ArrowRight'];
+    const moving=keys['KeyW']||keys['ArrowUp']||keys['KeyS']||keys['ArrowDown']||keys['KeyA']||keys['KeyD']||keys['ArrowLeft']||keys['ArrowRight']||(typeof touch!=='undefined'&&touch.stickActive&&(Math.abs(touch.stickX)>.12||Math.abs(touch.stickY)>.12));
     try{if(typeof animateForestPilotWalk==='function')animateForestPilotWalk(firePilot,moving,dt,moving?1:0)}catch(e){}
     // Shield (Shift held)
     const shieldKey=keys['ShiftLeft']||keys['ShiftRight'];
@@ -36337,21 +36347,42 @@ function setupTouch(){
   }
 
   // Napalm button
-  // v7.166: context-aware — on-foot modes activate saber (Enter key) instead of fireNapalm
+  // v7.234: context-aware — fire on-foot = beam shield (hold), ice/forest = saber, else napalm
   const napBtn=document.getElementById('touch-napalm');
   if(napBtn){
-    const fireNap=(e)=>{if(e){e.preventDefault();e.stopPropagation()}
+    napBtn.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();
       napBtn.classList.add('pressed');
-      setTimeout(()=>napBtn.classList.remove('pressed'),200);
-      if(S.onFootMode){
-        // Ice/Forest on-foot: Enter = saber swing
+      if(S.phase==='FIRE_ONFOOT'){
+        // Fire on-foot: HOLD shield (Shift) while finger down
+        if(typeof keys!=='undefined')keys['ShiftLeft']=true;
+      } else if(S.onFootMode){
+        // Ice/Forest: saber tap
         if(typeof keys!=='undefined'){keys['Enter']=true;setTimeout(()=>{try{keys['Enter']=false;}catch(_){}},120);}
       } else {
         if(S.power>=C.MAX_POWER)fireNapalm();
       }
-    };
-    napBtn.addEventListener('touchstart',fireNap,{passive:false});
-    napBtn.addEventListener('click',fireNap);
+    },{passive:false});
+    napBtn.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();
+      napBtn.classList.remove('pressed');
+      if(S.phase==='FIRE_ONFOOT'){
+        // Release shield
+        if(typeof keys!=='undefined')keys['ShiftLeft']=false;
+      }
+    },{passive:false});
+    napBtn.addEventListener('touchcancel',()=>{
+      napBtn.classList.remove('pressed');
+      if(typeof keys!=='undefined')keys['ShiftLeft']=false;
+    });
+    napBtn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
+      if(S.phase==='FIRE_ONFOOT'){
+        // click fallback: brief shield flash
+        if(typeof keys!=='undefined'){keys['ShiftLeft']=true;setTimeout(()=>{try{keys['ShiftLeft']=false;}catch(_){}},400);}
+      } else if(S.onFootMode){
+        if(typeof keys!=='undefined'){keys['Enter']=true;setTimeout(()=>{try{keys['Enter']=false;}catch(_){}},120);}
+      } else {
+        if(S.power>=C.MAX_POWER)fireNapalm();
+      }
+    });
   }
 
   // Prevent default touch on canvas (no scroll/zoom)
@@ -36363,7 +36394,11 @@ function setupTouch(){
 function updateTouchButtonLabels(mode){
   const fb=document.getElementById('touch-fire');
   const nb=document.getElementById('touch-napalm');
-  if(mode==='onfoot'){
+  if(mode==='fire_onfoot'){
+    // Fire planet on-foot: ice beam + beam shield (hold)
+    if(fb){fb.textContent='SHOT';fb.title='Ice Beam (Space)';}
+    if(nb){nb.textContent='SHLD';nb.title='Beam Shield (hold)';}
+  } else if(mode==='onfoot'){
     // On-foot phases: shoot + saber
     if(fb){fb.textContent='SHOT';fb.title='Shoot (Space)';}
     if(nb){nb.textContent='SABR';nb.title='Lightsaber (Enter)';}
