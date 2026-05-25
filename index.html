@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.240</title>
+<title>COSMIC INVADERS v7.241</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -728,7 +728,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.60 - LOADED
+  COSMIC INVADERS v7.241 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -749,7 +749,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
 </noscript>
 <!-- IMMEDIATE minimal JS test - if this doesn't run, JS is blocked -->
-<script>document.getElementById('version-banner').textContent='v7.105 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
+<script>document.getElementById('version-banner').textContent='v7.241 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
 <div id="container">
   <div id="crt"></div>
     <!-- v7.187: ice escape cockpit interior view -->
@@ -944,6 +944,8 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <button type="button" class="op-close" onclick="openPoseEditorFromOptions()" style="border-color:#0ff;color:#0ff;background:rgba(0,30,40,0.4);box-shadow:0 0 10px rgba(0,255,255,0.3);margin-top:4px">&#9654; POSE EDITOR &#9664;</button>
     <!-- v7.159: Character Name Editor -->
     <button type="button" class="op-close" onclick="openCharNameEditor()" style="border-color:#fa0;color:#fa0;background:rgba(40,28,0,0.45);box-shadow:0 0 10px rgba(255,170,0,0.3);margin-top:4px">&#x270E; CHARACTER NAMES &#9664;</button>
+    <!-- v7.241: Mobile viewport simulator for dev testing -->
+    <button type="button" id="btn-mobile-sim" class="op-close" onclick="toggleMobileSim()" style="border-color:#0f8;color:#0f8;background:rgba(0,30,15,0.4);box-shadow:0 0 10px rgba(0,255,128,0.3);margin-top:4px">&#128241; MOBILE VIEW TEST</button>
     <button type="button" class="op-close" onclick="closeOptions()">&#9654; CLOSE &#9664;</button>
   </div>
   <!-- v7.159: Character Name Editor -->
@@ -1069,7 +1071,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.159</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.241</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1324,7 +1326,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.105 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.241 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1359,7 +1361,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.105 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.241 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -3224,7 +3226,9 @@ function setupThree(){scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x0000
   renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(w,h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor(0x000000);
   document.getElementById('container').prepend(renderer.domElement);clock=new THREE.Clock();
-  window.addEventListener('resize',()=>{const w2=innerWidth,h2=innerHeight;
+  window.addEventListener('resize',()=>{
+    if(window._mobileSimActive)return;// v7.241: don't override mobile sim
+    const w2=innerWidth,h2=innerHeight;
     camera.aspect=w2/h2;camera.updateProjectionMatrix();renderer.setSize(w2,h2)})}
 
 function createStars(){
@@ -34625,6 +34629,51 @@ function closeOptions(){
   saveOpt();applyOptions();
 }
 
+// ── v7.241: MOBILE VIEWPORT SIMULATOR ────────────────────────────────────────
+// Resizes renderer to phone dimensions so touch UI / layout can be verified on desktop.
+// Portrait 390×844 (iPhone 14 / common Android). Letterboxes with dark overlay.
+const _MSIM_W=390,_MSIM_H=844;
+function toggleMobileSim(){
+  window._mobileSimActive=!window._mobileSimActive;
+  const btn=document.getElementById('btn-mobile-sim');
+  const cnv=typeof renderer!=='undefined'&&renderer?renderer.domElement:null;
+  if(window._mobileSimActive){
+    // Resize renderer + camera
+    try{if(typeof camera!=='undefined'&&camera){camera.aspect=_MSIM_W/_MSIM_H;camera.updateProjectionMatrix();}
+        if(typeof renderer!=='undefined'&&renderer)renderer.setSize(_MSIM_W,_MSIM_H);}catch(_){}
+    // Centre canvas with phone border
+    if(cnv)cnv.style.cssText='position:fixed;width:'+_MSIM_W+'px;height:'+_MSIM_H+'px;left:50%;top:50%;transform:translate(-50%,-50%);border:2px solid #0f8;box-shadow:0 0 30px rgba(0,255,128,0.5);z-index:1;border-radius:18px';
+    // Dark letterbox background
+    let ov=document.getElementById('mobile-sim-ov');
+    if(!ov){ov=document.createElement('div');ov.id='mobile-sim-ov';
+      ov.style.cssText='position:fixed;inset:0;background:#000;z-index:0;pointer-events:none';
+      document.body.insertBefore(ov,document.body.firstChild);}
+    ov.style.display='block';
+    // Floating label (tap to exit)
+    let lbl=document.getElementById('mobile-sim-lbl');
+    if(!lbl){lbl=document.createElement('div');lbl.id='mobile-sim-lbl';
+      lbl.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);color:#0f8;font-size:10px;letter-spacing:2px;font-family:monospace;z-index:9999;background:rgba(0,20,10,0.85);padding:3px 10px;border-radius:4px;border:1px solid #0f8;cursor:pointer';
+      lbl.onclick=()=>{toggleMobileSim();};
+      document.body.appendChild(lbl);}
+    lbl.textContent='📱 MOBILE SIM 390×844 — タップして終了';lbl.style.display='block';
+    // Show touch controls
+    try{showTouchControls(true);}catch(_){}
+    if(btn){btn.textContent='📱 MOBILE VIEW: ON ✓';btn.classList.add('on');}
+    closeOptions();
+  } else {
+    window._mobileSimActive=false;
+    // Restore desktop size
+    const w=innerWidth,h=innerHeight;
+    try{if(typeof camera!=='undefined'&&camera){camera.aspect=w/h;camera.updateProjectionMatrix();}
+        if(typeof renderer!=='undefined'&&renderer)renderer.setSize(w,h);}catch(_){}
+    if(cnv)cnv.style.cssText='position:fixed;top:0;left:0;z-index:1;border:none;border-radius:0;box-shadow:none;transform:none';
+    const ov=document.getElementById('mobile-sim-ov');if(ov)ov.style.display='none';
+    const lbl=document.getElementById('mobile-sim-lbl');if(lbl)lbl.style.display='none';
+    try{showTouchControls(false);}catch(_){}
+    if(btn){btn.textContent='📱 MOBILE VIEW TEST';btn.classList.remove('on');}
+  }
+}
+
 // ── v7.159: CHARACTER NAME EDITOR ────────────────────────────────────────────
 const _CNE_MAIN=[
   {key:'hq',     label:'HQ / COMMAND',    defEn:'HQ COMMAND',       defJp:'司令部'},
@@ -37214,7 +37263,7 @@ function init(){setupThree();createStars();createSpeedLines();createGrid();creat
 // Wrap init in try/catch so any error doesn't prevent auto-launch
 try{init();
   // Update banner: success
-  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.32 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
+  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.241 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
 }catch(initErr){
   // Show error on screen (for iPhone debugging)
   try{const b=document.getElementById('version-banner');
