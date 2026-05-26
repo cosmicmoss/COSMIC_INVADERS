@@ -13,6 +13,7 @@ Open `index.html` in any modern browser, or visit the GitHub Pages link.
 - ❄️ **Ice planet** — 5-phase campaign: infiltration → snow-trooper combat → cryo-valley → base raid → AT-RT walker battle + escape
 - 🔥 **Fire planet** — corona dragon combat + on-foot Fire Dragon boss battle (beam shield + ice beam + saber finisher) → unlocks ship flamethrower
 - 🏰 **Fortress assault** — trench run + Death Star reactor
+- 🤼 **Space Colosseum** — captured by pirates, fight 7 monsters to free the baby alien hostage (CHOP / Giant Swing / Frankensteiner)
 - 🎵 **Procedural audio** — full BGM with orchestral boss theme, all SFX synthesized via Web Audio API
 - 🎮 **Keyboard + touch controls**
 
@@ -29,4 +30,4 @@ Open `index.html` in any modern browser, or visit the GitHub Pages link.
 
 ## Version
 
-v7.242
+v7.243

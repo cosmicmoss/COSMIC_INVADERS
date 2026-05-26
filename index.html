@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.242</title>
+<title>COSMIC INVADERS v7.243</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -728,7 +728,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.242 - LOADED
+  COSMIC INVADERS v7.243 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -749,7 +749,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
 </noscript>
 <!-- IMMEDIATE minimal JS test - if this doesn't run, JS is blocked -->
-<script>document.getElementById('version-banner').textContent='v7.242 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
+<script>document.getElementById('version-banner').textContent='v7.243 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
 <div id="container">
   <div id="crt"></div>
     <!-- v7.187: ice escape cockpit interior view -->
@@ -944,7 +944,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <button type="button" class="op-close" onclick="openPoseEditorFromOptions()" style="border-color:#0ff;color:#0ff;background:rgba(0,30,40,0.4);box-shadow:0 0 10px rgba(0,255,255,0.3);margin-top:4px">&#9654; POSE EDITOR &#9664;</button>
     <!-- v7.159: Character Name Editor -->
     <button type="button" class="op-close" onclick="openCharNameEditor()" style="border-color:#fa0;color:#fa0;background:rgba(40,28,0,0.45);box-shadow:0 0 10px rgba(255,170,0,0.3);margin-top:4px">&#x270E; CHARACTER NAMES &#9664;</button>
-    <!-- v7.242: Mobile viewport simulator for dev testing -->
+    <!-- v7.243: Mobile viewport simulator for dev testing -->
     <button type="button" id="btn-mobile-sim" class="op-close" onclick="toggleMobileSim()" style="border-color:#0f8;color:#0f8;background:rgba(0,30,15,0.4);box-shadow:0 0 10px rgba(0,255,128,0.3);margin-top:4px">&#128241; MOBILE VIEW TEST</button>
     <button type="button" class="op-close" onclick="closeOptions()">&#9654; CLOSE &#9664;</button>
   </div>
@@ -1071,7 +1071,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.242</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.243</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1326,7 +1326,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.242 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.243 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1361,7 +1361,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.242 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.243 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -3227,7 +3227,7 @@ function setupThree(){scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x0000
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor(0x000000);
   document.getElementById('container').prepend(renderer.domElement);clock=new THREE.Clock();
   window.addEventListener('resize',()=>{
-    if(window._mobileSimActive)return;// v7.242: don't override mobile sim
+    if(window._mobileSimActive)return;// v7.243: don't override mobile sim
     const w2=innerWidth,h2=innerHeight;
     camera.aspect=w2/h2;camera.updateProjectionMatrix();renderer.setSize(w2,h2)})}
 
@@ -13631,7 +13631,7 @@ const RETURN_RADIO_SCRIPT=[
   {t:50,who:'hq',line:'#N, you are cleared to dock. Great run out there.'},
 ];
 function startReturn(){
-  // v7.242 ★ Colosseum intercept — after ice planet clear (and not yet done), pirates
+  // v7.243 ★ Colosseum intercept — after ice planet clear (and not yet done), pirates
   // ambush the pilot before they can dock. OPT.colosseumDone prevents repeat capture.
   if(typeof selectedStage!=='undefined'&&selectedStage&&selectedStage.id==='ice'&&
      !(typeof OPT!=='undefined'&&OPT.colosseumDone)&&!(typeof S!=='undefined'&&S._testFromOptions)){
@@ -14198,7 +14198,7 @@ function cleanupSceneCompletely(){
     if(typeof removeFireSun==='function')try{removeFireSun()}catch(e){}
     if(typeof removeRuinsColony==='function')try{removeRuinsColony()}catch(e){}
     if(typeof clearFireDragons==='function')try{clearFireDragons()}catch(e){}
-    // v7.242: colosseum scene cleanup
+    // v7.243: colosseum scene cleanup
     if(typeof colosseumState!=='undefined'&&colosseumState){try{colosseumState.active=false}catch(_){}}
     if(typeof colosseumScene!=='undefined'&&colosseumScene){try{scene.remove(colosseumScene);colosseumScene=null}catch(_){}}
     try{const h=document.getElementById('colosseum-hud');if(h)h.remove();const c=document.getElementById('colo-controls');if(c)c.remove();}catch(_){}
@@ -15614,7 +15614,7 @@ function openTestStage(){
       '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'火炎放射改造シネマ単体':'Just the modbay_flame cinematic')+'</div>'+
       '</button>'+
     '</div>';
-  // v7.242: COLOSSEUM TEST
+  // v7.243: COLOSSEUM TEST
   html+='<div style="font-size:15px;color:#f84;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #f84">▼ '+(hk?'コロッセウム テスト':'COLOSSEUM TEST')+' ▼</div>'+
     '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'宇宙コロッセウム バトルロイヤルをテスト':'Test the Space Colosseum battle-royale stage')+'</div>'+
     '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">'+
@@ -27244,7 +27244,7 @@ function _restoreRadarFromMinimap(){
   const self=document.getElementById('forest-radar-self');if(self)self.style.display='';
 }
 // ============================================================
-// v7.242 ★ SPACE COLOSSEUM — Battle Royale
+// v7.243 ★ SPACE COLOSSEUM — Battle Royale
 // ============================================================
 let colosseumState=null;let colosseumScene=null;
 const _COLO_DEFS=[
@@ -27450,6 +27450,77 @@ function makeColosseumFighter(def){
   }
   g.scale.setScalar(def.sz||1.0);return g;
 }
+// ─── Baby alien cage (story prop) ────────────────────────────
+function _makeColoBabyMesh(){
+  const g=new THREE.Group();g.name='coloBaby';
+  const col=0x88ddff;
+  const mat=new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.92});
+  const fill=new THREE.MeshBasicMaterial({color:0x0a1a22,depthWrite:true});
+  const fw=geo=>{const gr=new THREE.Group();gr.add(new THREE.Mesh(geo,fill));gr.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),mat));return gr;};
+  const hd=fw(new THREE.SphereGeometry(.38,7,5));hd.position.y=.68;hd.name='head';g.add(hd);
+  [-1,1].forEach(s=>{const eye=fw(new THREE.SphereGeometry(.12,5,4));eye.position.set(s*.18,.72,.36);g.add(eye);});
+  const body=fw(new THREE.BoxGeometry(.38,.42,.32));body.position.y=.28;g.add(body);
+  [-1,1].forEach(s=>{const arm=fw(new THREE.CylinderGeometry(.06,.05,.36,4));arm.position.set(s*.28,.32,0);arm.rotation.z=s*.6;g.add(arm);});
+  [-1,1].forEach(s=>{const leg=fw(new THREE.CylinderGeometry(.07,.06,.4,4));leg.position.set(s*.1,.02,0);g.add(leg);});
+  g.scale.setScalar(.9);return g;
+}
+function _makeColoBabyAlienCage(){
+  const g=new THREE.Group();g.name='babyCage';
+  const mat=new THREE.LineBasicMaterial({color:0xdd9900,transparent:true,opacity:.9});
+  const fill=new THREE.MeshBasicMaterial({color:0x1a0800,depthWrite:true});
+  const fw=geo=>{const gr=new THREE.Group();gr.add(new THREE.Mesh(geo,fill));gr.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),mat));return gr;};
+  // Platform base
+  const base=fw(new THREE.CylinderGeometry(1.3,1.4,.25,8));base.position.y=-.12;g.add(base);
+  // Floor ring
+  const fr=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.0,.05,6,10)),mat);fr.position.y=.02;g.add(fr);
+  // Top ring
+  const tr=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.0,.05,6,10)),mat);tr.position.y=2.2;g.add(tr);
+  // Bars — 10 bars, 2 are the "door" (will slide open on victory)
+  const BARS=10;const doorBars=[];
+  for(let i=0;i<BARS;i++){
+    const a=i/BARS*Math.PI*2;
+    const bar=fw(new THREE.CylinderGeometry(.06,.06,2.2,4));
+    bar.position.set(Math.cos(a)*1.0,1.12,Math.sin(a)*1.0);
+    g.add(bar);if(i>=1&&i<=2)doorBars.push(bar);
+  }
+  // Lock
+  const lock=fw(new THREE.BoxGeometry(.22,.22,.12));lock.position.set(1.0,1.12,0);g.add(lock);
+  // Baby alien inside
+  const baby=_makeColoBabyMesh();baby.position.set(0,.08,0);g.add(baby);
+  g._baby=baby;g._doorBars=doorBars;g._open=false;
+  // Warning sign above cage
+  const sign=fw(new THREE.BoxGeometry(.9,.4,.04));sign.position.set(0,2.7,0);g.add(sign);
+  return g;
+}
+function _openBabyCage(cageGroup){
+  if(!cageGroup||cageGroup._open)return;
+  cageGroup._open=true;
+  // Slide door bars outward
+  if(cageGroup._doorBars){cageGroup._doorBars.forEach((b,i)=>{
+    const dir=i===0?-1:1;
+    const t0=Date.now();
+    const ani=()=>{const p=Math.min((Date.now()-t0)/600,1);b.position.y=1.12+p*1.8;b.position.x+=dir*.02;
+      if(p<1)requestAnimationFrame(ani);};ani();
+  });}
+  // Animate baby toward pilot
+  if(cageGroup._baby&&typeof colosseumState!=='undefined'&&colosseumState){
+    const baby=cageGroup._baby;
+    const worldPos=new THREE.Vector3();cageGroup.getWorldPosition(worldPos);
+    colosseumScene.attach(baby);// detach from cage, keep world pos
+    const tgt=colosseumState.pilotPos.clone();
+    const t0=Date.now();
+    const run=()=>{
+      const p=Math.min((Date.now()-t0)/2200,1);
+      baby.position.lerpVectors(worldPos,tgt.clone().add(new THREE.Vector3(1.5,0,.5)),p);
+      baby.position.y=.42+Math.sin(p*Math.PI)*.6;
+      const h=baby.getObjectByName('head');if(h)h.rotation.y=Math.sin(Date.now()*.006)*.5;
+      if(p<1)requestAnimationFrame(run);
+      else{try{sfx.playCrowdCheer(3)}catch(_){}
+        playComm('nav',_L('The baby is safe! You did it, #N!','赤ちゃんが無事だ！やったぞ、#N！'));
+      }
+    };run();
+  }
+}
 function _startColosseumAmbushCine(){
   playComm('nav',_L('PIRATES?! Where did they come from?!','パイレーツ?! どこから来た?!'));
   wfCineSubtitle(_L('PIRATES! WHERE DID THEY COME FROM?!','海賊船!! どこから現れた?!'),'#f84');
@@ -27481,26 +27552,32 @@ function startColosseum(){
       lLeg:mesh.getObjectByName('lLeg')||null,rLeg:mesh.getObjectByName('rLeg')||null,
       head:mesh.getObjectByName('head')||null};
   });
+  // Baby alien cage — story prop (placed ringside at x=14)
+  let babyCage=null;
+  try{babyCage=_makeColoBabyAlienCage();babyCage.position.set(14,.8,0);colosseumScene.add(babyCage);}catch(e){console.warn('babyCage:',e);}
   camera.position.set(0,22,22);camera.lookAt(0,0,0);
   colosseumState={
-    active:true,t:0,waveNum:0,waveActive:false,nextWaveT:4.5,waveKills:0,
+    active:true,t:0,waveNum:0,waveActive:false,nextWaveT:4.8,waveKills:0,
     pilotHP:8,pilotMaxHP:8,pilotInvT:0,
     pilotPos:new THREE.Vector3(0,.42,5),pilotAngle:Math.PI,
     pilotState:'IDLE',pilotActionT:0,walkT:0,
     hitboxActive:false,hitboxT:0,hitboxType:'',hitboxPos:new THREE.Vector3(),hitboxR:0,
     fighters,activeFighters:[],ringR:11.8,audienceT:0,
     _spaceWas:false,_kickWas:false,_grapWas:false,
+    _swingTarget:null,_swingAngle:0,_frankTarget:null,_frankHit:false,
+    _babyCage:babyCage,
     pilotMesh};
   try{showTouchControls(true,'colosseum')}catch(_){}
   showColosseumHUD();
   announce(_L('SPACE COLOSSEUM!','宇宙コロッセウム！'));
-  playComm('hq',_L('You must WIN to escape! Fight for your freedom, #N!','勝たないと脱出できない！ #N、自由のために戦え！'));
+  playComm('hq',_L('They have the baby alien hostage! WIN every round to free them both, #N!','ベイビーエイリアンが人質だ！ 全ラウンド勝って、二人とも自由にしろ！ #N！'));
+  setTimeout(()=>{try{playComm('nav',_L('That cage… #N, the baby is watching you! Give them a show!','あの檻… #N！ ベイビーが見てます！ みんなに見せてやって！'))}catch(_){}},3200);
   try{sfx.playCrowdCheer(4)}catch(_){}
 }
 function _colosseumPilotMove(dt){
   const cs=colosseumState;if(!cs||!cs.pilotMesh)return;
   const pst=cs.pilotState;
-  if(pst==='PUNCH'||pst==='KICK'||pst==='GRAPPLE'||pst==='STAGGER'||pst==='DOWN'||pst==='GETUP')return;
+  if(pst==='CHOP'||pst==='GIANTSWING'||pst==='FRANKENSTEINER'||pst==='STAGGER'||pst==='DOWN'||pst==='GETUP')return;
   const fwd=keys['KeyW']||keys['ArrowUp'];const bk=keys['KeyS']||keys['ArrowDown'];
   const lt=keys['KeyA']||keys['ArrowLeft'];const rt=keys['KeyD']||keys['ArrowRight'];
   const TURN=2.8*dt,WALK=6*dt,BACK=3.5*dt;
@@ -27525,24 +27602,75 @@ function _colosseumPilotMove(dt){
 function _colosseumDoAttack(type){
   const cs=colosseumState;if(!cs)return;
   const pst=cs.pilotState;
-  if(pst==='PUNCH'||pst==='KICK'||pst==='GRAPPLE'||pst==='STAGGER'||pst==='DOWN'||pst==='GETUP')return;
-  cs.pilotState=type;cs.pilotActionT=0;cs.hitboxActive=true;cs.hitboxT=0;
-  cs.hitboxR=(type==='PUNCH')?2.0:(type==='KICK')?2.8:1.5;
-  cs.hitboxType=type.toLowerCase();
-  const pm=cs.pilotMesh;if(!pm)return;
-  const ra=pm.getObjectByName('rArm'),la=pm.getObjectByName('lArm'),ll=pm.getObjectByName('lLeg');
-  if(type==='PUNCH'&&ra)ra.rotation.x=-Math.PI*.72;
-  else if(type==='KICK'&&ll)ll.rotation.x=-Math.PI*.58;
-  else if(type==='GRAPPLE'){if(la)la.rotation.x=-Math.PI*.5;if(ra)ra.rotation.x=-Math.PI*.5;}
-  try{sfx.shoot&&sfx.shoot()}catch(_){}
+  if(pst==='CHOP'||pst==='GIANTSWING'||pst==='FRANKENSTEINER'||pst==='STAGGER'||pst==='DOWN'||pst==='GETUP')return;
+  const pm=cs.pilotMesh;
+  if(type==='CHOP'){
+    cs.pilotState='CHOP';cs.pilotActionT=0;
+    cs.hitboxActive=true;cs.hitboxT=0;cs.hitboxR=2.2;cs.hitboxType='chop';
+    // Dramatic chop: right arm sweeps down from overhead
+    const ra=pm&&pm.getObjectByName('rArm');
+    if(ra){ra.rotation.x=-Math.PI*.9;ra.rotation.z=-.15;}
+    try{sfx.hit&&sfx.hit()}catch(_){}
+  } else if(type==='GIANTSWING'){
+    // Find nearest active fighter within grab range
+    let best=null,bestD=2.8;
+    cs.activeFighters.forEach(f=>{
+      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING')return;
+      const d=Math.hypot(f.pos.x-cs.pilotPos.x,f.pos.z-cs.pilotPos.z);
+      if(d<bestD){bestD=d;best=f;}
+    });
+    if(!best){
+      // Whiff — short cooldown
+      cs.pilotState='CHOP';cs.pilotActionT=0;
+      const ra=pm&&pm.getObjectByName('rArm');if(ra)ra.rotation.x=-Math.PI*.6;
+      return;
+    }
+    cs.pilotState='GIANTSWING';cs.pilotActionT=0;
+    cs._swingTarget=best;
+    // Angle = current bearing to fighter
+    cs._swingAngle=Math.atan2(best.pos.x-cs.pilotPos.x,best.pos.z-cs.pilotPos.z);
+    best.state='GRAPPLED';best.stateT=0;
+    // Arms out for swing
+    const la=pm&&pm.getObjectByName('lArm'),ra=pm&&pm.getObjectByName('rArm');
+    if(la)la.rotation.x=-Math.PI*.48;if(ra)ra.rotation.x=-Math.PI*.48;
+    try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
+    announce(_L('GIANT SWING!','ジャイアント スイング！'));
+    try{sfx.playCrowdCheer(1.5)}catch(_){}
+  } else if(type==='FRANKENSTEINER'){
+    // Find nearest active fighter roughly in front within 4.5m
+    let best=null,bestD=4.5;
+    cs.activeFighters.forEach(f=>{
+      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING')return;
+      const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
+      const d=Math.hypot(dx,dz);
+      if(d>4.5)return;
+      let diff=Math.atan2(dx,dz)-cs.pilotAngle;
+      while(diff>Math.PI)diff-=Math.PI*2;while(diff<-Math.PI)diff+=Math.PI*2;
+      if(Math.abs(diff)>Math.PI*.62)return;
+      if(d<bestD){bestD=d;best=f;}
+    });
+    if(!best){
+      // Whiff
+      cs.pilotState='CHOP';cs.pilotActionT=0;
+      const la=pm&&pm.getObjectByName('lLeg');if(la)la.rotation.x=-Math.PI*.5;
+      return;
+    }
+    cs.pilotState='FRANKENSTEINER';cs.pilotActionT=0;
+    cs._frankTarget=best;cs._frankHit=false;
+    // Start dash animation
+    const ll=pm&&pm.getObjectByName('lLeg'),rl=pm&&pm.getObjectByName('rLeg');
+    if(ll)ll.rotation.x=-Math.PI*.65;if(rl)rl.rotation.x=-Math.PI*.65;
+    announce(_L('FRANKENSTEINER!','フランケンシュタイナー！'));
+  }
 }
 function _colosseumHitDetect(){
+  // Only called for CHOP; GIANTSWING and FRANKENSTEINER are handled in updateColosseum
   const cs=colosseumState;if(!cs||!cs.hitboxActive)return;
-  const dmg={punch:1.5,kick:2.0,grapple:3.0}[cs.hitboxType]||1.5;
-  const arc={punch:Math.PI*.28,kick:Math.PI*.31,grapple:Math.PI*.22}[cs.hitboxType]||.28;
+  const dmg=2.0; // chop damage
+  const arc=Math.PI*.34; // ±60° arc
   const px=cs.pilotPos.x,pz=cs.pilotPos.z,pa=cs.pilotAngle;
   cs.activeFighters.forEach(f=>{
-    if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING')return;
+    if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='GRAPPLED')return;
     const dx=f.pos.x-px,dz=f.pos.z-pz;
     const dist=Math.hypot(dx,dz);
     if(dist>cs.hitboxR+f.def.sz*.9)return;
@@ -27550,20 +27678,33 @@ function _colosseumHitDetect(){
     while(diff>Math.PI)diff-=Math.PI*2;while(diff<-Math.PI)diff+=Math.PI*2;
     if(Math.abs(diff)>arc)return;
     f.hp-=dmg;cs.hitboxActive=false;
-    try{screenFlash(.32)}catch(_){}
-    try{spawnP(f.pos.clone().add(new THREE.Vector3(0,1.2,0)),f.def.col,12,1.2,.55)}catch(_){}
+    try{screenFlash(.28)}catch(_){}
+    try{spawnP(f.pos.clone().add(new THREE.Vector3(0,1.2,0)),f.def.col,10,1.1,.5)}catch(_){}
     try{sfx.hit&&sfx.hit()}catch(_){}
-    if(cs.hitboxType==='grapple'){const ta=Math.atan2(dx,dz);f.pos.x+=Math.sin(ta)*5;f.pos.z+=Math.cos(ta)*5;f.mesh.position.copy(f.pos);}
-    if(f.hp<=0){
-      f.hp=0;f.state='DOWN';f.stateT=0;
-      try{spawnMegaExplosion(f.pos.clone().add(new THREE.Vector3(0,1,0)),.22)}catch(_){}
-      try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
-      announce(_L(f.def.ring+' IS DOWN!',f.def.ring+' ダウン！'));
-      try{sfx.playCrowdCheer(2.5)}catch(_){}
-      setTimeout(()=>{try{if(colosseumState){f.state='ELIMINATED';f.pos.set(0,-50,0);f.mesh.position.copy(f.pos);updateColosseumHUD();}}catch(_){}},1800);
-    } else {f.state='STAGGER';f.stateT=0;}
+    _coloKnockOrDown(f,dx,dz,1.2);
     updateColosseumHUD();
   });
+}
+function _coloKnockOrDown(f,dx,dz,pushDist){
+  // Shared: push fighter, check ring-out or HP=0
+  const cs=colosseumState;if(!cs)return;
+  if(pushDist>0){
+    const dist=Math.hypot(dx,dz)||1;
+    f.pos.x+=dx/dist*pushDist;f.pos.z+=dz/dist*pushDist;
+    f.mesh.position.copy(f.pos);
+    // Ring-out check
+    if(Math.hypot(f.pos.x,f.pos.z)>cs.ringR+.6){
+      f.hp=0;
+    }
+  }
+  if(f.hp<=0){
+    f.hp=0;f.state='DOWN';f.stateT=0;
+    try{spawnMegaExplosion(f.pos.clone().add(new THREE.Vector3(0,1,0)),.22)}catch(_){}
+    try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
+    announce(_L(f.def.ring+' IS DOWN!',f.def.ring+' ダウン！'));
+    try{sfx.playCrowdCheer(2.5)}catch(_){}
+    setTimeout(()=>{try{if(colosseumState){f.state='ELIMINATED';f.pos.set(0,-50,0);f.mesh.position.copy(f.pos);updateColosseumHUD();}}catch(_){}},1800);
+  } else {f.state='STAGGER';f.stateT=0;}
 }
 function _updateColoFighter(f,dt){
   const cs=colosseumState;if(!cs)return;
@@ -27605,7 +27746,7 @@ function _updateColoFighter(f,dt){
       else if(f.stateT<.75){
         f.mesh.rotation.x=0;
         if(!f._hitThisAttack&&f.attackCD<=0){f._hitThisAttack=true;
-          if(dist<f.def.sz*2.2+1.2&&cs.pilotInvT<=0&&cs.pilotState!=='GRAPPLE'){
+          if(dist<f.def.sz*2.2+1.2&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
             cs.pilotHP=Math.max(0,cs.pilotHP-1);cs.pilotInvT=1.2;
             try{screenFlash(.55)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
             updateColosseumHUD();
@@ -27621,6 +27762,7 @@ function _updateColoFighter(f,dt){
       const ra=f.rArm;if(ra)ra.rotation.x=-Math.sin(f.stateT*Math.PI/.9)*.8;break;}
     case 'STAGGER':{if(f.stateT>.6){f.state='IDLE';f.stateT=0;}const h=f.head;if(h)h.rotation.x=Math.sin(f.stateT*35)*.1;break;}
     case 'DOWN':{f.mesh.rotation.x=Math.min(f.stateT/1.8*Math.PI*.5,Math.PI*.5);break;}
+    case 'GRAPPLED':break; // position set by updateColosseum Giant Swing logic
     case 'ELIMINATED':break;
     default:break;
   }
@@ -27662,29 +27804,151 @@ function _colosseumStartWave(){
 function updateColosseum(dt){
   const cs=colosseumState;if(!cs||!cs.active)return;
   cs.t+=dt;if(cs.pilotInvT>0)cs.pilotInvT-=dt;
-  // Pilot action timers
-  const atk=cs.pilotState==='PUNCH'||cs.pilotState==='KICK'||cs.pilotState==='GRAPPLE';
-  if(atk){
+  const pm=cs.pilotMesh;
+  const pst=cs.pilotState;
+  // ── STAGGER recovery ─────────────────────────────────────────
+  if(pst==='STAGGER'){
     cs.pilotActionT+=dt;
-    const dur={PUNCH:.5,KICK:.62,GRAPPLE:.72}[cs.pilotState]||.55;
-    if(cs.pilotActionT>dur){
-      const pm=cs.pilotMesh;
-      if(pm){const la=pm.getObjectByName('lArm'),ra=pm.getObjectByName('rArm'),ll=pm.getObjectByName('lLeg');
-        if(la)la.rotation.x=0;if(ra)ra.rotation.x=0;if(ll)ll.rotation.x=0;}
+    if(cs.pilotActionT>.55){cs.pilotState='IDLE';cs.pilotActionT=0;
+      if(pm){const la=pm.getObjectByName('lArm'),ra=pm.getObjectByName('rArm');if(la)la.rotation.x=0;if(ra)ra.rotation.x=0;}}
+  }
+  // ── CHOP animation + hitbox ───────────────────────────────────
+  else if(pst==='CHOP'){
+    cs.pilotActionT+=dt;
+    const ra=pm&&pm.getObjectByName('rArm');
+    if(cs.pilotActionT<.18){if(ra)ra.rotation.x=-Math.PI*.9;}         // swing down
+    else if(cs.pilotActionT<.38){if(ra)ra.rotation.x=-Math.PI*.2;}    // follow-through
+    if(cs.pilotActionT>.42){
+      if(ra){ra.rotation.x=0;ra.rotation.z=0;}
       cs.pilotState='IDLE';cs.hitboxActive=false;
     }
   }
-  if(cs.pilotState==='STAGGER'){cs.pilotActionT+=dt;if(cs.pilotActionT>.55){cs.pilotState='IDLE';cs.pilotActionT=0;}}
-  // Input
+  // ── GIANT SWING orbit + release ───────────────────────────────
+  else if(pst==='GIANTSWING'){
+    cs.pilotActionT+=dt;
+    const GRAB_DUR=.22;    // lunge to grab
+    const ORBIT_DUR=1.75;  // spin duration
+    const TOTAL=GRAB_DUR+ORBIT_DUR;
+    const f=cs._swingTarget;
+    const la=pm&&pm.getObjectByName('lArm'),ra2=pm&&pm.getObjectByName('rArm');
+    if(cs.pilotActionT<GRAB_DUR){
+      // Lunge toward target
+      if(f&&f.state==='GRAPPLED'){
+        const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
+        const d=Math.hypot(dx,dz)||.01;
+        cs.pilotPos.x+=dx/d*Math.min(d,.15);cs.pilotPos.z+=dz/d*Math.min(d,.15);
+      }
+      if(la)la.rotation.x=-Math.PI*.5;if(ra2)ra2.rotation.x=-Math.PI*.5;
+    } else if(cs.pilotActionT<TOTAL){
+      // Orbit
+      const SWING_SPD=4.8;
+      cs._swingAngle+=SWING_SPD*dt;
+      const SWING_R=2.0;
+      if(f&&f.state==='GRAPPLED'){
+        f.pos.x=cs.pilotPos.x+Math.sin(cs._swingAngle)*SWING_R;
+        f.pos.z=cs.pilotPos.z+Math.cos(cs._swingAngle)*SWING_R;
+        f.mesh.position.set(f.pos.x,f.pos.y,f.pos.z);
+        f.mesh.rotation.y=cs._swingAngle+Math.PI*.5;
+        // Arms spinning pose
+        if(la){la.rotation.x=-Math.PI*.5;la.rotation.z=Math.sin(cs.t*6)*.3;}
+        if(ra2){ra2.rotation.x=-Math.PI*.5;ra2.rotation.z=-Math.sin(cs.t*6)*.3;}
+      }
+    } else {
+      // Release — tangential launch
+      if(f&&f.state==='GRAPPLED'){
+        const launchDist=13.0;
+        const launchA=cs._swingAngle+Math.PI*.5; // tangential
+        const nx=cs.pilotPos.x+Math.sin(launchA)*launchDist;
+        const nz=cs.pilotPos.z+Math.cos(launchA)*launchDist;
+        const dx=nx-f.pos.x,dz=nz-f.pos.z;
+        f.hp=Math.max(0,f.hp-4.5);
+        f.state='DOWN';f.stateT=0;
+        // Fly animation: bounce across ring
+        const landX=nx,landZ=nz;
+        f.pos.x=landX;f.pos.z=landZ;f.mesh.position.set(landX,f.pos.y,landZ);
+        try{screenFlash(.45)}catch(_){}
+        try{spawnMegaExplosion(f.pos.clone().add(new THREE.Vector3(0,1,0)),.28)}catch(_){}
+        try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
+        try{sfx.playCrowdCheer(3.5)}catch(_){}
+        // Ring-out?
+        if(Math.hypot(landX,landZ)>cs.ringR+.5){
+          f.hp=0;
+          announce(_L(f.def.ring+' RING OUT!!',f.def.ring+' リングアウト！！'));
+        } else {
+          announce(_L(f.def.ring+' IS DOWN!',f.def.ring+' ダウン！'));
+        }
+        _coloKnockOrDown(f,dx,dz,0);
+        updateColosseumHUD();
+      }
+      if(la){la.rotation.x=0;la.rotation.z=0;}if(ra2){ra2.rotation.x=0;ra2.rotation.z=0;}
+      cs.pilotState='IDLE';cs.pilotActionT=0;cs._swingTarget=null;
+    }
+  }
+  // ── FRANKENSTEINER dash + flying scissors ─────────────────────
+  else if(pst==='FRANKENSTEINER'){
+    cs.pilotActionT+=dt;
+    const f=cs._frankTarget;
+    const DASH_DUR=.28;   // dash toward target
+    const FLIP_DUR=.12;   // impact + flip
+    const RECOV_DUR=.55;  // land and recover
+    if(cs.pilotActionT<DASH_DUR&&f&&(f.state!=='ELIMINATED'&&f.state!=='DOWN')){
+      // Dash toward target
+      const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
+      const d=Math.hypot(dx,dz)||.01;
+      const dashSpd=Math.min(d,14*dt);
+      cs.pilotPos.x+=dx/d*dashSpd;cs.pilotPos.z+=dz/d*dashSpd;
+      cs.pilotAngle=Math.atan2(dx,dz);
+      if(pm)pm.rotation.y=cs.pilotAngle;
+      const ll2=pm&&pm.getObjectByName('lLeg'),rl2=pm&&pm.getObjectByName('rLeg');
+      if(ll2)ll2.rotation.x=-Math.PI*.65*(1-cs.pilotActionT/DASH_DUR);
+      if(rl2)rl2.rotation.x=-Math.PI*.65*(1-cs.pilotActionT/DASH_DUR);
+      // Jump arc: y peaks in middle of dash
+      const jumpH=1.8*Math.sin(cs.pilotActionT/DASH_DUR*Math.PI);
+      if(pm)pm.position.y=.42+jumpH;
+    } else if(cs.pilotActionT<DASH_DUR+FLIP_DUR&&!cs._frankHit){
+      // Impact
+      cs._frankHit=true;
+      if(f&&f.state!=='ELIMINATED'&&f.state!=='DOWN'){
+        f.hp=Math.max(0,f.hp-3.5);
+        const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
+        try{screenFlash(.5)}catch(_){}
+        try{spawnMegaExplosion(f.pos.clone().add(new THREE.Vector3(0,1.2,0)),.25)}catch(_){}
+        try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
+        try{sfx.playCrowdCheer(3)}catch(_){}
+        // Send fighter flying backward
+        const pushA=Math.atan2(dx,dz);
+        f.pos.x+=Math.sin(pushA)*7.5;f.pos.z+=Math.cos(pushA)*7.5;
+        if(Math.hypot(f.pos.x,f.pos.z)>cs.ringR+.5)f.hp=0;
+        f.mesh.position.copy(f.pos);
+        _coloKnockOrDown(f,dx,dz,0);
+        announce(_L(f.def.ring+' FLYING!',f.def.ring+' 空中飛行！'));
+        updateColosseumHUD();
+      }
+      // Pilot flip anim
+      if(pm){pm.position.y=.42;const la=pm.getObjectByName('lArm'),ra=pm.getObjectByName('rArm');
+        if(la)la.rotation.x=-Math.PI*.6;if(ra)ra.rotation.x=-Math.PI*.6;}
+    } else if(cs.pilotActionT>=DASH_DUR+FLIP_DUR){
+      // Recovery
+      const recT=(cs.pilotActionT-DASH_DUR-FLIP_DUR)/RECOV_DUR;
+      if(pm)pm.position.y=.42;
+      if(recT>=1){
+        const la=pm&&pm.getObjectByName('lArm'),ra=pm&&pm.getObjectByName('rArm');
+        const ll2=pm&&pm.getObjectByName('lLeg'),rl2=pm&&pm.getObjectByName('rLeg');
+        if(la)la.rotation.x=0;if(ra)ra.rotation.x=0;if(ll2)ll2.rotation.x=0;if(rl2)rl2.rotation.x=0;
+        cs.pilotState='IDLE';cs.pilotActionT=0;cs._frankTarget=null;cs._frankHit=false;
+      }
+    }
+  }
+  // ── Input ─────────────────────────────────────────────────────
   const spc=keys['Space']||keys['ControlLeft'];
-  const kck=keys['KeyN']||keys['Enter']||keys['Numpad0'];
-  const grp=keys['ShiftLeft']||keys['ShiftRight'];
-  if(spc&&!cs._spaceWas)_colosseumDoAttack('PUNCH');
-  if(kck&&!cs._kickWas)_colosseumDoAttack('KICK');
-  if(grp&&!cs._grapWas)_colosseumDoAttack('GRAPPLE');
-  cs._spaceWas=spc;cs._kickWas=kck;cs._grapWas=grp;
-  // Hitbox fire
-  if(cs.hitboxActive){cs.hitboxT+=dt;if(cs.hitboxT>.18)_colosseumHitDetect();if(cs.hitboxT>.38)cs.hitboxActive=false;}
+  const swng=keys['KeyN']||keys['Enter']||keys['Numpad0'];
+  const frank=keys['ShiftLeft']||keys['ShiftRight'];
+  if(spc&&!cs._spaceWas)_colosseumDoAttack('CHOP');
+  if(swng&&!cs._kickWas)_colosseumDoAttack('GIANTSWING');
+  if(frank&&!cs._grapWas)_colosseumDoAttack('FRANKENSTEINER');
+  cs._spaceWas=spc;cs._kickWas=swng;cs._grapWas=frank;
+  // Hitbox fire (CHOP only)
+  if(cs.hitboxActive){cs.hitboxT+=dt;if(cs.hitboxT>.14)_colosseumHitDetect();if(cs.hitboxT>.35)cs.hitboxActive=false;}
   _colosseumPilotMove(dt);
   _updateColosseumFighters(dt);
   _colosseumWaveCheck(dt);
@@ -27695,7 +27959,7 @@ function updateColosseum(dt){
   camera.position.z+=(pp.z*.22+22-camera.position.z)*3*dt;
   camera.lookAt(pp.x*.1,0,pp.z*.1);
   // Invincibility blink
-  if(cs.pilotMesh)cs.pilotMesh.visible=!(cs.pilotInvT>0&&Math.floor(cs.t*18)%2===0);
+  if(pm)pm.visible=!(cs.pilotInvT>0&&Math.floor(cs.t*18)%2===0);
 }
 function endColosseum(won){
   const cs=colosseumState;if(!cs)return;
@@ -27706,6 +27970,8 @@ function endColosseum(won){
     announce(_L('VICTORY! FREEDOM!','勝利！自由だ！'));
     screenFlash(.6);
     playComm('wingman',_L('#N! We broke through — coming to get you NOW!','#N！突破した — 今すぐ救出に行く！'));
+    // Open the baby alien cage
+    try{if(cs._babyCage)_openBabyCage(cs._babyCage);}catch(_){}
     try{OPT.colosseumDone=true;if(typeof saveOpt==='function')saveOpt()}catch(_){}
     setTimeout(()=>{
       try{if(colosseumScene){scene.remove(colosseumScene);colosseumScene=null;}colosseumState=null;
@@ -27735,7 +28001,7 @@ function showColosseumHUD(){
   document.body.appendChild(hud);
   const ctrl=document.createElement('div');ctrl.id='colo-controls';
   ctrl.style.cssText='position:fixed;bottom:calc(170px + env(safe-area-inset-bottom,0px));left:12px;z-index:120;background:rgba(0,0,0,.75);border:1px solid #666;padding:7px 12px;font-size:10px;color:#aaa;letter-spacing:1px;line-height:1.8;pointer-events:none;border-radius:4px';
-  ctrl.innerHTML=h?'Space: パンチ　N: キック　Shift: グラップル<br>WASD: 移動':'Space: PUNCH　N: KICK　Shift: GRAPPLE<br>WASD / Arrow: Move';
+  ctrl.innerHTML=h?'Space: チョップ　N: ジャイアントスイング　Shift: フランケンシュタイナー<br>WASD: 移動':'Space: CHOP　N: GIANT SWING　Shift: FRANKENSTEINER<br>WASD / Arrow: Move';
   document.body.appendChild(ctrl);
 }
 function updateColosseumHUD(){
@@ -34478,7 +34744,7 @@ const OPT={masterVol:0.55,bgmVol:1.0,sfxVol:1.0,voiceVol:0.6,sensitivity:1.0,
   sfxVariants:{laser:0,hit:0,explosion:0},
   // v7.65: Campaign progression
   campaignClear:[],
-  // v7.242: colosseum cleared flag — once true, ice-planet return skips ambush
+  // v7.243: colosseum cleared flag — once true, ice-planet return skips ambush
   colosseumDone:false,
   // v7.208: persistent flamethrower upgrade — unlocked after defeating fire dragon
   hasFlamethrower:false,
@@ -35192,7 +35458,7 @@ function closeOptions(){
   saveOpt();applyOptions();
 }
 
-// ── v7.242: MOBILE VIEWPORT SIMULATOR ────────────────────────────────────────
+// ── v7.243: MOBILE VIEWPORT SIMULATOR ────────────────────────────────────────
 // Resizes renderer to phone dimensions so touch UI / layout can be verified on desktop.
 // Portrait 390×844 (iPhone 14 / common Android). Letterboxes with dark overlay.
 const _MSIM_W=390,_MSIM_H=844;
@@ -37190,8 +37456,8 @@ function updateTouchButtonLabels(mode){
   const fb=document.getElementById('touch-fire');
   const nb=document.getElementById('touch-napalm');
   if(mode==='colosseum'){
-    if(fb){fb.textContent='PNCH';fb.title='Punch (Space)';}
-    if(nb){nb.textContent='KICK';nb.title='Kick (N)';}
+    if(fb){fb.textContent='CHOP';fb.title='Chop (Space)';}
+    if(nb){nb.textContent='SWNG';nb.title='Giant Swing (N)';}
   } else if(mode==='fire_onfoot'){
     // Fire planet on-foot: ice beam + beam shield (hold)
     if(fb){fb.textContent='SHOT';fb.title='Ice Beam (Space)';}
@@ -37830,7 +38096,7 @@ function init(){setupThree();createStars();createSpeedLines();createGrid();creat
 // Wrap init in try/catch so any error doesn't prevent auto-launch
 try{init();
   // Update banner: success
-  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.242 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
+  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.243 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
 }catch(initErr){
   // Show error on screen (for iPhone debugging)
   try{const b=document.getElementById('version-banner');
