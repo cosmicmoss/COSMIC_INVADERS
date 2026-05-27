@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.251</title>
+<title>COSMIC INVADERS v7.252</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -82,6 +82,27 @@ body.stolen-fighter #cockpit-frame::after{background:rgba(255,30,20,.45)!importa
 #boss-hp-name{color:#ff4400;font-family:monospace;font-size:13px;letter-spacing:2px;margin-bottom:4px;text-shadow:0 0 8px #ff2200;}
 #boss-hp-track{background:#220000;border:1px solid #ff2200;height:12px;border-radius:2px;overflow:hidden;}
 #boss-hp-fill{background:linear-gradient(to right,#ff6600,#ff2200);height:100%;width:100%;transition:width 0.15s;}
+/* v7.252: cyberpunk character parade */
+@keyframes cyberGlitch{
+  0%{transform:translate(-50%,-50%) skewX(0deg)}
+  7%{transform:translate(-50%,-50%) skewX(4deg)}
+  14%{transform:translate(-50%,-50%) skewX(0deg)}
+  21%{transform:translate(-51%,-50%) skewX(-3deg)}
+  28%{transform:translate(-50%,-50%) skewX(0deg)}
+  100%{transform:translate(-50%,-50%) skewX(0deg)}
+}
+@keyframes cyberBar{0%{width:0}100%{width:100%}}
+@keyframes cyberFadeIn{from{opacity:0;letter-spacing:10px}to{opacity:1;letter-spacing:3px}}
+#cyber-scanlines{display:none;position:fixed;inset:0;z-index:1001;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.25) 0px,rgba(0,0,0,0.25) 1px,transparent 1px,transparent 4px);}
+#cyber-name-card{display:none;position:fixed;bottom:9%;left:50%;transform:translateX(-50%);
+  z-index:1003;text-align:left;pointer-events:none;min-width:380px;}
+.cn-idx{font-family:monospace;font-size:11px;letter-spacing:4px;color:#444;margin-bottom:3px;}
+.cn-name{font-family:monospace;font-size:30px;font-weight:bold;letter-spacing:3px;
+  text-shadow:0 0 18px currentColor,0 0 38px currentColor;
+  animation:cyberFadeIn 0.6s ease-out forwards;}
+.cn-bar{height:2px;margin-top:5px;animation:cyberBar 0.9s ease-out forwards;box-shadow:0 0 8px currentColor;}
+.cn-title{font-family:monospace;font-size:12px;letter-spacing:2px;margin-top:5px;opacity:0.70;}
 /* v7.227: cockpit power-up flash overlay */
 @keyframes ckPwSweep{0%{top:-2px;opacity:0}10%{opacity:1}90%{opacity:.8}100%{top:100%;opacity:0}}
 @keyframes ckPwLabel{0%{opacity:0;letter-spacing:12px}15%{opacity:1;letter-spacing:6px}80%{opacity:1}100%{opacity:0;letter-spacing:8px}}
@@ -744,7 +765,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.251 - LOADED
+  COSMIC INVADERS v7.252 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1088,7 +1109,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.251</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.252</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1340,6 +1361,9 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="fire-filter"></div>
   <!-- v7.249: trench-run speed overlay -->
   <div id="speed-overlay"></div>
+  <!-- v7.252: cyberpunk character parade overlays -->
+  <div id="cyber-scanlines"></div>
+  <div id="cyber-name-card"></div>
   <!-- v7.251: boss HP bar (DEATH HAND + shield generators) -->
   <div id="boss-hp-bar">
     <div id="boss-hp-name">BOSS</div>
@@ -1350,7 +1374,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.251 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.252 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1385,7 +1409,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.251 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.252 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -14450,8 +14474,8 @@ function _startEndingRoll(){
       requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.opacity='1';}));
     },delay);
   });
-  // TO BE CONTINUED (55s after start)
-  setTimeout(()=>_startToBeContinued(ov),55000);
+  // Character parade (50s after start) → then TO BE CONTINUED
+  setTimeout(()=>_startCharacterParade(ov),50000);
 }
 
 function _startToBeContinued(ov){
@@ -14494,10 +14518,208 @@ function _startToBeContinued(ov){
       try{
         S.phase='TITLE';
         const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';
-        const vb=document.getElementById('version-banner');if(vb)vb.textContent='COSMIC INVADERS v7.251';
+        const vb=document.getElementById('version-banner');if(vb)vb.textContent='COSMIC INVADERS v7.252';
       }catch(e){}
     },2200);
   },32000);
+}
+
+// ============ v7.252: CYBERPUNK CHARACTER PARADE ============
+const PARADE_CHARS=[
+  {id:'pilot',  name:'THE PILOT',       sub:'COSMIC INVADERS ACE',          col:0x00ffff, colCss:'#00ffff', dur:7,  maker:makeForestTacticalPilot, scale:2.0,  camR:10, camY:1,  camH:1.5},
+  {id:'n1',     name:'N1 STARFIGHTER',  sub:'MARK VII ASSAULT CRAFT',        col:0x4499ff, colCss:'#4499ff', dur:6,  maker:makeStarfighterN1,       scale:2.8,  camR:14, camY:0,  camH:0},
+  {id:'zeong',  name:'Z E O N G',       sub:'MOBILE ARMOR  CLASS-ALPHA',     col:0xff0055, colCss:'#ff0055', dur:6,  maker:makeBossZeong,           scale:1.5,  camR:18, camY:3,  camH:4},
+  {id:'gipsy',  name:'GIPSY DANGER',    sub:'JAEGER MARK-3  KAIJU HUNTER',   col:0xff6600, colCss:'#ff6600', dur:6,  maker:makeBossGipsyDanger,     scale:1.1,  camR:22, camY:3,  camH:4},
+  {id:'mech',   name:'R01  MECH',       sub:'IMPERIAL STRIKE UNIT',          col:0x44ff44, colCss:'#44ff44', dur:6,  maker:makeBossMech,            scale:1.3,  camR:18, camY:3,  camH:3},
+  {id:'dhand',  name:'DEATH HAND',      sub:'DREADNOUGHT SIEGE WEAPON',      col:0xff2200, colCss:'#ff2200', dur:6,  maker:_makeDEATHHAND,          scale:0.85, camR:20, camY:5,  camH:5},
+  {id:'all',    name:'COSMIC INVADERS', sub:'FOREVER  IN  THE  STARS',       col:0xffffff, colCss:'#ffffff', dur:8,  maker:null,                    scale:1.0,  camR:32, camY:3,  camH:4},
+];
+let _paradeState=null;
+
+function _startCharacterParade(ov){
+  if(!ov||!ov.parentNode)return;
+  ov.innerHTML='';
+  ov.style.background='#000008';
+  // Hide stray DOM HUDs
+  ['hud','mission-display','stage-select','target-radar','speed-overlay','boss-hp-bar'].forEach(id=>{
+    try{const e=document.getElementById(id);if(e)e.style.display='none';}catch(_){}
+  });
+  try{if(typeof starField!=='undefined'&&starField)starField.visible=false;}catch(_){}
+  try{if(typeof speedLines!=='undefined'&&speedLines)speedLines.visible=false;}catch(_){}
+  // Save camera
+  const savedCamPos=camera.position.clone();
+  const savedCamRot=new THREE.Euler().copy(camera.rotation);
+  // Cyberpunk grid floor
+  const gridHelper=new THREE.GridHelper(80,32,0x003344,0x001122);
+  gridHelper.position.y=-8;
+  scene.add(gridHelper);
+  // Perspective horizon lines
+  const horizLines=[];
+  for(let i=0;i<5;i++){
+    const pts=[new THREE.Vector3(-60,-8+i*0.3,-70),new THREE.Vector3(60,-8+i*0.3,-70)];
+    const hGeo=new THREE.BufferGeometry().setFromPoints(pts);
+    const hMat=new THREE.LineBasicMaterial({color:0x002233,transparent:true,opacity:0.4-i*0.06});
+    const hl=new THREE.Line(hGeo,hMat);
+    scene.add(hl);
+    horizLines.push(hl);
+  }
+  // Show cyberpunk DOM overlays
+  const scanEl=document.getElementById('cyber-scanlines');
+  const cardEl=document.getElementById('cyber-name-card');
+  if(scanEl)scanEl.style.display='block';
+  if(cardEl){cardEl.style.display='block';cardEl.innerHTML='';}
+  _paradeState={
+    active:true,ov,charIdx:0,charT:0,charMesh:null,extraMeshes:[],
+    camOrbitAngle:0.3,camOrbitSpeed:0.20,camOrbitDir:1,
+    gridHelper,horizLines,charLight:null,rimLight:null,
+    savedCamPos,savedCamRot
+  };
+  _paradeShowChar(0);
+}
+
+function _paradeShowChar(idx){
+  const ps=_paradeState;
+  if(!ps||!ps.active)return;
+  // Remove previous mesh
+  if(ps.charMesh){try{scene.remove(ps.charMesh)}catch(_){}; ps.charMesh=null;}
+  if(ps.extraMeshes){ps.extraMeshes.forEach(m=>{try{scene.remove(m)}catch(_){}});ps.extraMeshes=[];}
+  if(ps.charLight){try{scene.remove(ps.charLight)}catch(_){}; ps.charLight=null;}
+  if(ps.rimLight){try{scene.remove(ps.rimLight)}catch(_){}; ps.rimLight=null;}
+  const ch=PARADE_CHARS[idx];
+  if(!ch){_paradeCleanup();return;}
+  // Screen flash transition
+  try{screenFlash(0.55)}catch(_){}
+  // Vary orbit parameters per character
+  ps.camOrbitDir=(idx%2===0)?1:-1;
+  ps.camOrbitAngle=idx*0.9+0.25;
+  ps.camOrbitSpeed=0.16+idx*0.02;
+  // Build character mesh
+  if(ch.id==='all'){
+    // All 3 bosses side by side for grand finale
+    const g=new THREE.Group();
+    try{const z=makeBossZeong();z.scale.setScalar(1.2);z.position.set(-20,0,0);_paradeColorMesh(z,0xff0055);g.add(z);}catch(_){}
+    try{const gd=makeBossGipsyDanger();gd.scale.setScalar(0.9);gd.position.set(0,0,0);_paradeColorMesh(gd,0xff6600);g.add(gd);}catch(_){}
+    try{const m=makeBossMech();m.scale.setScalar(1.1);m.position.set(20,0,0);_paradeColorMesh(m,0x44ff44);g.add(m);}catch(_){}
+    scene.add(g);ps.charMesh=g;
+  } else if(ch.maker){
+    try{
+      const m=ch.maker();
+      m.scale.setScalar(ch.scale);
+      _paradeColorMesh(m,ch.col);
+      scene.add(m);ps.charMesh=m;
+    }catch(e){ps.charMesh=null;}
+  }
+  // Neon key light
+  const kl=new THREE.PointLight(ch.col,4.5,70);
+  kl.position.set(0,10,-8);
+  scene.add(kl);ps.charLight=kl;
+  // Soft white rim fill from front-right
+  const rl=new THREE.PointLight(0xffffff,1.2,55);
+  rl.position.set(-9,3,9);
+  scene.add(rl);ps.rimLight=rl;
+  // Update name card
+  const cardEl=document.getElementById('cyber-name-card');
+  if(cardEl){
+    cardEl.innerHTML=
+      '<div class="cn-idx" style="color:'+ch.colCss+'">'+(idx+1)+' / '+PARADE_CHARS.length+'</div>'+
+      '<div class="cn-name" style="color:'+ch.colCss+'">'+ch.name+'</div>'+
+      '<div class="cn-bar" style="color:'+ch.colCss+';background:'+ch.colCss+'"></div>'+
+      '<div class="cn-title" style="color:'+ch.colCss+'">'+ch.sub+'</div>';
+  }
+  ps.charIdx=idx;
+  ps.charT=0;
+}
+
+function _paradeColorMesh(m,col){
+  // Tint all LineBasicMaterial edges to the neon color
+  try{
+    m.traverse(c=>{
+      if(c.material&&c.material.color){
+        c.material=c.material.clone();
+        c.material.color.setHex(col);
+      }
+    });
+  }catch(_){}
+}
+
+function _paradeNextChar(){
+  const ps=_paradeState;
+  if(!ps||!ps.active)return;
+  const next=ps.charIdx+1;
+  if(next>=PARADE_CHARS.length){
+    const savedOv=ps.ov;
+    _paradeCleanup();
+    try{_startToBeContinued(savedOv)}catch(e){
+      // fallback: go to title
+      try{
+        if(savedOv&&savedOv.parentNode){
+          savedOv.style.transition='opacity 2s';savedOv.style.opacity='0';
+          setTimeout(()=>{
+            savedOv.remove();
+            S.phase='TITLE';
+            const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';
+          },2200);
+        }
+      }catch(_){}
+    }
+    return;
+  }
+  _paradeShowChar(next);
+}
+
+function _paradeCleanup(){
+  const ps=_paradeState;
+  if(!ps)return;
+  ps.active=false;
+  if(ps.charMesh){try{scene.remove(ps.charMesh)}catch(_){}; ps.charMesh=null;}
+  if(ps.extraMeshes){ps.extraMeshes.forEach(m=>{try{scene.remove(m)}catch(_){}});}
+  if(ps.charLight){try{scene.remove(ps.charLight)}catch(_){};}
+  if(ps.rimLight){try{scene.remove(ps.rimLight)}catch(_){};}
+  if(ps.gridHelper){try{scene.remove(ps.gridHelper)}catch(_){};}
+  if(ps.horizLines){ps.horizLines.forEach(h=>{try{scene.remove(h)}catch(_){}});}
+  try{const e=document.getElementById('cyber-scanlines');if(e)e.style.display='none';}catch(_){}
+  try{const e=document.getElementById('cyber-name-card');if(e)e.style.display='none';}catch(_){}
+  try{camera.position.copy(ps.savedCamPos);camera.rotation.copy(ps.savedCamRot);}catch(_){}
+  _paradeState=null;
+}
+
+function updateEndingParade(dt){
+  const ps=_paradeState;
+  if(!ps||!ps.active)return;
+  // Keep stars hidden during parade
+  try{if(typeof starField!=='undefined'&&starField&&starField.visible)starField.visible=false;}catch(_){}
+  try{if(typeof speedLines!=='undefined'&&speedLines&&speedLines.visible)speedLines.visible=false;}catch(_){}
+  ps.charT+=dt;
+  const ch=PARADE_CHARS[ps.charIdx];
+  if(!ch){_paradeCleanup();return;}
+  if(ps.charT>=ch.dur){_paradeNextChar();return;}
+  // Orbit camera around subject
+  ps.camOrbitAngle+=dt*ps.camOrbitSpeed*ps.camOrbitDir;
+  camera.position.set(
+    Math.sin(ps.camOrbitAngle)*ch.camR,
+    ch.camY+ch.camH,
+    Math.cos(ps.camOrbitAngle)*ch.camR
+  );
+  camera.lookAt(0, ch.camY+ch.camH*0.25, 0);
+  // Slowly spin character
+  if(ps.charMesh){
+    ps.charMesh.rotation.y+=dt*0.12*ps.camOrbitDir;
+    // Slight bob
+    ps.charMesh.position.y=Math.sin(ps.charT*1.4)*0.25;
+  }
+  // Key light orbits at +60° offset, pulses
+  if(ps.charLight){
+    ps.charLight.intensity=4.0+Math.sin(ps.charT*2.5)*1.2;
+    ps.charLight.position.set(
+      Math.sin(ps.camOrbitAngle+1.05)*10,
+      10,
+      Math.cos(ps.camOrbitAngle+1.05)*10
+    );
+  }
+  // Grid floor subtle vertical float
+  if(ps.gridHelper){
+    ps.gridHelper.position.y=-8+Math.sin(ps.charT*0.6)*0.2;
+  }
 }
 
 function spawnWallPair(){
@@ -39247,6 +39469,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
     case 'FOREST':S.gameTime+=dt;try{updateForestOnFoot(dt)}catch(e){console.error('forest:',e)}updateParticles(dt);break;
     case 'FIRE_ONFOOT':S.gameTime+=dt;try{updateFirePlanetOnFoot(dt)}catch(e){console.error('fire-onfoot:',e)}updateParticles(dt);break;
     case 'FIRE_LANDING':S.gameTime+=dt;updateParticles(dt);break;
+    case 'ENDING':try{updateEndingParade(dt)}catch(e){}break;
     case 'GAMEOVER':case 'VICTORY':updateParticles(dt);updateBeams(dt);break}
   updateStars(dt);updateSpeedLines(dt);updatePersistentFortress(dt);updateStageFilters();
   // v7.189: stolen fighter — baby alien button-mashing events
@@ -40281,7 +40504,7 @@ function init(){setupThree();createStars();createSpeedLines();createGrid();creat
 // Wrap init in try/catch so any error doesn't prevent auto-launch
 try{init();
   // Update banner: success
-  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.247 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
+  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.252 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
 }catch(initErr){
   // Show error on screen (for iPhone debugging)
   try{const b=document.getElementById('version-banner');

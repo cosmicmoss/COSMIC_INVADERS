@@ -17,7 +17,7 @@ Open `index.html` in any modern browser, or visit the GitHub Pages link.
 - 🚀 **Hyperspace jump** — asteroid belt → hyperdrive failure (ice planet arc) or Millennium Falcon–style warp → docking
 - ❄️ **Ice planet auto-door** — hangar entrance slides open automatically when AT-RT arrives
 - ⚡ **Magnet Coating** — post-colosseum upgrade; beams gently home in on enemies; unlocked via bridge emergency → mod bay → 5-fighter V-formation launch cinematic
-- 🎬 **Story ending** — character epilogue text cards → TO BE CONTINUED teaser → "COSMIC INVADERS 2" title reveal
+- 🎬 **Story ending** — character epilogue text cards → **cyberpunk wireframe character parade** (7 cast members, neon-lit, orbiting camera) → TO BE CONTINUED teaser → "COSMIC INVADERS 2" title reveal
 - 🎵 **Procedural audio** — full BGM with orchestral boss theme + 3-movement ending orchestra, all SFX synthesized via Web Audio API
 - 🎮 **Keyboard + touch controls**
 
@@ -34,4 +34,4 @@ Open `index.html` in any modern browser, or visit the GitHub Pages link.
 
 ## Version
 
-v7.251
+v7.252
