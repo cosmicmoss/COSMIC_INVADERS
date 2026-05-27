@@ -2219,6 +2219,43 @@ class SFX{
       });
     }catch(e){}
   }
+  // v7.252: Cinematic timpani drum hit for character parade entry
+  cinematicDrum(){
+    if(!this.ctx)return;const ac=this.ctx,now=ac.currentTime;
+    // Sub-bass timpani punch (70→28 Hz sweep)
+    const o=ac.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(75,now);o.frequency.exponentialRampToValueAtTime(26,now+.5);
+    const g=ac.createGain();g.gain.setValueAtTime(.001,now);
+    g.gain.linearRampToValueAtTime(.95,now+.014);g.gain.exponentialRampToValueAtTime(.001,now+.8);
+    o.connect(g);g.connect(this.g||ac.destination);o.start(now);o.stop(now+.85);
+    // Attack snare transient
+    const buf=ac.createBuffer(1,Math.floor(ac.sampleRate*.07),ac.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const ns=ac.createBufferSource();ns.buffer=buf;
+    const flt=ac.createBiquadFilter();flt.type='bandpass';flt.frequency.value=200;flt.Q.value=.8;
+    const ng=ac.createGain();ng.gain.setValueAtTime(.5,now);ng.gain.exponentialRampToValueAtTime(.001,now+.07);
+    ns.connect(flt);flt.connect(ng);ng.connect(this.g||ac.destination);ns.start(now);ns.stop(now+.08);
+    // High metallic ring (cymbal shimmer)
+    const o2=ac.createOscillator();o2.type='triangle';o2.frequency.value=3800;
+    const g2=ac.createGain();g2.gain.setValueAtTime(.001,now);
+    g2.gain.linearRampToValueAtTime(.18,now+.008);g2.gain.exponentialRampToValueAtTime(.001,now+.35);
+    o2.connect(g2);g2.connect(this.g||ac.destination);o2.start(now);o2.stop(now+.36);
+  }
+  cinematicDrumLight(){
+    if(!this.ctx)return;const ac=this.ctx,now=ac.currentTime;
+    const o=ac.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(55,now);o.frequency.exponentialRampToValueAtTime(22,now+.32);
+    const g=ac.createGain();g.gain.setValueAtTime(.001,now);
+    g.gain.linearRampToValueAtTime(.42,now+.012);g.gain.exponentialRampToValueAtTime(.001,now+.42);
+    o.connect(g);g.connect(this.g||ac.destination);o.start(now);o.stop(now+.44);
+    // Light shaker noise
+    const buf=ac.createBuffer(1,Math.floor(ac.sampleRate*.04),ac.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const ns=ac.createBufferSource();ns.buffer=buf;
+    const flt=ac.createBiquadFilter();flt.type='highpass';flt.frequency.value=4000;
+    const ng=ac.createGain();ng.gain.setValueAtTime(.22,now);ng.gain.exponentialRampToValueAtTime(.001,now+.04);
+    ns.connect(flt);flt.connect(ng);ng.connect(this.g||ac.destination);ns.start(now);ns.stop(now+.05);
+  }
   // v7.251: Orchestral ending BGM — 3 movements ~3 min
   startEndingBGM(){
     if(!this.ctx)return;
@@ -14553,6 +14590,7 @@ const PARADE_CHARS=[
   {id:'all',    name:'COSMIC INVADERS', sub:'FOREVER  IN  THE  STARS',       col:0xffffff, colCss:'#ffffff', dur:8,  maker:null,                    scale:1.0,  camR:32, camY:3,  camH:4},
 ];
 let _paradeState=null;
+const _PARADE_SILVER=new THREE.Color(0xe8f4ff); // metallic silver-white for shimmer
 
 function _startCharacterParade(ov){
   if(!ov||!ov.parentNode)return;
@@ -14596,7 +14634,8 @@ function _startCharacterParade(ov){
     active:true,ov,charIdx:0,charT:0,charMesh:null,extraMeshes:[],
     camOrbitAngle:0.3,camOrbitSpeed:0.20,camOrbitDir:1,
     gridHelper,horizLines,charLight:null,rimLight:null,
-    savedCamPos,savedCamRot
+    savedCamPos,savedCamRot,
+    charMaterials:[],entryT:0,entryDone:false,drumHit2Done:false
   };
   _paradeShowChar(0);
 }
@@ -14604,51 +14643,76 @@ function _startCharacterParade(ov){
 function _paradeShowChar(idx){
   const ps=_paradeState;
   if(!ps||!ps.active)return;
-  // Remove previous mesh
+  // Remove previous mesh + lights
   if(ps.charMesh){try{scene.remove(ps.charMesh)}catch(_){}; ps.charMesh=null;}
   if(ps.extraMeshes){ps.extraMeshes.forEach(m=>{try{scene.remove(m)}catch(_){}});ps.extraMeshes=[];}
   if(ps.charLight){try{scene.remove(ps.charLight)}catch(_){}; ps.charLight=null;}
   if(ps.rimLight){try{scene.remove(ps.rimLight)}catch(_){}; ps.rimLight=null;}
   const ch=PARADE_CHARS[idx];
   if(!ch){_paradeCleanup();return;}
-  // Screen flash transition
-  try{screenFlash(0.55)}catch(_){}
+  // Cinematic entry state reset
+  ps.charMaterials=[];
+  ps.entryT=0;
+  ps.entryDone=false;
+  ps.drumHit2Done=false;
   // Vary orbit parameters per character
   ps.camOrbitDir=(idx%2===0)?1:-1;
   ps.camOrbitAngle=idx*0.9+0.25;
-  ps.camOrbitSpeed=0.16+idx*0.02;
+  ps.camOrbitSpeed=0.14+idx*0.018;
+  // Big timpani BOOM on entry
+  try{sfx.cinematicDrum&&sfx.cinematicDrum()}catch(_){}
+  // White flash (very brief — feels like spotlight flare)
+  try{screenFlash(0.75)}catch(_){}
   // Build character mesh
+  const _buildMesh=(maker,col,scl)=>{
+    try{
+      const m=maker();m.scale.setScalar(scl);
+      _paradeColorMesh(m,col);
+      // Wireframe-only: hide all solid Mesh fills, keep only LineSegments
+      m.traverse(c=>{
+        if(c.isMesh&&!(c instanceof THREE.LineSegments)){
+          c.visible=false;
+        }
+      });
+      return m;
+    }catch(e){return null;}
+  };
   if(ch.id==='all'){
-    // All 3 bosses side by side for grand finale
     const g=new THREE.Group();
-    try{const z=makeBossZeong();z.scale.setScalar(1.2);z.position.set(-20,0,0);_paradeColorMesh(z,0xff0055);g.add(z);}catch(_){}
-    try{const gd=makeBossGipsyDanger();gd.scale.setScalar(0.9);gd.position.set(0,0,0);_paradeColorMesh(gd,0xff6600);g.add(gd);}catch(_){}
-    try{const m=makeBossMech();m.scale.setScalar(1.1);m.position.set(20,0,0);_paradeColorMesh(m,0x44ff44);g.add(m);}catch(_){}
+    const z=_buildMesh(makeBossZeong,    0xff0055,1.2); if(z){z.position.set(-20,0,0);g.add(z);}
+    const gd=_buildMesh(makeBossGipsyDanger,0xff6600,0.9); if(gd){gd.position.set(0,0,0);g.add(gd);}
+    const m=_buildMesh(makeBossMech,     0x44ff44,1.1); if(m){m.position.set(20,0,0);g.add(m);}
     scene.add(g);ps.charMesh=g;
   } else if(ch.maker){
-    try{
-      const m=ch.maker();
-      m.scale.setScalar(ch.scale);
-      _paradeColorMesh(m,ch.col);
-      scene.add(m);ps.charMesh=m;
-    }catch(e){ps.charMesh=null;}
+    const m=_buildMesh(ch.maker,ch.col,ch.scale);
+    if(m){scene.add(m);ps.charMesh=m;}
   }
-  // Neon key light
-  const kl=new THREE.PointLight(ch.col,4.5,70);
-  kl.position.set(0,10,-8);
+  // Collect LineBasicMaterial refs for metallic shimmer animation
+  if(ps.charMesh){
+    ps.charMesh.traverse(c=>{
+      if(c.material&&c.material.isLineBasicMaterial){
+        ps.charMaterials.push({mat:c.material, baseCol:new THREE.Color(ch.col)});
+      }
+    });
+  }
+  // Neon key light — strong, tight radius
+  const kl=new THREE.PointLight(ch.col,6.5,65);
+  kl.position.set(0,12,-6);
   scene.add(kl);ps.charLight=kl;
-  // Soft white rim fill from front-right
-  const rl=new THREE.PointLight(0xffffff,1.2,55);
-  rl.position.set(-9,3,9);
+  // Silver rim light (gives metallic edge highlight look)
+  const rl=new THREE.PointLight(0xc0d8ff,2.2,50);
+  rl.position.set(-10,4,10);
   scene.add(rl);ps.rimLight=rl;
-  // Update name card
+  // Update name card — hide briefly during flash, then reveal
   const cardEl=document.getElementById('cyber-name-card');
   if(cardEl){
+    cardEl.style.opacity='0';cardEl.style.transition='opacity 0.6s';
     cardEl.innerHTML=
       '<div class="cn-idx" style="color:'+ch.colCss+'">'+(idx+1)+' / '+PARADE_CHARS.length+'</div>'+
       '<div class="cn-name" style="color:'+ch.colCss+'">'+ch.name+'</div>'+
       '<div class="cn-bar" style="color:'+ch.colCss+';background:'+ch.colCss+'"></div>'+
       '<div class="cn-title" style="color:'+ch.colCss+'">'+ch.sub+'</div>';
+    setTimeout(()=>{if(cardEl)cardEl.style.opacity='1';},350);
   }
   ps.charIdx=idx;
   ps.charT=0;
@@ -14710,39 +14774,90 @@ function _paradeCleanup(){
 function updateEndingParade(dt){
   const ps=_paradeState;
   if(!ps||!ps.active)return;
-  // Keep stars hidden during parade
+  // Keep stars hidden
   try{if(typeof starField!=='undefined'&&starField&&starField.visible)starField.visible=false;}catch(_){}
   try{if(typeof speedLines!=='undefined'&&speedLines&&speedLines.visible)speedLines.visible=false;}catch(_){}
   ps.charT+=dt;
   const ch=PARADE_CHARS[ps.charIdx];
   if(!ch){_paradeCleanup();return;}
   if(ps.charT>=ch.dur){_paradeNextChar();return;}
-  // Orbit camera around subject
-  ps.camOrbitAngle+=dt*ps.camOrbitSpeed*ps.camOrbitDir;
-  camera.position.set(
-    Math.sin(ps.camOrbitAngle)*ch.camR,
-    ch.camY+ch.camH,
-    Math.cos(ps.camOrbitAngle)*ch.camR
-  );
-  camera.lookAt(0, ch.camY+ch.camH*0.25, 0);
-  // Slowly spin character
-  if(ps.charMesh){
-    ps.charMesh.rotation.y+=dt*0.12*ps.camOrbitDir;
-    // Slight bob
-    ps.charMesh.position.y=Math.sin(ps.charT*1.4)*0.25;
-  }
-  // Key light orbits at +60° offset, pulses
-  if(ps.charLight){
-    ps.charLight.intensity=4.0+Math.sin(ps.charT*2.5)*1.2;
-    ps.charLight.position.set(
-      Math.sin(ps.camOrbitAngle+1.05)*10,
-      10,
-      Math.cos(ps.camOrbitAngle+1.05)*10
+
+  // ── Camera: cinematic zoom-in entry, then smooth orbit ──
+  const ENTRY_DUR=1.6;
+  if(!ps.entryDone){
+    ps.entryT=(ps.entryT||0)+dt;
+    const ep=Math.min(1,ps.entryT/ENTRY_DUR);
+    // Cubic ease-out: fast start, smooth landing
+    const ease=1-Math.pow(1-ep,3);
+    // Zoom from 3.5× camR → 1× camR
+    const curR=ch.camR*(3.5-2.5*ease);
+    // Drop from high angle to normal
+    const curY=(ch.camY+ch.camH)+(1-ease)*ch.camH*2.2;
+    // Orbit angle barely moves during fast zoom, picks up speed as ease reaches 1
+    ps.camOrbitAngle+=dt*ps.camOrbitSpeed*ps.camOrbitDir*(0.06+ease*0.94);
+    camera.position.set(
+      Math.sin(ps.camOrbitAngle)*curR,
+      curY,
+      Math.cos(ps.camOrbitAngle)*curR
+    );
+    // Second lighter drum at ~40% of entry
+    if(!ps.drumHit2Done&&ep>0.40){
+      ps.drumHit2Done=true;
+      try{sfx.cinematicDrumLight&&sfx.cinematicDrumLight()}catch(_){}
+    }
+    if(ep>=1){ps.entryDone=true;}
+  } else {
+    // Normal orbit after entry
+    ps.camOrbitAngle+=dt*ps.camOrbitSpeed*ps.camOrbitDir;
+    camera.position.set(
+      Math.sin(ps.camOrbitAngle)*ch.camR,
+      ch.camY+ch.camH,
+      Math.cos(ps.camOrbitAngle)*ch.camR
     );
   }
-  // Grid floor subtle vertical float
+  camera.lookAt(0,ch.camY+ch.camH*0.25,0);
+
+  // ── Character mesh: spin + breathe ──
+  if(ps.charMesh){
+    // Spin faster during entry, settle to slow orbit after
+    const spinSpd=ps.entryDone?0.10:0.28;
+    ps.charMesh.rotation.y+=dt*spinSpd*ps.camOrbitDir;
+    ps.charMesh.position.y=Math.sin(ps.charT*1.3)*0.28;
+  }
+
+  // ── Metallic shimmer on wireframe materials ──
+  if(ps.charMaterials&&ps.charMaterials.length){
+    // Entry flash: white-hot silver during fast zoom, fades to pulsing metallic
+    const entryFlash=ps.entryDone?0:Math.max(0,0.75-(ps.entryT||0)*0.9);
+    const baseShimmer=0.14+0.22*Math.sin(ps.charT*5.8);
+    const shimmer=Math.min(0.90,baseShimmer+entryFlash);
+    for(const {mat,baseCol} of ps.charMaterials){
+      mat.color.copy(baseCol).lerp(_PARADE_SILVER,shimmer);
+    }
+  }
+
+  // ── Key light: intense + pulsing, orbits around character ──
+  if(ps.charLight){
+    const entryBoost=ps.entryDone?0:Math.max(0,(1-(ps.entryT||0)/ENTRY_DUR)*4);
+    ps.charLight.intensity=5.5+Math.sin(ps.charT*2.8)*1.8+entryBoost;
+    ps.charLight.position.set(
+      Math.sin(ps.camOrbitAngle+1.1)*12,
+      11,
+      Math.cos(ps.camOrbitAngle+1.1)*12
+    );
+  }
+  // Rim light swings opposite side
+  if(ps.rimLight){
+    ps.rimLight.position.set(
+      Math.sin(ps.camOrbitAngle-1.0)*9,
+      4,
+      Math.cos(ps.camOrbitAngle-1.0)*9
+    );
+  }
+
+  // ── Grid floor gently floats ──
   if(ps.gridHelper){
-    ps.gridHelper.position.y=-8+Math.sin(ps.charT*0.6)*0.2;
+    ps.gridHelper.position.y=-8+Math.sin(ps.charT*0.55)*0.22;
   }
 }
 
