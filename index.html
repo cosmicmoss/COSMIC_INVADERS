@@ -12786,7 +12786,7 @@ function checkCollisions(){const camP=camera.position;
         if(gen._exploded)continue;
         const gp=gen.mesh.position;
         const dx=b.mesh.position.x-gp.x,dy=b.mesh.position.y-gp.y,dz=b.mesh.position.z-gp.z;
-        if(Math.sqrt(dx*dx+dy*dy+dz*dz)<7.0){
+        if(Math.sqrt(dx*dx+dy*dy+dz*dz)<9.0){
           gen.hp-=(b.dmg||1);
           gen._flashT=0.15;
           spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0x00ccff,5,.6,.3);
@@ -14125,7 +14125,7 @@ function _makeShieldGenerator(id){
   // Hexagonal dome shell (icosahedron wireframe)
   const domeFill=new THREE.MeshBasicMaterial({color:0x001133,transparent:true,opacity:.3});
   const domeEdge=new THREE.LineBasicMaterial({color:0x00aaff,transparent:true,opacity:.8});
-  const domeGeo=new THREE.IcosahedronGeometry(5.5,1);
+  const domeGeo=new THREE.IcosahedronGeometry(6.5,1);
   g.add(new THREE.Mesh(domeGeo,domeFill));
   g.add(new THREE.LineSegments(new THREE.EdgesGeometry(domeGeo),domeEdge));
   // Energy core
@@ -14151,7 +14151,9 @@ function _trySpawnShieldGenerators(){
   if(S._shieldGensSpawned)return;
   S._shieldGensSpawned=true;
   if(!S._shieldGens)S._shieldGens=[];
-  const positions=[{x:-16,y:-3,z:-270},{x:16,y:-3,z:-230}];
+  // v7.252 fix: moved to x=±7 (center of trench, easy to hit) and closer z=-190/-155
+  // (previous x=±16 was at edge of player reach; previous z=-270/-230 delayed entry to beam range)
+  const positions=[{x:-7,y:0,z:-190},{x:7,y:0,z:-155}];
   positions.forEach((pos,i)=>{
     const mesh=_makeShieldGenerator(i);
     mesh.position.set(pos.x,pos.y,pos.z);
@@ -14159,6 +14161,7 @@ function _trySpawnShieldGenerators(){
     S._shieldGens.push({mesh,hp:60,maxHp:60,id:i,_exploded:false,_flashT:0,_t:0});
   });
   announce('◆ SHIELD GENERATORS DETECTED ×2 ◆');
+  wfCineSubtitle('◆ SHIELD GENERATORS ×2 — DESTROY BOTH! ◆','#00ccff');
   setTimeout(()=>playComm('hq','Two shield generators protecting the core — destroy them BOTH!'),400);
   setTimeout(()=>playComm('pilot','Copy! Taking them out!'),3800);
   // Show boss HP bar for first generator
@@ -14190,13 +14193,21 @@ function _updateShieldGenerators(dt,wSpd){
     } else {
       gen.mesh.scale.setScalar(1.0);
     }
-    // Remove if past player
+    // Remove if past player (scrolled through without being destroyed)
     if(gen.mesh.position.z>25){gen._exploded=true;scene.remove(gen.mesh);S._shieldGens.splice(gi,1);}
-    totalHpFrac+=gen.hp/gen.maxHp;
+    else totalHpFrac+=gen.hp/gen.maxHp;
   }
   // Update boss HP bar
   if(S._shieldGens.length>0){
     try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(totalHpFrac/Math.max(S._shieldGens.length,1))*100)+'%';}catch(_){}
+  }
+  // v7.252: failsafe — if all generators are gone (destroyed OR scrolled past) but shields
+  // never went down, unlock the next phase so the game can continue
+  if(S._shieldGensSpawned&&S._shieldGens.length===0&&!S._fortShieldsDown){
+    S._fortShieldsDown=true;
+    wfCineSubtitle('◆ SHIELDS COLLAPSED! ◆','#00ffff');
+    screenFlash(.6);S.shakeT=1;S.shakeI=2;
+    try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width='0%';}catch(_){}
   }
 }
 
