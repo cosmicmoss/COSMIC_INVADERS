@@ -17392,6 +17392,51 @@ function openTestStage(){
       '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'7体のモンスターとバトルロイヤル':'7-monster battle royale')+'</div>'+
     '</button>'+
     '</div>';
+  // v7.252: FORTRESS FINALE TESTS
+  html+='<div style="font-size:15px;color:#ff4422;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #ff4422">▼ '+(hk?'要塞フィナーレ テスト':'FORTRESS FINALE TEST')+' ▼</div>'+
+    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'シールドジェネレーター/DEATHHANDボス/コア最終決戦 を個別テスト':'Jump to Shield Generators / DEATH HAND boss / Reactor Core finale')+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">'+
+    '<button type="button" onclick="launchFortressFinaleTest(\'shields\')" '+
+      'style="padding:12px 16px;background:rgba(30,5,0,0.85);border:2px solid #ff4422;'+
+      'color:#ff4422;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #ff442266;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'SHIELD GENERATORS ×2':'SHIELD GENERATORS ×2')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'シールドジェネレーター2基を即座にスポーン':'Shield gens spawn right away — test core-lock beam')+'</div>'+
+    '</button>'+
+    '<button type="button" onclick="launchFortressFinaleTest(\'dhand\')" '+
+      'style="padding:12px 16px;background:rgba(30,5,0,0.85);border:2px solid #ff6600;'+
+      'color:#ff6600;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #ff660066;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'☠ DEATH HAND BOSS':'☠ DEATH HAND BOSS')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'シールドスキップ → DEATHHANDが即登場':'Skip shields → DEATH HAND spawns immediately')+'</div>'+
+    '</button>'+
+    '<button type="button" onclick="launchFortressFinaleTest(\'core\')" '+
+      'style="padding:12px 16px;background:rgba(30,5,0,0.85);border:2px solid #ffcc00;'+
+      'color:#ffcc00;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #ffcc0066;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'◆ REACTOR CORE FINALE':'◆ REACTOR CORE FINALE')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'DEATH HANDスキップ → HP60コア最終決戦':'Skip DEATH HAND → HP×2 reactor core battle')+'</div>'+
+    '</button>'+
+    '</div>';
+  // v7.252: ENDING TESTS
+  html+='<div style="font-size:15px;color:#ffaa00;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #ffaa00">▼ '+(hk?'エンディング テスト':'ENDING TEST')+' ▼</div>'+
+    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'エピローグ / キャラクターパレード / TO BE CONTINUEDを確認':'Preview the full ending roll or just the cyberpunk character parade')+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">'+
+    '<button type="button" onclick="launchEndingTest(\'full\')" '+
+      'style="padding:12px 16px;background:rgba(20,15,0,0.85);border:2px solid #ffaa00;'+
+      'color:#ffaa00;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:220px;'+
+      'border-radius:8px;box-shadow:0 0 12px #ffaa0066;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'フル エンディングロール':'FULL ENDING ROLL')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'エピローグ → パレード → COSMIC INVADERS 2 まで全部':'Epilogue → parade → TO BE CONTINUED → title')+'</div>'+
+    '</button>'+
+    '<button type="button" onclick="launchEndingTest(\'parade\')" '+
+      'style="padding:12px 16px;background:rgba(0,5,20,0.85);border:2px solid #00ffff;'+
+      'color:#00ffff;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:220px;'+
+      'border-radius:8px;box-shadow:0 0 12px #00ffff66;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'★ キャラクターパレードのみ':'★ CHARACTER PARADE ONLY')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'サイバーパンク7キャラ紹介シーンをすぐ確認':'Jump straight to the cyberpunk wireframe showcase')+'</div>'+
+    '</button>'+
+    '</div>';
   // v7.32: DIRECT PHASE TESTS — jump straight to FORTRESS (trench-run) or RETURN (asteroid belt
   // escape) without going through the normal wave progression. Per user 「テストステージに
   // トレンチラン、隕石群のウェーブステージを追加」.
@@ -30401,6 +30446,90 @@ function launchColosseumTest(){
   try{particles.forEach(p=>{try{scene.remove(p.mesh)}catch(_){}});particles.length=0}catch(_){}
   try{closeOptions()}catch(_){}
   setTimeout(()=>{try{startColosseum();showTestModeExitButton('colosseum')}catch(e){console.error('colosseum test:',e)}},350);
+}
+
+// ─── v7.252: Fortress finale test (Options → STORY TEST MODE) ───────
+// skipTo: 'shields' | 'dhand' | 'core'
+function launchFortressFinaleTest(skipTo){
+  const ov=document.getElementById('test-stage');if(ov)ov.remove();
+  selectedStage=STAGES.find(s=>s.id==='space')||STAGES[0];
+  if(!S.callsign){const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}
+  if(!selectedShip&&typeof SHIP_ROSTER!=='undefined')selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
+  ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  try{sfx.init();sfx.resume()}catch(e){}
+  S._testFromOptions=true;
+  try{actualStartGame&&actualStartGame()}catch(e){console.error('fortress finale init:',e)}
+  setTimeout(()=>{
+    try{
+      enemies.forEach(e=>{try{scene.remove(e.mesh)}catch(_){}});enemies.length=0;
+      eBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});eBeams.length=0;
+      S.wave=5;S.waveLeft=0;
+      // Pre-set state flags then let updateFortress() react normally
+      if(skipTo==='shields'){
+        // Approach cinematic → immediately drop into trench with generators pending
+        startFortressApproachCine&&startFortressApproachCine();
+        setTimeout(()=>{
+          try{
+            S._fortCineActive=false;S.phase='FORTRESS';fortPhase=1;S.fortTimer=9;
+            spawnWallPair&&spawnWallPair();spawnWallPair&&spawnWallPair();
+            announce('◆ SHIELD GENERATORS TEST ◆');
+          }catch(_){}
+        },600);
+      } else if(skipTo==='dhand'){
+        startFortressApproachCine&&startFortressApproachCine();
+        setTimeout(()=>{
+          try{
+            S._fortCineActive=false;S.phase='FORTRESS';fortPhase=1;S.fortTimer=9;
+            S._shieldGensSpawned=true;S._fortShieldsDown=true;
+            spawnWallPair&&spawnWallPair();spawnWallPair&&spawnWallPair();
+            announce('◆ DEATH HAND TEST ◆');
+          }catch(_){}
+        },600);
+      } else if(skipTo==='core'){
+        startFortressApproachCine&&startFortressApproachCine();
+        setTimeout(()=>{
+          try{
+            S._fortCineActive=false;S.phase='FORTRESS';fortPhase=1;S.fortTimer=9;
+            S._shieldGensSpawned=true;S._fortShieldsDown=true;
+            S._deathHandSpawned=true;S._deathHandDone=true;
+            spawnWallPair&&spawnWallPair();spawnWallPair&&spawnWallPair();
+            announce('◆ REACTOR CORE TEST ◆');
+          }catch(_){}
+        },600);
+      }
+    }catch(e){console.error('fortress finale test:',e)}
+  },400);
+}
+
+// ─── v7.252: Ending test (Options → STORY TEST MODE) ───────
+// mode: 'full' | 'parade'
+function launchEndingTest(mode){
+  const ov=document.getElementById('test-stage');if(ov)ov.remove();
+  ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.style.display='none';
+  });
+  try{sfx.init();sfx.resume()}catch(e){}
+  try{cleanupBossResidue&&cleanupBossResidue()}catch(_){}
+  try{wfCineEnd&&wfCineEnd()}catch(_){}
+  // Don't use _testFromOptions so the ending proceeds normally
+  S._testFromOptions=false;
+  selectedStage=STAGES.find(s=>s.id==='space')||STAGES[0];
+  if(!S.callsign){const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}
+  if(!selectedShip&&typeof SHIP_ROSTER!=='undefined')selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
+  if(mode==='parade'){
+    // Start just the character parade (→ TO BE CONTINUED → title)
+    S.phase='ENDING';
+    let endOv=document.getElementById('ending-overlay');
+    if(!endOv){
+      endOv=document.createElement('div');endOv.id='ending-overlay';
+      endOv.style.cssText='position:fixed;inset:0;background:#000008;z-index:999;';
+      document.body.appendChild(endOv);
+    }
+    setTimeout(()=>{try{_startCharacterParade&&_startCharacterParade(endOv)}catch(e){console.error('parade test:',e)}},300);
+  } else {
+    // Full ending roll: epilogue + parade + TO BE CONTINUED
+    setTimeout(()=>{try{_startEndingRoll&&_startEndingRoll()}catch(e){console.error('ending test:',e)}},300);
+  }
 }
 
 // Main forest update - runs in the render loop when S.phase==='FOREST'
