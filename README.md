@@ -12,7 +12,7 @@ Open `index.html` in any modern browser, or visit the GitHub Pages link.
 - 🌲 **Forest planet** — on-foot third-person action, speeder bike chase, dungeon rescue
 - ❄️ **Ice planet** — 5-phase campaign: infiltration → snow-trooper combat → cryo-valley → base raid → AT-RT walker battle + escape
 - 🔥 **Fire planet** — corona dragon combat + on-foot Fire Dragon boss battle (beam shield + ice beam + saber finisher) → unlocks ship flamethrower
-- 🏰 **Fortress assault** — trench run + Death Star reactor
+- 🏰 **Fortress assault** — 5-ship V-formation cinematic → conduit entry → pursuit fighters chase from behind → progressive speed ramp → space-station interior (conduit rings + glow pipes) → pulsing reactor core + chain explosions
 - 🤼 **Space Colosseum** — hyperdrive fails mid-jump → captured by pirates → jail cell → fight 7 monsters (CHOP / Giant Swing / Frankensteiner); ring weapons auto-pickup (spear/chain/whip/poop); ring-outs → **spike impalement** stays visible all battle
 - 🚀 **Hyperspace jump** — asteroid belt → hyperdrive failure (ice planet arc) or Millennium Falcon–style warp → docking
 - ❄️ **Ice planet auto-door** — hangar entrance slides open automatically when AT-RT arrives
@@ -33,4 +33,4 @@ Open `index.html` in any modern browser, or visit the GitHub Pages link.
 
 ## Version
 
-v7.248
+v7.249

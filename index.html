@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.248</title>
+<title>COSMIC INVADERS v7.249</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -75,6 +75,8 @@ body.stolen-fighter #cockpit-frame::after{background:rgba(255,30,20,.45)!importa
 @keyframes ohFlash{50%{opacity:.4}}
 @keyframes alarmPulse{0%{background:rgba(200,0,0,0)}100%{background:rgba(200,0,0,0.18)}}
 #alarm-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:88;animation:alarmPulse 0.5s ease-in-out infinite alternate;}
+/* v7.249: trench-run speed multiplier HUD */
+#speed-overlay{display:none;position:fixed;top:14%;right:12px;color:#ffaa00;font-size:22px;font-weight:bold;font-family:monospace;text-shadow:0 0 8px #ff8800,0 0 16px #ff4400;pointer-events:none;z-index:90;letter-spacing:2px;}
 /* v7.227: cockpit power-up flash overlay */
 @keyframes ckPwSweep{0%{top:-2px;opacity:0}10%{opacity:1}90%{opacity:.8}100%{top:100%;opacity:0}}
 @keyframes ckPwLabel{0%{opacity:0;letter-spacing:12px}15%{opacity:1;letter-spacing:6px}80%{opacity:1}100%{opacity:0;letter-spacing:8px}}
@@ -737,7 +739,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.248 - LOADED
+  COSMIC INVADERS v7.249 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1081,7 +1083,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.248</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.249</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1331,12 +1333,14 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="heartbeat-vignette"></div>
   <div id="screen-flash"></div>
   <div id="fire-filter"></div>
+  <!-- v7.249: trench-run speed overlay -->
+  <div id="speed-overlay"></div>
 </div>
 
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.248 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.249 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1371,7 +1375,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.248 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.249 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -2215,7 +2219,7 @@ class SFX{
       step++;
     },Math.round(SZ*1000));}// fire every 16th ≒ 163ms
   stopBossBGM(){if(this._bossBGMiv){clearInterval(this._bossBGMiv);this._bossBGMiv=null;}}
-  // v7.248 ★ Hyperdrive failure SFX — descending sawtooth + noise burst + electrical beeps
+  // v7.249 ★ Hyperdrive failure SFX — descending sawtooth + noise burst + electrical beeps
   driveFailSFX(){
     const ac=this.ctx;if(!ac)return;const now=ac.currentTime;
     // Descending engine whine (sawtooth 800→40Hz, 1.5s)
@@ -2244,7 +2248,7 @@ class SFX{
     const nbp=ac.createBiquadFilter();nbp.type='bandpass';nbp.frequency.value=3000;nbp.Q.value=.8;
     ns.connect(nbp);nbp.connect(ng);ng.connect(this.masterGain||ac.destination);ns.start(now+.2);
   }
-  // v7.248 ★ Emergency alarm blare — alternating square tones 250/300Hz
+  // v7.249 ★ Emergency alarm blare — alternating square tones 250/300Hz
   alarmBlare(){
     const ac=this.ctx;if(!ac)return;
     if(this._alarmIv)clearInterval(this._alarmIv);
@@ -2259,6 +2263,29 @@ class SFX{
   }
   stopAlarm(){this._alarmOn=false;if(this._alarmIv){clearInterval(this._alarmIv);this._alarmIv=null;}}
   startAlarm(){this._alarmOn=true;this.alarmBlare();}
+  // v7.249 ★ Pipe-rush entry rumble — descending sawtooth bass
+  pipeRushStart(){
+    const ac=this.ctx;if(!ac)return;const now=ac.currentTime;
+    const osc=ac.createOscillator();osc.type='sawtooth';
+    osc.frequency.setValueAtTime(90,now);osc.frequency.linearRampToValueAtTime(35,now+2.2);
+    const g=ac.createGain();g.gain.setValueAtTime(.28,now);g.gain.linearRampToValueAtTime(0,now+2.2);
+    osc.connect(g);g.connect(this.masterGain||ac.destination);osc.start(now);osc.stop(now+2.2);
+    // sub-bass thud
+    const o2=ac.createOscillator();o2.type='sine';o2.frequency.setValueAtTime(42,now);
+    const g2=ac.createGain();g2.gain.setValueAtTime(.2,now);g2.gain.linearRampToValueAtTime(0,now+1.4);
+    o2.connect(g2);g2.connect(this.masterGain||ac.destination);o2.start(now);o2.stop(now+1.4);
+  }
+  // v7.249 ★ Core access alert — 4 rapid descending beeps
+  coreAlertSFX(){
+    const ac=this.ctx;if(!ac)return;const now=ac.currentTime;
+    [0,.18,.36,.54].forEach((t,i)=>{
+      const o=ac.createOscillator();o.type='square';
+      o.frequency.setValueAtTime(1400-i*120,now+t);
+      const g=ac.createGain();
+      g.gain.setValueAtTime(.18,now+t);g.gain.linearRampToValueAtTime(0,now+t+.14);
+      o.connect(g);g.connect(this.masterGain||ac.destination);o.start(now+t);o.stop(now+t+.15);
+    });
+  }
 }
 const sfx=new SFX();
 
@@ -5514,6 +5541,35 @@ function makeStarfighterN1(){
     g.add(new THREE.Line(wing,mBody))});
   return g}
 
+// v7.249: PURSUIT FIGHTER — TIE-style enemy that chases player from behind in trench run
+function makePursuitFighter(){
+  const g=new THREE.Group();
+  const mBody=new THREE.LineBasicMaterial({color:0xff2200,transparent:true,opacity:.9});
+  const mWing=new THREE.LineBasicMaterial({color:0xcc1100,transparent:true,opacity:.8});
+  const mCore=new THREE.LineBasicMaterial({color:0xff6600,transparent:true,opacity:1});
+  // Cockpit pod
+  const pod=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(.55,4,4)),mCore);
+  g.add(pod);
+  // Left wing panel — thin flat slab
+  const wL=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.12,2.4,1.8)),mWing);
+  wL.position.set(0,0,-1.6);g.add(wL);
+  // Right wing panel
+  const wR=wL.clone();wR.position.set(0,0,1.6);g.add(wR);
+  // Cross strut (horizontal bar connecting wings to pod)
+  const strut=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.1,.15,3.6)),mBody);
+  g.add(strut);
+  // Engine nozzle (front-facing in-game = +x since ship faces player at -z)
+  const noz=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.18,.25,.6,6)),mCore);
+  noz.rotation.z=Math.PI/2;noz.position.x=-.7;g.add(noz);
+  // Wing edge accents
+  [-1.6,1.6].forEach(z=>{
+    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.06,2.4,.06)),mCore);
+    edge.position.set(.1,0,z);g.add(edge);
+  });
+  g.scale.setScalar(1.3);
+  return g;
+}
+
 // EASY: TURBO FIGHTER - sleek blue/white fighter with wide swept wings (second reference image)
 function makeTurboFighter(){
   const g=new THREE.Group();
@@ -7677,7 +7733,7 @@ function fireBeam(){
       LU_IDS.forEach(id=>document.getElementById(id).classList.add('overheat'));return}
   }
   const cannons=CANNON_MAP[S.power]||CANNON_MAP[0];
-  // v6.69: Crystal Laser overrides beam color; v7.189: stolen fighter = red; v7.209: overdrive = fluorescent green; v7.248: magnet coating = silver-blue
+  // v6.69: Crystal Laser overrides beam color; v7.189: stolen fighter = red; v7.209: overdrive = fluorescent green; v7.249: magnet coating = silver-blue
   const color=S._stolenFighter?0xff2200:(S.hasOverdriveBeam?0x00ff44:(S.hasCrystalLaser?0xff44ff:(S.hasMagnetCoating?0xaaccff:PCOLORS[Math.min(S.power,4)])));
   // Pick the next cannon in rotation
   const idx=seqIndex%cannons.length;
@@ -12394,7 +12450,7 @@ function spawnEnemyBeam(pos){const mesh=makeEnemyBeam();mesh.position.copy(pos);
 
 function updateBeams(dt){
   for(let i=pBeams.length-1;i>=0;i--){const b=pBeams[i];
-    // v7.248: magnet coating — gentle homing toward nearest enemy
+    // v7.249: magnet coating — gentle homing toward nearest enemy
     if(b._magnetic&&enemies.length>0){
       let nearE=null,nearD=Infinity;
       enemies.forEach(e=>{if(!e.isBonus){const d2=b.mesh.position.distanceTo(e.mesh.position);if(d2<nearD){nearD=d2;nearE=e;}}});
@@ -12407,7 +12463,27 @@ function updateBeams(dt){
     }
     b.mesh.position.add(b.vel.clone().multiplyScalar(dt));
     b.mesh.rotation.z+=dt*6;const bfar=S.phase==='FORTRESS'?C.BEAM_FAR_FORT:C.BEAM_FAR;
-    if(b.mesh.position.z<bfar){scene.remove(b.mesh);pBeams.splice(i,1)}}
+    if(b.mesh.position.z<bfar){scene.remove(b.mesh);pBeams.splice(i,1);continue;}
+    // v7.249: pursuit fighter hit detection
+    if(S._pursuitFighters&&S._pursuitFighters.length>0&&S.phase==='FORTRESS'){
+      let hitPf=false;
+      for(const pf of S._pursuitFighters){
+        if(pf._dead)continue;
+        const dx=b.mesh.position.x-pf.x,dy=b.mesh.position.y-pf.y,dz=b.mesh.position.z-pf.z;
+        if(Math.sqrt(dx*dx+dy*dy+dz*dz)<1.8){
+          pf.hp--;
+          if(pf.hp<=0){
+            pf._dead=true;
+            try{spawnMegaExplosion(new THREE.Vector3(pf.x,pf.y,pf.z),.35);sfx.bigExplosion();}catch(_){}
+          }else{
+            try{spawnP(new THREE.Vector3(pf.x,pf.y,pf.z),0xff4400,6,.6);}catch(_){}
+          }
+          hitPf=true;break;
+        }
+      }
+      if(hitPf){try{scene.remove(b.mesh)}catch(_){};pBeams.splice(i,1);}
+    }
+  }
   for(let i=eBeams.length-1;i>=0;i--){const b=eBeams[i];b.mesh.position.add(b.vel.clone().multiplyScalar(dt));
     b.mesh.rotation.x+=dt*10;b.mesh.rotation.y+=dt*7;
     if(b.mesh.position.z>C.BEAM_NEAR||b.mesh.position.y<-20){scene.remove(b.mesh);eBeams.splice(i,1)}}}
@@ -12877,6 +12953,15 @@ function cleanupBossResidue(){
       sh.length=0;
     }
   }catch(_){}
+  // v7.249: pursuit fighters cleanup
+  try{
+    if(typeof S!=='undefined'&&S&&S._pursuitFighters&&S._pursuitFighters.length){
+      S._pursuitFighters.forEach(pf=>{try{if(pf&&pf.mesh)scene.remove(pf.mesh)}catch(_){}});
+      S._pursuitFighters.length=0;
+    }
+  }catch(_){}
+  // v7.249: hide speed overlay on cleanup
+  try{const se=document.getElementById('speed-overlay');if(se)se.style.display='none';}catch(_){}
   // Also clear screen-flash + shake state so the next scene starts visually neutral
   try{if(typeof S!=='undefined'&&S){S.shakeT=0;S.shakeI=0}}catch(_){}
   try{const sf=document.getElementById('screen-flash');if(sf)sf.style.opacity='0'}catch(_){}
@@ -12921,144 +13006,211 @@ function cleanupBossResidue(){
 function startFortressApproachCine(){
   S.phase='FORTRESS_APPROACH';
   S._fortApproachT=0;
-  // v7.199: Haruka fortress approach personality line
-  if(typeof selectedNav!=='undefined'&&selectedNav&&selectedNav.lang==='ja-JP'){
-    setTimeout(()=>playComm('nav','あれが要塞です。排気口、狙えますか…？ 信じてます！'),1500);
-  }
+  // v7.249: extended 15s cinematic with 6 phases
   S._fortApproachInited=false;
-  S._fortApproachSub1=false;S._fortApproachSub2=false;
-  // v7.105 ★ Boss residue refresh — wipe any debris/projectiles/particles left over
-  // from the previous boss kill so the cinematic camera doesn't orbit past floating
-  // boss limbs or stale rocket fists.
+  S._fortApproachSub1=false;S._fortApproachSub2=false;S._fortApproachSub3=false;
+  S._fortApproachPhaseVoiced={};
+  // v7.105 ★ Boss residue refresh
   cleanupBossResidue();
-  // Hide cockpit during cinema (replay-style)
+  // Hide cockpit during cinema
   try{
     if(cockpitObj&&cockpitObj.parent){
       window._fortApproachCockpitParent=cockpitObj.parent;
       cockpitObj.parent.remove(cockpitObj);
     }
   }catch(e){}
-  // Save camera so we can restore on cinema end
+  // Save camera
   S._fortApproachCamSave=camera.position.clone();
   S._fortApproachRotSave=camera.rotation.clone();
-  // Title overlay
   try{document.getElementById('mission-display').textContent='FORTRESS DETECTED'}catch(e){}
-  // Voice — wingman calls out the approach (light, no freeze)
-  try{playComm('wingman','COMING UP ON THE FORTRESS! STAND BY!')}catch(e){}
+  // v7.199: Haruka fortress approach personality line
+  if(typeof selectedNav!=='undefined'&&selectedNav&&selectedNav.lang==='ja-JP'){
+    setTimeout(()=>{try{playComm('nav','あれが要塞です。排気口、狙えますか…？ 信じてます！')}catch(_){}},1500);
+  }
+  // v7.249: Spawn 5 ally formation ships for the opening shot
+  S._fortCineShips=[];
+  const formations=[[0,-2,-22],[5,-2,-18],[-5,-2,-18],[10,-2,-14],[-10,-2,-14]];
+  formations.forEach((p,i)=>{
+    try{
+      const m=makeStarfighterN1();
+      m.position.set(p[0],p[1],p[2]);
+      m.rotation.y=Math.PI/2;// nose forward
+      scene.add(m);
+      S._fortCineShips.push(m);
+    }catch(_){}
+  });
 }
 
 function updateFortressApproachCine(dt){
   S._fortApproachT+=dt;
+  // v7.249 ★ EXTENDED CINEMA: 10.5s → 15s with 6 phases
+  // Phase 0: 0-3s   FORMATION SHOT — V-formation of 5 ships, fortress far ahead
+  // Phase 1: 3-6s   BACK APPROACH — camera swings to see fortress back face
+  // Phase 2: 6-8s   UNDERSIDE — camera dives, fortress underside above
+  // Phase 3: 8-10s  PIPE ENTRY — pipe mouth looms, rush toward it
+  // Phase 4: 10-12s CONDUIT — tunnel rush interior, cine pursuit fighters visible
+  // Phase 5: 12-15s HANDOFF — camera returns to player POV, gameplay begins
   // FRAME ~6 (after first ~100ms render): run the heavy startFortress() init.
-  // Cinema is already showing on screen, so the freeze (~200ms-2s) appears as
-  // "loading the next scene" rather than as a mid-game hitch.
   if(!S._fortApproachInited&&S._fortApproachT>0.10){
     S._fortApproachInited=true;
     try{startFortress()}catch(e){console.warn('fortress init:',e)}
     // startFortress sets S.phase='FORTRESS' — restore so cinema keeps running
     S.phase='FORTRESS_APPROACH';
-    // Spawn a cinema fighter (replay-style) — uses player's selected ship if available
+    // Spawn a cinema lead fighter
     try{
       const rs=(selectedShip&&selectedShip.make)?selectedShip.make():makeStarfighterN1();
-      rs.scale.setScalar(0.7);
-      rs.position.set(0,-1,-30);
-      rs.rotation.y=Math.PI/2;// nose along -Z
+      rs.scale.setScalar(0.8);
+      rs.position.set(0,-2,-22);
+      rs.rotation.y=Math.PI/2;
       scene.add(rs);
       window._fortApproachShip=rs;
     }catch(e){}
-    // Hide HUD elements that startFortress turned on (we'll restore them on cinema end)
+    // Hide HUD elements that startFortress turned on
     try{
       document.getElementById('target-radar').style.display='none';
       document.getElementById('heartbeat-vignette').style.display='none';
       document.getElementById('fortress-alert').style.display='none';
     }catch(e){}
   }
-  if(!S._fortApproachInited)return;// wait one frame for init
+  if(!S._fortApproachInited)return;
   const ship=window._fortApproachShip;
-  if(!ship){
-    if(S._fortApproachT>0.5)endFortressApproachCine();
-    return;
-  }
+  if(!ship){if(S._fortApproachT>0.5)endFortressApproachCine();return;}
   const t=S._fortApproachT;
-  // Spin the actual fortress slowly so it looks alive in the cinema
-  if(megaFortMesh)megaFortMesh.rotation.y+=dt*0.06;
-  // v7.44 ★ EXTENDED CINEMA: 6s → 10.5s with 5 phases per user request
-  // 「要塞の溝がだんだん近くに見えてくるようにシーンを長くしてほしい」.
-  // Fortress visibly approaches throughout (z=-450 → -80) so the player feels the
-  // distance closing in. 5-phase timeline: APPROACH 0-2s / REVEAL 2-4.5s /
-  // SURFACE 4.5-7s / TRENCH_VISIBLE 7-9s / DIVE 9-10.5s.
-  // Smoothstep helper for natural ease-in/out
   const _ss=k=>k*k*(3-2*k);
-  // Drive megaFortMesh approach across the WHOLE 10.5s timeline (continuous, no phase jumps)
+  // Spin fortress slowly throughout
+  if(megaFortMesh)megaFortMesh.rotation.y+=dt*0.05;
+  // Drive megaFortMesh from far (-450) to close (-80) over 15s
   if(megaFortMesh){
-    const tn=Math.min(1,t/10.5);
-    // Start far (-450) and pull in to -80 by the end of cinema
+    const tn=Math.min(1,t/15);
     megaFortMesh.position.z=-450+_ss(tn)*370;
-    // Slight Y descent so the trench groove rises into view as we approach
-    megaFortMesh.position.y=10-_ss(tn)*8;
+    megaFortMesh.position.y=12-_ss(tn)*10;
+    // Show fortress during phases 0-2, hide during pipe interior (phases 3+)
+    megaFortMesh.visible=t<9.0;
+  }
+  // Move formation ships forward with lead ship
+  if(S._fortCineShips){
+    const fOffsets=[[5,-2,-18],[-5,-2,-18],[10,-2,-14],[-10,-2,-14]];
+    S._fortCineShips.forEach((m,i)=>{
+      const base=fOffsets[i]||[0,-2,-22];
+      m.position.set(
+        ship.position.x+base[0],
+        ship.position.y+(base[1]+2),
+        ship.position.z+(base[2]+22));
+      m.rotation.y=ship.rotation.y;
+      // Gentle formation roll
+      m.rotation.z=Math.sin(t*1.2+i)*.06;
+    });
   }
   const fortPos=megaFortMesh?megaFortMesh.position.clone():new THREE.Vector3(0,2,-350);
-  if(t<2.0){
-    // PHASE 1: APPROACH (0-2s) — fighter cruises, fortress small in the distance
-    const k=t/2.0;
-    ship.position.set(0,-1,-30+k*15);
+  if(t<3.0){
+    // PHASE 0: FORMATION SHOT (0-3s)
+    const k=t/3.0;
+    ship.position.set(0,-2,-22+k*8);
+    ship.rotation.y=Math.PI/2;ship.rotation.z=Math.sin(t*1.5)*0.04;
+    camera.position.set(0,-1,ship.position.z+14);
+    camera.lookAt(0,-1,-200);
+    if(t>0.5&&!S._fortApproachPhaseVoiced[0]){
+      S._fortApproachPhaseVoiced[0]=true;
+      try{playComm('hq',_L('FORMATION — APPROACHING FORTRESS FROM BEHIND!','編隊！要塞の裏から接近！'))}catch(_){}
+      try{document.getElementById('mission-display').textContent='FORMATION APPROACH'}catch(e){}
+    }
+  }else if(t<6.0){
+    // PHASE 1: BACK APPROACH (3-6s)
+    const k=(t-3.0)/3.0;
+    ship.position.set(Math.sin(k*Math.PI)*5,-2+k*0.5,-14+k*20);
     ship.rotation.y=Math.PI/2;
-    ship.rotation.z=Math.sin(t*2)*0.05;
-    camera.position.set(0,5,ship.position.z+15);
-    camera.lookAt(0,2,fortPos.z*0.4);
-  }else if(t<4.5){
-    // PHASE 2: FORTRESS_REVEAL (2-4.5s) — orbital pan, fortress detail visible
-    const k=(t-2.0)/2.5;
-    ship.position.set(Math.sin(k*Math.PI)*4,-1+k*1,-15+k*15);
-    ship.rotation.y=Math.PI/2+k*0.2;
-    const orbAng=-Math.PI*0.3+k*Math.PI*0.5;
+    const orbAng=Math.PI*0.2+k*Math.PI*0.4;
     camera.position.set(
-      ship.position.x+Math.cos(orbAng)*12,
-      ship.position.y+3+k*2,
-      ship.position.z+Math.sin(orbAng)*12);
-    camera.lookAt(fortPos.x,fortPos.y,fortPos.z);
-    if(k>0.3&&!S._fortApproachSub1){
-      S._fortApproachSub1=true;
-      try{document.getElementById('mission-display').textContent='FORTRESS APPROACH'}catch(e){}
+      ship.position.x+Math.cos(orbAng)*14,
+      ship.position.y+4+k*3,
+      ship.position.z+Math.sin(orbAng)*10);
+    camera.lookAt(fortPos.x,fortPos.y+4,fortPos.z+60);
+    if(!S._fortApproachPhaseVoiced[1]&&k>0.3){
+      S._fortApproachPhaseVoiced[1]=true;
+      try{playComm('pilot',_L('Going around the back!','裏にまわるぞ！'))}catch(_){}
+      try{document.getElementById('mission-display').textContent='FORTRESS BACK SIDE'}catch(e){}
     }
-  }else if(t<7.0){
-    // PHASE 3: SURFACE_APPROACH (4.5-7s) — closing in on fortress surface, trench appears
-    const k=(t-4.5)/2.5;
-    ship.position.set(Math.sin(k*Math.PI*0.5)*3,k*0.5,k*15);
-    ship.rotation.y=Math.PI/2+Math.sin(k*Math.PI*2)*0.05;
-    // Camera swings from the side toward behind/above the fighter
-    camera.position.set(15-k*12,5+k*3,ship.position.z+5);
-    // Camera tracks the fortress directly so player sees it growing
-    camera.lookAt(0,fortPos.y*0.5,fortPos.z);
-    if(k>0.2&&!S._fortApproachSub3){
-      S._fortApproachSub3=true;
-      try{document.getElementById('mission-display').textContent='APPROACHING TRENCH'}catch(e){}
+  }else if(t<8.0){
+    // PHASE 2: UNDERSIDE (6-8s)
+    const k=(t-6.0)/2.0;
+    ship.position.set(Math.sin(k*Math.PI)*3,-2+k*(-8),6+k*18);
+    ship.rotation.y=Math.PI/2;ship.rotation.x=k*0.2;
+    camera.position.set(0,-8-k*10,ship.position.z+10-k*5);
+    camera.lookAt(0,8+k*20,fortPos.z+80);
+    if(!S._fortApproachPhaseVoiced[2]&&k>0.3){
+      S._fortApproachPhaseVoiced[2]=true;
+      try{playComm('hq',_L('TARGET: LOWER EXHAUST CONDUIT!','目標：下部排気コンジット！'))}catch(_){}
+      try{document.getElementById('mission-display').textContent='LOWER CONDUIT'}catch(e){}
     }
-  }else if(t<9.0){
-    // PHASE 4: TRENCH_VISIBLE (7-9s) — fortress dominates, trench groove clearly approaching
-    const k=(t-7.0)/2.0;
-    ship.position.set(0,1-k,15+k*10);
-    ship.rotation.y=Math.PI/2;
-    ship.rotation.x=-k*0.15;// nose tipping down toward trench
-    camera.position.set(0,3+k*2,ship.position.z+8-k*4);
-    // Look straight at the fortress as we close in
-    camera.lookAt(0,-2*k,fortPos.z);
-    if(k>0.2&&!S._fortApproachSub2){
-      S._fortApproachSub2=true;
-      try{playComm('hq','TRENCH RUN! ENGAGE!')}catch(e){}
+  }else if(t<10.0){
+    // PHASE 3: PIPE ENTRY (8-10s) — pipe mouth looms
+    const k=(t-8.0)/2.0;
+    ship.position.set(0,-10+k*4,24+k*25);
+    ship.rotation.y=Math.PI/2;ship.rotation.x=0.2-k*0.1;
+    camera.position.set(0,-8+k*6,ship.position.z+12-k*8);
+    camera.lookAt(0,-5,ship.position.z-30);
+    if(!S._fortApproachPhaseVoiced[3]&&k>0.2){
+      S._fortApproachPhaseVoiced[3]=true;
+      try{wfCineSubtitle(_L('◆ ENTERING CONDUIT — FULL POWER ◆','◆ コンジット突入 — 全力前進 ◆'),'#ffaa00');}catch(_){}
+      try{sfx.pipeRushStart&&sfx.pipeRushStart()}catch(_){}
+      try{document.getElementById('mission-display').textContent='ENTERING CONDUIT'}catch(e){}
+    }
+    // Pipe mouth visual (tube segments rushing past)
+    if(!S._fortApproachPipeMade){
+      S._fortApproachPipeMade=true;
+      S._fortApproachPipeSections=[];
+      try{
+        for(let pi=0;pi<6;pi++){
+          const rg=new THREE.TorusGeometry(16,.6,4,14);
+          const rm=new THREE.LineBasicMaterial({color:0xaa2200,transparent:true,opacity:.8});
+          const ring=new THREE.LineSegments(new THREE.EdgesGeometry(rg),rm);
+          ring.rotation.x=Math.PI/2;
+          ring.position.set(0,-8,24+pi*14);
+          scene.add(ring);
+          S._fortApproachPipeSections.push(ring);
+          walls.push(ring);// so it scrolls and gets cleaned up with walls
+        }
+      }catch(_){}
+    }
+  }else if(t<12.0){
+    // PHASE 4: CONDUIT RUSH (10-12s)
+    const k=(t-10.0)/2.0;
+    ship.position.set(0,-4+k*3,49+k*30);
+    ship.rotation.y=Math.PI/2;ship.rotation.x=0.1-k*0.05;
+    camera.position.set(0,-2+k*2,ship.position.z+10);
+    camera.lookAt(0,-1,ship.position.z-40);
+    // Fade in formation ships
+    if(k>0.5){
+      const op=1-(k-0.5)/0.5;
+      if(S._fortCineShips)S._fortCineShips.forEach(m=>m.traverse(o=>{if(o.material){o.material.transparent=true;o.material.opacity=op;}}));
+    }
+    if(!S._fortApproachPhaseVoiced[4]&&k>0.1){
+      S._fortApproachPhaseVoiced[4]=true;
+      try{playComm('pilot',_L('We\'ve got company! BOGEYS AT SIX!','後方に敵機！ 追いつかれるぞ！'))}catch(_){}
+      try{sfx.coreAlertSFX&&sfx.coreAlertSFX()}catch(_){}
       try{document.getElementById('mission-display').textContent='TRENCH RUN'}catch(e){}
     }
-  }else if(t<10.5){
-    // PHASE 5: TRENCH_DIVE (9-10.5s) — dive into trench, fade out cinema fighter
-    const k=(t-9.0)/1.5;
-    ship.position.set(0,-k*1,25+k*30);
-    ship.rotation.y=Math.PI/2;
-    ship.rotation.x=-0.15-k*0.15;
-    camera.position.set(0,3-k*3,ship.position.z+8-k*5);
-    camera.lookAt(ship.position.x,ship.position.y,ship.position.z-30);
-    if(k>0.7){
-      const op=1-(k-0.7)/0.3;
-      ship.traverse(o=>{if(o.material){o.material.transparent=true;o.material.opacity=op}});
+  }else if(t<15.0){
+    // PHASE 5: HANDOFF (12-15s) — camera returns to player POV
+    const k=(t-12.0)/3.0;
+    ship.position.set(0,-1+k,79+k*40);
+    // Fade out cinema ship
+    const op=Math.max(0,1-k*2);
+    ship.traverse(o=>{if(o.material){o.material.transparent=true;o.material.opacity=op;}});
+    // Camera lerps back to play position
+    const targetCamZ=C.CAM_Z;
+    camera.position.set(
+      camera.position.x*(1-k*0.8),
+      camera.position.y*(1-k*0.8),
+      camera.position.z+(targetCamZ-camera.position.z)*k*0.6);
+    camera.rotation.set(
+      camera.rotation.x*(1-k),
+      camera.rotation.y*(1-k),
+      camera.rotation.z*(1-k));
+    camera.lookAt(0,0,-80);
+    if(!S._fortApproachPhaseVoiced[5]&&k>0.3){
+      S._fortApproachPhaseVoiced[5]=true;
+      try{playComm('hq',_L('TRENCH RUN! ENGAGE THE CORE!','トレンチラン！コアを攻撃せよ！'))}catch(_){}
     }
   }else{
     endFortressApproachCine();
@@ -13066,6 +13218,13 @@ function updateFortressApproachCine(dt){
 }
 
 function endFortressApproachCine(){
+  // v7.249: Cleanup formation ships
+  try{
+    if(S._fortCineShips){S._fortCineShips.forEach(m=>{try{scene.remove(m)}catch(_){}});S._fortCineShips=[];}
+  }catch(_){}
+  // v7.249: Reset pipe section flag (walls[] handles cleanup)
+  S._fortApproachPipeMade=false;
+  S._fortApproachPipeSections=null;
   // Cleanup cinema fighter
   try{
     if(window._fortApproachShip){scene.remove(window._fortApproachShip);window._fortApproachShip=null}
@@ -13119,10 +13278,13 @@ function endFortressApproachCine(){
     if(typeof scene!=='undefined'&&scene)scene.background=null;
   }catch(e){}
   // v7.105 ★ End-of-cinema residue refresh — defensive second sweep before the actual
-  // trench-run gameplay begins. Catches any debris/projectiles that may have spawned
-  // or were left dangling during the 10.5s cinema (e.g. delayed despawns, async
-  // particle systems). Per user 「シネマシーンの最初と最後」.
+  // trench-run gameplay begins.
   cleanupBossResidue();
+  // v7.249: Speed multiplier and pursuit state init
+  S._fortSpeedMul=1.0;
+  S._pursuitEliminatedMsg=false;
+  // v7.249: Spawn pursuit fighters right as gameplay begins
+  try{_spawnPursuitFighters();}catch(_){}
   // Final commit — switch to actual FORTRESS gameplay
   S.phase='FORTRESS';
 }
@@ -13200,8 +13362,33 @@ function updateFortress(dt){S.fortTimer+=dt;
       turSpT=0.5;
     }
   }
+  // v7.249: Progressive speed ramp — walls scroll faster over time (caps at 1.8×)
+  if(fortPhase>=1&&(S._fortSpeedMul||1)<1.8){
+    S._fortSpeedMul=(S._fortSpeedMul||1)+dt*0.004;
+    if(S._fortSpeedMul>1.8)S._fortSpeedMul=1.8;
+  }
+  const _wSpd=(S._fortSpeedMul||1)*30;
+  // Update speed HUD
+  try{
+    const sEl=document.getElementById('speed-overlay');
+    if(sEl){
+      if(fortPhase>=1&&(S._fortSpeedMul||1)>1.2){
+        sEl.style.display='block';
+        sEl.textContent='SPD×'+(S._fortSpeedMul||1).toFixed(1);
+      }else{sEl.style.display='none';}
+    }
+  }catch(_){}
+  // v7.249: Update core pulse + orbit rings
+  if(coreMesh&&S._corePulseT!==undefined){
+    S._corePulseT+=dt;
+    const pulse=0.85+Math.sin(S._corePulseT*4)*0.15;
+    coreMesh.scale.setScalar(pulse);
+    const cLight=coreMesh.getObjectByName('corePointLight');
+    if(cLight)cLight.intensity=2.5+Math.sin(S._corePulseT*6)*1.5;
+  }
+  if(S._coreRings)S._coreRings.forEach((r,i)=>{r.rotation.z+=dt*(0.8+i*0.3);});
   // Walls scroll
-  for(let i=walls.length-1;i>=0;i--){walls[i].position.z+=30*dt;
+  for(let i=walls.length-1;i>=0;i--){walls[i].position.z+=_wSpd*dt;
     if(walls[i].position.z>20){scene.remove(walls[i]);walls.splice(i,1)}}
 
   // --- Core approach + targeting radar ---
@@ -13519,10 +13706,21 @@ function getCorridorCurve(){
 
 function spawnWallPair(){
   const curve=getCorridorCurve();
+  // v7.249: interior color gradient based on how far into the run we are
+  // early: dark rust / mid: deep red / late (core approach): hot red-orange
+  const ft=S.fortTimer||0;
+  const edgeCol=ft<20?0x662200:(ft<40?0xaa2200:0xff4400);
   // Walls (offset by curve for winding corridor). Height doubled in v6.69.
   [-30,30].forEach(x=>{const w=makeWallSeg();
     w.position.set(x+curve,0,C.SPAWN_Z);scene.add(w);walls.push(w);
-    w.userData.curveAtSpawn=curve});
+    w.userData.curveAtSpawn=curve;
+    // v7.249: tint wall materials to interior palette
+    try{w.traverse(o=>{if(o.material&&o.material.color){
+      const c=o.material.color.getHex();
+      // Only shift orange/red tones (leave warning light points alone)
+      if(c===0xff4400||c===0x884400||c===0xff6600)o.material.color.setHex(edgeCol);
+    }});}catch(_){}
+  });
   // v6.69: Death Star trench-run style floor RESTORED
   const floor=makeFortressFloor();
   floor.position.x=curve;floor.position.z=C.SPAWN_Z;
@@ -13530,10 +13728,46 @@ function spawnWallPair(){
   floor.userData.curveAtSpawn=curve;
   // Ceiling girders (occasional)
   if(Math.random()<.5){
-    const girM=new THREE.LineBasicMaterial({color:0x884400,transparent:true,opacity:.5});
+    const girM=new THREE.LineBasicMaterial({color:edgeCol,transparent:true,opacity:.5});
     const gir=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(50,1.5,1.5)),girM);
     gir.position.set(curve,18,C.SPAWN_Z);scene.add(gir);walls.push(gir);
-    gir.userData.curveAtSpawn=curve}
+    gir.userData.curveAtSpawn=curve;}
+  // v7.249 ★ CONDUIT RING — space station cross-section ring (33% chance)
+  if(Math.random()<0.33){
+    try{
+      const rg=new THREE.TorusGeometry(28,.4,4,16);
+      const rm=new THREE.LineBasicMaterial({color:edgeCol,transparent:true,opacity:.65});
+      const ring=new THREE.LineSegments(new THREE.EdgesGeometry(rg),rm);
+      ring.rotation.x=Math.PI/2;ring.position.set(curve,0,C.SPAWN_Z);
+      scene.add(ring);walls.push(ring);
+    }catch(_){}
+  }
+  // v7.249 ★ GLOW PIPES — thin vertical conduit lines on left/right walls (40% chance)
+  if(Math.random()<0.4){
+    try{
+      const pipeMat=new THREE.LineBasicMaterial({color:0xff6600,transparent:true,opacity:.45});
+      [-1,1].forEach(side=>{
+        const pts=[new THREE.Vector3(0,12,0),new THREE.Vector3(0,-12,0)];
+        const pGeo=new THREE.BufferGeometry().setFromPoints(pts);
+        const pipe=new THREE.Line(pGeo,pipeMat);
+        pipe.position.set((side*28)+curve+0.2,0,C.SPAWN_Z);
+        scene.add(pipe);walls.push(pipe);
+      });
+    }catch(_){}
+  }
+  // v7.249 ★ CEILING COLUMN — structural support pillar (25% chance)
+  if(Math.random()<0.25){
+    try{
+      const colFill=new THREE.MeshBasicMaterial({color:0x220800});
+      const colEdge=new THREE.LineBasicMaterial({color:edgeCol,transparent:true,opacity:.7});
+      const colGeo=new THREE.BoxGeometry(1.8,10,0.3);
+      const colM=new THREE.Mesh(colGeo,colFill);
+      const colE=new THREE.LineSegments(new THREE.EdgesGeometry(colGeo),colEdge);
+      const colG=new THREE.Group();colG.add(colM);colG.add(colE);
+      colG.position.set(curve,13,C.SPAWN_Z);
+      scene.add(colG);walls.push(colG);
+    }catch(_){}
+  }
 }
 
 function spawnFortTurret(){
@@ -13565,6 +13799,81 @@ function spawnFortTurret(){
     spinRate:0,spiralR:0,spiralA:0,isTurret:true,isBigTurret:true,
     isFloorTurret:isFloor});//  v7.219: flag for head-tracking logic
   S.waveLeft++}
+
+// v7.249: Spawn 3 pursuit fighters that chase player from behind in trench run
+function _spawnPursuitFighters(){
+  if(S._pursuitFighters&&S._pursuitFighters.length>0)return;
+  S._pursuitFighters=[];
+  const offsets=[[5,0],[-5,0],[0,4]];
+  offsets.forEach((o,i)=>{
+    try{
+      const pf={
+        mesh:makePursuitFighter(),
+        x:o[0],y:o[1],z:C.CAM_Z+(20+i*8),
+        hp:3,fireCD:2.2+i*0.7,fireCDT:i*0.6,
+        _wobble:Math.random()*Math.PI*2,
+        _dead:false
+      };
+      pf.mesh.position.set(pf.x,pf.y,pf.z);
+      pf.mesh.rotation.y=Math.PI;// face toward player (−z)
+      scene.add(pf.mesh);
+      S._pursuitFighters.push(pf);
+    }catch(_){}
+  });
+  try{wfCineSubtitle(_L('◆ PURSUIT FIGHTERS INCOMING! ◆','◆ 追跡機接近！ ◆'),'#ff4400');}catch(_){}
+  try{playComm('wingman',_L('THREE BOGEYS AT SIX! THEY\'RE ON US!','後方3機！追いつかれるぞ！'));}catch(_){}
+}
+
+function _updatePursuitFighters(dt){
+  if(!S._pursuitFighters||!S._pursuitFighters.length)return;
+  const camZ=typeof camera!=='undefined'?camera.position.z:0;
+  const camX=typeof player!=='undefined'?player.x:0;
+  const camY=typeof player!=='undefined'?player.y:0;
+  const wSpd=(S._fortSpeedMul||1)*30;
+  let allDead=true;
+  for(let i=S._pursuitFighters.length-1;i>=0;i--){
+    const pf=S._pursuitFighters[i];
+    if(pf._dead){
+      try{scene.remove(pf.mesh)}catch(_){}
+      S._pursuitFighters.splice(i,1);
+      continue;
+    }
+    allDead=false;
+    pf._wobble+=dt*0.9;
+    // Follow player from behind at a fixed distance, drifting left/right
+    const targetZ=camZ+(16+i*6)+Math.sin(pf._wobble)*2;
+    const targetX=camX+[5,-5,0][i%3];
+    const targetY=camY+[0,0,3][i%3];
+    pf.z+=(targetZ-pf.z)*0.04;
+    pf.x+=(targetX-pf.x)*0.018;
+    pf.y+=(targetY-pf.y)*0.018;
+    pf.mesh.position.set(pf.x,pf.y,pf.z);
+    // Gentle roll wobble
+    pf.mesh.rotation.z=Math.sin(pf._wobble*.6)*.12;
+    // Scroll with walls (drift forward in world space as walls scroll)
+    pf.z+=wSpd*dt*0.05;// slight drift to match world motion feel
+    // Fire toward player
+    pf.fireCDT-=dt;
+    if(pf.fireCDT<=0){
+      pf.fireCDT=1.6+Math.random()*1.2;
+      try{
+        // Fire eBeam forward (toward player — positive z direction)
+        const bGeo=new THREE.BoxGeometry(.12,.12,1.2);
+        const bMat=new THREE.LineBasicMaterial({color:0xff2200});
+        const bMesh=new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),bMat);
+        bMesh.position.set(pf.x,pf.y,pf.z-1);
+        scene.add(bMesh);
+        eBeams.push({mesh:bMesh,vel:new THREE.Vector3(0,0,C.E_BEAM_SPEED*0.8)});
+      }catch(_){}
+    }
+    // Check if player shot a pursuit fighter (pBeam hits)
+    // (handled in updateBeams via S._pursuitFighters check)
+  }
+  if(allDead&&S._pursuitFighters.length===0&&S._pursuitEliminatedMsg!==true){
+    S._pursuitEliminatedMsg=true;
+    try{wfCineSubtitle(_L('◆ PURSUIT ELIMINATED! ◆','◆ 追跡機撃墜！ ◆'),'#44ff88');}catch(_){}
+  }
+}
 
 // v6.76: Spawn escort wingmen that fly alongside then break off during the trench run
 function triggerEscortRetreat(){
@@ -13607,9 +13916,26 @@ function spawnCore2(){if(coreMesh)scene.remove(coreMesh);coreMesh=makeCore();
   // v6.76: Target far away (coreInitialZ=-300, was -100) so the radar countdown has real runway.
   // y lowered from 0 → -6 so the exhaust port sits near the trench floor (Death Star-style).
   coreInitialZ=-300;coreMesh.position.set(0,-6,coreInitialZ);coreMesh.visible=true;scene.add(coreMesh);
+  // v7.249 ★ Core atmosphere: pulsing PointLight + 3 orbital rings
+  try{
+    const cLight=new THREE.PointLight(0xff4400,3.0,50);
+    cLight.name='corePointLight';
+    coreMesh.add(cLight);
+    S._corePulseT=0;
+    S._coreRings=[];
+    const ringColors=[0xff4400,0xff8800,0xffcc00];
+    for(let ri=0;ri<3;ri++){
+      const rg=new THREE.TorusGeometry(3+ri*1.0,.1,4,18);
+      const rm=new THREE.LineBasicMaterial({color:ringColors[ri],transparent:true,opacity:.8});
+      const ring=new THREE.LineSegments(new THREE.EdgesGeometry(rg),rm);
+      ring.rotation.x=Math.PI/2+ri*0.35;ring.rotation.y=ri*0.6;
+      coreMesh.add(ring);S._coreRings.push(ring);
+    }
+  }catch(_){}
   // Spawn markers to remember lock-on "10% remaining" transition
   S._coreInRangeVoiced=false;S._coreEscortRetreated=false;
   announce('TARGET ACQUIRED - APPROACHING EXHAUST PORT');
+  try{sfx.coreAlertSFX&&sfx.coreAlertSFX()}catch(_){}
   sfx.targetingAlarm(0.2)}
 
 // Camera angles for replay cuts
@@ -13649,6 +13975,26 @@ function triggerCoreDeath(){
   if(coreMesh){spawnMegaExplosion(coreMesh.position.clone(),.4);scene.remove(coreMesh);coreMesh=null}// v7.239 -20%
   sfx.bigExplosion();sfx.stopBGM();screenFlash(1.2);// v7.239 -20%
   S.shakeT=1.6;S.shakeI=2.4;// v7.239 -20%
+  // v7.249 ★ Chain explosions — 5 staggered blasts around the core death point
+  try{
+    const cPos=coreDeathPos.clone();
+    for(let ci=0;ci<5;ci++){
+      setTimeout(()=>{
+        try{
+          const cx=cPos.x+(Math.random()-.5)*12;
+          const cy=cPos.y+(Math.random()-.5)*8;
+          const cz=cPos.z+(Math.random()-.5)*15;
+          spawnMegaExplosion(new THREE.Vector3(cx,cy,cz),.4);
+          sfx.bigExplosion();screenFlash(.35);
+          S.shakeT=Math.max(S.shakeT,.6);S.shakeI=Math.max(S.shakeI,1.5);
+        }catch(_){}
+      },600+ci*380);
+    }
+    // Hide speed overlay on core death
+    try{const se=document.getElementById('speed-overlay');if(se)se.style.display='none';}catch(_){}
+    // Cleanup pursuit fighters on core death
+    if(S._pursuitFighters){S._pursuitFighters.forEach(pf=>{try{scene.remove(pf.mesh)}catch(_){}});S._pursuitFighters=[];}
+  }catch(_){}
   // v6.76: Spawn a visible player-ship stand-in for the orbit replay camera
   try{
     if(window._replayShip){scene.remove(window._replayShip)}
@@ -13802,7 +14148,7 @@ const RETURN_RADIO_SCRIPT=[
   {t:50,who:'hq',line:'#N, you are cleared to dock. Great run out there.'},
 ];
 function startReturn(){
-  // v7.248: Colosseum intercept moved to _startHyperspace() malfunction branch
+  // v7.249: Colosseum intercept moved to _startHyperspace() malfunction branch
   S.phase='RETURN';S.returnTimer=0;S._hyperspaceActive=false;
   // v7.247 ★ Camera reset — colosseum leaves camera at y=22 (bird-eye view) and at
   // wrong z. Reset to standard space-flight position so asteroid belt renders correctly.
@@ -13849,11 +14195,11 @@ function startReturn(){
 }
 
 // v7.247 ★ HYPERSPACE JUMP — Millennium Falcon–style warp after clearing asteroid belt
-// v7.248: malfunction branch for ice planet → colosseum intercept
+// v7.249: malfunction branch for ice planet → colosseum intercept
 function _startHyperspace(){
   if(S._hyperspaceActive)return;
   S._hyperspaceActive=true;
-  // v7.248: malfunction path — ice planet not yet done
+  // v7.249: malfunction path — ice planet not yet done
   const doMalfunction=typeof selectedStage!=='undefined'&&selectedStage&&selectedStage.id==='ice'&&
     !(typeof OPT!=='undefined'&&OPT.colosseumDone)&&!(typeof S!=='undefined'&&S._testFromOptions);
   // Clear remaining enemies + beams immediately
@@ -13877,7 +14223,7 @@ function _startHyperspace(){
   // Play SFX
   try{sfx.stopBGM();sfx.hyperspaceEngage();}catch(_){}
   if(doMalfunction){
-    // v7.248 ★ DRIVE MALFUNCTION PATH — pirates intercept during jump
+    // v7.249 ★ DRIVE MALFUNCTION PATH — pirates intercept during jump
     setTimeout(()=>{
       if(catText){catText.textContent='⚠ DRIVE INSTABILITY';catText.style.color='#ff8800';catText.style.fontSize='28px';catText.style.letterSpacing='4px';}
       if(catCount){catCount.textContent='CHECKING SYSTEMS...';catCount.style.color='#ff8800';}
@@ -15657,7 +16003,7 @@ function wfCineShow(kind,duration,onDone){
     })();
     return;
   }
-  // ── v7.248 ★ JAIL CELL — pirate dungeon, pilot awaiting colosseum ──────────────────────
+  // ── v7.249 ★ JAIL CELL — pirate dungeon, pilot awaiting colosseum ──────────────────────
   if(kind==='jail_cell'){
     const g=wfCineGroup=new THREE.Group();scene.add(g);
     const mStone=new THREE.LineBasicMaterial({color:0x222833,transparent:true,opacity:.85});
@@ -15702,7 +16048,7 @@ function wfCineShow(kind,duration,onDone){
     })();
     return;
   }
-  // ── v7.248 ★ BRIDGE EMERGENCY — alarm + commander speech ─────────────────────────────
+  // ── v7.249 ★ BRIDGE EMERGENCY — alarm + commander speech ─────────────────────────────
   if(kind==='bridge_emergency'){
     const g=wfCineGroup=new THREE.Group();scene.add(g);
     try{const bg=makeCinBridge();g.add(bg);}catch(_){}
@@ -15734,7 +16080,7 @@ function wfCineShow(kind,duration,onDone){
     })();
     return;
   }
-  // ── v7.248 ★ MODBAY MAGNET — magnet coating installation ─────────────────────────────
+  // ── v7.249 ★ MODBAY MAGNET — magnet coating installation ─────────────────────────────
   if(kind==='modbay_magnet'){
     const g=wfCineGroup=new THREE.Group();scene.add(g);
     try{const mbg=makeCinModBay();g.add(mbg);}catch(_){}
@@ -15768,7 +16114,7 @@ function wfCineShow(kind,duration,onDone){
     })();
     return;
   }
-  // ── v7.248 ★ HANGAR FORMATION — 5-fighter V-formation launch ─────────────────────────
+  // ── v7.249 ★ HANGAR FORMATION — 5-fighter V-formation launch ─────────────────────────
   if(kind==='hangar_formation'){
     const g=wfCineGroup=new THREE.Group();scene.add(g);
     try{_makeFormationHangarScene(g);}catch(_){}
@@ -15813,7 +16159,7 @@ function wfCineShow(kind,duration,onDone){
 function wfCinePlay(queue,isReplay){
   if(!queue||queue.length===0){if(isReplay)wfCineEnd();else showStageSelectOverlay();return}
   if(isReplay)wfCineShowExitButton(()=>{wfCineEnd();isReplay=null});
-  const durations={docking:3,disembark:16,elevator:7,bridge:3,modbay:26,cockpit_victory:4,hangar_welcome:6,modbay_flame:14,jail_cell:4,bridge_emergency:10,modbay_magnet:10,hangar_formation:8};// v7.248: +jail_cell,bridge_emergency,modbay_magnet,hangar_formation
+  const durations={docking:3,disembark:16,elevator:7,bridge:3,modbay:26,cockpit_victory:4,hangar_welcome:6,modbay_flame:14,jail_cell:4,bridge_emergency:10,modbay_magnet:10,hangar_formation:8};// v7.249: +jail_cell,bridge_emergency,modbay_magnet,hangar_formation
   const step=queue[0];
   wfCineShow(step,durations[step]||3,()=>{
     if(queue.length>1)wfCinePlay(queue.slice(1),isReplay);
@@ -24298,7 +24644,7 @@ function _buildIceEscapeHangar(){
   [-106.5,-130].forEach(function(wz){
     hs(new THREE.BoxGeometry(32,0.12,0.1),-0,10.5,wz,mWarnM,mWarnE);
   });
-  // v7.248 ★ AUTO-DOOR — two sliding panels at hangar entrance (z=-106.5)
+  // v7.249 ★ AUTO-DOOR — two sliding panels at hangar entrance (z=-106.5)
   const mDoorFill=new THREE.MeshBasicMaterial({color:0x041828});
   const mDoorEdge=new THREE.LineBasicMaterial({color:0x33bbff,transparent:true,opacity:.85});
   const doorGeoL=new THREE.BoxGeometry(5,8,0.4);
@@ -24474,7 +24820,7 @@ function _updateIceEscapeCine(dt){
       try{wfCineSubtitle(_L('◆ ENTERING HANGAR — DISMOUNT! ◆','◆ 格納庫突入 — 降機！ ◆'),'#6ef');}catch(_){}
       try{playComm('pilot',_L('Stopping here! Dismount — get to the ship!','ここで止まる！降りろ — 宇宙船へ急げ！'));}catch(_){}
     }
-    // v7.248 ★ AUTO-DOOR: open when AT-RT arrives at hangar
+    // v7.249 ★ AUTO-DOOR: open when AT-RT arrives at hangar
     if(!iceState._hangDoorOpened&&iceState._rideArrived){
       iceState._hangDoorOpened=true;iceState._hangDoorOpenT=0;
       try{sfx._o('sine',180,sfx.ctx.currentTime,.3,.15);}catch(_){}
@@ -27730,7 +28076,7 @@ function makeColosseumArena(){
     new THREE.EdgesGeometry(new THREE.TorusGeometry(SPIKE_R,.06,4,SPIKE_COUNT)),
     new THREE.LineBasicMaterial({color:0x882200,transparent:true,opacity:.7}));
   baseRing.position.y=.15;g.add(baseRing);
-  // v7.248 ★ RING WEAPONS — 4 weapons placed at r=10.5 (auto-pickup when pilot walks near)
+  // v7.249 ★ RING WEAPONS — 4 weapons placed at r=10.5 (auto-pickup when pilot walks near)
   // Spear — やり (north)
   {const sg=new THREE.Group();sg.name='weapon_spear';sg.position.set(0,.4,10.5);
    const sh=_coloFW(new THREE.CylinderGeometry(.045,.045,2.5,5),0x888888);sg.add(sh);sh.rotation.x=Math.PI/2;
@@ -28018,7 +28364,7 @@ function _openBabyCage(cageGroup){
   }
 }
 function _startColosseumAmbushCine(){
-  // v7.248: now called from _startHyperspace() malfunction path
+  // v7.249: now called from _startHyperspace() malfunction path
   wfCineSubtitle(_L('CAPTURED BY PIRATES!','海賊に捕まった！'),'#f84');
   try{playComm('pilot',_L('WHAT?! GET OFF ME!!','なんだ！！放せ！！'));}catch(_){}
   try{screenFlash(.8);}catch(_){}
@@ -28094,7 +28440,7 @@ function startColosseum(){
   let babyCage=null;
   try{babyCage=_makeColoBabyAlienCage();babyCage.position.set(14,.8,0);colosseumScene.add(babyCage);}catch(e){console.warn('babyCage:',e);}
   camera.position.set(0,22,22);camera.lookAt(0,0,0);
-  // v7.248 ★ Gather weapon meshes from arena group userData
+  // v7.249 ★ Gather weapon meshes from arena group userData
   const arenaWMeshes=(colosseumScene&&colosseumScene.userData&&colosseumScene.userData._arenaGroup)?
     (colosseumScene.userData._arenaGroup.userData.weaponMeshes||{}):
     (()=>{let wm={};colosseumScene&&colosseumScene.traverse(c=>{if(c.userData&&c.userData.weaponMeshes)wm=c.userData.weaponMeshes;});return wm;})();
@@ -28110,7 +28456,7 @@ function startColosseum(){
     _zapTimer:0,_zapFlash:0,_hitCam:null,_swingCenter:null,
     _babyCage:babyCage,
     pilotMesh,
-    // v7.248 ★ RING WEAPONS
+    // v7.249 ★ RING WEAPONS
     _weapons:[
       {id:'spear', ring:'やり / SPEAR',   pos:new THREE.Vector3(0,.4,10.5),  held:false,uses:5,range:3.5,arc:.45,dmg:3.0,aoe:false},
       {id:'chain', ring:'チェーン / CHAIN',pos:new THREE.Vector3(10.5,.4,0), held:false,uses:4,range:2.5,arc:1.6,dmg:2.5,aoe:true},
@@ -28167,7 +28513,7 @@ function _colosseumPilotMove(dt){
     if(la)la.rotation.x=0;if(ra)ra.rotation.x=0;if(ll)ll.rotation.x=0;if(rl)rl.rotation.x=0;
     if(cs.pilotState==='WALK')cs.pilotState='IDLE';
   }
-  // v7.248 ★ AUTO-PICKUP: walk near a ring weapon to grab it automatically
+  // v7.249 ★ AUTO-PICKUP: walk near a ring weapon to grab it automatically
   if(!cs._heldWeapon&&cs._weapons){
     for(const w of cs._weapons){
       if(!w.held&&cs._weaponMeshes&&cs._weaponMeshes[w.id]&&cs._weaponMeshes[w.id].visible!==false){
@@ -28251,7 +28597,7 @@ function _colosseumDoAttack(type){
 function _colosseumHitDetect(){
   // Only called for CHOP; GIANTSWING and FRANKENSTEINER are handled in updateColosseum
   const cs=colosseumState;if(!cs||!cs.hitboxActive)return;
-  // v7.248: use held weapon stats if available
+  // v7.249: use held weapon stats if available
   const hw=cs._heldWeapon;
   const dmg=hw?hw.dmg:2.0;
   const arc=hw?hw.arc:Math.PI*.34;
@@ -28279,13 +28625,13 @@ function _colosseumHitDetect(){
     updateColosseumHUD();
   });
   if(isAoe&&hitCount===0)cs.hitboxActive=false;
-  // v7.248: deplete weapon uses on hit
+  // v7.249: deplete weapon uses on hit
   if(hw&&hitCount>0){
     hw.uses--;
     if(hw.uses<=0)_coloDropWeapon(hw);
   }
 }
-// v7.248 ★ WEAPON PICKUP / DROP
+// v7.249 ★ WEAPON PICKUP / DROP
 function _coloPickupWeapon(w){
   const cs=colosseumState;if(!cs)return;
   w.held=true;cs._heldWeapon=w;
@@ -28391,7 +28737,7 @@ function _impaleFighter(f,overrideX,overrideZ){
 function _updateColoFighter(f,dt){
   const cs=colosseumState;if(!cs)return;
   f.stateT+=dt;if(f.attackCD>0)f.attackCD-=dt;
-  // v7.248: slow effect (poop weapon)
+  // v7.249: slow effect (poop weapon)
   if(f._slowTimer>0){f._slowTimer-=dt;if(f.state==='APPROACH'||f.state==='CIRCLE'||f.state==='ATTACK'){f.mesh.position.copy(f.pos);return;}}
   // v7.247: Eel body undulation
   if(f.def.id==='eel'&&f.mesh._segs){
@@ -28781,7 +29127,7 @@ function endColosseum(won){
     },2000);
   }
 }
-// v7.248 ★ COLOSSEUM VICTORY → FINAL FORTRESS FLOW
+// v7.249 ★ COLOSSEUM VICTORY → FINAL FORTRESS FLOW
 function _startColosseumVictoryReturn(){
   S._pendingFortressLaunch=true;
   // Camera reset to standard space position
@@ -28816,7 +29162,7 @@ function _launchFinalFortressAssault(){
   setTimeout(()=>{try{startFortressApproachCine();}catch(e){console.error('fortress cine:',e);}},300);
 }
 function _makeFormationHangarScene(g){
-  // v7.248: 5-fighter V-formation in expanded hangar bay
+  // v7.249: 5-fighter V-formation in expanded hangar bay
   const mHull=new THREE.LineBasicMaterial({color:0x4488cc,transparent:true,opacity:.88});
   const mWall=new THREE.LineBasicMaterial({color:0x223344,transparent:true,opacity:.6});
   const mFloor=new THREE.MeshBasicMaterial({color:0x060e14});
@@ -37807,8 +38153,12 @@ function actualStartGame(){
   // v7.209: restore multi-napalm and overdrive beam upgrades
   S.hasMultiNapalm=(typeof OPT!=='undefined'&&OPT.hasMultiNapalm)||false;
   S.hasOverdriveBeam=(typeof OPT!=='undefined'&&OPT.hasOverdriveBeam)||false;
-  // v7.248: magnet coating — granted after colosseum victory, persists
+  // v7.249: magnet coating — granted after colosseum victory, persists
   S.hasMagnetCoating=(typeof OPT!=='undefined'&&OPT.hasMagnetCoating)||false;
+  // v7.249: trench-run speed multiplier + pursuit fighters reset
+  S._fortSpeedMul=1.0;
+  S._pursuitFighters=[];
+  S._pursuitEliminatedMsg=false;
   if(typeof fireState!=='undefined'&&fireState){fireState.active=false;fireState.cleared=false}
   // v6.71: reset ruins post-mod state
   targetPracticeState=null;
@@ -37962,7 +38312,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
     case 'TITLE':updateTitle(dt);break;
     case 'PLAYING':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateComms(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();updateTargetPractice(dt);try{updateBossShrapnel(dt)}catch(_){}break;
     case 'BONUS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateBonus(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();try{updateBossShrapnel(dt)}catch(_){}break;
-    case 'FORTRESS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateFortress(dt);updateRadar();updateBossHP();try{updateEscortRetreat(dt)}catch(e){}break;
+    case 'FORTRESS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateFortress(dt);updateRadar();updateBossHP();try{updateEscortRetreat(dt)}catch(e){};try{_updatePursuitFighters(dt)}catch(e){}break;
     case 'FORTRESS_APPROACH':try{updateFortressApproachCine(dt)}catch(e){console.error('fortress approach:',e);S.phase='FORTRESS'}break;
     case 'RETURN':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateReturn(dt);updateComms(dt);updateRadar();if(S._hyperspaceActive)updateHangarTunnelRush(dt);break;
     case 'REPLAY':updateReplay(dt);break;
