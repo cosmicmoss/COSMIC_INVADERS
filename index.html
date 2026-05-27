@@ -14278,7 +14278,7 @@ function _spawnDeathHand(){
   S._deathHandMesh=dh;
   S._deathHandHP=120;S._deathHandMaxHP=120;
   S._deathHandPhase='APPROACH';S._deathHandT=0;
-  S._deathHandAttackIdx=-1;S._deathHandAttackT=0;
+  S._deathHandAttackIdx=-1;S._deathHandAttackT=12; // First attack fires ~6s after IDLE
   S._deathHandCycle=0;S._dhBeamSweep=null;S._dhTentacle=null;
   // Show boss HP bar
   try{
@@ -14310,9 +14310,9 @@ function _updateDEATHHAND(dt){
     if(S._deathHandT>1.0){S._deathHandPhase='IDLE';S._deathHandT=0;}
     return;
   }
-  // Approach → IDLE
+  // Approach → IDLE (transition when within 20 units of target z)
   if(S._deathHandPhase==='APPROACH'){
-    if(dh.position.z>targetZ+5){S._deathHandPhase='IDLE';S._deathHandT=0;}
+    if(Math.abs(dh.position.z-targetZ)<20){S._deathHandPhase='IDLE';S._deathHandT=0;}
     return;
   }
   // Attack cycle every 18s
@@ -14491,6 +14491,13 @@ function _startEndingRoll(){
 
 function _startToBeContinued(ov){
   if(!ov||!ov.parentNode)return;
+  // Restore opaque black background + scene for teaser text slides
+  ov.style.background='#000';
+  ov.style.opacity='1';
+  try{scene.background=null;}catch(_){}
+  // Hide scanlines/name card (parade is done)
+  try{const e=document.getElementById('cyber-scanlines');if(e)e.style.display='none';}catch(_){}
+  try{const e=document.getElementById('cyber-name-card');if(e)e.style.display='none';}catch(_){}
   ov.innerHTML='';
   const TEASER=[
     {delay:0,    text:'',bg:true},
@@ -14550,7 +14557,13 @@ let _paradeState=null;
 function _startCharacterParade(ov){
   if(!ov||!ov.parentNode)return;
   ov.innerHTML='';
-  ov.style.background='#000008';
+  // Make overlay transparent so Three.js canvas shows through for 3D parade
+  ov.style.background='transparent';
+  ov.style.opacity='1';
+  // Set Three.js scene to deep space black so parade characters pop
+  try{scene.background=new THREE.Color(0x000011);}catch(_){}
+  // Start ending BGM if not already playing
+  try{if(sfx&&sfx.startEndingBGM&&!sfx._endingBGMNode)sfx.startEndingBGM();}catch(_){}
   // Hide stray DOM HUDs
   ['hud','mission-display','stage-select','target-radar','speed-overlay','boss-hp-bar'].forEach(id=>{
     try{const e=document.getElementById(id);if(e)e.style.display='none';}catch(_){}
