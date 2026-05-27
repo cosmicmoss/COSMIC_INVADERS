@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.250</title>
+<title>COSMIC INVADERS v7.251</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -77,6 +77,11 @@ body.stolen-fighter #cockpit-frame::after{background:rgba(255,30,20,.45)!importa
 #alarm-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:88;animation:alarmPulse 0.5s ease-in-out infinite alternate;}
 /* v7.249: trench-run speed multiplier HUD */
 #speed-overlay{display:none;position:fixed;top:14%;right:12px;color:#ffaa00;font-size:22px;font-weight:bold;font-family:monospace;text-shadow:0 0 8px #ff8800,0 0 16px #ff4400;pointer-events:none;z-index:90;letter-spacing:2px;}
+/* v7.251: boss HP bar */
+#boss-hp-bar{display:none;position:fixed;top:8%;left:50%;transform:translateX(-50%);width:320px;text-align:center;z-index:90;pointer-events:none;}
+#boss-hp-name{color:#ff4400;font-family:monospace;font-size:13px;letter-spacing:2px;margin-bottom:4px;text-shadow:0 0 8px #ff2200;}
+#boss-hp-track{background:#220000;border:1px solid #ff2200;height:12px;border-radius:2px;overflow:hidden;}
+#boss-hp-fill{background:linear-gradient(to right,#ff6600,#ff2200);height:100%;width:100%;transition:width 0.15s;}
 /* v7.227: cockpit power-up flash overlay */
 @keyframes ckPwSweep{0%{top:-2px;opacity:0}10%{opacity:1}90%{opacity:.8}100%{top:100%;opacity:0}}
 @keyframes ckPwLabel{0%{opacity:0;letter-spacing:12px}15%{opacity:1;letter-spacing:6px}80%{opacity:1}100%{opacity:0;letter-spacing:8px}}
@@ -739,7 +744,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.250 - LOADED
+  COSMIC INVADERS v7.251 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1083,7 +1088,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.250</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.251</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1335,12 +1340,17 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="fire-filter"></div>
   <!-- v7.249: trench-run speed overlay -->
   <div id="speed-overlay"></div>
+  <!-- v7.251: boss HP bar (DEATH HAND + shield generators) -->
+  <div id="boss-hp-bar">
+    <div id="boss-hp-name">BOSS</div>
+    <div id="boss-hp-track"><div id="boss-hp-fill"></div></div>
+  </div>
 </div>
 
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.250 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.251 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1375,7 +1385,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.250 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.251 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -2184,6 +2194,84 @@ class SFX{
         o.connect(og);og.connect(this.g||ac.destination);o.start(t);o.stop(t+.1);
       });
     }catch(e){}
+  }
+  // v7.251: Orchestral ending BGM — 3 movements ~3 min
+  startEndingBGM(){
+    if(!this.ctx)return;
+    try{this.stopBGM()}catch(_){}
+    const ctx=this.ctx;
+    const master=ctx.createGain();master.gain.setValueAtTime(0.001,ctx.currentTime);
+    master.gain.linearRampToValueAtTime(.07,ctx.currentTime+3);
+    master.connect(this.g||ctx.destination);
+    this._endingBGMNode=master;
+    const now=ctx.currentTime;
+    // === Movement 1: Slow strings (0-35s) triumph/sorrow blend ===
+    const stringFreqs=[220,277,330,440,554,660];
+    stringFreqs.forEach((freq,si)=>{
+      const dur=38;
+      const o=ctx.createOscillator();o.type='sawtooth';o.frequency.value=freq*(si<3?1:0.5);
+      const vib=ctx.createOscillator();vib.type='sine';vib.frequency.value=5.2;
+      const vibG=ctx.createGain();vibG.gain.setValueAtTime(freq*.014,now);
+      vib.connect(vibG);vibG.connect(o.frequency);
+      const g=ctx.createGain();
+      g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(.028+si*.004,now+2.5);
+      g.gain.setValueAtTime(.028+si*.004,now+dur-3);g.gain.linearRampToValueAtTime(0,now+dur);
+      const flt=ctx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=1800;flt.Q.value=.6;
+      o.connect(flt);flt.connect(g);g.connect(master);
+      vib.start(now);o.start(now);o.stop(now+dur);vib.stop(now+dur);
+    });
+    // === Movement 2: Horn fanfare (35-80s) rising triadic ===
+    const hornNotes=[262,330,392,523,659,784,1047,784,659,523,392,330,262];
+    const hornRhythm=[0,.5,1,1.5,2,2.5,3,3.8,4.3,4.8,5.3,5.8,6.5];
+    hornNotes.forEach((freq,ni)=>{
+      const t=now+35+hornRhythm[ni%hornRhythm.length];
+      const o=ctx.createOscillator();o.type='square';o.frequency.value=freq;
+      const g=ctx.createGain();g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(.04,t+.05);g.gain.setValueAtTime(.04,t+.3);
+      g.gain.linearRampToValueAtTime(0,t+.42);
+      const flt=ctx.createBiquadFilter();flt.type='bandpass';flt.frequency.value=600;flt.Q.value=1.2;
+      o.connect(flt);flt.connect(g);g.connect(master);
+      o.start(t);o.stop(t+.5);
+    });
+    // Horn fanfare repeats (octave up) at t=now+46
+    hornNotes.forEach((freq,ni)=>{
+      const t=now+46+hornRhythm[ni%hornRhythm.length];
+      const o=ctx.createOscillator();o.type='square';o.frequency.value=freq*1.5;
+      const g=ctx.createGain();g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(.035,t+.05);g.gain.setValueAtTime(.035,t+.28);
+      g.gain.linearRampToValueAtTime(0,t+.40);
+      const flt=ctx.createBiquadFilter();flt.type='bandpass';flt.frequency.value=900;flt.Q.value=1.0;
+      o.connect(flt);flt.connect(g);g.connect(master);
+      o.start(t);o.stop(t+.45);
+    });
+    // === Movement 3: Grand orchestra (80-150s) ===
+    // Full string swell (loop 8s phrase × 8)
+    for(let rep=0;rep<8;rep++){
+      const baseT=now+80+rep*9;
+      [330,440,550,660,880].forEach((freq,si)=>{
+        const o=ctx.createOscillator();o.type='sawtooth';o.frequency.value=freq;
+        const vib=ctx.createOscillator();vib.type='sine';vib.frequency.value=5.5+si*.2;
+        const vibG=ctx.createGain();vibG.gain.value=freq*.016;
+        vib.connect(vibG);vibG.connect(o.frequency);
+        const g=ctx.createGain();
+        g.gain.setValueAtTime(0,baseT);g.gain.linearRampToValueAtTime(.035+si*.005,baseT+1.5);
+        g.gain.setValueAtTime(.035+si*.005,baseT+7);g.gain.linearRampToValueAtTime(0,baseT+9);
+        const flt=ctx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=2200;
+        o.connect(flt);flt.connect(g);g.connect(master);
+        vib.start(baseT);o.start(baseT);o.stop(baseT+9.2);vib.stop(baseT+9.2);
+      });
+    }
+    // Timpani (every 4s from 80→150s)
+    for(let ti=0;ti<17;ti++){
+      const t=now+80+ti*4.5;
+      const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t);
+      o.frequency.exponentialRampToValueAtTime(35,t+1.2);
+      const g=ctx.createGain();g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+1.4);
+      o.connect(g);g.connect(master);o.start(t);o.stop(t+1.5);
+    }
+    // === Fade out (150-190s) ===
+    master.gain.setValueAtTime(.07,now+150);
+    master.gain.linearRampToValueAtTime(0.001,now+188);
   }
   // v7.247: Millennium Falcon–style hyperspace jump SFX
   // Phase 1 (0–1s): engine whine spinup  Phase 2 (1–3s): roaring acceleration
@@ -12666,6 +12754,90 @@ function checkCollisions(){const camP=camera.position;
         const glow=coreMesh.getObjectByName('glow');
         if(glow){glow.scale.setScalar(2.2);setTimeout(()=>{if(glow)glow.scale.setScalar(1)},100)}
         if(S.coreHP<=0)triggerCoreDeath()}}}
+  // v7.251: pBeams vs shield generators
+  if(S._shieldGens&&S._shieldGens.length>0){
+    for(let bi=pBeams.length-1;bi>=0;bi--){const b=pBeams[bi];
+      let hit=false;
+      for(let gi=S._shieldGens.length-1;gi>=0;gi--){const gen=S._shieldGens[gi];
+        if(gen._exploded)continue;
+        const gp=gen.mesh.position;
+        const dx=b.mesh.position.x-gp.x,dy=b.mesh.position.y-gp.y,dz=b.mesh.position.z-gp.z;
+        if(Math.sqrt(dx*dx+dy*dy+dz*dz)<7.0){
+          gen.hp-=(b.dmg||1);
+          gen._flashT=0.15;
+          spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0x00ccff,5,.6,.3);
+          sfx.beamClash&&sfx.beamClash();
+          scene.remove(b.mesh);pBeams.splice(bi,1);hit=true;
+          if(gen.hp<=0&&!gen._exploded){
+            gen._exploded=true;
+            const gpos=gen.mesh.position.clone();
+            spawnMegaExplosion(gpos,.5);sfx.bigExplosion();screenFlash(.6);S.shakeT=1;S.shakeI=2;
+            scene.remove(gen.mesh);S._shieldGens.splice(gi,1);
+            const remain=S._shieldGens.filter(g=>!g._exploded).length;
+            if(remain===1){setTimeout(()=>playComm('pilot','One generator down!! One more to go!'),200);}
+            if(S._shieldGens.length===0){
+              S._fortShieldsDown=true;
+              wfCineSubtitle('◆ SHIELDS DOWN!! CORE EXPOSED! ◆','#00ffff');
+              screenFlash(.9);S.shakeT=1.5;S.shakeI=3;
+              setTimeout(()=>playComm('hq','Shields are DOWN! Engaging Death Hand protocols!'),300);
+              addScore(500);
+            }
+          }
+          break;
+        }
+      }
+      if(hit)continue;
+    }
+  }
+  // v7.251: pBeams vs DEATH HAND
+  if(S._deathHandMesh&&!S._deathHandDone&&fortPhase===1){
+    for(let bi=pBeams.length-1;bi>=0;bi--){const b=pBeams[bi];
+      const dh=S._deathHandMesh;
+      const dx=b.mesh.position.x-dh.position.x,dy=b.mesh.position.y-dh.position.y,dz=b.mesh.position.z-dh.position.z;
+      if(Math.abs(dz)<20&&Math.sqrt(dx*dx+dy*dy)<16){
+        S._deathHandHP-=(b.dmg||1);
+        spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0xff4400,5,.7,.4);
+        sfx.beamClash&&sfx.beamClash();
+        scene.remove(b.mesh);pBeams.splice(bi,1);
+        // Update boss HP bar
+        try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(S._deathHandHP/120)*100)+'%';}catch(_){}
+        if(S._deathHandHP<=0&&!S._deathHandDone){
+          S._deathHandDone=true;
+          const dhPos=dh.position.clone();
+          spawnMegaExplosion(dhPos,.5);sfx.bigExplosion();screenFlash(.8);S.shakeT=2;S.shakeI=3;
+          for(let ci=0;ci<4;ci++){setTimeout(()=>{try{spawnMegaExplosion(dhPos.clone().add(new THREE.Vector3((Math.random()-.5)*15,(Math.random()-.5)*8,(Math.random()-.5)*12)),.4);sfx.bigExplosion();}catch(_){}},ci*350+300);}
+          scene.remove(dh);S._deathHandMesh=null;
+          wfCineSubtitle('◆ DEATH HAND DESTROYED!! ◆','#ffaa00');
+          setTimeout(()=>playComm('pilot','YES!! DEATH HAND is DOWN!! Push to the core!!'),300);
+          try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
+          addScore(2000);
+        } else if(S._deathHandHP>0&&S._deathHandPhase!=='STAGGER'){
+          // stagger on heavy damage intervals
+          if(S._deathHandHP%30===0)S._deathHandPhase='STAGGER';
+        }
+      }
+    }
+  }
+  // v7.251: pBeams vs DEATH HAND tentacle (CORE_LOCK attack)
+  if(S._dhTentacle&&S._dhTentacle.active&&S._dhTentacle.mesh){
+    for(let bi=pBeams.length-1;bi>=0;bi--){const b=pBeams[bi];
+      const tp=S._dhTentacle.mesh.position;
+      const dx=b.mesh.position.x-tp.x,dy=b.mesh.position.y-tp.y,dz=b.mesh.position.z-tp.z;
+      if(Math.sqrt(dx*dx+dy*dy+dz*dz)<5){
+        S._dhTentacle.hp-=1;
+        spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0xff8800,4,.5,.3);
+        scene.remove(b.mesh);pBeams.splice(bi,1);
+        if(S._dhTentacle.hp<=0){
+          // Tentacle destroyed — core lock released
+          scene.remove(S._dhTentacle.mesh);
+          S._dhTentacle.active=false;S._dhTentacle=null;
+          wfCineSubtitle('◆ TENTACLE SEVERED! CORE SAVED! ◆','#44ff88');
+          playComm('pilot','Got it!! Core is free!!');
+          spawnP(tp.clone(),0xff6600,12,1,.6);
+        }
+      }
+    }
+  }
   // pBeams vs enemies
   for(let bi=pBeams.length-1;bi>=0;bi--){const b=pBeams[bi];
     for(let ei=enemies.length-1;ei>=0;ei--){const e=enemies[ei];
@@ -13118,6 +13290,20 @@ function cleanupBossResidue(){
   }catch(_){}
   // v7.249: hide speed overlay on cleanup
   try{const se=document.getElementById('speed-overlay');if(se)se.style.display='none';}catch(_){}
+  // v7.251: shield generators + DEATH HAND + tentacle cleanup
+  try{
+    if(typeof S!=='undefined'&&S){
+      if(S._shieldGens&&S._shieldGens.length){
+        S._shieldGens.forEach(g=>{try{if(g&&g.mesh)scene.remove(g.mesh)}catch(_){}});
+        S._shieldGens=[];
+      }
+      S._shieldGensSpawned=false;S._fortShieldsDown=false;
+      if(S._deathHandMesh){try{scene.remove(S._deathHandMesh)}catch(_){}; S._deathHandMesh=null;}
+      S._deathHandSpawned=false;S._deathHandDone=false;S._corePending=false;
+      if(S._dhTentacle&&S._dhTentacle.mesh){try{scene.remove(S._dhTentacle.mesh)}catch(_){}; S._dhTentacle=null;}
+    }
+    try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
+  }catch(_){}
   // v7.250: BBQ scene cleanup (colosseum impalement BBQ objects)
   try{
     if(typeof colosseumState!=='undefined'&&colosseumState&&colosseumState._bbqObjects&&colosseumState._bbqObjects.length){
@@ -13456,6 +13642,14 @@ function endFortressApproachCine(){
 function startFortress(){S.phase='FORTRESS';S.fortTimer=0;S.coreHP=Math.ceil(C.CORE_HP*(1+S.cycle*.5));
   // v7.105 ★ Mandatory transient-FX refresh on FORTRESS_APPROACH→FORTRESS transition.
   try{cleanupBossResidue()}catch(_){}
+  // v7.251: reset shield/DEATH HAND state
+  S._shieldGens=[];S._shieldGensSpawned=false;S._fortShieldsDown=false;
+  S._deathHandMesh=null;S._deathHandSpawned=false;S._deathHandDone=false;
+  S._deathHandHP=120;S._deathHandAttackIdx=0;S._deathHandAttackT=0;
+  S._deathHandPhase='IDLE';S._deathHandT=0;S._deathHandCycle=0;
+  S._dhBeamSweep=null;S._dhTentacle=null;S._corePending=false;S._dhBeamHitCD=0;
+  S._triggerEnding=false;
+  try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
   S.coreAlive=true;fortPhase=0;sfx.stopBGM();setTimeout(()=>sfx.startFortBGM(),1500);
   // v7.32/v7.32: reset 1-second firing-window state so a fresh trench-run starts clean
   S._coreFireWindowStarted=false;S.coreFireWindowT=0;S.coreFireWindowMissed=false;
@@ -13507,7 +13701,27 @@ function updateFortress(dt){S.fortTimer+=dt;
     if(reactor){reactor.rotation.x+=dt*.8;reactor.rotation.y+=dt*.5}
   }
   if(fortPhase===0&&S.fortTimer>7)fortPhase=1;
-  if(fortPhase===1&&S.fortTimer>30){fortPhase=2;spawnCore2()}
+  // v7.251: phase 1→2 is now gated by shield destruction + DEATH HAND defeat (not timer)
+  if(fortPhase===1&&!S._fortShieldsDown&&S.fortTimer>8){
+    _trySpawnShieldGenerators();
+  }
+  if(fortPhase===1&&S._fortShieldsDown&&!S._deathHandSpawned){
+    S._deathHandSpawned=true;
+    _spawnDeathHand();
+    announce('◆ DEATH HAND DEPLOYED ◆');
+    setTimeout(()=>playComm('pilot','What the — that thing is MASSIVE!!'),200);
+  }
+  if(fortPhase===1&&S._deathHandDone&&!S._corePending){
+    S._corePending=true;
+    fortPhase=2;
+    // Double core HP for final showdown
+    const baseHP=Math.ceil(C.CORE_HP*(1+S.cycle*.5));
+    S.coreHP=baseHP*2;
+    spawnCore2();
+    announce('◆ FINAL TARGET — REACTOR CORE ◆');
+    setTimeout(()=>playComm('hq','The core is exposed — FIRE EVERYTHING!!'),400);
+    setTimeout(()=>playComm('pilot','Going for the shot!!'),3500);
+  }
   if(fortPhase>=1){wallSpT-=dt;if(wallSpT<=0){spawnWallPair();wallSpT=.7}}
   // v6.69/v7.32: Turrets only spawn AFTER walls have appeared (phase>=1) AND we have walls.
   // CRITICAL FREEZE FIX: also cap active turret count at 10. Pre-v7.32 the spawn rate ramped
@@ -13531,6 +13745,14 @@ function updateFortress(dt){S.fortTimer+=dt;
     S._fortSpeedMul=(S._fortSpeedMul||1)+dt*0.004;
     if(S._fortSpeedMul>1.8)S._fortSpeedMul=1.8;
   }
+  // v7.251: raise turret cap in phase 2+ for final showdown intensity
+  if(fortPhase>=2&&walls.length>0){
+    const activeTurrets=enemies.filter(e=>e.isTurret).length;
+    if(activeTurrets<15&&turSpT<=0){
+      spawnFortTurret();
+      turSpT=Math.max(.6,2.5-S.fortTimer*.025);
+    } else if(turSpT<=0) turSpT=0.4;
+  }
   const _wSpd=(S._fortSpeedMul||1)*30;
   // Update speed HUD
   try{
@@ -13551,6 +13773,11 @@ function updateFortress(dt){S.fortTimer+=dt;
     if(cLight)cLight.intensity=2.5+Math.sin(S._corePulseT*6)*1.5;
   }
   if(S._coreRings)S._coreRings.forEach((r,i)=>{r.rotation.z+=dt*(0.8+i*0.3);});
+  // v7.251: update shield generators + DEATH HAND
+  try{_updateShieldGenerators(dt,_wSpd)}catch(_){}
+  try{_updateDEATHHAND(dt)}catch(_){}
+  try{_updateDHBeamSweep(dt)}catch(_){}
+  try{_updateDHTentacle(dt)}catch(_){}
   // Walls scroll
   for(let i=walls.length-1;i>=0;i--){walls[i].position.z+=_wSpd*dt;
     if(walls[i].position.z>20){scene.remove(walls[i]);walls.splice(i,1)}}
@@ -13868,6 +14095,411 @@ function getCorridorCurve(){
   const amp=6+Math.min(S.cycle,3)*3;
   return Math.sin(S.fortTimer*.4)*amp}
 
+// ============ v7.251: SHIELD GENERATORS ============
+function _makeShieldGenerator(id){
+  const g=new THREE.Group();
+  // Hexagonal dome shell (icosahedron wireframe)
+  const domeFill=new THREE.MeshBasicMaterial({color:0x001133,transparent:true,opacity:.3});
+  const domeEdge=new THREE.LineBasicMaterial({color:0x00aaff,transparent:true,opacity:.8});
+  const domeGeo=new THREE.IcosahedronGeometry(5.5,1);
+  g.add(new THREE.Mesh(domeGeo,domeFill));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(domeGeo),domeEdge));
+  // Energy core
+  const coreFill=new THREE.MeshBasicMaterial({color:0x0055ff});
+  const coreEdge=new THREE.LineBasicMaterial({color:0x66ccff});
+  const coreGeo=new THREE.SphereGeometry(1.4,6,6);
+  g.add(new THREE.Mesh(coreGeo,coreFill));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(coreGeo),coreEdge));
+  // Two spinning rings
+  for(let ri=0;ri<2;ri++){
+    const rg=new THREE.TorusGeometry(6+ri*.8,.15,4,14);
+    const rm=new THREE.LineBasicMaterial({color:ri===0?0x0088ff:0x00ccff,transparent:true,opacity:.6});
+    const ring=new THREE.LineSegments(new THREE.EdgesGeometry(rg),rm);
+    ring.rotation.x=ri===0?Math.PI/3:Math.PI/6;
+    ring.name='ring'+ri;
+    g.add(ring);
+  }
+  g.name='shieldGen'+id;
+  return g;
+}
+
+function _trySpawnShieldGenerators(){
+  if(S._shieldGensSpawned)return;
+  S._shieldGensSpawned=true;
+  if(!S._shieldGens)S._shieldGens=[];
+  const positions=[{x:-16,y:-3,z:-270},{x:16,y:-3,z:-230}];
+  positions.forEach((pos,i)=>{
+    const mesh=_makeShieldGenerator(i);
+    mesh.position.set(pos.x,pos.y,pos.z);
+    scene.add(mesh);
+    S._shieldGens.push({mesh,hp:60,maxHp:60,id:i,_exploded:false,_flashT:0,_t:0});
+  });
+  announce('◆ SHIELD GENERATORS DETECTED ×2 ◆');
+  setTimeout(()=>playComm('hq','Two shield generators protecting the core — destroy them BOTH!'),400);
+  setTimeout(()=>playComm('pilot','Copy! Taking them out!'),3800);
+  // Show boss HP bar for first generator
+  try{
+    const bh=document.getElementById('boss-hp-bar');
+    const bn=document.getElementById('boss-hp-name');
+    const bf=document.getElementById('boss-hp-fill');
+    if(bh&&bn&&bf){bh.style.display='block';bn.textContent='SHIELD GENERATORS';bf.style.width='100%';}
+  }catch(_){}
+}
+
+function _updateShieldGenerators(dt,wSpd){
+  if(!S._shieldGens||S._shieldGens.length===0)return;
+  let totalHpFrac=0;
+  for(let gi=S._shieldGens.length-1;gi>=0;gi--){
+    const gen=S._shieldGens[gi];
+    if(gen._exploded){S._shieldGens.splice(gi,1);continue;}
+    gen._t=(gen._t||0)+dt;
+    // Scroll with walls
+    gen.mesh.position.z+=(wSpd||30)*dt;
+    // Spin rings
+    const r0=gen.mesh.getObjectByName('ring0');const r1=gen.mesh.getObjectByName('ring1');
+    if(r0)r0.rotation.z+=dt*.8;
+    if(r1)r1.rotation.y+=dt*1.1;
+    // Pulse on hit (scale flash)
+    if(gen._flashT>0){
+      gen._flashT-=dt;
+      gen.mesh.scale.setScalar(1.0+gen._flashT*.3);
+    } else {
+      gen.mesh.scale.setScalar(1.0);
+    }
+    // Remove if past player
+    if(gen.mesh.position.z>25){gen._exploded=true;scene.remove(gen.mesh);S._shieldGens.splice(gi,1);}
+    totalHpFrac+=gen.hp/gen.maxHp;
+  }
+  // Update boss HP bar
+  if(S._shieldGens.length>0){
+    try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(totalHpFrac/Math.max(S._shieldGens.length,1))*100)+'%';}catch(_){}
+  }
+}
+
+// ============ v7.251: DEATH HAND BOSS ============
+function _makeDEATHHAND(){
+  const g=new THREE.Group();
+  // Palm (main body)
+  const palmFill=new THREE.MeshBasicMaterial({color:0x1a0000});
+  const palmEdge=new THREE.LineBasicMaterial({color:0xff2200});
+  const palmGeo=new THREE.BoxGeometry(20,10,14);
+  g.add(new THREE.Mesh(palmGeo,palmFill));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(palmGeo),palmEdge));
+  // 5 fingers
+  const fingerOffsets=[{x:-8,y:2,rz:-.2},{x:-4,y:5,rz:-.05},{x:0,y:6,rz:0},{x:4,y:5,rz:.05},{x:8,y:2,rz:.2}];
+  fingerOffsets.forEach((fo,fi)=>{
+    const fg=new THREE.Group();fg.name='finger'+fi;
+    const fFill=new THREE.MeshBasicMaterial({color:0x220000});
+    const fEdge=new THREE.LineBasicMaterial({color:0xff4400});
+    // Two segments per finger
+    [6,4.5].forEach((h,si)=>{
+      const fGeo=new THREE.CylinderGeometry(.8,.65,h,5);
+      const fm=new THREE.Group();
+      fm.add(new THREE.Mesh(fGeo,fFill));
+      fm.add(new THREE.LineSegments(new THREE.EdgesGeometry(fGeo),fEdge));
+      fm.position.y=si===0?h/2:6+h/2;
+      fg.add(fm);
+    });
+    // Fingertip cone
+    const tipGeo=new THREE.ConeGeometry(.65,2,5);
+    const tip=new THREE.Group();
+    tip.add(new THREE.Mesh(tipGeo,fFill));
+    tip.add(new THREE.LineSegments(new THREE.EdgesGeometry(tipGeo),fEdge));
+    tip.position.y=6+4.5+1.5;
+    fg.add(tip);
+    fg.position.set(fo.x,5.5,-5);fg.rotation.z=fo.rz;
+    g.add(fg);
+  });
+  // Central glow core (weak point)
+  const dhCoreFill=new THREE.MeshBasicMaterial({color:0xff4400});
+  const dhCoreEdge=new THREE.LineBasicMaterial({color:0xffaa00});
+  const dhCoreGeo=new THREE.SphereGeometry(2.2,6,6);
+  const dhCoreG=new THREE.Group();dhCoreG.name='dhCore';
+  dhCoreG.add(new THREE.Mesh(dhCoreGeo,dhCoreFill));
+  dhCoreG.add(new THREE.LineSegments(new THREE.EdgesGeometry(dhCoreGeo),dhCoreEdge));
+  dhCoreG.position.set(0,0,0);
+  g.add(dhCoreG);
+  return g;
+}
+
+function _makeTentacleMesh(){
+  const g=new THREE.Group();
+  const pts=[];
+  for(let i=0;i<8;i++)pts.push(new THREE.Vector3(i*4-14,Math.sin(i*1.2)*3,0));
+  const tGeo=new THREE.BufferGeometry().setFromPoints(pts);
+  g.add(new THREE.Line(tGeo,new THREE.LineBasicMaterial({color:0xff6600})));
+  // Tip
+  const tipGeo=new THREE.SphereGeometry(1.5,4,4);
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(tipGeo),new THREE.LineBasicMaterial({color:0xff8800})));
+  g.children[1].position.x=14;
+  return g;
+}
+
+function _spawnDeathHand(){
+  if(S._deathHandMesh)try{scene.remove(S._deathHandMesh)}catch(_){}
+  const dh=_makeDEATHHAND();
+  dh.position.set(0,4,-260);
+  scene.add(dh);
+  S._deathHandMesh=dh;
+  S._deathHandHP=120;S._deathHandMaxHP=120;
+  S._deathHandPhase='APPROACH';S._deathHandT=0;
+  S._deathHandAttackIdx=-1;S._deathHandAttackT=0;
+  S._deathHandCycle=0;S._dhBeamSweep=null;S._dhTentacle=null;
+  // Show boss HP bar
+  try{
+    const bh=document.getElementById('boss-hp-bar');
+    const bn=document.getElementById('boss-hp-name');
+    const bf=document.getElementById('boss-hp-fill');
+    if(bh&&bn&&bf){bh.style.display='block';bn.textContent='☠ DEATH HAND';bf.style.width='100%';}
+  }catch(_){}
+}
+
+function _updateDEATHHAND(dt){
+  if(!S._deathHandMesh||S._deathHandDone)return;
+  const dh=S._deathHandMesh;
+  S._deathHandT+=dt;
+  // Float + sway
+  dh.position.x=Math.sin(S._deathHandT*.35)*22;
+  dh.position.y=4+Math.cos(S._deathHandT*.28)*4;
+  // Creep toward player z
+  const targetZ=camera.position.z-190;
+  dh.position.z+=(targetZ-dh.position.z)*.018;
+  // Finger wiggle
+  for(let fi=0;fi<5;fi++){
+    const f=dh.getObjectByName('finger'+fi);
+    if(f)f.rotation.x=Math.sin(S._deathHandT*.6+fi*.4)*.15;
+  }
+  // Stagger shake
+  if(S._deathHandPhase==='STAGGER'){
+    dh.rotation.z=Math.sin(S._deathHandT*28)*.12;
+    if(S._deathHandT>1.0){S._deathHandPhase='IDLE';S._deathHandT=0;}
+    return;
+  }
+  // Approach → IDLE
+  if(S._deathHandPhase==='APPROACH'){
+    if(dh.position.z>targetZ+5){S._deathHandPhase='IDLE';S._deathHandT=0;}
+    return;
+  }
+  // Attack cycle every 18s
+  S._deathHandAttackT+=dt;
+  const ATK_PERIOD=18;
+  if(S._deathHandPhase==='IDLE'&&S._deathHandAttackT>=ATK_PERIOD){
+    S._deathHandAttackT=0;
+    S._deathHandAttackIdx=(S._deathHandAttackIdx+1)%3;
+    S._deathHandPhase='ATTACK';S._deathHandT=0;
+    _deathHandDoAttack(S._deathHandAttackIdx);
+  }
+  if(S._deathHandPhase==='ATTACK'&&S._deathHandT>4){
+    S._deathHandPhase='IDLE';S._deathHandT=0;
+  }
+  // HP bar update
+  try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(S._deathHandHP/120)*100)+'%';}catch(_){}
+}
+
+function _deathHandDoAttack(idx){
+  const dh=S._deathHandMesh;if(!dh)return;
+  const dhPos=dh.position.clone();
+  if(idx===0){
+    // BEAM SWEEP — single wide beam sweeps left→right
+    S._dhBeamSweep={active:true,t:0,x:-40,dir:1,warned:false};
+    wfCineSubtitle('◆ BEAM SWEEP — DODGE UP OR DOWN! ◆','#ff2200');
+    try{sfx.targetingAlarm&&sfx.targetingAlarm(.15)}catch(_){}
+    setTimeout(()=>playComm('pilot','Beam sweep!! Break away!!'),100);
+  } else if(idx===1){
+    // MISSILE VOLLEY — 5 missiles scatter-fire
+    wfCineSubtitle('◆ MISSILE VOLLEY!! ◆','#ff4400');
+    setTimeout(()=>playComm('pilot','Missiles!! Evasive maneuvers!!'),100);
+    for(let i=0;i<5;i++){
+      setTimeout(()=>{
+        try{
+          if(!S._deathHandMesh)return;
+          const bGeo=new THREE.SphereGeometry(.4,4,4);
+          const bMat=new THREE.LineBasicMaterial({color:0xff4400});
+          const bMesh=new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),bMat);
+          bMesh.position.copy(S._deathHandMesh.position);
+          bMesh.position.x+=(Math.random()-.5)*15;
+          bMesh.position.y+=(Math.random()-.5)*8;
+          scene.add(bMesh);
+          eBeams.push({
+            mesh:bMesh,
+            vel:new THREE.Vector3((Math.random()-.5)*5,(Math.random()-.5)*3,C.E_BEAM_SPEED*.8),
+            _fromDeathHand:true
+          });
+        }catch(_){}
+      },i*220);
+    }
+  } else if(idx===2){
+    // CORE LOCK — tentacle grabs toward core position
+    wfCineSubtitle('◆ CORE LOCK!! SHOOT THE TENTACLE!! ◆','#ff8800');
+    setTimeout(()=>playComm('pilot','It\'s grabbing the reactor!! Shoot that thing OFF!!'),100);
+    try{
+      if(S._dhTentacle&&S._dhTentacle.mesh)scene.remove(S._dhTentacle.mesh);
+      const tm=_makeTentacleMesh();
+      tm.position.copy(dhPos);
+      tm.position.x+=5;tm.position.y-=3;
+      scene.add(tm);
+      S._dhTentacle={active:true,t:0,hp:4,mesh:tm};
+      // Auto-timeout after 6s (tentacle retracts)
+      setTimeout(()=>{
+        if(S._dhTentacle&&S._dhTentacle.active){
+          try{scene.remove(S._dhTentacle.mesh)}catch(_){}
+          S._dhTentacle=null;
+          // Deal damage to core if not destroyed
+          if(S.coreAlive&&S.coreHP>0){
+            S.coreHP=Math.max(1,S.coreHP-15);
+            screenFlash(.4);S.shakeT=.6;S.shakeI=1.5;
+            playComm('nav','Core locked! Hull damage from energy drain!!');
+          }
+        }
+      },6000);
+    }catch(_){}
+  }
+}
+
+function _updateDHBeamSweep(dt){
+  if(!S._dhBeamSweep||!S._dhBeamSweep.active)return;
+  const sw=S._dhBeamSweep;
+  sw.t+=dt;
+  sw.x+=sw.dir*26*dt;
+  // Clamp 360px sweep from -40 to +40
+  if(sw.x>42){sw.x=42;sw.dir=-1;}
+  if(sw.x<-42&&sw.t>1.5){sw.active=false;return;}
+  // Visual: spawn red particles along beam path
+  if(Math.random()<.4){
+    const camZ=camera.position.z-20;
+    spawnP(new THREE.Vector3(sw.x,player.y+(Math.random()-.5)*12,camZ),0xff0000,2,.5,.12);
+  }
+  // Hit check (beam is ~5 units wide)
+  if(Math.abs((player.x||0)-sw.x)<5){
+    if(!sw._hitCD||sw._hitCD<=0){
+      sw._hitCD=.4;
+      player.hp=(player.hp||10)-1;
+      screenFlash(.25);S.shakeT=.3;S.shakeI=.8;
+    }
+  }
+  if(sw._hitCD)sw._hitCD-=dt;
+  if(sw.t>3.5)sw.active=false;
+}
+
+function _updateDHTentacle(dt){
+  if(!S._dhTentacle||!S._dhTentacle.active||!S._dhTentacle.mesh)return;
+  S._dhTentacle.t+=dt;
+  // Tentacle follows DEATH HAND + pulses
+  if(S._deathHandMesh){
+    S._dhTentacle.mesh.position.x=S._deathHandMesh.position.x+5;
+    S._dhTentacle.mesh.position.y=S._deathHandMesh.position.y-3;
+    S._dhTentacle.mesh.position.z=S._deathHandMesh.position.z+8;
+  }
+  S._dhTentacle.mesh.rotation.z=Math.sin(S._dhTentacle.t*4)*.2;
+  // Crackle particles
+  if(Math.random()<.3){
+    spawnP(S._dhTentacle.mesh.position.clone(),0xff6600,2,.4,.2);
+  }
+}
+
+// ============ v7.251: ENDING ROLL ============
+function _startEndingRoll(){
+  S.phase='ENDING';
+  try{sfx.startEndingBGM&&sfx.startEndingBGM()}catch(_){}
+  // Hide game HUD
+  ['hud','mission-display','stage-select','target-radar','asteroid-radar',
+   'speed-overlay','boss-hp-bar','fortress-alert'].forEach(id=>{
+    try{const el=document.getElementById(id);if(el)el.style.display='none';}catch(_){}
+  });
+  // Remove any lingering three.js overlay
+  try{wfCineEnd()}catch(_){}
+  const ov=document.createElement('div');
+  ov.id='ending-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:#000;z-index:999;color:#fff;'+
+    'font-family:Georgia,serif;overflow:hidden;';
+  document.body.appendChild(ov);
+  const EPILOGUE=[
+    {delay:1000,  text:'— STORY EPILOGUE —',
+     style:'font-size:28px;letter-spacing:6px;color:#ffaa00;text-shadow:0 0 20px #ff8800;'},
+    {delay:4000,
+     text:'The PILOT returned to Earth.\nThe galaxy was quiet — for the first time in years.\nBut rest never came easy after war.',
+     style:'font-size:16px;line-height:2;color:#eee;'},
+    {delay:10000,
+     text:'ADMIRAL HAYES\nPromoted to Supreme Commander of the Outer Fleet.\nLed the reconstruction of Station Alpha.\n"We rebuild. We always rebuild."',
+     style:'font-size:15px;line-height:1.9;color:#88ccff;'},
+    {delay:17000,
+     text:'NAVIGATOR AI  "HARUKA"\nUpgraded to the Ω-7 Series Core.\nStill monitoring. Still calculating.\n"I am always here."',
+     style:'font-size:15px;line-height:1.9;color:#aaffaa;'},
+    {delay:24000,
+     text:'WINGMAN  CALLSIGN "RAZOR"\nRetired to Kepler-22b colony.\nRuns a quiet farm at the edge of the frontier.\n"No more wars. Just sky."',
+     style:'font-size:15px;line-height:1.9;color:#ffccaa;'},
+    {delay:31000,
+     text:'The Colosseum was shut down by galactic treaty.\nThe pirates scattered to the outer rim.\nSomewhere out there, the Thunder Eel still crackles.',
+     style:'font-size:14px;line-height:1.9;color:#aaaaaa;font-style:italic;'},
+    {delay:38000,
+     text:'And in the deep forests of Endoria,\na scientist and her rescuer\nwatched the stars from a hilltop.',
+     style:'font-size:14px;line-height:1.9;color:#ccffcc;font-style:italic;'},
+    {delay:45000,
+     text:'— FIN —',
+     style:'font-size:36px;letter-spacing:10px;color:#ffaa00;text-shadow:0 0 30px #ff8800;'},
+  ];
+  EPILOGUE.forEach(({delay,text,style})=>{
+    setTimeout(()=>{
+      if(!document.getElementById('ending-overlay'))return;
+      ov.innerHTML='';
+      const p=document.createElement('div');
+      p.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'+
+        'text-align:center;white-space:pre-line;opacity:0;transition:opacity 1.8s;'+style;
+      p.textContent=text;
+      ov.appendChild(p);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.opacity='1';}));
+    },delay);
+  });
+  // TO BE CONTINUED (55s after start)
+  setTimeout(()=>_startToBeContinued(ov),55000);
+}
+
+function _startToBeContinued(ov){
+  if(!ov||!ov.parentNode)return;
+  ov.innerHTML='';
+  const TEASER=[
+    {delay:0,    text:'',bg:true},
+    {delay:2000, text:'They thought it was over...',
+     style:'font-size:22px;color:#888888;font-style:italic;letter-spacing:2px;'},
+    {delay:6500, text:'But the EMPIRE\nwas only beginning.',
+     style:'font-size:24px;color:#ff4400;line-height:1.7;letter-spacing:1px;text-shadow:0 0 18px #ff2200;'},
+    {delay:13000,text:'',bg:true},
+    {delay:15500,text:'★  TO BE CONTINUED  ★',
+     style:'font-size:38px;letter-spacing:4px;color:#ffdd00;text-shadow:0 0 24px #ff8800,0 0 50px #ffaa00;'},
+    {delay:20000,text:'COSMIC  INVADERS  2',
+     style:'font-size:50px;letter-spacing:6px;color:#ffffff;font-family:monospace;text-shadow:0 0 30px #00aaff,0 0 60px #0055ff;'},
+    {delay:26000,text:'',bg:true},
+  ];
+  TEASER.forEach(({delay,text,style,bg})=>{
+    setTimeout(()=>{
+      if(!ov.parentNode)return;
+      ov.innerHTML='';
+      if(text){
+        const p=document.createElement('div');
+        p.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'+
+          'text-align:center;white-space:pre-line;opacity:0;transition:opacity 2s;'+(style||'');
+        p.textContent=text;
+        ov.appendChild(p);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.opacity='1';}));
+      }
+    },delay);
+  });
+  // 32s later: fade to title
+  setTimeout(()=>{
+    if(!ov.parentNode)return;
+    ov.style.transition='opacity 2s';ov.style.opacity='0';
+    setTimeout(()=>{
+      try{sfx.stopBGM&&sfx.stopBGM()}catch(_){}
+      ov.remove();
+      try{
+        S.phase='TITLE';
+        const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';
+        const vb=document.getElementById('version-banner');if(vb)vb.textContent='COSMIC INVADERS v7.251';
+      }catch(e){}
+    },2200);
+  },32000);
+}
+
 function spawnWallPair(){
   const curve=getCorridorCurve();
   // v7.249: interior color gradient based on how far into the run we are
@@ -14130,6 +14762,8 @@ function triggerCoreDeath(){
   try{
     if(!S._testFromOptions && typeof selectedStage!=='undefined' && selectedStage && typeof markStageCleared==='function'){
       markStageCleared(selectedStage.id);
+      // v7.251: set ending flag when space stage is cleared (final story stage)
+      if(selectedStage.id==='space')S._triggerEnding=true;
     }
   }catch(e){}
   S.coreAlive=false;
@@ -15404,7 +16038,15 @@ function wfCineShow(kind,duration,onDone){
     endFn=()=>{
       if(onDone)onDone();
       // v6.69: suppress stage select during replay preview
-      if(!wfCineReplayMode)showStageSelectOverlay();
+      // v7.251: if ending flag is set (space stage cleared), launch ending roll instead
+      if(!wfCineReplayMode){
+        if(typeof S!=='undefined'&&S._triggerEnding){
+          S._triggerEnding=false;
+          setTimeout(()=>{try{_startEndingRoll()}catch(e){console.error('ending:',e);showStageSelectOverlay();}},1200);
+        } else {
+          showStageSelectOverlay();
+        }
+      }
     };
     // v6.69: CAPTAIN PICARD-STYLE commander - pulls lever, says ENGAGE!, occasional gags
     const captainLever=group.getObjectByName('captainLever');
