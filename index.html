@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.271</title>
+<title>COSMIC INVADERS v7.272</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1396,6 +1396,31 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
 </div>
 
+<!-- v7.272: SF-style colosseum character intro namecard -->
+<div id="colo-namecard" style="display:none;position:fixed;inset:0;z-index:135;pointer-events:none;font-family:monospace">
+  <div id="cn-bar-top" style="position:absolute;top:0;left:0;right:0;height:6px;transition:background .2s"></div>
+  <div id="cn-card" style="position:absolute;bottom:11%;left:0;right:0;padding:14px 7%;
+    background:linear-gradient(90deg,rgba(0,0,0,.94) 0%,rgba(0,0,0,.7) 62%,transparent 100%);
+    border-left:5px solid currentColor;
+    transform:translateX(-110%);transition:transform .22s cubic-bezier(.22,1,.36,1)">
+    <div id="cn-name" style="font-size:38px;font-style:italic;font-weight:bold;letter-spacing:4px;
+      text-shadow:0 0 18px currentColor;text-transform:uppercase;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    <div id="cn-title" style="font-size:12px;letter-spacing:5px;opacity:.72;margin-top:5px;text-transform:uppercase"></div>
+  </div>
+  <div id="cn-vs" style="position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(0);
+    font-size:82px;font-style:italic;font-weight:bold;color:#fff;
+    text-shadow:0 0 28px #ff6600,0 0 55px #ff0000;letter-spacing:8px;
+    transition:transform .28s cubic-bezier(.34,1.56,.64,1);white-space:nowrap">⚔ VS ⚔</div>
+  <div id="cn-fight" style="display:none;position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(0);font-size:74px;font-style:italic;font-weight:bold;
+    color:#ffdd00;text-shadow:0 0 28px #ff8800,0 0 55px #ff4400;letter-spacing:6px;
+    transition:transform .22s cubic-bezier(.34,1.56,.64,1);white-space:nowrap">FIGHT!</div>
+  <div id="cn-skip" style="position:absolute;bottom:1.5%;right:2%;font-size:10px;
+    color:rgba(255,255,255,.3);letter-spacing:2px">SPACE / TAP TO SKIP</div>
+  <div id="cn-bar-bot" style="position:absolute;bottom:0;left:0;right:0;height:6px;transition:background .2s"></div>
+</div>
+
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
@@ -2241,6 +2266,37 @@ class SFX{
         const o=ac.createOscillator();o.type='sine';o.frequency.value=f;
         const og=ac.createGain();og.gain.setValueAtTime(.18,t);og.gain.exponentialRampToValueAtTime(.001,t+.09);
         o.connect(og);og.connect(this.g||ac.destination);o.start(t);o.stop(t+.1);
+      });
+    }catch(e){}
+  }
+  // v7.272: VS sting — dramatic brass chord + timpani
+  _vsStingSFX(){
+    if(!this.ctx)return;const ac=this.ctx,now=ac.currentTime;
+    try{
+      [110,138.6,165].forEach((freq,i)=>{
+        const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=freq;
+        const bf=ac.createBiquadFilter();bf.type='bandpass';bf.frequency.value=700+i*200;bf.Q.value=.9;
+        const g=ac.createGain();g.gain.setValueAtTime(.10,now);g.gain.exponentialRampToValueAtTime(.001,now+.9);
+        o.connect(bf);bf.connect(g);g.connect(this.g||ac.destination);o.start(now);o.stop(now+1.0);
+      });
+      const t=ac.createOscillator();t.type='sine';
+      t.frequency.setValueAtTime(80,now);t.frequency.exponentialRampToValueAtTime(28,now+.65);
+      const tg=ac.createGain();tg.gain.setValueAtTime(.001,now);
+      tg.gain.linearRampToValueAtTime(.4,now+.012);tg.gain.exponentialRampToValueAtTime(.001,now+.8);
+      t.connect(tg);tg.connect(this.g||ac.destination);t.start(now);t.stop(now+.9);
+    }catch(e){}
+  }
+  // v7.272: FIGHT! cry — rising square arpeggio
+  _fightCrySFX(){
+    if(!this.ctx)return;const ac=this.ctx,now=ac.currentTime;
+    try{
+      [330,440,660,880].forEach((freq,i)=>{
+        const delay=i*.055;
+        const o=ac.createOscillator();o.type='square';o.frequency.value=freq;
+        const bf=ac.createBiquadFilter();bf.type='bandpass';bf.frequency.value=freq*1.4;bf.Q.value=1.2;
+        const g=ac.createGain();g.gain.setValueAtTime(.12,now+delay);g.gain.exponentialRampToValueAtTime(.001,now+delay+.32);
+        o.connect(bf);bf.connect(g);g.connect(this.g||ac.destination);
+        o.start(now+delay);o.stop(now+delay+.38);
       });
     }catch(e){}
   }
@@ -13555,6 +13611,13 @@ function cleanupBossResidue(){
       colosseumState._energyBalls.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});
       colosseumState._energyBalls.length=0;
     }
+  }catch(_){}
+  // v7.272: colosseum SF intro cleanup
+  try{
+    if(typeof colosseumState!=='undefined'&&colosseumState&&colosseumState._introActive){
+      try{_endColoIntro()}catch(_){}
+    }
+    const nc=document.getElementById('colo-namecard');if(nc)nc.style.display='none';
   }catch(_){}
   // Also clear screen-flash + shake state so the next scene starts visually neutral
   try{if(typeof S!=='undefined'&&S){S.shakeT=0;S.shakeI=0}}catch(_){}
@@ -30134,6 +30197,13 @@ const _FIGHTER_HINTS={
   queen:     "HER MAJESTY! That inner jaw is deadly up close — grapple from the flank!",
   kaiju:     "GORGON!! The big one! Full power — GIANT SWING everything it throws at me!!"
 };
+// v7.272: SF-style intro — fighter subtitle titles
+const _COLO_TITLES={
+  tengu:'WIND SPIRIT OF DESTRUCTION',mantis:'BLADE WING ASSASSIN',
+  centipede:'ARMORED CENTIPEDE LORD',eel:'THUNDER EEL OF ALPHA STAR',
+  predator:'THE GALAXY HUNTER',jabba:'SLIME KING OF THE OUTER RIM',
+  queen:'HER MAJESTY OF THE HIVE',kaiju:'KAIJU GOD OF THE COSMOS',
+};
 // v7.255: monsters set to 1.5× original sizes (non-Kaiju); joints + detail upgrades added
 const _COLO_DEFS=[
   {id:'tengu',   ring:'THE TENGU',   hp:5, speed:9, wave:1,style:'aggressive',col:0xff3300,sz:1.5},
@@ -31682,7 +31752,10 @@ function startColosseum(){
       {id:'poop',  ring:'うんち / POOP',  pos:new THREE.Vector3(0,.4,-10.5), held:false,uses:3,range:5.0,arc:Math.PI,dmg:1.5,aoe:true,slow:true}
     ],
     _heldWeapon:null,
-    _weaponMeshes:arenaWMeshes};
+    _weaponMeshes:arenaWMeshes,
+    // v7.272: SF-style wave intro
+    _introActive:false,_introSteps:[],_introStep:0,_introT:0,
+    _introOnDone:null,_introCamTargetPos:null,_introCamTargetLook:null,_introSkipBound:null};
   try{showTouchControls(true,'colosseum')}catch(_){}
   showColosseumHUD();
   announce(_L('SPACE COLOSSEUM!','宇宙コロッセウム！'));
@@ -31693,6 +31766,7 @@ function startColosseum(){
 }
 function _colosseumPilotMove(dt){
   const cs=colosseumState;if(!cs||!cs.pilotMesh)return;
+  if(cs._introActive)return; // v7.272: no pilot movement during SF intro
   const pst=cs.pilotState;
   if(pst==='CHOP'||pst==='GIANTSWING'||pst==='FRANKENSTEINER'||pst==='STAGGER'||pst==='DOWN'||pst==='GETUP')return;
   if(cs._zapTimer>0)return; // v7.247: zapped — can't move
@@ -32210,34 +32284,213 @@ function _colosseumWaveCheck(dt){
 }
 function _colosseumStartWave(){
   const cs=colosseumState;if(!cs)return;
-  cs.waveNum++;cs.waveActive=true;cs.waveKills=0;
+  cs.waveNum++;cs.waveActive=false;cs.waveKills=0; // waveActive stays false until intro ends
   const wf=cs.fighters.filter(f=>f.def.wave===cs.waveNum);
   cs.activeFighters=wf;
   const n=wf.length;
+  // Position fighters but keep them in WAITING (visible, standing still at spawn)
   wf.forEach((f,i)=>{
     const ang=Math.PI*.5+i/(Math.max(n,1))*Math.PI*.8;
     f.pos.set(Math.sin(ang)*10.5,.42,Math.cos(ang)*10.5);
     f.mesh.position.copy(f.pos);f.mesh.rotation.y=ang+Math.PI;
-    f.state='INTRO';f.stateT=0;f._hitThisAttack=false;f.hp=f.def.hp;f.mesh.visible=true;f.mesh.rotation.x=0;
+    f.state='WAITING';f.stateT=0;f._hitThisAttack=false;f.hp=f.def.hp;f.mesh.visible=true;f.mesh.rotation.x=0;
   });
   const isFinal=cs.waveNum===4;
-  announce(isFinal?_L('FINAL ROUND — GORGON!','決戦ラウンド — GORGON！'):_L('ROUND '+cs.waveNum,'ラウンド '+cs.waveNum));
-  if(isFinal){playComm('hq',_L('GORGON! The Kaiju boss! Use everything you have, #N!','GORGON!! カイジュウボス！全力で戦え！ #N！'));try{sfx.startBossBGM&&sfx.startBossBGM()}catch(_){};}
-  try{sfx.playCrowdCheer(isFinal?4:2)}catch(_){}
-  const odds=wf.map(f=>`${f.def.ring}: ${({tengu:'2.5:1',mantis:'1.8:1',centipede:'3.2:1',predator:'2.1:1',jabba:'4.5:1',queen:'1.5:1',kaiju:'0.9:1'})[f.def.id]||'2:1'}`).join(' | ');
-  wfCineSubtitle('💰 '+odds,'#ffcc00');
-  setTimeout(()=>{try{const s=document.getElementById('wfcine-sub');if(s)s.style.display='none'}catch(_){}},5000);
-  // v7.250 ★ Pilot combat hints — strategic commentary per fighter
-  setTimeout(()=>{
-    try{
-      const hints=wf.map(f=>_FIGHTER_HINTS[f.def.id]).filter(Boolean);
-      if(hints.length>0)playComm('pilot',hints[0]);
-      if(hints.length>1)setTimeout(()=>{try{playComm('pilot',hints[1])}catch(_){}},3800);
-    }catch(_){}
-  },2200);
-  // v7.250 ★ Money burst on wave start
-  try{const cPos=cs.pilotPos?cs.pilotPos.clone():new THREE.Vector3(0,2,0);_spawnMoneyBurst(cPos,50);}catch(_){}
-  updateColosseumHUD();
+  // v7.272: Run SF-style intro first, then start the actual wave
+  const isFirstWave=cs.waveNum===1;
+  _startColoWaveIntro(wf,isFirstWave,()=>{
+    // Intro complete → fighters walk in
+    cs.waveActive=true;
+    wf.forEach(f=>{f.state='INTRO';f.stateT=0;});
+    announce(isFinal?_L('FINAL ROUND — GORGON!','決戦ラウンド — GORGON！'):_L('ROUND '+cs.waveNum,'ラウンド '+cs.waveNum));
+    if(isFinal){playComm('hq',_L('GORGON! The Kaiju boss! Use everything you have, #N!','GORGON!! カイジュウボス！全力で戦え！ #N！'));try{sfx.startBossBGM&&sfx.startBossBGM()}catch(_){};}
+    try{sfx.playCrowdCheer(isFinal?4:2)}catch(_){}
+    const odds=wf.map(f=>`${f.def.ring}: ${({tengu:'2.5:1',mantis:'1.8:1',centipede:'3.2:1',predator:'2.1:1',jabba:'4.5:1',queen:'1.5:1',kaiju:'0.9:1'})[f.def.id]||'2:1'}`).join(' | ');
+    wfCineSubtitle('💰 '+odds,'#ffcc00');
+    setTimeout(()=>{try{const s=document.getElementById('wfcine-sub');if(s)s.style.display='none'}catch(_){}},5000);
+    // v7.250 ★ Pilot combat hints — strategic commentary per fighter
+    setTimeout(()=>{
+      try{
+        const hints=wf.map(f=>_FIGHTER_HINTS[f.def.id]).filter(Boolean);
+        if(hints.length>0)playComm('pilot',hints[0]);
+        if(hints.length>1)setTimeout(()=>{try{playComm('pilot',hints[1])}catch(_){}},3800);
+      }catch(_){}
+    },1000);
+    // v7.250 ★ Money burst on wave start
+    try{const cPos=cs.pilotPos?cs.pilotPos.clone():new THREE.Vector3(0,2,0);_spawnMoneyBurst(cPos,50);}catch(_){}
+    updateColosseumHUD();
+  });
+}
+// v7.272: SF-style colosseum wave intro ─────────────────────────────────────
+function _startColoWaveIntro(waveFighters,isFirstWave,onDone){
+  const cs=colosseumState;if(!cs)return;
+  cs._introActive=true;cs._introStep=0;cs._introT=0;cs._introOnDone=onDone;
+  cs._introCamTargetPos=null;cs._introCamTargetLook=null;
+  const steps=[];
+  if(isFirstWave){
+    steps.push({type:'pilot',name:'THE PILOT',title:'COSMIC WARRIOR',
+      color:'#00ff88',duration:2.6});
+    steps.push({type:'vs',duration:1.2});
+  }
+  waveFighters.forEach(f=>{
+    const isKaiju=f.def.id==='kaiju';
+    steps.push({type:'char',fighter:f,
+      name:f.def.ring,title:(_COLO_TITLES&&_COLO_TITLES[f.def.id])||'CHALLENGER',
+      color:'#'+f.def.col.toString(16).padStart(6,'0'),
+      duration:isKaiju?3.2:(isFirstWave?2.5:2.0)});
+  });
+  steps.push({type:'fight',duration:.9});
+  cs._introSteps=steps;
+  // Show overlay
+  const nc=document.getElementById('colo-namecard');if(nc)nc.style.display='block';
+  // Skip handler — space or touch skips to end
+  if(cs._introSkipBound){try{document.removeEventListener('keydown',cs._introSkipBound)}catch(_){};}
+  cs._introSkipBound=function(e){if(e.code==='Space'||e.type==='touchstart')_endColoIntro();};
+  try{document.addEventListener('keydown',cs._introSkipBound);}catch(_){}
+  try{document.addEventListener('touchstart',cs._introSkipBound,{once:true});}catch(_){}
+  // Kick off first step after a short lead-in
+  setTimeout(()=>{try{_coloIntroStep(cs._introSteps[0])}catch(e){}},300);
+}
+function _coloIntroStep(step){
+  const cs=colosseumState;if(!cs||!cs._introActive)return;
+  cs._introT=0;
+  // ── PILOT close-up ────────────────────────────────────────────
+  if(step.type==='pilot'){
+    const pm=cs.pilotMesh;
+    if(pm){
+      const pp=pm.position;
+      cs._introCamTargetPos=new THREE.Vector3(pp.x+3.5,pp.y+10,pp.z+13);
+      cs._introCamTargetLook=new THREE.Vector3(pp.x,pp.y+9,pp.z);
+    }
+    // Jab pose after 0.4s, then hold
+    setTimeout(()=>{
+      if(!cs||!cs._introActive)return;
+      const rA=cs.pilotMesh&&cs.pilotMesh.getObjectByName('rArm');
+      if(rA)rA.rotation.x=-Math.PI*.55; // jab forward
+      setTimeout(()=>{if(rA&&cs._introActive)rA.rotation.x=-Math.PI*1.05;},300); // raise fist
+    },380);
+    // Name card after flash
+    setTimeout(()=>{
+      if(!cs||!cs._introActive)return;
+      try{screenFlash(.22)}catch(_){}
+      _coloShowNameCard(step.name,step.title,step.color);
+      try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2.5)}catch(_){}
+      try{playComm('pilot',_L("Ready!! Bring them on!!","来い！全員かかってこい！！"));}catch(_){}
+    },520);
+  }
+  // ── FIGHTER close-up ──────────────────────────────────────────
+  else if(step.type==='char'){
+    const f=step.fighter;if(!f)return;
+    const fp=f.mesh.position;
+    const s=f.def.sz||1.5;
+    const headH=s*3.8;
+    cs._introCamTargetPos=new THREE.Vector3(fp.x+s*1.8,fp.y+headH*.88,fp.z+s*3.2+5.5);
+    cs._introCamTargetLook=new THREE.Vector3(fp.x,fp.y+headH*.7,fp.z);
+    setTimeout(()=>{
+      if(!cs||!cs._introActive)return;
+      try{screenFlash(.3)}catch(_){}
+      try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}
+      if(f.def.id==='kaiju'){try{S.shakeT=.7;S.shakeI=1.8}catch(_){};}
+      _coloShowNameCard(step.name,step.title,step.color);
+    },480);
+  }
+  // ── VS screen ────────────────────────────────────────────────
+  else if(step.type==='vs'){
+    // Pull back to arena overview
+    cs._introCamTargetPos=new THREE.Vector3(0,28,28);
+    cs._introCamTargetLook=new THREE.Vector3(0,0,0);
+    _coloHideNameCard();
+    setTimeout(()=>{
+      if(!cs||!cs._introActive)return;
+      try{screenFlash(.7)}catch(_){}
+      const vs=document.getElementById('cn-vs');
+      if(vs)vs.style.transform='translate(-50%,-50%) scale(1)';
+      try{sfx._vsStingSFX&&sfx._vsStingSFX()}catch(_){}
+      try{playComm('hq',_L('Place your bets!! All bets in!!','賭けろ！！全員賭けろ！！'));}catch(_){}
+    },350);
+  }
+  // ── FIGHT! ────────────────────────────────────────────────────
+  else if(step.type==='fight'){
+    // Zoom back toward arena center
+    cs._introCamTargetPos=new THREE.Vector3(3,18,20);
+    cs._introCamTargetLook=new THREE.Vector3(0,1,0);
+    _coloHideNameCard();
+    const vs=document.getElementById('cn-vs');if(vs)vs.style.transform='translate(-50%,-50%) scale(0)';
+    const fi=document.getElementById('cn-fight');
+    if(fi){fi.style.display='block';fi.style.transform='translate(-50%,-50%) scale(0)';}
+    setTimeout(()=>{
+      if(!cs||!cs._introActive)return;
+      try{screenFlash(.5)}catch(_){}
+      if(fi)fi.style.transform='translate(-50%,-50%) scale(1)';
+      try{sfx._fightCrySFX&&sfx._fightCrySFX()}catch(_){}
+      try{S.shakeT=.4;S.shakeI=1.2}catch(_){}
+    },200);
+  }
+}
+function _coloShowNameCard(name,title,color){
+  const nc=document.getElementById('colo-namecard');if(!nc)return;
+  const card=document.getElementById('cn-card');
+  const nm=document.getElementById('cn-name');
+  const ti=document.getElementById('cn-title');
+  const bt=document.getElementById('cn-bar-top');
+  const bb=document.getElementById('cn-bar-bot');
+  if(card){card.style.color=color;card.style.borderLeftColor=color;}
+  if(nm)nm.textContent=name;
+  if(ti)ti.textContent=title;
+  if(bt)bt.style.background=color;
+  if(bb)bb.style.background=color;
+  // Slide in
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(card)card.style.transform='translateX(0)';}));
+}
+function _coloHideNameCard(){
+  const card=document.getElementById('cn-card');
+  if(card)card.style.transform='translateX(-110%)';
+}
+function _updateColoIntro(dt){
+  const cs=colosseumState;if(!cs||!cs._introActive)return;
+  cs._introT+=dt;
+  // Smooth camera lerp to target
+  if(cs._introCamTargetPos){
+    camera.position.x+=(cs._introCamTargetPos.x-camera.position.x)*Math.min(1,5.5*dt);
+    camera.position.y+=(cs._introCamTargetPos.y-camera.position.y)*Math.min(1,5.5*dt);
+    camera.position.z+=(cs._introCamTargetPos.z-camera.position.z)*Math.min(1,5.5*dt);
+  }
+  if(cs._introCamTargetLook){
+    camera.lookAt(cs._introCamTargetLook.x,cs._introCamTargetLook.y,cs._introCamTargetLook.z);
+  }
+  const step=cs._introSteps[cs._introStep];
+  if(!step){_endColoIntro();return;}
+  if(cs._introT>=step.duration){
+    _coloHideNameCard();
+    cs._introStep++;
+    const next=cs._introSteps[cs._introStep];
+    if(next){setTimeout(()=>{try{_coloIntroStep(next)}catch(e){}},180);}
+    else{setTimeout(()=>{try{_endColoIntro()}catch(e){}},550);}
+  }
+}
+function _endColoIntro(){
+  const cs=colosseumState;if(!cs)return;
+  if(!cs._introActive)return;
+  cs._introActive=false;
+  // Remove skip handlers
+  if(cs._introSkipBound){
+    try{document.removeEventListener('keydown',cs._introSkipBound)}catch(_){}
+    try{document.removeEventListener('touchstart',cs._introSkipBound)}catch(_){}
+    cs._introSkipBound=null;
+  }
+  // Hide all overlay elements
+  const nc=document.getElementById('colo-namecard');if(nc)nc.style.display='none';
+  const card=document.getElementById('cn-card');if(card)card.style.transform='translateX(-110%)';
+  const vs=document.getElementById('cn-vs');if(vs)vs.style.transform='translate(-50%,-50%) scale(0)';
+  const fi=document.getElementById('cn-fight');if(fi){fi.style.transform='translate(-50%,-50%) scale(0)';setTimeout(()=>{if(fi)fi.style.display='none'},300);}
+  // Reset pilot pose
+  if(cs.pilotMesh){
+    const rA=cs.pilotMesh.getObjectByName('rArm');if(rA)rA.rotation.x=0;
+  }
+  cs._introCamTargetPos=null;cs._introCamTargetLook=null;
+  // Trigger the actual wave start callback
+  const cb=cs._introOnDone;cs._introOnDone=null;
+  if(cb){try{cb()}catch(e){};}
 }
 function updateColosseum(dt){
   const cs=colosseumState;if(!cs||!cs.active)return;
@@ -32579,6 +32832,10 @@ function updateColosseum(dt){
   _updateColosseumFighters(dt);
   _colosseumWaveCheck(dt);
   // ── Camera follow + hit-zoom ─────────────────────────────────
+  if(cs._introActive){
+    // v7.272: SF intro controls camera via _updateColoIntro
+    _updateColoIntro(dt);
+  }else{
   const pp=cs.pilotPos;
   if(cs._hitCam){
     cs._hitCam.t+=dt;
@@ -32599,6 +32856,7 @@ function updateColosseum(dt){
     camera.position.z+=(pp.z*.22+22-camera.position.z)*3*dt;
     camera.lookAt(pp.x*.1,0,pp.z*.1);
   }
+  } // end !_introActive camera block
   // Invincibility blink
   if(pm)pm.visible=!(cs.pilotInvT>0&&Math.floor(cs.t*18)%2===0);
 }
