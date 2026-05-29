@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COSMIC INVADERS — Space Colosseum</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: monospace;
+      color: #ff6600;
+    }
+    .msg {
+      text-align: center;
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+    .msg small {
+      display: block;
+      margin-top: 10px;
+      color: #666;
+      font-size: 12px;
+    }
+  </style>
+  <script>
+    // Redirect to the main game with the ?colosseum parameter
+    window.location.replace('index.html?colosseum');
+  </script>
+</head>
+<body>
+  <div class="msg">
+    ⚔️ SPACE COLOSSEUM ⚔️
+    <small>Loading...</small>
+  </div>
+</body>
+</html>

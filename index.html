@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.254</title>
+<title>COSMIC INVADERS v7.271</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -591,7 +591,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 
 /* Game Over */
 #gameover-screen{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;
-  align-items:center;justify-content:center;z-index:200;pointer-events:auto}
+  align-items:center;justify-content:flex-start;padding-top:max(4vh,22px);overflow-y:auto;z-index:200;pointer-events:auto}
 #gameover-screen h2{font-size:60px;color:#f00;letter-spacing:8px;text-shadow:0 0 30px #f00,0 0 60px #800}
 #gameover-screen .final-score{font-size:34px;color:#ff0;margin-top:18px;text-shadow:0 0 15px #ff0}
 #gameover-screen .new-record{font-size:18px;color:#f0f;margin-top:8px;animation:blink .5s step-end infinite}
@@ -606,20 +606,23 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 #victory-screen .vic-score{font-size:30px;color:#ff0;margin-top:20px}
 #victory-screen .restart-prompt{font-size:18px;color:#0f0;margin-top:40px;animation:blink 1s step-end infinite}
 
-/* Stamp */
-#stamp{position:fixed;top:50%;left:50%;z-index:250;transform:translate(-50%,-50%) scale(0) rotate(-30deg);
-  width:200px;height:200px;border-radius:50%;border:4px solid #f80;display:none;
+/* Stamp — v7.261: moved to top-right so it never overlaps buttons */
+#stamp{position:fixed;top:8%;right:6%;z-index:250;transform:scale(0) rotate(-30deg);
+  width:160px;height:160px;border-radius:50%;border:4px solid #f80;display:none;
   flex-direction:column;align-items:center;justify-content:center;
   background:rgba(255,136,0,0.1);box-shadow:0 0 40px #f80,inset 0 0 30px rgba(255,136,0,0.2)}
 #stamp.animate{display:flex;animation:stampIn .6s cubic-bezier(0.175,0.885,0.32,1.275) forwards}
-#stamp .rank{font-size:24px;color:#f80;font-weight:bold;letter-spacing:3px}
-#stamp .stamp-score{font-size:16px;color:#ff0;margin-top:4px}
+#stamp .rank{font-size:20px;color:#f80;font-weight:bold;letter-spacing:3px}
+#stamp .stamp-score{font-size:13px;color:#ff0;margin-top:4px}
 #stamp .stamp-ring{position:absolute;top:-8px;left:-8px;right:-8px;bottom:-8px;
   border:2px dashed #f80;border-radius:50%;opacity:.6}
-@keyframes stampIn{0%{transform:translate(-50%,-50%) scale(0) rotate(-30deg);opacity:0}
-  60%{transform:translate(-50%,-50%) scale(1.2) rotate(5deg);opacity:1}
-  80%{transform:translate(-50%,-50%) scale(.95) rotate(-2deg)}
-  100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);opacity:1}}
+@keyframes stampIn{0%{transform:scale(0) rotate(-30deg);opacity:0}
+  60%{transform:scale(1.2) rotate(5deg);opacity:1}
+  80%{transform:scale(.95) rotate(-2deg)}
+  100%{transform:scale(1) rotate(0deg);opacity:1}}
+/* v7.261: colosseum unlock button glow pulse */
+@keyframes coloUnlockPulse{0%,100%{box-shadow:0 0 22px rgba(255,170,0,0.5),inset 0 0 12px rgba(255,170,0,0.08)}
+  50%{box-shadow:0 0 38px rgba(255,200,0,0.9),inset 0 0 20px rgba(255,200,0,0.18);border-color:#ffd040}}
 
 /* Bonus */
 /* v7.67: Repositioned bonus-overlay to sit ABOVE the target-radar (bottom-left HUD area).
@@ -765,7 +768,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.254 - LOADED
+  COSMIC INVADERS v7.270 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -974,7 +977,6 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
       <div id="op-cine-list" style="display:flex;flex-direction:column;gap:4px"></div>
     </div>
     <button type="button" class="op-close" onclick="openGallery()" style="border-color:#0ff;color:#0ff;background:rgba(0,40,50,0.4);box-shadow:0 0 10px rgba(0,255,255,0.3);margin-top:8px">&#9654; CHARACTER GALLERY &#9664;</button>
-    <button type="button" class="op-close" onclick="openCineReplay()" style="border-color:#f0f;color:#f0f;background:rgba(40,0,40,0.4);box-shadow:0 0 10px rgba(255,0,255,0.3);margin-top:4px">&#9654; CINEMATIC REPLAY &#9664;</button>
     <button type="button" class="op-close" onclick="openTestStage()" style="border-color:#ff0;color:#ff0;background:rgba(40,40,0,0.4);box-shadow:0 0 10px rgba(255,255,0,0.3);margin-top:4px">&#9654; TEST STAGE &#9664;</button>
     <button type="button" class="op-close" onclick="openBossTest()" style="border-color:#f44;color:#f88;background:rgba(40,0,0,0.4);box-shadow:0 0 10px rgba(255,50,50,0.3);margin-top:4px">&#9654; BOSS TEST &#9664;</button>
     <!-- v7.53: open the Cosmic Pose Editor as an in-game tool (was URL-only ?tool=pose) -->
@@ -1109,7 +1111,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.254</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.270</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1136,6 +1138,15 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
       <div id="best-line" style="margin-top:3px;font-size:10px;color:#888">No record yet — be the first!</div>
     </div>
     <button type="button" id="btn-show-tutorial" onclick="showOnboarding()" style="margin-top:8px;font-size:11px;color:#0ff;background:transparent;border:1px solid #044;padding:5px 14px;cursor:pointer;letter-spacing:2px;font-family:inherit">❓ HOW TO PLAY</button>
+    <!-- v7.261: COLOSSEUM CHALLENGE — unlocked after all 5 main stages cleared -->
+    <div id="colosseum-unlock-section" style="display:none;margin-top:14px;text-align:center">
+      <div style="font-size:10px;color:#ffaa00;letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 8px rgba(255,170,0,0.7)">★ ALL STAGES CLEARED — NEW MODE UNLOCKED ★</div>
+      <button type="button" id="btn-colosseum-challenge" onclick="startColosseumChallenge()"
+        style="font-size:16px;color:#ffaa00;padding:16px 42px;border:2px solid #ffaa00;cursor:pointer;letter-spacing:3px;background:rgba(40,18,0,0.75);border-radius:6px;font-family:inherit;min-height:60px;min-width:280px;box-shadow:0 0 22px rgba(255,170,0,0.5),inset 0 0 12px rgba(255,170,0,0.08);-webkit-tap-highlight-color:rgba(255,170,0,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold;animation:coloUnlockPulse 2.2s ease-in-out infinite">
+        🤼 COLOSSEUM CHALLENGE
+      </button>
+      <div style="font-size:9px;color:#886600;letter-spacing:2px;margin-top:5px">FIGHT ALL 8 MONSTERS — BEAT YOUR BEST SCORE</div>
+    </div>
     <div class="controls">
       ARROWS/WASD - MANEUVER&ensp;|&ensp;SPACE - FIRE&ensp;|&ensp;[E] - NAPALM<br>
     </div>
@@ -1223,7 +1234,9 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <div id="final-summary" style="margin-top:10px;font-size:14px;color:#0ff;letter-spacing:2px;line-height:1.7"></div>
     <div class="new-record" id="new-record" style="display:none">!! NEW RECORD !!</div>
     <div class="restart-prompt">[ PRESS SPACE OR TAP BELOW ]</div>
-    <button type="button" onclick="restartFromGameOver()" style="pointer-events:auto;margin-top:20px;font-size:20px;color:#0f0;padding:20px 50px;border:4px solid #0f0;cursor:pointer;letter-spacing:4px;background:rgba(0,60,0,0.5);border-radius:8px;font-family:inherit;min-height:70px;min-width:260px;box-shadow:0 0 25px rgba(0,255,0,0.6);-webkit-tap-highlight-color:rgba(0,255,0,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold">&#9654; TAP TO RETRY &#9664;</button>
+    <!-- v7.261: CONTINUE button — shown only when a continue target is saved -->
+    <button type="button" id="go-continue-btn" onclick="continueGame()" style="display:none;pointer-events:auto;margin-top:16px;font-size:20px;color:#f0f;padding:16px 50px;border:4px solid #f0f;cursor:pointer;letter-spacing:4px;background:rgba(60,0,60,0.6);border-radius:8px;font-family:inherit;min-height:64px;min-width:260px;box-shadow:0 0 25px rgba(255,0,255,0.5);-webkit-tap-highlight-color:rgba(255,0,255,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold">&#9654; CONTINUE &#9664;</button>
+    <button type="button" onclick="restartFromGameOver()" style="pointer-events:auto;margin-top:10px;font-size:20px;color:#0f0;padding:20px 50px;border:4px solid #0f0;cursor:pointer;letter-spacing:4px;background:rgba(0,60,0,0.5);border-radius:8px;font-family:inherit;min-height:70px;min-width:260px;box-shadow:0 0 25px rgba(0,255,0,0.6);-webkit-tap-highlight-color:rgba(0,255,0,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold">&#9654; TAP TO RETRY &#9664;</button>
     <!-- v7.42: viral share buttons -->
     <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;pointer-events:auto;flex-wrap:wrap">
       <button type="button" onclick="shareToX()" style="font-size:14px;color:#0ff;background:rgba(0,40,80,0.6);border:2px solid #0af;padding:10px 24px;cursor:pointer;letter-spacing:2px;font-family:inherit;border-radius:4px;min-height:42px">🐦 SHARE ON X</button>
@@ -1370,11 +1383,23 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <div id="boss-hp-track"><div id="boss-hp-fill"></div></div>
   </div>
 </div>
+<!-- v7.264: ARMADA stage HUD -->
+<div id="arm-ion-warn" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(0,50,100,0.7);border:2px solid #44aaff;color:#44aaff;
+  font-family:monospace;font-size:18px;letter-spacing:3px;padding:10px 20px;
+  z-index:200;pointer-events:none;text-align:center">⚡ WEAPONS OFFLINE ⚡</div>
+<div id="arm-fleet-hp" style="display:none;position:fixed;top:4.5%;left:50%;transform:translateX(-50%);
+  width:260px;text-align:center;z-index:90;pointer-events:none;">
+  <div style="color:#44aaff;font-family:monospace;font-size:11px;letter-spacing:2px;margin-bottom:3px">⚔ REBEL FLEET</div>
+  <div style="background:#000022;border:1px solid #2266aa;height:9px;border-radius:2px;overflow:hidden;">
+    <div id="arm-fleet-fill" style="background:linear-gradient(to right,#44aaff,#0044ff);height:100%;width:100%;transition:width 0.3s;"></div>
+  </div>
+</div>
 
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.254 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.270 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1409,7 +1434,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.254 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.270 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -4413,10 +4438,13 @@ function makeEnemy(type){const g=new THREE.Group();const c=ECOLORS[type%4];const
     g.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.2,.08,3,6)),m))}
   return g}
 
-function makeAsteroid(){const g=new THREE.Group();
+function makeAsteroid(large){const g=new THREE.Group();
   // v6.70: On FIRE PLANET, asteroids are 2.5x bigger fireballs with red→orange→white gradient layers
+  // v7.270: dual size — large (~40%): big boulder | small (~60%): pebble
   const isFire=(selectedStage&&selectedStage.id==='fire');
-  const sz=(isFire?6.3:2.5)+Math.random()*(isFire?4:2);
+  const sz=isFire
+    ?(large?(9.0+Math.random()*3.0):(4.5+Math.random()*2.0))
+    :(large?(4.0+Math.random()*2.5):(1.5+Math.random()*1.2));
   const geo=new THREE.IcosahedronGeometry(sz,0);
   const pos=geo.attributes.position;for(let i=0;i<pos.count;i++){pos.array[i*3]*=.7+Math.random()*.6;
     pos.array[i*3+1]*=.7+Math.random()*.6;pos.array[i*3+2]*=.7+Math.random()*.6}pos.needsUpdate=true;
@@ -4891,6 +4919,82 @@ function makeMegaFortress(){
     th.position.set(Math.cos(angle)*6,-9,Math.sin(angle)*6);g.add(th)}
 
   return g}
+
+// ---- Capital Ships (v7.263: Fortress background fleet; v7.264: Armada stage) ----
+function makeImperialSD(scale){
+  scale=scale||1;
+  const g=new THREE.Group();
+  const fw=(geo,fill,edge)=>{
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.85}));
+    const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
+    g.add(m);g.add(l);
+  };
+  // Central spine
+  fw(new THREE.BoxGeometry(28,2,48),0x111122,0x3344aa);
+  // Left wedge wing
+  const lwg=new THREE.BoxGeometry(14,7,42);
+  const lm=new THREE.Mesh(lwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.85}));
+  const ll=new THREE.LineSegments(new THREE.EdgesGeometry(lwg),new THREE.LineBasicMaterial({color:0x3344aa}));
+  lm.rotation.y=0.5;ll.rotation.y=0.5;lm.position.set(-12,0,2);ll.position.set(-12,0,2);g.add(lm);g.add(ll);
+  // Right wedge wing
+  const rwg=new THREE.BoxGeometry(14,7,42);
+  const rm=new THREE.Mesh(rwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.85}));
+  const rl=new THREE.LineSegments(new THREE.EdgesGeometry(rwg),new THREE.LineBasicMaterial({color:0x3344aa}));
+  rm.rotation.y=-0.5;rl.rotation.y=-0.5;rm.position.set(12,0,2);rl.position.set(12,0,2);g.add(rm);g.add(rl);
+  // Bridge tower
+  fw(new THREE.BoxGeometry(6,8,10),0x192240,0x6677cc);
+  // Bridge window
+  const bwg=new THREE.SphereGeometry(2.2,5,4);
+  const bwm=new THREE.Mesh(bwg,new THREE.MeshBasicMaterial({color:0x88bbff,transparent:true,opacity:0.9}));
+  bwm.position.set(0,5,0);g.add(bwm);
+  // Turrets (6 small ones on deck)
+  for(let i=0;i<6;i++){
+    const tg=new THREE.CylinderGeometry(0.4,0.4,1.5,4);
+    const tm=new THREE.Mesh(tg,new THREE.MeshBasicMaterial({color:0x334477}));
+    tm.position.set(-8+i*3.5,2,(i%2===0)?-8:5);g.add(tm);
+  }
+  // Engine glow (3 engines at rear)
+  for(let i=0;i<3;i++){
+    const eg=new THREE.TorusGeometry(2.5,0.4,4,10);
+    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x334488,transparent:true,opacity:0.8}));
+    em.position.set(-5+i*5,0,22);em.rotation.x=Math.PI/2;g.add(em);
+  }
+  g.scale.setScalar(scale);
+  return g;
+}
+
+function makeRebelCruiser(scale){
+  scale=scale||1;
+  const g=new THREE.Group();
+  const fw=(geo,fill,edge)=>{
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.85}));
+    const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
+    g.add(m);g.add(l);
+  };
+  // Main organic hull (Mon Calamari style — elongated sphere approximated)
+  const hg=new THREE.SphereGeometry(8,8,6);
+  const hm=new THREE.Mesh(hg,new THREE.MeshBasicMaterial({color:0x223322,transparent:true,opacity:0.85}));
+  hm.scale.set(1,0.6,2.5);// stretch into oval shape
+  const hl=new THREE.LineSegments(new THREE.EdgesGeometry(hg),new THREE.LineBasicMaterial({color:0x44aa66}));
+  hl.scale.set(1,0.6,2.5);
+  g.add(hm);g.add(hl);
+  // Dorsal superstructure
+  fw(new THREE.BoxGeometry(4,5,12),0x1a2d1a,0x44aa66);
+  // Surface bumps
+  for(let i=0;i<5;i++){
+    const bg=new THREE.SphereGeometry(1.5,4,4);
+    const bm=new THREE.Mesh(bg,new THREE.MeshBasicMaterial({color:0x1e2e1e,transparent:true,opacity:0.85}));
+    bm.position.set((i-2)*4,1+Math.sin(i)*2,(-2+i)*3);bm.scale.y=0.5;g.add(bm);
+  }
+  // Engines (4 at rear)
+  for(let i=0;i<4;i++){
+    const eg=new THREE.CylinderGeometry(1.0,1.5,3,6);
+    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x224422,transparent:true,opacity:0.85}));
+    em.position.set(-5+i*3.5,-1.5,18);em.rotation.x=Math.PI/2;g.add(em);
+  }
+  g.scale.setScalar(scale);
+  return g;
+}
 
 // ---- Beams ----
 function makePlayerBeam(color,pw){const g=new THREE.Group();const m=new THREE.LineBasicMaterial({color});
@@ -8050,14 +8154,15 @@ let seqIndex=0;// tracks which cannon fires next in the rotation
 // Map: offset [x,y] + which LU index to flash
 // Beam offsets matched to 3D cannon positions: TL(-2.8,1.2) TR(2.8,1.2) BL(-2.8,-1.2) BR(2.8,-1.2)
 const CANNON_MAP={
-  0:[ {off:[0,-1.2],lu:2} ],                                         // 1 gun: bottom center
-  1:[ {off:[-2.8,-1.2],lu:2},{off:[2.8,-1.2],lu:3} ],                // 2 guns: BL, BR
-  2:[ {off:[-2.8,-1.2],lu:2},{off:[0,-0.5],lu:0},{off:[2.8,-1.2],lu:3} ],// 3 guns
+  0:[ {off:[0, 0],   lu:2} ],                                          // 1 gun: dead center
+  1:[ {off:[-2.8,-1.2],lu:2},{off:[2.8,-1.2],lu:3} ],                 // 2 guns: BL, BR
+  2:[ {off:[-2.8,-1.2],lu:2},{off:[0, 0],lu:0},{off:[2.8,-1.2],lu:3} ],// 3 guns
   3:[ {off:[-2.8,1.2],lu:0},{off:[2.8,1.2],lu:1},{off:[-2.8,-1.2],lu:2},{off:[2.8,-1.2],lu:3} ],// X-Wing 4
   4:[ {off:[-2.8,1.2],lu:0},{off:[2.8,1.2],lu:1},{off:[-2.8,-1.2],lu:2},{off:[2.8,-1.2],lu:3} ],
 };
 
 function fireBeam(){
+  if(S._armIonDisableT>0)return;// v7.264: ion cannon weapon disable
   const heatCost=C.HEAT_PER_SHOT[Math.min(S.power,3)];
   if(S.hasOverdriveBeam){
     // v7.209: Overdrive beam — no heat accumulation, never overheats
@@ -8106,7 +8211,8 @@ function emitBeamFromCannon(cannon,color){
   const shipDmg=(selectedShip&&selectedShip.playerDmgMult)||1;
   // v7.209: overdrive beam doubles damage
   const overDmg=S.hasOverdriveBeam?2:1;
-  pBeams.push({mesh,vel:new THREE.Vector3(-ox*.4,-oy*.2,-C.BEAM_SPEED),dmg:(1+S.power*.4)*shipDmg*overDmg,_magnetic:S.hasMagnetCoating})}
+  // v7.265: converge to player center at ~100u ahead (-ox/oy * BEAM_SPEED/100 ≈ *1.2)
+  pBeams.push({mesh,vel:new THREE.Vector3(-ox*1.2,-oy*1.2,-C.BEAM_SPEED),dmg:(1+S.power*.4)*shipDmg*overDmg,_magnetic:S.hasMagnetCoating})}
 
 function fireNapalm(){
   // Napalm is independent from heat system - fires regardless of overheat
@@ -12685,7 +12791,7 @@ function updateEnemies(dt){
       }
     }
     else{e.mesh.rotation.y+=e.spinRate*dt;e.mesh.rotation.x+=dt*.5;if(e.type===3)e.mesh.rotation.z+=e.spinRate*dt*.7}
-    if(S.phase==='PLAYING'||S.phase==='FORTRESS'||S.phase==='RETURN'){
+    if(S.phase==='PLAYING'||S.phase==='FORTRESS'||S.phase==='RETURN'||S.phase==='ARMADA'){
       // Boss with both arms lost cannot shoot regular beams
       if(e.isBoss&&e.armsLost){/* no attack */}
       else if(!e.isAsteroid&&!e.isBonus){e.shootTimer-=dt;if(e.shootTimer<=0){
@@ -12799,7 +12905,7 @@ function updateBeams(dt){
       }
     }
     b.mesh.position.add(b.vel.clone().multiplyScalar(dt));
-    b.mesh.rotation.z+=dt*6;const bfar=S.phase==='FORTRESS'?C.BEAM_FAR_FORT:C.BEAM_FAR;
+    b.mesh.rotation.z+=dt*6;const bfar=(S.phase==='FORTRESS'||S.phase==='ARMADA')?C.BEAM_FAR_FORT:C.BEAM_FAR;
     // v7.254: ally beams expire by life timer; also do enemy hit detection for ally beams
     if(b._allyBeam){
       b.life=(b.life||2.5)-dt;
@@ -12876,7 +12982,7 @@ function checkCollisions(){const camP=camera.position;
         if(gen._exploded)continue;
         const gp=gen.mesh.position;
         const dx=b.mesh.position.x-gp.x,dy=b.mesh.position.y-gp.y,dz=b.mesh.position.z-gp.z;
-        if(Math.sqrt(dx*dx+dy*dy+dz*dz)<9.0){
+        if(Math.sqrt(dx*dx+dy*dy+dz*dz)<12.0){// v7.262: enlarged hitbox
           gen.hp-=(b.dmg||1);
           gen._flashT=0.15;
           spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0x00ccff,5,.6,.3);
@@ -12903,36 +13009,37 @@ function checkCollisions(){const camP=camera.position;
       if(hit)continue;
     }
   }
-  // v7.251: pBeams vs DEATH HAND
-  if(S._deathHandMesh&&!S._deathHandDone&&fortPhase===1){
+  // v7.263: pBeams vs SD TRENCH BOSS (replaces DEATH HAND)
+  if(S._sdBossMesh&&!S._sdBossDone&&fortPhase===1){
     for(let bi=pBeams.length-1;bi>=0;bi--){const b=pBeams[bi];
-      const dh=S._deathHandMesh;
-      const dx=b.mesh.position.x-dh.position.x,dy=b.mesh.position.y-dh.position.y,dz=b.mesh.position.z-dh.position.z;
-      if(Math.abs(dz)<20&&Math.sqrt(dx*dx+dy*dy)<16){
-        S._deathHandHP-=(b.dmg||1);
-        spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0xff4400,5,.7,.4);
+      const sd=S._sdBossMesh;
+      const dx=b.mesh.position.x-sd.position.x,dy=b.mesh.position.y-sd.position.y,dz=b.mesh.position.z-sd.position.z;
+      // Large hit area for the imposing destroyer
+      if(Math.abs(dz)<22&&Math.sqrt(dx*dx+dy*dy)<34){
+        S._sdBossHP-=(b.dmg||1);
+        spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0x3366ff,5,.7,.4);
         sfx.beamClash&&sfx.beamClash();
         scene.remove(b.mesh);pBeams.splice(bi,1);
-        // Update boss HP bar
-        try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(S._deathHandHP/120)*100)+'%';}catch(_){}
-        if(S._deathHandHP<=0&&!S._deathHandDone){
-          S._deathHandDone=true;
-          const dhPos=dh.position.clone();
-          spawnMegaExplosion(dhPos,.5);sfx.bigExplosion();screenFlash(.8);S.shakeT=2;S.shakeI=3;
-          for(let ci=0;ci<4;ci++){setTimeout(()=>{try{spawnMegaExplosion(dhPos.clone().add(new THREE.Vector3((Math.random()-.5)*15,(Math.random()-.5)*8,(Math.random()-.5)*12)),.4);sfx.bigExplosion();}catch(_){}},ci*350+300);}
-          scene.remove(dh);S._deathHandMesh=null;
-          wfCineSubtitle('◆ DEATH HAND DESTROYED!! ◆','#ffaa00');
-          setTimeout(()=>playComm('pilot','YES!! DEATH HAND is DOWN!! Push to the core!!'),300);
+        try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(S._sdBossHP/S._sdBossMaxHP)*100)+'%';}catch(_){}
+        if(S._sdBossHP<=0&&!S._sdBossDone){
+          S._sdBossDone=true;
+          const sdPos=sd.position.clone();
+          // Chain explosion x5
+          spawnMegaExplosion(sdPos,.5);sfx.bigExplosion&&sfx.bigExplosion();screenFlash(.9);S.shakeT=2.5;S.shakeI=4;
+          for(let ci=0;ci<5;ci++){setTimeout(()=>{try{spawnMegaExplosion(sdPos.clone().add(new THREE.Vector3((Math.random()-.5)*20,(Math.random()-.5)*10,(Math.random()-.5)*10)),.5);sfx.bigExplosion&&sfx.bigExplosion();}catch(_){}},ci*400+200);}
+          setTimeout(()=>{try{scene.remove(sd);S._sdBossMesh=null;}catch(_){}},2500);
+          wfCineSubtitle('◆ EXECUTOR ELIMINATED!! CLEAR THE TRENCH! ◆','#ffaa00');
+          setTimeout(()=>playComm('pilot','YES!! THE DESTROYER IS DOWN!! PUSH TO THE CORE!!'),300);
+          setTimeout(()=>playComm('hq','Outstanding!! Move to the reactor — FINISH IT!!'),2000);
           try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
-          addScore(2000);
-        } else if(S._deathHandHP>0&&S._deathHandPhase!=='STAGGER'){
-          // stagger on heavy damage intervals
-          if(S._deathHandHP%30===0)S._deathHandPhase='STAGGER';
+          addScore(3000);
+        } else if(S._sdBossHP>0&&S._sdBossPhase!=='STAGGER'){
+          if(Math.floor(S._sdBossHP)%20===0){S._sdBossPhase='STAGGER';S._sdBossT=0;}
         }
       }
     }
   }
-  // v7.251: pBeams vs DEATH HAND tentacle (CORE_LOCK attack)
+  // v7.251: pBeams vs DEATH HAND tentacle (kept for legacy/tentacle removal)
   if(S._dhTentacle&&S._dhTentacle.active&&S._dhTentacle.mesh){
     for(let bi=pBeams.length-1;bi>=0;bi--){const b=pBeams[bi];
       const tp=S._dhTentacle.mesh.position;
@@ -12942,12 +13049,10 @@ function checkCollisions(){const camP=camera.position;
         spawnP(new THREE.Vector3(b.mesh.position.x,b.mesh.position.y,b.mesh.position.z),0xff8800,4,.5,.3);
         scene.remove(b.mesh);pBeams.splice(bi,1);
         if(S._dhTentacle.hp<=0){
-          // Tentacle destroyed — core lock released
           scene.remove(S._dhTentacle.mesh);
           S._dhTentacle.active=false;S._dhTentacle=null;
           wfCineSubtitle('◆ TENTACLE SEVERED! CORE SAVED! ◆','#44ff88');
           playComm('pilot','Got it!! Core is free!!');
-          spawnP(tp.clone(),0xff6600,12,1,.6);
         }
       }
     }
@@ -12956,7 +13061,8 @@ function checkCollisions(){const camP=camera.position;
   for(let bi=pBeams.length-1;bi>=0;bi--){const b=pBeams[bi];
     for(let ei=enemies.length-1;ei>=0;ei--){const e=enemies[ei];
       // v6.69: fortress turrets get an enlarged hitbox (3 units for 2x-sized turrets)
-      const hr=e.isAsteroid?C.HR_A:(e.isBigTurret?3:C.HR_E);
+      // v7.270: asteroids use per-instance _asteroidR (large vs small)
+      const hr=e.isAsteroid?(e._asteroidR||C.HR_A):(e.isBigTurret?3:C.HR_E);
       // v6.69: CRYSTAL LASER upgrade - beam hit radius 2.2x permanently after ruins clear
       const beamR=S.hasCrystalLaser?C.HR_B*2.2:C.HR_B;
       const r=beamR+hr;
@@ -13098,6 +13204,8 @@ function checkCollisions(){const camP=camera.position;
               spawnP(e.mesh.position.clone(),ec,e.isAsteroid?25:15,e.isAsteroid?1.5:1,1.5);sfx.hit();// v7.32: 1.5x lifetime
               scene.remove(e.mesh);enemies.splice(ei,1);
               const pts=e.isBonus?10:e.isAsteroid?15:(e.type+1)*5;addScore(pts);
+              if(e._isBattleTIE){S._fleetKills=(S._fleetKills||0)+1;}// v7.263: fleet TIE kill counter
+              if(e._armFighter&&typeof S._armKills!=='undefined'){S._armKills=(S._armKills||0)+1;}// v7.264: armada fighter kill counter
               if(!e.isBonus){S.waveLeft--;S.kills++;checkPowerUp()}
               if(e.isRuinsDebris){try{onRuinsDebrisDestroyed()}catch(er){}}
             }
@@ -13117,11 +13225,13 @@ function checkCollisions(){const camP=camera.position;
         addScore(1);break}}}
   // eBeams vs player
   if(S.invTimer<=0){for(let i=eBeams.length-1;i>=0;i--){const eb=eBeams[i];
+    if(eb._isIon)continue;// v7.264: ion beams handled by _checkArmadaHits (weapon disable, not damage)
     if(dsq(eb.mesh.position,camP)<(C.HR_B+C.HR_P)*(C.HR_B+C.HR_P)){
       playerHit();scene.remove(eb.mesh);eBeams.splice(i,1);break}}}
   // enemies vs player
   if(S.invTimer<=0){for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];
-    const hr=(e.isAsteroid?C.HR_A:C.HR_E)+(e.isBoss?10:0);// boss: larger collision (v6.69)
+    // v7.270: asteroids use per-instance _asteroidR (large vs small)
+    const hr=(e.isAsteroid?(e._asteroidR||C.HR_A):C.HR_E)+(e.isBoss?10:0);// boss: larger collision (v6.69)
     if(dsq(e.mesh.position,camP)<(hr+C.HR_P)*(hr+C.HR_P)){
       if(e.isBoss){
         playerHit();
@@ -13412,7 +13522,7 @@ function cleanupBossResidue(){
   }catch(_){}
   // v7.249: hide speed overlay on cleanup
   try{const se=document.getElementById('speed-overlay');if(se)se.style.display='none';}catch(_){}
-  // v7.251: shield generators + DEATH HAND + tentacle cleanup
+  // v7.263: shield generators + SD Boss + background fleet cleanup
   try{
     if(typeof S!=='undefined'&&S){
       if(S._shieldGens&&S._shieldGens.length){
@@ -13420,9 +13530,14 @@ function cleanupBossResidue(){
         S._shieldGens=[];
       }
       S._shieldGensSpawned=false;S._fortShieldsDown=false;
-      if(S._deathHandMesh){try{scene.remove(S._deathHandMesh)}catch(_){}; S._deathHandMesh=null;}
-      S._deathHandSpawned=false;S._deathHandDone=false;S._corePending=false;
-      if(S._dhTentacle&&S._dhTentacle.mesh){try{scene.remove(S._dhTentacle.mesh)}catch(_){}; S._dhTentacle=null;}
+      if(S._sdBossMesh){try{scene.remove(S._sdBossMesh)}catch(_){}; S._sdBossMesh=null;}
+      S._sdBossSpawned=false;S._sdBossDone=false;S._corePending=false;
+      // Background fleet cleanup
+      if(S._bgFleet&&S._bgFleet.length){
+        S._bgFleet.forEach(f=>{try{if(f&&f.mesh)scene.remove(f.mesh)}catch(_){}});
+        S._bgFleet.length=0;
+      }
+      S._fleetKills=0;S._fleetBattleAnnounced=false;
     }
     try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
   }catch(_){}
@@ -13480,6 +13595,20 @@ function cleanupBossResidue(){
   // the ship sits at world pos (0,-1,-30) and appears as a "landed fighter jet" inside
   // Ice Planet Phase 2 and Phase 3 scenes.
   try{if(window._fortApproachShip){scene.remove(window._fortApproachShip);window._fortApproachShip=null}}catch(_){}
+  // v7.264: armada stage cleanup
+  try{
+    if(typeof S!=='undefined'&&S){
+      if(S._armBgFleet&&S._armBgFleet.length){
+        S._armBgFleet.forEach(f=>{try{if(f&&f.mesh)scene.remove(f.mesh)}catch(_){}});
+        S._armBgFleet=[];
+      }
+      if(S._armEscort&&S._armEscort.mesh){try{scene.remove(S._armEscort.mesh)}catch(_){}; S._armEscort=null;}
+      if(S._armTitan&&S._armTitan.mesh){try{scene.remove(S._armTitan.mesh)}catch(_){}; S._armTitan=null;}
+      S._armPhase=0;S._armKills=0;S._armIonDisableT=0;
+      try{const af=document.getElementById('arm-fleet-hp');if(af)af.style.display='none';}catch(_){}
+      try{const ai=document.getElementById('arm-ion-warn');if(ai)ai.style.display='none';}catch(_){}
+    }
+  }catch(_){}
 }
 
 function startFortressApproachCine(){
@@ -13775,13 +13904,27 @@ function endFortressApproachCine(){
 function startFortress(){S.phase='FORTRESS';S.fortTimer=0;S.coreHP=Math.ceil(C.CORE_HP*(1+S.cycle*.5));
   // v7.105 ★ Mandatory transient-FX refresh on FORTRESS_APPROACH→FORTRESS transition.
   try{cleanupBossResidue()}catch(_){}
-  // v7.251: reset shield/DEATH HAND state
+  // v7.263: reset shield/SD Boss state (replaces DEATH HAND)
   S._shieldGens=[];S._shieldGensSpawned=false;S._fortShieldsDown=false;
-  S._deathHandMesh=null;S._deathHandSpawned=false;S._deathHandDone=false;
-  S._deathHandHP=120;S._deathHandAttackIdx=0;S._deathHandAttackT=0;
-  S._deathHandPhase='IDLE';S._deathHandT=0;S._deathHandCycle=0;
-  S._dhBeamSweep=null;S._dhTentacle=null;S._corePending=false;S._dhBeamHitCD=0;
+  S._sdBossMesh=null;S._sdBossSpawned=false;S._sdBossDone=false;
+  S._sdBossHP=0;S._sdBossAttackIdx=0;S._sdBossAttackT=0;
+  S._sdBossPhase='APPROACH';S._sdBossT=0;S._sdBossStuckT=0;
+  S._corePending=false;
   S._triggerEnding=false;
+  S._bgFleet=[];S._fleetKills=0;S._fleetKillTarget=12;S._tieWaveT=3;
+  S._fleetBattleAnnounced=false;S._lastFleetAnnounce=-1;S._fleetBeamT=2;
+  S._shieldGenSpawnT=0;// v7.263: reset timers
+  // Generate background fleet (2 Imperial SDs + 2 Rebel Cruisers)
+  const bgFleetDefs=[
+    {fn:makeImperialSD,  s:0.4,  x: 70, y:35, z:-650, drift: 0.25, col:'imperial'},
+    {fn:makeImperialSD,  s:0.55, x:-50, y:55, z:-780, drift:-0.18, col:'imperial'},
+    {fn:makeRebelCruiser,s:0.5,  x:-85, y:25, z:-600, drift: 0.15, col:'rebel'},
+    {fn:makeRebelCruiser,s:0.38, x: 45, y:-25,z:-700, drift:-0.12, col:'rebel'},
+  ];
+  bgFleetDefs.forEach(d=>{
+    try{const m=d.fn(d.s);m.position.set(d.x,d.y,d.z);scene.add(m);
+      S._bgFleet.push({mesh:m,drift:d.drift,col:d.col});}catch(_){}
+  });
   try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
   S.coreAlive=true;fortPhase=0;sfx.stopBGM();setTimeout(()=>sfx.startFortBGM(),1500);
   // v7.32/v7.32: reset 1-second firing-window state so a fresh trench-run starts clean
@@ -13813,8 +13956,8 @@ function startFortress(){S.phase='FORTRESS';S.fortTimer=0;S.coreHP=Math.ceil(C.C
   // Show targeting radar
   document.getElementById('target-radar').style.display='block';
   document.getElementById('target-radar').classList.remove('locked');
-  document.getElementById('tr-dist').textContent='SCANNING';
-  document.getElementById('tr-bar-fill').style.width='0%';
+  // v7.270: guard — tr-dist / tr-bar-fill no longer exist (replaced by tr-dist-digits)
+  try{const _d=document.getElementById('tr-dist-digits');if(_d)_d.textContent='SCAN  ';}catch(_){}
   document.getElementById('heartbeat-vignette').style.display='block'}
 
 function updateFortress(dt){S.fortTimer+=dt;
@@ -13833,27 +13976,83 @@ function updateFortress(dt){S.fortTimer+=dt;
     const reactor=megaFortMesh.getObjectByName('reactor');
     if(reactor){reactor.rotation.x+=dt*.8;reactor.rotation.y+=dt*.5}
   }
-  if(fortPhase===0&&S.fortTimer>7)fortPhase=1;
-  // v7.251: phase 1→2 is now gated by shield destruction + DEATH HAND defeat (not timer)
+  // v7.263: Phase 0 = FLEET BATTLE — TIE fighter screen to break through
+  if(fortPhase===0){
+    // First-frame announcement
+    if(!S._fleetBattleAnnounced&&S.fortTimer>1.5){
+      S._fleetBattleAnnounced=true;
+      wfCineSubtitle('◆ IMPERIAL FIGHTER SCREEN DETECTED ◆','#ff4400');
+      setTimeout(()=>playComm('hq','All wings — enemy fighter screen must be cleared! Destroy them ALL!'),200);
+      setTimeout(()=>playComm('pilot','All wings report in! Beginning attack run!'),3000);
+      setTimeout(()=>playComm('pilot','Gold Leader here — shields holding! Push through!!'),8000);
+    }
+    // TIE wave spawner
+    S._tieWaveT=(S._tieWaveT||3)-dt;
+    if(S._tieWaveT<=0&&(S._fleetKills||0)<(S._fleetKillTarget||12)){
+      try{_spawnFleetTIEWave(3);}catch(_){}
+      S._tieWaveT=5.5+Math.random()*2.5;
+    }
+    // Progress updates
+    const fk=S._fleetKills||0;
+    const ft=S._fleetKillTarget||12;
+    if(fk>0&&fk<ft&&fk%4===0&&fk!==S._lastFleetAnnounce){
+      S._lastFleetAnnounce=fk;
+      announce(`◆ ${fk}/${ft} TIEs DOWN — PUSH THROUGH! ◆`);
+    }
+    // Advance to trench run when kills met OR 120s timeout
+    if(fk>=ft||S.fortTimer>120){
+      fortPhase=1;
+      wfCineSubtitle('◆ FIGHTER SCREEN CLEARED! ENTERING TRENCH! ◆','#ffaa00');
+      screenFlash(.5);S.shakeT=0.8;S.shakeI=1.5;
+      setTimeout(()=>playComm('pilot','TRENCH ENTRY — FULL POWER!!'),200);
+      setTimeout(()=>playComm('hq','All wings, begin your trench run!'),2000);
+      // Clean up remaining TIEs
+      for(let ei=enemies.length-1;ei>=0;ei--){if(enemies[ei]._isBattleTIE){scene.remove(enemies[ei].mesh);enemies.splice(ei,1);}}
+      spawnWallPair();spawnWallPair();
+      try{_spawnPursuitFighters();}catch(_){}
+    }
+    // Don't fall through to phase 1+ logic
+  }
+  // v7.263: phase 1→2 gated by shield destruction + SD BOSS defeat
   if(fortPhase===1&&!S._fortShieldsDown&&S.fortTimer>8){
-    _trySpawnShieldGenerators();
+    try{_trySpawnShieldGenerators();}catch(e){console.warn('shield gen spawn:',e);}
   }
-  if(fortPhase===1&&S._fortShieldsDown&&!S._deathHandSpawned){
-    S._deathHandSpawned=true;
-    _spawnDeathHand();
-    announce('◆ DEATH HAND DEPLOYED ◆');
-    setTimeout(()=>playComm('pilot','What the — that thing is MASSIVE!!'),200);
+  if(fortPhase===1&&S._fortShieldsDown&&!S._sdBossSpawned){
+    S._sdBossSpawned=true;
+    try{_spawnSDTrenchBoss();}catch(e){console.warn('SD boss spawn:',e);}
+    try{announce('◆ EXECUTOR-CLASS DESTROYER ◆');}catch(_){}
   }
-  if(fortPhase===1&&S._deathHandDone&&!S._corePending){
+  // SD Boss failsafe — after 10s auto-defeat
+  if(fortPhase===1&&S._fortShieldsDown&&S._sdBossSpawned&&!S._sdBossDone){
+    S._sdBossStuckT=(S._sdBossStuckT||0)+dt;
+    if(S._sdBossStuckT>10){
+      S._sdBossDone=true;
+      if(S._sdBossMesh){try{spawnMegaExplosion(S._sdBossMesh.position.clone(),.5);sfx.bigExplosion&&sfx.bigExplosion();}catch(_){}try{scene.remove(S._sdBossMesh)}catch(_){};S._sdBossMesh=null;}
+      try{wfCineSubtitle('◆ EXECUTOR ELIMINATED!! ◆','#ffaa00');}catch(_){}
+      try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
+    }
+  } else if(fortPhase!==1||!S._fortShieldsDown) S._sdBossStuckT=0;
+  // Absolute failsafe — if still in phase 1 after 120s (was 80), force advance
+  if(fortPhase===1&&S.fortTimer>120&&!S._corePending){
+    if(!S._fortShieldsDown){
+      S._fortShieldsDown=true;
+      try{wfCineSubtitle('◆ SHIELDS COLLAPSED ◆','#00ffff');screenFlash(.5);}catch(_){}
+    }
+    if(!S._sdBossDone){
+      S._sdBossDone=true;
+      if(S._sdBossMesh){try{spawnMegaExplosion(S._sdBossMesh.position.clone(),.5);sfx.bigExplosion&&sfx.bigExplosion();}catch(_){}try{scene.remove(S._sdBossMesh)}catch(_){};S._sdBossMesh=null;}
+    }
+  }
+  if(fortPhase===1&&S._sdBossDone&&!S._corePending){
     S._corePending=true;
     fortPhase=2;
-    // Double core HP for final showdown
     const baseHP=Math.ceil(C.CORE_HP*(1+S.cycle*.5));
     S.coreHP=baseHP*2;
     spawnCore2();
     announce('◆ FINAL TARGET — REACTOR CORE ◆');
     setTimeout(()=>playComm('hq','The core is exposed — FIRE EVERYTHING!!'),400);
     setTimeout(()=>playComm('pilot','Going for the shot!!'),3500);
+    setTimeout(()=>playComm('hq','The Rebel fleet is buying us time — make it count!!'),7000);
   }
   if(fortPhase>=1){wallSpT-=dt;if(wallSpT<=0){spawnWallPair();wallSpT=.7}}
   // v6.69/v7.32: Turrets only spawn AFTER walls have appeared (phase>=1) AND we have walls.
@@ -13906,11 +14105,27 @@ function updateFortress(dt){S.fortTimer+=dt;
     if(cLight)cLight.intensity=2.5+Math.sin(S._corePulseT*6)*1.5;
   }
   if(S._coreRings)S._coreRings.forEach((r,i)=>{r.rotation.z+=dt*(0.8+i*0.3);});
-  // v7.251: update shield generators + DEATH HAND
+  // v7.263: update shield generators + SD BOSS
   try{_updateShieldGenerators(dt,_wSpd)}catch(_){}
-  try{_updateDEATHHAND(dt)}catch(_){}
+  try{_updateSDTrenchBoss(dt)}catch(_){}
   try{_updateDHBeamSweep(dt)}catch(_){}
   try{_updateDHTentacle(dt)}catch(_){}
+  // v7.263: background fleet update (capital ships drift + fire beam FX)
+  if(S._bgFleet&&S._bgFleet.length>0){
+    S._bgFleet.forEach(f=>{
+      try{
+        f.mesh.position.x+=f.drift*dt;
+        f.mesh.rotation.y+=dt*.012;
+        // Reverse drift at ±130 range
+        if(f.mesh.position.x>130||f.mesh.position.x<-130)f.drift*=-1;
+      }catch(_){}
+    });
+    S._fleetBeamT=(S._fleetBeamT||0)-dt;
+    if(S._fleetBeamT<=0){
+      try{_spawnFleetBeam();}catch(_){}
+      S._fleetBeamT=1.5+Math.random()*1.8;
+    }
+  }
   // Walls scroll
   for(let i=walls.length-1;i>=0;i--){walls[i].position.z+=_wSpd*dt;
     if(walls[i].position.z>20){scene.remove(walls[i]);walls.splice(i,1)}}
@@ -14155,11 +14370,20 @@ function updateFortress(dt){S.fortTimer+=dt;
     if(coreMesh.position.z>camera.position.z-5){
       playerHit();coreMesh.position.z=camera.position.z-20}}
   else if(fortPhase<2){
-    // Pre-core: radar shows scanning
-    document.getElementById('tr-dist').textContent='SCANNING';
-    const scanBlip=document.getElementById('tr-blip');
-    scanBlip.style.top='15%';
-    scanBlip.style.left=(50+Math.sin(S.fortTimer*2)*20)+'%'}}
+    // v7.270: guard — tr-dist / tr-blip no longer exist; use tr-dist-digits safely
+    // Phase 0 = fleet battle → show TIE kill count  Phase 1 = trench run → SCAN
+    try{
+      const _d=document.getElementById('tr-dist-digits');
+      if(_d){
+        if(fortPhase===0){
+          const fk=S._fleetKills||0,ft=S._fleetKillTarget||12;
+          _d.textContent='T'+String(fk).padStart(2,'0')+'/'+String(ft).padStart(2,'0')+'  ';
+        }else{
+          _d.textContent='SCAN  ';
+        }
+      }
+    }catch(_){}
+  }}
 
 // v6.69: Death Star trench-run style floor - detailed wireframe with greebles,
 // pipes, raised blocks, scattered equipment. Restored from v6.45 (simpler/denser).
@@ -14234,7 +14458,7 @@ function _makeShieldGenerator(id){
   // Hexagonal dome shell (icosahedron wireframe)
   const domeFill=new THREE.MeshBasicMaterial({color:0x001133,transparent:true,opacity:.3});
   const domeEdge=new THREE.LineBasicMaterial({color:0x00aaff,transparent:true,opacity:.8});
-  const domeGeo=new THREE.IcosahedronGeometry(6.5,1);
+  const domeGeo=new THREE.IcosahedronGeometry(8.5,1);// v7.262: larger for visibility
   g.add(new THREE.Mesh(domeGeo,domeFill));
   g.add(new THREE.LineSegments(new THREE.EdgesGeometry(domeGeo),domeEdge));
   // Energy core
@@ -14245,7 +14469,7 @@ function _makeShieldGenerator(id){
   g.add(new THREE.LineSegments(new THREE.EdgesGeometry(coreGeo),coreEdge));
   // Two spinning rings
   for(let ri=0;ri<2;ri++){
-    const rg=new THREE.TorusGeometry(6+ri*.8,.15,4,14);
+    const rg=new THREE.TorusGeometry(8+ri*.8,.15,4,14);// v7.262: larger rings
     const rm=new THREE.LineBasicMaterial({color:ri===0?0x0088ff:0x00ccff,transparent:true,opacity:.6});
     const ring=new THREE.LineSegments(new THREE.EdgesGeometry(rg),rm);
     ring.rotation.x=ri===0?Math.PI/3:Math.PI/6;
@@ -14260,19 +14484,18 @@ function _trySpawnShieldGenerators(){
   if(S._shieldGensSpawned)return;
   S._shieldGensSpawned=true;
   if(!S._shieldGens)S._shieldGens=[];
-  // v7.254 fix: moved to x=±7 (center of trench, easy to hit) and closer z=-190/-155
-  // (previous x=±16 was at edge of player reach; previous z=-270/-230 delayed entry to beam range)
-  const positions=[{x:-7,y:0,z:-190},{x:7,y:0,z:-155}];
+  // v7.262: spawn VERY CLOSE (z=-40/-25) and half-speed scroll so player has plenty of time
+  const positions=[{x:-7,y:0,z:-40},{x:7,y:0,z:-25}];
   positions.forEach((pos,i)=>{
     const mesh=_makeShieldGenerator(i);
     mesh.position.set(pos.x,pos.y,pos.z);
     scene.add(mesh);
-    S._shieldGens.push({mesh,hp:60,maxHp:60,id:i,_exploded:false,_flashT:0,_t:0});
+    S._shieldGens.push({mesh,hp:5,maxHp:5,id:i,_exploded:false,_flashT:0,_t:0,_spawnT:0});
   });
-  announce('◆ SHIELD GENERATORS DETECTED ×2 ◆');
-  wfCineSubtitle('◆ SHIELD GENERATORS ×2 — DESTROY BOTH! ◆','#00ccff');
-  setTimeout(()=>playComm('hq','Two shield generators protecting the core — destroy them BOTH!'),400);
-  setTimeout(()=>playComm('pilot','Copy! Taking them out!'),3800);
+  announce('◆ SHIELD GENERATORS ×2 — FIRE NOW! ◆');
+  wfCineSubtitle('◆ SHOOT THE SHIELD GENERATORS! ◆','#00ffff');
+  setTimeout(()=>playComm('hq','Two shield generators blocking the core — destroy them BOTH!'),400);
+  setTimeout(()=>playComm('pilot','Copy! Targeting generators NOW!'),2500);
   // Show boss HP bar for first generator
   try{
     const bh=document.getElementById('boss-hp-bar');
@@ -14289,8 +14512,15 @@ function _updateShieldGenerators(dt,wSpd){
     const gen=S._shieldGens[gi];
     if(gen._exploded){S._shieldGens.splice(gi,1);continue;}
     gen._t=(gen._t||0)+dt;
-    // Scroll with walls
-    gen.mesh.position.z+=(wSpd||30)*dt;
+    gen._spawnT=(gen._spawnT||0)+dt;
+    // v7.262: scroll at HALF wall speed so generators stay in view longer
+    gen.mesh.position.z+=(wSpd||30)*0.5*dt;
+    // v7.262: timed failsafe — if generator alive > 12s, auto-destroy
+    if(gen._spawnT>12&&!gen._exploded){
+      gen._exploded=true;
+      try{spawnMegaExplosion(gen.mesh.position.clone(),.4);sfx.bigExplosion&&sfx.bigExplosion();}catch(_){}
+      scene.remove(gen.mesh);S._shieldGens.splice(gi,1);continue;
+    }
     // Spin rings
     const r0=gen.mesh.getObjectByName('ring0');const r1=gen.mesh.getObjectByName('ring1');
     if(r0)r0.rotation.z+=dt*.8;
@@ -14382,12 +14612,12 @@ function _makeTentacleMesh(){
 function _spawnDeathHand(){
   if(S._deathHandMesh)try{scene.remove(S._deathHandMesh)}catch(_){}
   const dh=_makeDEATHHAND();
-  dh.position.set(0,4,-260);
+  dh.position.set(0,4,-130);// v7.262: spawn closer (was -180)
   scene.add(dh);
   S._deathHandMesh=dh;
-  S._deathHandHP=120;S._deathHandMaxHP=120;
+  S._deathHandHP=50;S._deathHandMaxHP=50;
   S._deathHandPhase='APPROACH';S._deathHandT=0;
-  S._deathHandAttackIdx=-1;S._deathHandAttackT=12; // First attack fires ~6s after IDLE
+  S._deathHandAttackIdx=-1;S._deathHandAttackT=14; // v7.262: first attack ~4s after IDLE (was 12→6s)
   S._deathHandCycle=0;S._dhBeamSweep=null;S._dhTentacle=null;
   // Show boss HP bar
   try{
@@ -14402,12 +14632,12 @@ function _updateDEATHHAND(dt){
   if(!S._deathHandMesh||S._deathHandDone)return;
   const dh=S._deathHandMesh;
   S._deathHandT+=dt;
-  // Float + sway
-  dh.position.x=Math.sin(S._deathHandT*.35)*22;
-  dh.position.y=4+Math.cos(S._deathHandT*.28)*4;
-  // Creep toward player z
-  const targetZ=camera.position.z-190;
-  dh.position.z+=(targetZ-dh.position.z)*.018;
+  // Float + sway — v7.261: reduced sway range from ±22 to ±14 so player can track easier
+  dh.position.x=Math.sin(S._deathHandT*.35)*14;
+  dh.position.y=4+Math.cos(S._deathHandT*.28)*3;
+  // v7.262: target z=-90 (was -130, player beams reach ~-200) — closer for easier targeting
+  const targetZ=camera.position.z-90;
+  dh.position.z+=(targetZ-dh.position.z)*.04;// v7.262: faster lerp (was .025)
   // Finger wiggle
   for(let fi=0;fi<5;fi++){
     const f=dh.getObjectByName('finger'+fi);
@@ -14419,14 +14649,14 @@ function _updateDEATHHAND(dt){
     if(S._deathHandT>1.0){S._deathHandPhase='IDLE';S._deathHandT=0;}
     return;
   }
-  // Approach → IDLE (transition when within 20 units of target z)
+  // v7.262: approach threshold 30 (was 25) so IDLE triggers sooner
   if(S._deathHandPhase==='APPROACH'){
-    if(Math.abs(dh.position.z-targetZ)<20){S._deathHandPhase='IDLE';S._deathHandT=0;}
+    if(Math.abs(dh.position.z-targetZ)<30){S._deathHandPhase='IDLE';S._deathHandT=0;}
     return;
   }
-  // Attack cycle every 18s
+  // v7.262: attack cycle every 10s (was 18s) for more action
   S._deathHandAttackT+=dt;
-  const ATK_PERIOD=18;
+  const ATK_PERIOD=10;
   if(S._deathHandPhase==='IDLE'&&S._deathHandAttackT>=ATK_PERIOD){
     S._deathHandAttackT=0;
     S._deathHandAttackIdx=(S._deathHandAttackIdx+1)%3;
@@ -14437,7 +14667,7 @@ function _updateDEATHHAND(dt){
     S._deathHandPhase='IDLE';S._deathHandT=0;
   }
   // HP bar update
-  try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(S._deathHandHP/120)*100)+'%';}catch(_){}
+  try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(S._deathHandHP/(S._deathHandMaxHP||50))*100)+'%';}catch(_){}
 }
 
 function _deathHandDoAttack(idx){
@@ -14538,6 +14768,394 @@ function _updateDHTentacle(dt){
   // Crackle particles
   if(Math.random()<.3){
     spawnP(S._dhTentacle.mesh.position.clone(),0xff6600,2,.4,.2);
+  }
+}
+
+// ============ v7.263: STAR WARS FLEET BATTLE ============
+
+// Imperial Star Destroyer — wedge silhouette
+function makeImperialSD(scale){
+  const s=scale||1;
+  const g=new THREE.Group();
+  const hullFill=new THREE.MeshBasicMaterial({color:0x111122});
+  const hullEdge=new THREE.LineBasicMaterial({color:0x3344aa});
+  function addBox(w,h,d,ox,oy,oz,ry){
+    const geo=new THREE.BoxGeometry(w*s,h*s,d*s);
+    const m=new THREE.Group();
+    m.add(new THREE.Mesh(geo,hullFill));
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),hullEdge));
+    m.position.set(ox*s,oy*s,oz*s);
+    if(ry)m.rotation.y=ry;
+    g.add(m);
+  }
+  // Main flat deck
+  addBox(28,2,48, 0,0,0);
+  // Left angled wing
+  addBox(14,7,42, -16,0,2, 0.52);
+  // Right angled wing
+  addBox(14,7,42,  16,0,2,-0.52);
+  // Bridge tower
+  addBox(6,8,10, 0,6,14);
+  // Bridge viewport (glow)
+  const bwFill=new THREE.MeshBasicMaterial({color:0x88bbff,transparent:true,opacity:.85});
+  const bwEdge=new THREE.LineBasicMaterial({color:0xaaddff});
+  const bwGeo=new THREE.SphereGeometry(2.2*s,6,4);
+  const bw=new THREE.Group();bw.name='sdBW';
+  bw.add(new THREE.Mesh(bwGeo,bwFill));
+  bw.add(new THREE.LineSegments(new THREE.EdgesGeometry(bwGeo),bwEdge));
+  bw.position.set(0,10*s,18*s);
+  g.add(bw);
+  // Turret towers x8 on deck
+  const tFill=new THREE.MeshBasicMaterial({color:0x222244});
+  const tEdge=new THREE.LineBasicMaterial({color:0x4455bb});
+  for(let ti=0;ti<8;ti++){
+    const tx=(ti%4-1.5)*6*s, tz=(Math.floor(ti/4)===0?-8:4)*s+(ti%4)*3*s;
+    const tGeo=new THREE.CylinderGeometry(.35*s,.35*s,2*s,4);
+    const tm=new THREE.Group();
+    tm.add(new THREE.Mesh(tGeo,tFill));
+    tm.add(new THREE.LineSegments(new THREE.EdgesGeometry(tGeo),tEdge));
+    tm.position.set(tx,3*s,tz);
+    g.add(tm);
+  }
+  // Rear engine glow x3
+  const eFill=new THREE.MeshBasicMaterial({color:0x334499,transparent:true,opacity:.7});
+  const eEdge=new THREE.LineBasicMaterial({color:0x5566cc});
+  for(let ei=0;ei<3;ei++){
+    const ex=(ei-1)*5*s;
+    const eGeo=new THREE.TorusGeometry(2*s,.45*s,4,10);
+    const em=new THREE.Group();
+    em.add(new THREE.Mesh(eGeo,eFill));
+    em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eGeo),eEdge));
+    em.position.set(ex,0,-22*s);
+    em.rotation.x=Math.PI/2;
+    g.add(em);
+  }
+  return g;
+}
+
+// Rebel Mon Cal Cruiser — bulbous organic shape
+function makeRebelCruiser(scale){
+  const s=scale||1;
+  const g=new THREE.Group();
+  const hFill=new THREE.MeshBasicMaterial({color:0x223322});
+  const hEdge=new THREE.LineBasicMaterial({color:0x44aa66});
+  // Main hull (elongated sphere)
+  const hullGeo=new THREE.SphereGeometry(7*s,8,6);
+  const hull=new THREE.Group();hull.scale.z=2.5;
+  hull.add(new THREE.Mesh(hullGeo,hFill));
+  hull.add(new THREE.LineSegments(new THREE.EdgesGeometry(hullGeo),hEdge));
+  g.add(hull);
+  // Surface blisters x6
+  const bFill=new THREE.MeshBasicMaterial({color:0x334433});
+  const bEdge=new THREE.LineBasicMaterial({color:0x55bb77});
+  const blisterPos=[[6,3,5],[- 5,4,3],[6,-3,-5],[-5,-3,8],[0,6,-8],[0,-5,10]];
+  blisterPos.forEach(([bx,by,bz])=>{
+    const bGeo=new THREE.SphereGeometry(1.5*s,4,3);
+    const bm=new THREE.Group();
+    bm.add(new THREE.Mesh(bGeo,bFill));
+    bm.add(new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),bEdge));
+    bm.position.set(bx*s,by*s,bz*s);
+    g.add(bm);
+  });
+  // Command tower
+  const tGeo=new THREE.BoxGeometry(4*s,5*s,12*s);
+  const tm=new THREE.Group();
+  tm.add(new THREE.Mesh(tGeo,new THREE.MeshBasicMaterial({color:0x334433})));
+  tm.add(new THREE.LineSegments(new THREE.EdgesGeometry(tGeo),hEdge));
+  tm.position.set(0,9*s,2*s);
+  g.add(tm);
+  // Engines x4
+  const eFill=new THREE.MeshBasicMaterial({color:0x225522,transparent:true,opacity:.8});
+  const eEdge=new THREE.LineBasicMaterial({color:0x44cc66});
+  for(let ei=0;ei<4;ei++){
+    const ex=((ei%2)-.5)*5*s, ey=(Math.floor(ei/2)-.5)*3*s;
+    const eGeo=new THREE.TorusGeometry(1.6*s,.35*s,4,8);
+    const em=new THREE.Group();
+    em.add(new THREE.Mesh(eGeo,eFill));
+    em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eGeo),eEdge));
+    em.position.set(ex,ey,-17*s);
+    em.rotation.x=Math.PI/2;
+    g.add(em);
+  }
+  return g;
+}
+
+// TIE Fighter — ball cockpit + hexagonal wings
+function _makeFleetTIE(){
+  const g=new THREE.Group();
+  const cockFill=new THREE.MeshBasicMaterial({color:0x222233});
+  const cockEdge=new THREE.LineBasicMaterial({color:0x6688cc});
+  // Cockpit ball
+  const cGeo=new THREE.IcosahedronGeometry(0.9,1);
+  g.add(new THREE.Mesh(cGeo,cockFill));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(cGeo),cockEdge));
+  // Viewport strip
+  const vpFill=new THREE.MeshBasicMaterial({color:0x334455});
+  const vpGeo=new THREE.BoxGeometry(1.2,.25,.05);
+  const vp=new THREE.Mesh(vpGeo,vpFill);vp.position.z=.9;g.add(vp);
+  const wFill=new THREE.MeshBasicMaterial({color:0x111111});
+  const wEdge=new THREE.LineBasicMaterial({color:0x334455});
+  // Wings: hexagonal flat panel approximated as 6-sided geometry
+  for(let side=0;side<2;side++){
+    const sign=side===0?-1:1;
+    // Panel body: flat BoxGeometry (roughly hexagonal proportions)
+    const wGeo=new THREE.BoxGeometry(2.8,3.2,.08);
+    const wm=new THREE.Group();
+    wm.add(new THREE.Mesh(wGeo,wFill));
+    wm.add(new THREE.LineSegments(new THREE.EdgesGeometry(wGeo),wEdge));
+    wm.position.x=sign*3.0;
+    // Extra top/bottom triangular clipping panels to suggest hex
+    const cGeo2=new THREE.BoxGeometry(2.0,0.8,.06);
+    const ct=new THREE.Group();
+    ct.add(new THREE.Mesh(cGeo2,wFill));
+    ct.add(new THREE.LineSegments(new THREE.EdgesGeometry(cGeo2),wEdge));
+    ct.position.set(sign*3.0, 1.9, 0);ct.rotation.z=sign*0.45;
+    const cb=ct.clone();cb.position.set(sign*3.0,-1.9,0);cb.rotation.z=sign*-0.45;
+    g.add(wm,ct,cb);
+    // Strut (pod → wing)
+    const sGeo=new THREE.CylinderGeometry(.1,.1,1.4,4);
+    const sm=new THREE.Group();
+    sm.add(new THREE.Mesh(sGeo,new THREE.MeshBasicMaterial({color:0x334455})));
+    sm.add(new THREE.LineSegments(new THREE.EdgesGeometry(sGeo),wEdge));
+    sm.rotation.z=Math.PI/2;sm.position.x=sign*1.5;
+    g.add(sm);
+  }
+  return g;
+}
+
+// Spawn TIE wave into enemies[] during fleet battle phase
+function _spawnFleetTIEWave(count){
+  count=count||3;
+  for(let i=0;i<count;i++){
+    const angle=(i/(count>1?count-1:1)-.5)*1.3;
+    const e={
+      mesh:_makeFleetTIE(),
+      x:Math.sin(angle)*28+(Math.random()-.5)*10,
+      y:(Math.random()-.5)*14,
+      z:-95-i*12,
+      hp:1,maxHp:1,
+      vel:{x:0,y:0,z:C.E_SPEED*.75},
+      _isBattleTIE:true,
+      _fireT:1.8+Math.random()*2,
+      size:1.8,
+      col:0xff4400
+    };
+    e.mesh.position.set(e.x,e.y,e.z);
+    scene.add(e.mesh);
+    enemies.push(e);
+  }
+}
+
+// Fleet background beam FX between capital ships
+function _spawnFleetBeam(){
+  if(!S._bgFleet||S._bgFleet.length<2)return;
+  const imperials=S._bgFleet.filter(f=>f.col==='imperial');
+  const rebels=S._bgFleet.filter(f=>f.col==='rebel');
+  if(!imperials.length||!rebels.length)return;
+  const src=imperials[Math.floor(Math.random()*imperials.length)];
+  const dst=rebels[Math.floor(Math.random()*rebels.length)];
+  const sp=src.mesh.position.clone();
+  const dp=dst.mesh.position.clone();
+  const mid=sp.clone().lerp(dp,.5).add(new THREE.Vector3(
+    (Math.random()-.5)*25,(Math.random()-.5)*12,0));
+  const isEmpire=Math.random()<.5;
+  const col=isEmpire?0xff6600:0x44ff88;
+  const pts=[sp,mid,dp];
+  const geo=new THREE.BufferGeometry().setFromPoints(pts);
+  const mat=new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.75});
+  const beam=new THREE.Line(geo,mat);
+  try{scene.add(beam);}catch(_){return;}
+  spawnP(mid.clone(),col,4,.6,.4);
+  const t1=setTimeout(()=>{try{
+    mat.opacity=.35;
+  }catch(_){}},300);
+  const t2=setTimeout(()=>{try{scene.remove(beam);geo.dispose();mat.dispose();}catch(_){}},600);
+  // Store for cleanup
+  if(!S._fleetBeamTimers)S._fleetBeamTimers=[];
+  S._fleetBeamTimers.push(t1,t2);
+}
+
+// ============ v7.263: STAR DESTROYER TRENCH BOSS (replaces DEATH HAND) ============
+
+function _makeSDTrenchBoss(){
+  const g=new THREE.Group();
+  const hFill=new THREE.MeshBasicMaterial({color:0x111122});
+  const hEdge=new THREE.LineBasicMaterial({color:0x3344aa});
+  function addBox(w,h,d,ox,oy,oz,rz){
+    const geo=new THREE.BoxGeometry(w,h,d);
+    const m=new THREE.Group();
+    m.add(new THREE.Mesh(geo,hFill));
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),hEdge));
+    m.position.set(ox,oy,oz);
+    if(rz)m.rotation.z=rz;
+    g.add(m);
+  }
+  // Main front face (wedge bow)
+  addBox(58,22,6, 0,0,0);
+  // Left angled flank
+  addBox(20,16,5, -27,0,0, 0.38);
+  // Right angled flank
+  addBox(20,16,5,  27,0,0,-0.38);
+  // Bridge tower
+  addBox(12,20,7, 0,18,2);
+  // Upper superstructure
+  addBox(8,10,5, 0,26,2);
+  // Bridge viewport (weak point) — glowing blue
+  const bwFill=new THREE.MeshBasicMaterial({color:0x2244bb,transparent:true,opacity:.9});
+  const bwEdge=new THREE.LineBasicMaterial({color:0x88bbff});
+  const bwGeo=new THREE.SphereGeometry(4.5,6,5);
+  const bw=new THREE.Group();bw.name='sdBridge';
+  bw.add(new THREE.Mesh(bwGeo,bwFill));
+  bw.add(new THREE.LineSegments(new THREE.EdgesGeometry(bwGeo),bwEdge));
+  bw.position.set(0,30,3);
+  g.add(bw);
+  // Turbolaser turrets x8
+  const tFill=new THREE.MeshBasicMaterial({color:0x222244});
+  const tEdge=new THREE.LineBasicMaterial({color:0x4455bb});
+  const turretPos=[[- 22,8],[-14,10],[-6,12],[6,12],[14,10],[22,8],[0,4],[-5,3]];
+  turretPos.forEach(([tx,ty],ti)=>{
+    const tGeo=new THREE.CylinderGeometry(.6,.6,3,5);
+    const tm=new THREE.Group();tm.name='sdTurret'+ti;
+    tm.add(new THREE.Mesh(tGeo,tFill));
+    tm.add(new THREE.LineSegments(new THREE.EdgesGeometry(tGeo),tEdge));
+    tm.position.set(tx,ty,4);
+    g.add(tm);
+  });
+  // Engine glow x3 (behind)
+  const eFill=new THREE.MeshBasicMaterial({color:0x334499,transparent:true,opacity:.7});
+  const eEdge=new THREE.LineBasicMaterial({color:0x5577dd});
+  for(let ei=0;ei<3;ei++){
+    const ex=(ei-1)*8;
+    const eGeo=new THREE.TorusGeometry(3,.6,4,10);
+    const em=new THREE.Group();
+    em.add(new THREE.Mesh(eGeo,eFill));
+    em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eGeo),eEdge));
+    em.position.set(ex,0,-4);em.rotation.x=Math.PI/2;
+    g.add(em);
+  }
+  return g;
+}
+
+function _spawnSDTrenchBoss(){
+  if(S._sdBossMesh)try{scene.remove(S._sdBossMesh)}catch(_){}
+  const sd=_makeSDTrenchBoss();
+  sd.position.set(0,2,-150);
+  scene.add(sd);
+  S._sdBossMesh=sd;
+  S._sdBossHP=80;S._sdBossMaxHP=80;
+  S._sdBossPhase='APPROACH';S._sdBossT=0;
+  S._sdBossAttackIdx=-1;S._sdBossAttackT=12;
+  S._sdBossStuckT=0;S._sdBossDone=false;
+  try{
+    const bh=document.getElementById('boss-hp-bar');
+    const bn=document.getElementById('boss-hp-name');
+    const bf=document.getElementById('boss-hp-fill');
+    if(bh&&bn&&bf){bh.style.display='block';bn.textContent='EXECUTOR-CLASS DESTROYER';bf.style.width='100%';}
+  }catch(_){}
+  wfCineSubtitle('◆ EXECUTOR-CLASS DESTROYER ◆','#3366ff');
+  setTimeout(()=>playComm('pilot','What the — a STAR DESTROYER?! IN THE TRENCH?!!'),200);
+  setTimeout(()=>playComm('hq','Target its bridge viewport — THAT\'S the weak point!!'),3000);
+}
+
+function _updateSDTrenchBoss(dt){
+  if(!S._sdBossMesh||S._sdBossDone)return;
+  const sd=S._sdBossMesh;
+  S._sdBossT+=dt;
+  // Bridge window pulse
+  const bw=sd.getObjectByName('sdBridge');
+  if(bw){const p=0.65+Math.sin(S._sdBossT*4)*.35;bw.scale.setScalar(p);
+    const pct=S._sdBossHP/S._sdBossMaxHP;
+    // Color shifts red as HP drops
+    const col=pct>.5?0x2244bb:pct>.25?0x884400:0xff2200;
+    try{bw.children[0].material.color.setHex(col);}catch(_){}
+  }
+  // Turret rotation
+  for(let ti=0;ti<8;ti++){
+    const t=sd.getObjectByName('sdTurret'+ti);
+    if(t)t.rotation.y+=dt*(ti%2===0?.6:-.5);
+  }
+  // Approach toward player
+  const targetZ=camera.position.z-100;
+  sd.position.z+=(targetZ-sd.position.z)*.03;
+  sd.position.x=Math.sin(S._sdBossT*.18)*12;
+  sd.position.y=2+Math.cos(S._sdBossT*.14)*3;
+  sd.rotation.z=Math.sin(S._sdBossT*.15)*.04;
+  if(S._sdBossPhase==='STAGGER'){
+    sd.rotation.z=Math.sin(S._sdBossT*22)*.14;
+    if(S._sdBossT>1.0){S._sdBossPhase='IDLE';S._sdBossT=0;}
+    return;
+  }
+  if(S._sdBossPhase==='APPROACH'){
+    if(Math.abs(sd.position.z-targetZ)<30){S._sdBossPhase='IDLE';S._sdBossT=0;}
+    return;
+  }
+  // Attack cycle every 10s
+  S._sdBossAttackT+=dt;
+  const ATK_PERIOD=10;
+  if(S._sdBossPhase==='IDLE'&&S._sdBossAttackT>=ATK_PERIOD){
+    S._sdBossAttackT=0;
+    S._sdBossAttackIdx=(S._sdBossAttackIdx+1)%2;
+    S._sdBossPhase='ATTACK';S._sdBossT=0;
+    _sdBossDoAttack(S._sdBossAttackIdx);
+  }
+  if(S._sdBossPhase==='ATTACK'&&S._sdBossT>4){
+    S._sdBossPhase='IDLE';S._sdBossT=0;
+  }
+  // HP bar
+  try{const f=document.getElementById('boss-hp-fill');if(f)f.style.width=Math.max(0,(S._sdBossHP/S._sdBossMaxHP)*100)+'%';}catch(_){}
+}
+
+function _sdBossDoAttack(idx){
+  const sd=S._sdBossMesh;if(!sd)return;
+  if(idx===0){
+    // TURBOLASER SALVO — 3 beams spread at different Y angles
+    wfCineSubtitle('◆ TURBOLASER SALVO!! DODGE! ◆','#ff6600');
+    setTimeout(()=>playComm('pilot','Turbolasers!! Break formation!!'),100);
+    try{sfx.targetingAlarm&&sfx.targetingAlarm(.12)}catch(_){}
+    const angles=[-0.14,0,0.14];
+    angles.forEach((vy,ai)=>{
+      setTimeout(()=>{
+        try{
+          if(!S._sdBossMesh)return;
+          const bGeo=new THREE.BoxGeometry(.35,.35,4);
+          const bMat=new THREE.LineBasicMaterial({color:0xff6600});
+          const bMesh=new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),bMat);
+          const sp=sd.position.clone();
+          sp.x+=(ai-1)*8;sp.y+=ai===1?6:4;
+          bMesh.position.copy(sp);
+          scene.add(bMesh);
+          eBeams.push({
+            mesh:bMesh,
+            vel:new THREE.Vector3((ai-1)*.8,vy,C.E_BEAM_SPEED*.9),
+            _fromSD:true
+          });
+        }catch(_){}
+      },ai*180);
+    });
+  } else {
+    // TIE DEPLOY — launches 2 TIE fighters from SD position
+    wfCineSubtitle('◆ TIE FIGHTERS DEPLOYED! ◆','#ff4400');
+    setTimeout(()=>playComm('pilot','They\'re launching fighters — WATCH OUT!!'),100);
+    setTimeout(()=>{
+      try{
+        if(!S._sdBossMesh)return;
+        // Spawn 2 TIEs offset from SD position
+        for(let i=0;i<2;i++){
+          const e={
+            mesh:_makeFleetTIE(),
+            x:S._sdBossMesh.position.x+(i===0?-8:8),
+            y:S._sdBossMesh.position.y+(Math.random()-.5)*6,
+            z:S._sdBossMesh.position.z+15,
+            hp:1,maxHp:1,
+            vel:{x:0,y:0,z:C.E_SPEED*.8},
+            _isBattleTIE:true,size:1.8,col:0xff4400
+          };
+          e.mesh.position.set(e.x,e.y,e.z);
+          scene.add(e.mesh);
+          enemies.push(e);
+        }
+      }catch(_){}
+    },800);
   }
 }
 
@@ -14645,7 +15263,8 @@ function _startToBeContinued(ov){
       try{
         S.phase='TITLE';
         const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';
-        const vb=document.getElementById('version-banner');if(vb)vb.textContent='COSMIC INVADERS v7.254';
+        const vb=document.getElementById('version-banner');if(vb)vb.textContent='COSMIC INVADERS v7.263';
+        try{updateTitleUnlocks();}catch(_){}
       }catch(e){}
     },2200);
   },32000);
@@ -14818,6 +15437,7 @@ function _paradeNextChar(){
             savedOv.remove();
             S.phase='TITLE';
             const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';
+            try{updateTitleUnlocks();}catch(_){}
           },2200);
         }
       }catch(_){}
@@ -15134,6 +15754,7 @@ function _spawnFormationAllies(){
     try{
       const mesh=makeStarfighterN1();
       mesh.scale.setScalar(1.0);
+      mesh.rotation.y=Math.PI/2; // v7.270: nose points forward (-Z) on spawn
       const startX=player.x+o.ox, startY=player.y+o.oy;
       const startZ=camera.position.z+o.lagZ+10;
       mesh.position.set(startX,startY,startZ);
@@ -15160,71 +15781,74 @@ function _updateFormationAllies(dt){
   for(const a of aliveAllies){
     a.fireCDT-=dt;
     a.attackT+=dt;
-    // Formation flight: follow player position with lag + fixed offset
-    const tgtX=player.x+a.ox+(Math.sin(S.gameTime*0.6+a.idx)*2);
-    const tgtY=player.y+a.oy+(Math.cos(S.gameTime*0.4+a.idx*1.5)*0.8);
-    const tgtZ=camera.position.z+a.lagZ;
-    a.mesh.position.x+=(tgtX-a.mesh.position.x)*Math.min(1,2.5*dt);
-    a.mesh.position.y+=(tgtY-a.mesh.position.y)*Math.min(1,2.5*dt);
-    a.mesh.position.z+=(tgtZ-a.mesh.position.z)*Math.min(1,2.0*dt);
-    // Periodically break formation and swoop to attack nearby enemies
-    const shouldAttack=!a.attackMode&&a.attackT>12+a.idx*2&&enemies.length>0;
-    if(shouldAttack){
-      a.attackMode=true;a.attackT=0;
-      // pick a random enemy within range
-      const tgt=enemies[Math.floor(Math.random()*enemies.length)];
-      if(tgt&&tgt.mesh){
-        a.attackAngle=Math.atan2(tgt.mesh.position.x-a.mesh.position.x,tgt.mesh.position.z-a.mesh.position.z);
-        a._attackTarget=tgt;
-      }
-    }
+
     if(a.attackMode){
-      if(a.attackT>3.5){a.attackMode=false;a.attackT=0;a._attackTarget=null;}
-      else{
-        // Swoop toward target
+      // v7.265: Smart attack run — 3 phases: APPROACH → FIRE → RETURN
+      if(!a._atkPhase)a._atkPhase='APPROACH';
+      if(a.attackT>3.5){
+        // Return to formation
+        a.attackMode=false;a.attackT=0;a._attackTarget=null;a._atkPhase=null;
+      } else {
         const atX=a._attackTarget&&a._attackTarget.mesh?a._attackTarget.mesh.position.x:(player.x+a.ox*0.5);
-        const atZ=a._attackTarget&&a._attackTarget.mesh?a._attackTarget.mesh.position.z:(camera.position.z-60);
-        a.mesh.position.x+=(atX-a.mesh.position.x)*Math.min(1,1.2*dt);
-        a.mesh.position.z+=(atZ-a.mesh.position.z)*Math.min(1,1.5*dt);
-        // Bank roll during attack run
-        a.mesh.rotation.z=Math.sin(a.attackT*4)*0.35;
-        a.mesh.rotation.y=Math.PI+Math.sin(a.attackT*3)*0.2;
+        const atZ=a._attackTarget&&a._attackTarget.mesh?a._attackTarget.mesh.position.z:(camera.position.z-90);
+        // Fast decisive swoop forward
+        a.mesh.position.x+=(atX-a.mesh.position.x)*Math.min(1,4.0*dt);
+        a.mesh.position.z+=(atZ-a.mesh.position.z)*Math.min(1,3.0*dt);
+        // Dynamic bank: lean into the direction of movement
+        const dxToTgt=atX-a.mesh.position.x;
+        const bankTarget=Math.max(-0.6,Math.min(0.6,-dxToTgt*0.04));
+        a.mesh.rotation.z+=(bankTarget-a.mesh.rotation.z)*Math.min(1,5.0*dt);
+        a.mesh.rotation.y=Math.PI/2; // v7.270: nose forward (-Z)
       }
     } else {
-      // Gentle banking in formation
-      a.mesh.rotation.z=(a.ox>0?-1:1)*0.08+Math.sin(S.gameTime*1.2+a.idx)*0.05;
-      a.mesh.rotation.y=Math.PI;
+      // v7.265: Tight formation hold — NO sinusoidal wobble, clean tracking
+      const tgtX=player.x+a.ox;
+      const tgtY=player.y+a.oy;
+      const tgtZ=camera.position.z+a.lagZ;
+      const snapXY=Math.min(1,5.0*dt);
+      const snapZ =Math.min(1,4.0*dt);
+      a.mesh.position.x+=(tgtX-a.mesh.position.x)*snapXY;
+      a.mesh.position.y+=(tgtY-a.mesh.position.y)*snapXY;
+      a.mesh.position.z+=(tgtZ-a.mesh.position.z)*snapZ;
+      // Subtle static outboard lean only (no wobble)
+      const bankTarget=(a.ox>0?-1:1)*0.07;
+      a.mesh.rotation.z+=(bankTarget-a.mesh.rotation.z)*Math.min(1,3.0*dt);
+      a.mesh.rotation.y=Math.PI/2; // v7.270: nose forward (-Z)
+      // Attack trigger: staggered per slot (10/12/14/16s)
+      if(a.attackT>10+a.idx*2&&enemies.length>0){
+        a.attackMode=true;a.attackT=0;a._atkPhase='APPROACH';
+        // Pick nearest enemy
+        let nearE=null,nearD=9999;
+        for(const e of enemies){
+          if(!e.mesh)continue;
+          const d=Math.hypot(e.mesh.position.x-a.mesh.position.x,e.mesh.position.z-a.mesh.position.z);
+          if(d<nearD){nearD=d;nearE=e;}
+        }
+        if(nearE)a._attackTarget=nearE;
+      }
     }
-    // Fire at enemies
+
+    // Fire at nearest enemy — tighter cooldown in attack mode
     if(a.fireCDT<=0&&enemies.length>0){
-      a.fireCDT=1.4+Math.random()*0.8;
-      // Find nearest enemy
+      a.fireCDT=a.attackMode?(0.5+Math.random()*0.3):(1.2+Math.random()*0.6);
       let nearE=null,nearD=9999;
       for(const e of enemies){
         if(!e.mesh)continue;
         const d=Math.hypot(e.mesh.position.x-a.mesh.position.x,e.mesh.position.z-a.mesh.position.z);
         if(d<nearD){nearD=d;nearE=e;}
       }
-      if(nearE&&nearD<120){
+      if(nearE&&nearD<140){
         try{
-          const bGeo=new THREE.BoxGeometry(.1,.1,1.0);
-          const bMat=new THREE.LineBasicMaterial({color:0x44aaff});
-          const bMesh=new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),bMat);
+          const bGeo=new THREE.BoxGeometry(.1,.1,1.2);
+          const bMesh=new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),new THREE.LineBasicMaterial({color:0x44aaff}));
           const spawnPos=a.mesh.position.clone().add(new THREE.Vector3(0,0,-1));
           bMesh.position.copy(spawnPos);
           scene.add(bMesh);
-          // Direction toward enemy
           const bDx=nearE.mesh.position.x-spawnPos.x;
           const bDz=nearE.mesh.position.z-spawnPos.z;
           const bD=Math.hypot(bDx,bDz)||1;
-          const bSpd=C.BEAM_SPEED||45;
-          const allyBeam={
-            mesh:bMesh,
-            vel:new THREE.Vector3(bDx/bD*bSpd,0,bDz/bD*bSpd),
-            _allyBeam:true,_targetEnemy:nearE,
-            life:2.5
-          };
-          pBeams.push(allyBeam);
+          const bSpd=C.BEAM_SPEED*0.9;
+          pBeams.push({mesh:bMesh,vel:new THREE.Vector3(bDx/bD*bSpd,0,bDz/bD*bSpd),_allyBeam:true,_targetEnemy:nearE,dmg:1,life:2.5});
         }catch(_){}
       }
     }
@@ -15671,12 +16295,17 @@ function updateReturn(dt){S.returnTimer+=dt;
     });
   }
   // v6.69: asteroid spawn rate reduced to 1/3 (was dt*3 → dt*1)
-  if(Math.random()<dt*1){const mesh=makeAsteroid();
+  // v7.270: dual size — 40% large boulder, 60% small pebble
+  if(Math.random()<dt*1){
+    const isLarge=Math.random()<0.4;
+    const isFire=(selectedStage&&selectedStage.id==='fire');
+    const mesh=makeAsteroid(isLarge);
     mesh.position.set((Math.random()-.5)*50,(Math.random()-.5)*20,C.SPAWN_Z-Math.random()*30);scene.add(mesh);
-    enemies.push({mesh,type:99,hp:2,baseX:mesh.position.x,baseY:mesh.position.y,
+    enemies.push({mesh,type:99,hp:isLarge?3:1,baseX:mesh.position.x,baseY:mesh.position.y,
       sineAmp:2,sineFreq:.2,sinePhase:Math.random()*Math.PI*2,
       speedZ:15+Math.random()*10,shootTimer:9999,shootCD:9999,spinRate:1+Math.random(),
       spiralR:0,spiralA:0,isAsteroid:true,
+      _asteroidR:isLarge?(isFire?8.0:6.5):(isFire?4.5:3.5),
       rotAxis:new THREE.Vector3(Math.random(),Math.random(),Math.random()).normalize()})}
   // Ambush: enemies hiding behind asteroids (1 in 4 asteroids)
   if(Math.random()<dt*0.8){const type=Math.floor(Math.random()*4);const mesh=makeEnemy(type);
@@ -15996,6 +16625,7 @@ const STAGES=[
   {id:'forest',name:'FOREST PLANET', nameEn:'STAGE 4 — FOREST PLANET', color:'#0f8',desc:'Jungle rescue. Infiltrate on foot. Free Master HK CHINDERU MK.',theme:0x00ff66, available:true},
   {id:'ice',   name:'ICE PLANET',    nameEn:'STAGE 5 — ICE PLANET',    color:'#8cf',desc:'Enemy stronghold. Snow troopers + cryo valley + alien-baby rescue.',theme:0x66ccff, available:true},
   {id:'colosseum',name:'COLOSSEUM',  nameEn:'SPACE COLOSSEUM',         color:'#f84',desc:'Captured by pirates — fight 7 monsters to earn your freedom!',theme:0xff4400, available:true},
+  {id:'armada',  name:'ARMADA',      nameEn:'ARMADA — 銀河大艦隊決戦', color:'#aa00ff',desc:'ALL OUT WAR — Destroy escort destroyers, break the fighter screen, and take down the TITAN DREADNOUGHT!',theme:0xaa00ff, available:true},
   {id:'station',name:'MEGA STATION', nameEn:'MEGA STATION',            color:'#ff0',desc:'Enemy flagship orbital. Heavy defenses.',theme:0xffcc00, available:false},
 ];
 // v7.65: Mission briefing lines (commander voice on stage select). Per-stage so each launch
@@ -16007,6 +16637,7 @@ const STAGE_BRIEFINGS={
   forest:'#N, FOREST PLANET drop! Master HK-CHINDERU MK is held captive in the underground base. Free him at any cost!',
   ice:   '#N, ICE PLANET infiltration. Enemy stronghold confirmed. Land in the snow forest, push through the cryo valley, and rescue the captive prisoner. Final mission before the moon!',
   colosseum: '#N! You have been captured and thrown into the Space Colosseum! Defeat all 7 challengers to earn your freedom! The crowd is betting — give them a show!',
+  armada: '#N, ARMADA BATTLE!! The Imperial Titan-Class Dreadnought is mobilizing. Destroy the escort destroyers, smash through the fighter screen, and TAKE DOWN THAT TITAN!! The entire Rebel fleet is counting on you!',
 };
 let selectedStage=STAGES[0];
 
@@ -17572,7 +18203,8 @@ function showStageSelectOverlay(){
     // v7.111: Forest and Ice are always unlocked so players can experience on-foot gameplay
     // immediately — no need to clear 3 space battles first. Space/Fire/Ruins still unlock
     // sequentially (they are all space battles; the lock adds progression variety there).
-    const alwaysUnlocked=(st.id==='forest'||st.id==='ice');
+    // v7.264: ARMADA is also always unlocked (standalone epic space battle).
+    const alwaysUnlocked=(st.id==='forest'||st.id==='ice'||st.id==='armada');
     const unlocked=isCleared||isNext||cleared.length>=canonical.length||alwaysUnlocked;
     if(unlocked){
       const badge=isCleared?'✓ CLEARED — REPLAY':isNext?'▶ NEXT MISSION':'▶ READY';
@@ -17635,8 +18267,8 @@ function openTestStage(){
   let ov=document.getElementById('test-stage');if(ov)ov.remove();
   ov=document.createElement('div');ov.id='test-stage';
   ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:235;'+
-    'background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;'+
-    'padding:30px;pointer-events:auto;font-family:inherit;color:#ff0;overflow:auto';
+    'background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;'+
+    'padding:24px 30px 40px;pointer-events:auto;font-family:inherit;color:#ff0;overflow-y:auto;overflow-x:hidden';
   const hk=isHarukaMode();
   let html='<div style="font-size:22px;color:#ff0;letter-spacing:6px;text-shadow:0 0 14px #ff0;margin-bottom:8px">&#9679; '+(hk?'ステージテスト':'TEST STAGE')+' &#9679;</div>'+
     '<div style="font-size:11px;color:#aaa;letter-spacing:2px;margin-bottom:20px">'+(hk?'好きなステージにジャンプ':'Skip to any stage for testing')+'</div>'+
@@ -17679,6 +18311,15 @@ function openTestStage(){
       '</button>';
   });
   html+='</div>';
+  // v7.270: forest escape cinematic accessible from test stage
+  html+='<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px;margin-top:4px">'+
+    '<button type="button" onclick="playCineReplay(\'forestEscape\')" '+
+      'style="padding:12px 16px;background:rgba(0,15,8,0.85);border:2px solid #0fc;'+
+      'color:#0fc;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #0fc6;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'🎬 森脱出シネマ':'🎬 FOREST ESCAPE CINE')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'バイクチェイス→惑星爆破シネマ単体':'Bike chase → planet destruct cinematic')+'</div>'+
+    '</button></div>';
   // v7.107 ★ ICE PLANET phase tests — mirror of the forest block above
   html+='<div style="font-size:15px;color:#8cf;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #8cf">▼ '+(hk?'氷の惑星 - フェーズ別テスト':'ICE PLANET - PHASE TEST')+' ▼</div>'+
     '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'各フェーズに直接ジャンプ可能':'Jump directly into each ice planet phase')+'</div>'+
@@ -17732,9 +18373,28 @@ function openTestStage(){
       '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'7体のモンスターとバトルロイヤル':'7-monster battle royale')+'</div>'+
     '</button>'+
     '</div>';
+  // v7.270: ARMADA — 銀河大艦隊決戦 TEST
+  html+='<div style="font-size:15px;color:#4af;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #4af">▼ '+(hk?'ARMADA — 銀河大艦隊決戦':'ARMADA — FLEET BATTLE')+' ▼</div>'+
+    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'10隻の背景艦隊 → エスコート2隻 → タイタン級ドレッドノート':'10-ship fleet war → 2 escorts → Titan-Class Dreadnought')+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">'+
+    '<button type="button" onclick="launchTestArmada(\'full\')" '+
+      'style="padding:12px 16px;background:rgba(0,20,40,0.85);border:2px solid #4af;'+
+      'color:#4af;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #4af6;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'ARMADA フルラン':'ARMADA — FULL RUN')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'フェーズ0 (Fighter Screen) から開始':'Phase 0 start — Fighter Screen → Titan')+'</div>'+
+    '</button>'+
+    '<button type="button" onclick="launchTestArmada(\'titan\')" '+
+      'style="padding:12px 16px;background:rgba(0,15,40,0.85);border:2px solid #88f;'+
+      'color:#88f;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #88f6;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'⚡ TITAN ドレッドノート':'⚡ TITAN DREADNOUGHT')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'フェーズ4 — Titanボスへ直接スキップ':'Phase 4 — skip directly to Titan boss')+'</div>'+
+    '</button>'+
+    '</div>';
   // v7.254: FORTRESS FINALE TESTS
   html+='<div style="font-size:15px;color:#ff4422;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #ff4422">▼ '+(hk?'要塞フィナーレ テスト':'FORTRESS FINALE TEST')+' ▼</div>'+
-    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'シールドジェネレーター/DEATHHANDボス/コア最終決戦 を個別テスト':'Jump to Shield Generators / DEATH HAND boss / Reactor Core finale')+'</div>'+
+    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'シールドジェネレーター/SDボス/コア最終決戦 を個別テスト':'Jump to Shield Generators / SD Boss / Reactor Core finale')+'</div>'+
     '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">'+
     '<button type="button" onclick="launchFortressFinaleTest(\'shields\')" '+
       'style="padding:12px 16px;background:rgba(30,5,0,0.85);border:2px solid #ff4422;'+
@@ -17744,21 +18404,59 @@ function openTestStage(){
       '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'シールドジェネレーター2基を即座にスポーン':'Shield gens spawn right away — test core-lock beam')+'</div>'+
     '</button>'+
     '<button type="button" onclick="launchFortressFinaleTest(\'dhand\')" '+
-      'style="padding:12px 16px;background:rgba(30,5,0,0.85);border:2px solid #ff6600;'+
-      'color:#ff6600;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
-      'border-radius:8px;box-shadow:0 0 12px #ff660066;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
-      '<div style="font-size:13px;font-weight:bold">'+(hk?'☠ DEATH HAND BOSS':'☠ DEATH HAND BOSS')+'</div>'+
-      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'シールドスキップ → DEATHHANDが即登場':'Skip shields → DEATH HAND spawns immediately')+'</div>'+
+      'style="padding:12px 16px;background:rgba(30,5,0,0.85);border:2px solid #3366ff;'+
+      'color:#3366ff;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #3366ff66;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'⚡ EXECUTOR DESTROYER':'⚡ EXECUTOR DESTROYER')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'シールドスキップ → SDボスが即登場':'Skip shields → Star Destroyer boss spawns immediately')+'</div>'+
     '</button>'+
     '<button type="button" onclick="launchFortressFinaleTest(\'core\')" '+
       'style="padding:12px 16px;background:rgba(30,5,0,0.85);border:2px solid #ffcc00;'+
       'color:#ffcc00;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
       'border-radius:8px;box-shadow:0 0 12px #ffcc0066;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
       '<div style="font-size:13px;font-weight:bold">'+(hk?'◆ REACTOR CORE FINALE':'◆ REACTOR CORE FINALE')+'</div>'+
-      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'DEATH HANDスキップ → HP60コア最終決戦':'Skip DEATH HAND → HP×2 reactor core battle')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'SDボスをスキップ → HP60コア最終決戦':'Skip SD Boss → HP×2 reactor core battle')+'</div>'+
     '</button>'+
     '</div>';
-  // v7.254: ENDING TESTS
+  // v7.270: TRENCH RUN gameplay + approach cinema — appended to FORTRESS section
+  html+='<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px;margin-top:6px">'+
+    '<button type="button" onclick="launchTrenchTest()" '+
+      'style="padding:12px 16px;background:rgba(25,5,0,0.85);border:2px solid #ff4422;'+
+      'color:#ff4422;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #ff44226;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'トレンチラン (要塞突入)':'TRENCH RUN (FORTRESS)')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'巨大要塞 + 砲台 + 3秒射程ウィンドウ':'Mega fortress + turrets + 3s firing window')+'</div>'+
+    '</button>'+
+    '<button type="button" onclick="playCineReplay(\'trenchEntry\')" '+
+      'style="padding:12px 16px;background:rgba(20,5,0,0.85);border:2px solid #f84;'+
+      'color:#f84;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #f846;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'🎬 要塞突入シネマ':'🎬 FORTRESS APPROACH CINE')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'5機編隊→要塞接近→トレンチ突入演出':'5-ship formation → fortress approach → trench entry')+'</div>'+
+    '</button>'+
+    '</div>';
+  // v7.270: RETURN & CINEMATIC SEQUENCE — replaces old DIRECT PHASE TEST, now includes cinematic replays; moved before ENDING
+  html+='<div style="font-size:15px;color:#ff8;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #ff8">▼ '+(hk?'帰還 & シネマシーケンス':'RETURN & CINEMATIC SEQUENCE')+' ▼</div>'+
+    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'アステロイド帯帰還からドッキング・ブリッジまで各シーンをテスト':'Asteroid escape → docking → disembark → bridge — test each scene')+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">';
+  [
+    {fn:'launchAsteroidTest()',           label:hk?'隕石群ウェーブ (帰還)':'ASTEROID WAVE (RETURN)',     desc:hk?'アステロイド帯を突破して基地へ':'Asteroid belt escape — back to base',                 color:'#ffcc22'},
+    {fn:'launchDockingTest()',            label:hk?'ドッキング単体テスト':'DOCKING STATION',              desc:hk?'ポート合わせ + キャプチャーアームミニゲーム':'Align with port + capture arm mini-game',  color:'#0ff'},
+    {fn:"playCineReplay('disembark')",    label:hk?'🎬 パイロット降機シネマ':'🎬 PILOT DISEMBARK CINE',   desc:hk?'帰還後の徒歩・スタッフ歓迎シーン':'Post-docking walk-off with crew welcome',           color:'#0f8'},
+    {fn:"playCineReplay('elevator')",     label:hk?'🎬 エレベーターシネマ':'🎬 ELEVATOR CINE',             desc:hk?'1人称エレベーター昇降':'First-person elevator ride',                               color:'#ff0'},
+    {fn:"playCineReplay('bridge')",       label:hk?'🎬 コマンドブリッジシネマ':'🎬 COMMAND BRIDGE CINE',   desc:hk?'指令室報告シーン':'Bridge debriefing sequence',                                    color:'#0ff'},
+    {fn:"playCineReplay('modbay')",       label:hk?'🎬 改造ベイ (クリスタル)':'🎬 MOD BAY (CRYSTAL)',      desc:hk?'クリスタルレーザー改造シーン':'Crystal laser modification scene',                    color:'#f0f'},
+  ].forEach(p=>{
+    html+='<button type="button" onclick="'+p.fn+'" '+
+      'style="padding:12px 16px;background:rgba(12,8,2,0.85);border:2px solid '+p.color+';'+
+      'color:'+p.color+';font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:220px;'+
+      'border-radius:8px;box-shadow:0 0 12px '+p.color+'55;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+p.label+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+p.desc+'</div>'+
+      '</button>';
+  });
+  html+='</div>';
+  // v7.254: ENDING TESTS — moved after RETURN sequence to match story flow
   html+='<div style="font-size:15px;color:#ffaa00;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #ffaa00">▼ '+(hk?'エンディング テスト':'ENDING TEST')+' ▼</div>'+
     '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'エピローグ / キャラクターパレード / TO BE CONTINUEDを確認':'Preview the full ending roll or just the cyberpunk character parade')+'</div>'+
     '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">'+
@@ -17777,27 +18475,6 @@ function openTestStage(){
       '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'サイバーパンク7キャラ紹介シーンをすぐ確認':'Jump straight to the cyberpunk wireframe showcase')+'</div>'+
     '</button>'+
     '</div>';
-  // v7.32: DIRECT PHASE TESTS — jump straight to FORTRESS (trench-run) or RETURN (asteroid belt
-  // escape) without going through the normal wave progression. Per user 「テストステージに
-  // トレンチラン、隕石群のウェーブステージを追加」.
-  html+='<div style="font-size:15px;color:#ff8;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #ff8">▼ '+(hk?'直接フェーズテスト':'DIRECT PHASE TEST')+' ▼</div>'+
-    '<div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:10px">'+(hk?'要塞・帰還アステロイドにすぐジャンプ':'Jump straight to FORTRESS trench-run / RETURN asteroid-belt escape')+'</div>'+
-    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:820px">';
-  const directPhases=[
-    {fn:'launchTrenchTest',label:hk?'トレンチラン (要塞突入)':'TRENCH RUN (FORTRESS)',desc:hk?'巨大要塞 + 砲台 + 3秒射程ウィンドウ':'Mega fortress + turrets + 3s firing window',color:'#ff4422'},
-    {fn:'launchAsteroidTest',label:hk?'隕石群ウェーブ (帰還)':'ASTEROID WAVE (RETURN)',desc:hk?'アステロイド帯を突破して基地へ':'Asteroid belt escape — back to base',color:'#ffcc22'},
-    {fn:'launchDockingTest',label:hk?'ドッキング単体テスト':'DOCKING STATION',desc:hk?'ポート合わせ + キャプチャーアーム ミニゲーム':'Align with port + capture arm mini-game',color:'#0ff'},
-  ];
-  directPhases.forEach(p=>{
-    html+='<button type="button" onclick="'+p.fn+'()" '+
-      'style="padding:12px 16px;background:rgba(20,10,0,0.85);border:2px solid '+p.color+';'+
-      'color:'+p.color+';font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:230px;'+
-      'border-radius:8px;box-shadow:0 0 12px '+p.color+'66;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
-      '<div style="font-size:13px;font-weight:bold">'+p.label+'</div>'+
-      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+p.desc+'</div>'+
-      '</button>';
-  });
-  html+='</div>';
   // v7.105 ★ STORY TEST MODE — let the user step through the full campaign flow without
   // having to actually fight, so they can verify (a) bridge stage-select only shows the
   // stages that have legitimately been cleared and (b) every cinema scene reaches its
@@ -18529,15 +19206,19 @@ function closeCineReplay(){
 }
 function playCineReplay(id){
   wfCineReplayMode=true;// v6.69: suppress stage-select during replay
-  // Hide the replay menu while scene plays
+  // v7.270: hide whichever overlay is open (cine-replay or test-stage)
   const ov=document.getElementById('cine-replay');if(ov)ov.style.display='none';
+  const tsOv=document.getElementById('test-stage');if(tsOv)tsOv.style.display='none';
   // Hide all HUD
   ['hud','shield-gauge','heat-gauge','napalm-box','reticle','cockpit-frame','boss-hp-wrap','mini-radar','touch-controls','title-screen'].forEach(eid=>{
     const e=document.getElementById(eid);if(e)e.style.display='none'});
   const returnToMenu=()=>{
     wfCineReplayMode=false;
     wfCineEnd();
-    const m=document.getElementById('cine-replay');if(m)m.style.display='flex';
+    // v7.270: return to cine-replay if open, else fall back to test-stage
+    const m=document.getElementById('cine-replay');
+    if(m){m.style.display='flex';}
+    else{const t=document.getElementById('test-stage');if(t)t.style.display='flex';}
     if(S.phase==='TITLE'){const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex'}
   };
   wfCineShowExitButton(returnToMenu);
@@ -18838,6 +19519,14 @@ function selectStageAndLaunch(idx){
   // All phases operational since v7.108–v7.110. Button chains into startIcePlanetPhase2().
   if(selectedStage.id==='ice'){
     setTimeout(()=>{try{playIcePlanetPreview()}catch(e){console.error('ice preview:',e)}},1500);
+    return;
+  }
+  // v7.264 ★ ARMADA — direct launch into armada space battle
+  if(selectedStage.id==='armada'){
+    setTimeout(()=>{
+      try{wfCineEnd()}catch(e){}
+      try{startArmada()}catch(e){console.error('armada launch:',e)}
+    },2000);
     return;
   }
   setTimeout(()=>{
@@ -29445,15 +30134,15 @@ const _FIGHTER_HINTS={
   queen:     "HER MAJESTY! That inner jaw is deadly up close — grapple from the flank!",
   kaiju:     "GORGON!! The big one! Full power — GIANT SWING everything it throws at me!!"
 };
-// v7.254: sz doubled for all fighters — bigger, more imposing colosseum monsters
+// v7.255: monsters set to 1.5× original sizes (non-Kaiju); joints + detail upgrades added
 const _COLO_DEFS=[
-  {id:'tengu',   ring:'THE TENGU',   hp:5, speed:9, wave:1,style:'aggressive',col:0xff3300,sz:2.0},
-  {id:'mantis',  ring:'BLADE WING',  hp:6, speed:11,wave:1,style:'charger',   col:0x22ff44,sz:2.2},
-  {id:'centipede',ring:'CENTI-DOOM', hp:7, speed:7, wave:2,style:'cautious',  col:0xffaa00,sz:2.4},
-  {id:'eel',      ring:'THUNDER EEL',hp:9, speed:5, wave:2,style:'eel',       col:0xffff22,sz:2.6},
-  {id:'predator',ring:'THE HUNTER',  hp:8, speed:8, wave:2,style:'cautious',  col:0x886644,sz:2.4},
-  {id:'jabba',   ring:'THE SLUG',    hp:10,speed:4, wave:3,style:'slug',      col:0x88aa44,sz:2.8},
-  {id:'queen',   ring:'HER MAJESTY', hp:9, speed:7, wave:3,style:'aggressive',col:0x2244aa,sz:3.0},
+  {id:'tengu',   ring:'THE TENGU',   hp:5, speed:9, wave:1,style:'aggressive',col:0xff3300,sz:1.5},
+  {id:'mantis',  ring:'BLADE WING',  hp:6, speed:11,wave:1,style:'charger',   col:0x22ff44,sz:1.65},
+  {id:'centipede',ring:'CENTI-DOOM', hp:7, speed:7, wave:2,style:'cautious',  col:0xffaa00,sz:1.8},
+  {id:'eel',      ring:'THUNDER EEL',hp:9, speed:5, wave:2,style:'eel',       col:0xffff22,sz:1.95},
+  {id:'predator',ring:'THE HUNTER',  hp:8, speed:8, wave:2,style:'cautious',  col:0x886644,sz:1.8},
+  {id:'jabba',   ring:'THE SLUG',    hp:10,speed:4, wave:3,style:'slug',      col:0x88aa44,sz:2.1},
+  {id:'queen',   ring:'HER MAJESTY', hp:9, speed:7, wave:3,style:'aggressive',col:0x2244aa,sz:2.25},
   {id:'kaiju',   ring:'GORGON',      hp:20,speed:5, wave:4,style:'charger',   col:0x336622,sz:4.5,boss:true},
 ];
 function _coloFW(geo,col){
@@ -29482,7 +30171,9 @@ function makeColosseumArena(){
     new THREE.LineBasicMaterial({color:0xff8800,transparent:true,opacity:.6}));
   cc.position.y=.43;g.add(cc);
   // v7.250 ★ 3× crowd: 120+168+216=504 figures, colorful + monsters + VIP gang
+  // v7.261: crowd figs stored in g.userData._crowdFigs for per-frame animation
   const audMat=new THREE.LineBasicMaterial({color:0x446688,transparent:true,opacity:.55});
+  g.userData._crowdFigs=[];
   [[18,120],[24,168],[30,216]].forEach(([r,cnt],ti)=>{
     for(let i=0;i<cnt;i++){
       const ang=i/cnt*Math.PI*2;
@@ -29490,6 +30181,11 @@ function makeColosseumArena(){
       const fig=_makeColoAudienceFig(audMat,i+ti*1000,{isMonster});
       fig.position.set(Math.cos(ang)*r,ti*2.2-1.5,Math.sin(ang)*r);
       fig.rotation.y=-ang+Math.PI;g.add(fig);
+      // Store animation data on each figure
+      fig.userData._crowdOrigY=fig.position.y;
+      fig.userData._crowdPhase=((i+ti*500)*2.71828)%(Math.PI*2);
+      fig.userData._crowdFreq=2.6+((i*1.618)%1.4);
+      g.userData._crowdFigs.push(fig);
     }
   });
   // VIP gang section — 14 gang members at radius 22, rear-right arc
@@ -29498,6 +30194,10 @@ function makeColosseumArena(){
     const fig=_makeColoAudienceFig(audMat,i+9000,{isVIP:true});
     fig.position.set(Math.cos(ang)*22,3.0,Math.sin(ang)*22);
     fig.rotation.y=-ang+Math.PI;g.add(fig);
+    fig.userData._crowdOrigY=fig.position.y;
+    fig.userData._crowdPhase=(i*3.14159)%(Math.PI*2);
+    fig.userData._crowdFreq=2.8+((i*0.9)%1.2);
+    g.userData._crowdFigs.push(fig);
   }
   [[-8,-8],[8,-8],[8,8],[-8,8]].forEach(([lx,lz],i)=>{
     const lbl=_coloFW(new THREE.BoxGeometry(.6,.4,.4),i%2===0?0xff8844:0xff3300);
@@ -29641,14 +30341,38 @@ function makeColosseumFighter(def){
       const fan=new THREE.Group();
       for(let i=0;i<5;i++){const s=fw(box(.1,.7,.03));s.position.set((i-2)*.12,.35,-.22);s.rotation.z=(i-2)*.1;fan.add(s);}
       fan.position.set(0,1.5,-.2);g.add(fan);body.position.y=1.12;g.add(body);
-      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.1,.09,.8,5)));
-      const lH=fw(box(.18,.18,.18));lH.position.y=-.52;lArm.add(lH);
+      // v7.255: tengu arms — upper + elbow + forearm w/ claw hand
+      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.1,.09,.52,5)));
+      const lArmET=fw(sph(.1,5));lArmET.position.y=-.32;lArm.add(lArmET);
+      const lArmFore=new THREE.Group();lArmFore.name='lArmFore';
+      lArmFore.add(fw(cyl(.09,.08,.44,5)));
+      const lH=fw(box(.18,.18,.18));lH.position.y=-.3;lArmFore.add(lH);
+      for(let ci=0;ci<3;ci++){const cl=fw(cone(.03,.2,3));cl.position.set((ci-1)*.08,-.5,.05);cl.rotation.x=.3;lArmFore.add(cl);}
+      lArmFore.position.y=-.32;lArm.add(lArmFore);
       lArm.position.set(-.5,1.8,0);lArm.rotation.z=.35;g.add(lArm);
-      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.1,.09,.8,5)));
-      const rH=fw(box(.18,.18,.18));rH.position.y=-.52;rArm.add(rH);
+      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.1,.09,.52,5)));
+      const rArmET=fw(sph(.1,5));rArmET.position.y=-.32;rArm.add(rArmET);
+      const rArmFore=new THREE.Group();rArmFore.name='rArmFore';
+      rArmFore.add(fw(cyl(.09,.08,.44,5)));
+      const rH=fw(box(.18,.18,.18));rH.position.y=-.3;rArmFore.add(rH);
+      for(let ci=0;ci<3;ci++){const cl=fw(cone(.03,.2,3));cl.position.set((ci-1)*.08,-.5,.05);cl.rotation.x=.3;rArmFore.add(cl);}
+      rArmFore.position.y=-.32;rArm.add(rArmFore);
       rArm.position.set(.5,1.8,0);rArm.rotation.z=-.35;g.add(rArm);
-      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.13,.11,.9,5)));lLeg.position.set(-.22,.25,0);g.add(lLeg);
-      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.13,.11,.9,5)));rLeg.position.set(.22,.25,0);g.add(rLeg);
+      // v7.255: tengu legs — thigh + knee + lower + tabi foot
+      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.13,.11,.56,5)));
+      const lLegKT=fw(sph(.12,5));lLegKT.position.y=-.34;lLeg.add(lLegKT);
+      const lLegLower=new THREE.Group();lLegLower.name='lLegLower';
+      lLegLower.add(fw(cyl(.11,.1,.46,5)));
+      const lTabiF=fw(box(.22,.08,.3));lTabiF.position.set(0,-.3,.06);lLegLower.add(lTabiF);
+      lLegLower.position.y=-.34;lLeg.add(lLegLower);
+      lLeg.position.set(-.22,.25,0);g.add(lLeg);
+      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.13,.11,.56,5)));
+      const rLegKT=fw(sph(.12,5));rLegKT.position.y=-.34;rLeg.add(rLegKT);
+      const rLegLower=new THREE.Group();rLegLower.name='rLegLower';
+      rLegLower.add(fw(cyl(.11,.1,.46,5)));
+      const rTabiF=fw(box(.22,.08,.3));rTabiF.position.set(0,-.3,.06);rLegLower.add(rTabiF);
+      rLegLower.position.y=-.34;rLeg.add(rLegLower);
+      rLeg.position.set(.22,.25,0);g.add(rLeg);
       break;}
     case 'mantis':{
       const head=new THREE.Group();head.name='head';head.add(fw2(box(.42,.34,.4)));
@@ -29658,16 +30382,38 @@ function makeColosseumFighter(def){
       const body=new THREE.Group();body.name='body';body.add(fw2(box(.6,1.0,.44)));
       for(let i=0;i<3;i++){const seg=fw(box(.54,.2,.07));seg.position.set(0,.22-i*.24,.26);body.add(seg);}
       body.position.y=1.1;g.add(body);
-      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.09,.07,.65,4)));
-      const sicL=fw(box(.07,.85,.07));sicL.position.set(-.2,-.6,0);sicL.rotation.z=-.65;lArm.add(sicL);
-      const tipL=fw(cone(.06,.3,4));tipL.position.set(-.44,-1.0,0);tipL.rotation.z=-1.15;lArm.add(tipL);
+      // v7.255: mantis arms — upper + elbow + forearm with sickle
+      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.09,.07,.48,4)));
+      const lArmEM=fw(sph(.09,5));lArmEM.position.y=-.3;lArm.add(lArmEM);
+      const lArmFore=new THREE.Group();lArmFore.name='lArmFore';
+      lArmFore.add(fw(cyl(.08,.06,.44,4)));
+      const sicL=fw(box(.07,.85,.07));sicL.position.set(-.2,-.42,0);sicL.rotation.z=-.65;lArmFore.add(sicL);
+      const tipL=fw(cone(.06,.3,4));tipL.position.set(-.44,-.82,0);tipL.rotation.z=-1.15;lArmFore.add(tipL);
+      lArmFore.position.y=-.3;lArm.add(lArmFore);
       lArm.position.set(-.44,1.75,0);lArm.rotation.z=.4;g.add(lArm);
-      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.09,.07,.65,4)));
-      const sicR=fw(box(.07,.85,.07));sicR.position.set(.2,-.6,0);sicR.rotation.z=.65;rArm.add(sicR);
-      const tipR=fw(cone(.06,.3,4));tipR.position.set(.44,-1.0,0);tipR.rotation.z=1.15;rArm.add(tipR);
+      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.09,.07,.48,4)));
+      const rArmEM=fw(sph(.09,5));rArmEM.position.y=-.3;rArm.add(rArmEM);
+      const rArmFore=new THREE.Group();rArmFore.name='rArmFore';
+      rArmFore.add(fw(cyl(.08,.06,.44,4)));
+      const sicR=fw(box(.07,.85,.07));sicR.position.set(.2,-.42,0);sicR.rotation.z=.65;rArmFore.add(sicR);
+      const tipR=fw(cone(.06,.3,4));tipR.position.set(.44,-.82,0);tipR.rotation.z=1.15;rArmFore.add(tipR);
+      rArmFore.position.y=-.3;rArm.add(rArmFore);
       rArm.position.set(.44,1.75,0);rArm.rotation.z=-.4;g.add(rArm);
-      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.12,.1,.85,5)));lLeg.position.set(-.22,.25,0);g.add(lLeg);
-      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.12,.1,.85,5)));rLeg.position.set(.22,.25,0);g.add(rLeg);
+      // v7.255: mantis legs — thigh + knee + lower + insect spike foot
+      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.12,.1,.52,5)));
+      const lLegKM=fw(sph(.11,5));lLegKM.position.y=-.32;lLeg.add(lLegKM);
+      const lLegLower=new THREE.Group();lLegLower.name='lLegLower';
+      lLegLower.add(fw(cyl(.1,.08,.46,4)));
+      const lLegSp=fw(cone(.05,.3,4));lLegSp.position.set(0,-.36,-.06);lLegSp.rotation.x=-.25;lLegLower.add(lLegSp);
+      lLegLower.position.y=-.32;lLeg.add(lLegLower);
+      lLeg.position.set(-.22,.25,0);g.add(lLeg);
+      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.12,.1,.52,5)));
+      const rLegKM=fw(sph(.11,5));rLegKM.position.y=-.32;rLeg.add(rLegKM);
+      const rLegLower=new THREE.Group();rLegLower.name='rLegLower';
+      rLegLower.add(fw(cyl(.1,.08,.46,4)));
+      const rLegSp=fw(cone(.05,.3,4));rLegSp.position.set(0,-.36,-.06);rLegSp.rotation.x=-.25;rLegLower.add(rLegSp);
+      rLegLower.position.y=-.32;rLeg.add(rLegLower);
+      rLeg.position.set(.22,.25,0);g.add(rLeg);
       break;}
     case 'centipede':{
       for(let i=0;i<7;i++){
@@ -29696,12 +30442,42 @@ function makeColosseumFighter(def){
       const can=new THREE.Group();can.name='cannon';can.add(fw2(box(.18,.18,.52)));
       const bar=fw2(cyl(.07,.07,.65,5));bar.position.set(0,0,.42);can.add(bar);
       can.position.set(-.54,1.88,-.14);can.rotation.x=-.35;g.add(can);
-      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.12,.1,.85,5)));
-      const lH=fw2(box(.2,.2,.2));lH.position.y=-.55;lArm.add(lH);lArm.position.set(-.5,1.8,0);lArm.rotation.z=.3;g.add(lArm);
-      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.12,.1,.85,5)));
-      const rH=fw2(box(.2,.2,.2));rH.position.y=-.55;rArm.add(rH);rArm.position.set(.5,1.8,0);rArm.rotation.z=-.3;g.add(rArm);
-      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.13,.12,.9,5)));lLeg.position.set(-.22,.25,0);g.add(lLeg);
-      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.13,.12,.9,5)));rLeg.position.set(.22,.25,0);g.add(rLeg);
+      // v7.255: predator arms — bicep plate + elbow + forearm + bracer + 3 claws
+      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.12,.1,.54,5)));
+      const lBicepP=fw2(box(.28,.16,.18));lBicepP.position.y=-.08;lArm.add(lBicepP);
+      const lArmEP=fw(sph(.11,5));lArmEP.position.y=-.34;lArm.add(lArmEP);
+      const lArmFore=new THREE.Group();lArmFore.name='lArmFore';
+      lArmFore.add(fw(cyl(.11,.09,.48,5)));
+      const lBrP=fw2(box(.24,.18,.2));lBrP.position.y=-.26;lArmFore.add(lBrP);
+      for(let ci=0;ci<3;ci++){const cl=fw2(new THREE.CylinderGeometry(.025,.015,.42,4));cl.position.set((ci-1)*.06,-.5,.06);cl.rotation.x=.35;lArmFore.add(cl);}
+      lArmFore.position.y=-.34;lArm.add(lArmFore);
+      lArm.position.set(-.5,1.8,0);lArm.rotation.z=.3;g.add(lArm);
+      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.12,.1,.54,5)));
+      const rBicepP=fw2(box(.28,.16,.18));rBicepP.position.y=-.08;rArm.add(rBicepP);
+      const rArmEP=fw(sph(.11,5));rArmEP.position.y=-.34;rArm.add(rArmEP);
+      const rArmFore=new THREE.Group();rArmFore.name='rArmFore';
+      rArmFore.add(fw(cyl(.11,.09,.48,5)));
+      const rBrP=fw2(box(.24,.18,.2));rBrP.position.y=-.26;rArmFore.add(rBrP);
+      for(let ci=0;ci<3;ci++){const cl=fw2(new THREE.CylinderGeometry(.025,.015,.42,4));cl.position.set((ci-1)*.06,-.5,.06);cl.rotation.x=.35;rArmFore.add(cl);}
+      rArmFore.position.y=-.34;rArm.add(rArmFore);
+      rArm.position.set(.5,1.8,0);rArm.rotation.z=-.3;g.add(rArm);
+      // v7.255: predator legs — thigh + knee + shin guard + armored boot
+      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.13,.12,.56,5)));
+      const lLegKP=fw(sph(.13,5));lLegKP.position.y=-.36;lLeg.add(lLegKP);
+      const lLegLower=new THREE.Group();lLegLower.name='lLegLower';
+      lLegLower.add(fw(cyl(.12,.1,.48,5)));
+      const lShinP=fw2(box(.26,.28,.12));lShinP.position.set(0,-.08,-.09);lLegLower.add(lShinP);
+      const lFtP=fw2(box(.22,.1,.38));lFtP.position.set(0,-.28,.06);lLegLower.add(lFtP);
+      lLegLower.position.y=-.36;lLeg.add(lLegLower);
+      lLeg.position.set(-.22,.25,0);g.add(lLeg);
+      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.13,.12,.56,5)));
+      const rLegKP=fw(sph(.13,5));rLegKP.position.y=-.36;rLeg.add(rLegKP);
+      const rLegLower=new THREE.Group();rLegLower.name='rLegLower';
+      rLegLower.add(fw(cyl(.12,.1,.48,5)));
+      const rShinP=fw2(box(.26,.28,.12));rShinP.position.set(0,-.08,-.09);rLegLower.add(rShinP);
+      const rFtP=fw2(box(.22,.1,.38));rFtP.position.set(0,-.28,.06);rLegLower.add(rFtP);
+      rLegLower.position.y=-.36;rLeg.add(rLegLower);
+      rLeg.position.set(.22,.25,0);g.add(rLeg);
       break;}
     case 'jabba':{
       const body=new THREE.Group();body.name='body';body.add(fw(sph(.88,7)));
@@ -29731,33 +30507,112 @@ function makeColosseumFighter(def){
       body.position.y=1.2;g.add(body);
       const tail=fw(cyl(.12,.05,2.2,5));tail.position.set(0,.22,.9);tail.rotation.x=Math.PI*.5;g.add(tail);
       const tailTip=fw2(cone(.08,.48,4));tailTip.position.set(0,.22,2.25);tailTip.rotation.x=Math.PI*.5;g.add(tailTip);
-      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.12,.1,.9,5)));
-      const lC=fw2(box(.24,.24,.24));lC.position.y=-.62;lArm.add(lC);lArm.position.set(-.5,1.9,0);lArm.rotation.z=.35;g.add(lArm);
-      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.12,.1,.9,5)));
-      const rC=fw2(box(.24,.24,.24));rC.position.y=-.62;rArm.add(rC);rArm.position.set(.5,1.9,0);rArm.rotation.z=-.35;g.add(rArm);
-      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.14,.12,.92,5)));lLeg.position.set(-.22,.3,0);g.add(lLeg);
-      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.14,.12,.92,5)));rLeg.position.set(.22,.3,0);g.add(rLeg);
+      // v7.255: queen arms — elbow + forearm + alien talon fingers
+      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.12,.1,.56,5)));
+      const lArmEQ=fw(sph(.12,5));lArmEQ.position.y=-.36;lArm.add(lArmEQ);
+      const lArmFore=new THREE.Group();lArmFore.name='lArmFore';
+      lArmFore.add(fw(cyl(.11,.09,.48,5)));
+      [-1,0,1].forEach(ci=>{const tal=fw(cyl(.035,.02,.38,4));tal.position.set(ci*.1,-.42,.04);tal.rotation.x=.25;lArmFore.add(tal);});
+      lArmFore.position.y=-.36;lArm.add(lArmFore);
+      lArm.position.set(-.5,1.9,0);lArm.rotation.z=.35;g.add(lArm);
+      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.12,.1,.56,5)));
+      const rArmEQ=fw(sph(.12,5));rArmEQ.position.y=-.36;rArm.add(rArmEQ);
+      const rArmFore=new THREE.Group();rArmFore.name='rArmFore';
+      rArmFore.add(fw(cyl(.11,.09,.48,5)));
+      [-1,0,1].forEach(ci=>{const tal=fw(cyl(.035,.02,.38,4));tal.position.set(ci*.1,-.42,.04);tal.rotation.x=.25;rArmFore.add(tal);});
+      rArmFore.position.y=-.36;rArm.add(rArmFore);
+      rArm.position.set(.5,1.9,0);rArm.rotation.z=-.35;g.add(rArm);
+      // v7.255: queen legs — thigh + knee + chitinous spikes + foot plate
+      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.14,.12,.58,5)));
+      const lLegKQ=fw(sph(.13,5));lLegKQ.position.y=-.38;lLeg.add(lLegKQ);
+      const lLegLower=new THREE.Group();lLegLower.name='lLegLower';
+      lLegLower.add(fw(cyl(.12,.1,.5,5)));
+      for(let si=0;si<3;si++){const sp=fw2(cone(.04,.18,3));sp.position.set(0,-.08-si*.12,-.08);sp.rotation.x=-.3;lLegLower.add(sp);}
+      const lFtQ=fw2(box(.26,.09,.34));lFtQ.position.set(0,-.3,.06);lLegLower.add(lFtQ);
+      lLegLower.position.y=-.38;lLeg.add(lLegLower);
+      lLeg.position.set(-.22,.3,0);g.add(lLeg);
+      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.14,.12,.58,5)));
+      const rLegKQ=fw(sph(.13,5));rLegKQ.position.y=-.38;rLeg.add(rLegKQ);
+      const rLegLower=new THREE.Group();rLegLower.name='rLegLower';
+      rLegLower.add(fw(cyl(.12,.1,.5,5)));
+      for(let si=0;si<3;si++){const sp=fw2(cone(.04,.18,3));sp.position.set(0,-.08-si*.12,-.08);sp.rotation.x=-.3;rLegLower.add(sp);}
+      const rFtQ=fw2(box(.26,.09,.34));rFtQ.position.set(0,-.3,.06);rLegLower.add(rFtQ);
+      rLegLower.position.y=-.38;rLeg.add(rLegLower);
+      rLeg.position.set(.22,.3,0);g.add(rLeg);
       break;}
     case 'kaiju':{
-      const head=new THREE.Group();head.name='head';head.add(fw(box(.88,.68,.78)));
-      const brow=fw2(box(.92,.2,.16));brow.position.set(0,.3,.4);head.add(brow);
-      for(let i=0;i<5;i++){const t=fw(cone(.07,.22,3));t.position.set(-0.3+i*.15,-.28,.4);t.rotation.x=.12;head.add(t);}
-      [-1,1].forEach(s=>{const eye=fw(sph(.15,5));eye.position.set(s*.28,.24,.42);head.add(eye);});
-      head.position.y=4.5;g.add(head);
-      fw(cyl(.28,.32,.88,6)).position.y=3.85;g.add(g.children[g.children.length-1]);
-      const body=new THREE.Group();body.name='body';body.add(fw(box(1.1,1.6,.85)));
-      for(let i=0;i<5;i++){const sp=fw2(cone(.1,.48+i*.08,4));sp.position.set(0,.68-i*.18,-.36-i*.04);sp.rotation.x=-.2;body.add(sp);}
-      body.position.y=2.12;g.add(body);
-      const tailG=fw(cyl(.22,.06,2.8,6));tailG.position.set(0,1.2,1.62);tailG.rotation.x=Math.PI*.42;g.add(tailG);
-      const tailTipG=fw2(cone(.12,.58,5));tailTipG.position.set(0,.2,3.18);tailTipG.rotation.x=Math.PI*.5;g.add(tailTipG);
-      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.2,.17,1.2,6)));
-      const lC=fw2(box(.35,.35,.35));lC.position.y=-.85;lArm.add(lC);lArm.position.set(-.74,2.8,0);lArm.rotation.z=.4;g.add(lArm);
-      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.2,.17,1.2,6)));
-      const rC=fw2(box(.35,.35,.35));rC.position.y=-.85;rArm.add(rC);rArm.position.set(.74,2.8,0);rArm.rotation.z=-.4;g.add(rArm);
-      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.22,.2,1.3,6)));
-      const lF=fw2(box(.38,.22,.5));lF.position.set(0,-.82,.08);lLeg.add(lF);lLeg.position.set(-.35,.5,0);g.add(lLeg);
-      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.22,.2,1.3,6)));
-      const rF=fw2(box(.38,.22,.5));rF.position.set(0,-.82,.08);rLeg.add(rF);rLeg.position.set(.35,.5,0);g.add(rLeg);
+      // v7.266: GORGON — multi-joint kaiju: segmented neck/tail, 3-part arms & legs, animated jaw
+      // ── Body ─────────────────────────────────────────────────────
+      const body=new THREE.Group();body.name='body';
+      body.add(fw(box(1.4,1.85,1.02)));
+      for(let i=0;i<3;i++){const ap=fw2(box(1.3-i*.08,.34,.2));ap.position.set(0,.6-i*.4,.5);body.add(ap);}
+      for(let i=0;i<5;i++){const sp=fw2(cone(.13-.01*i,.58+i*.1,4));sp.position.set(0,.78-i*.3,-.46+i*.03);sp.rotation.x=-.15;body.add(sp);}
+      [-1,1].forEach(s=>{const hf=fw(box(.3,.55,.44));hf.position.set(s*.64,-.52,.02);body.add(hf);});
+      body.position.y=1.85;g.add(body);
+      // ── 3-segment neck chain (mounted on body top) ──────────────
+      const neck1=new THREE.Group();neck1.name='neck1';neck1.add(fw(cyl(.3,.26,.58,6)));
+      const np1=fw2(box(.26,.18,.14));np1.position.set(0,.2,-.18);neck1.add(np1);neck1.position.y=.95;body.add(neck1);
+      const neck2=new THREE.Group();neck2.name='neck2';neck2.add(fw(cyl(.26,.22,.5,6)));
+      const np2=fw2(box(.22,.16,.12));np2.position.set(0,.16,-.15);neck2.add(np2);neck2.position.y=.56;neck1.add(neck2);
+      const neck3=new THREE.Group();neck3.name='neck3';neck3.add(fw(cyl(.22,.18,.4,6)));neck3.position.y=.48;neck2.add(neck3);
+      // ── Head (mounted on neck3 top) ──────────────────────────────
+      const head=new THREE.Group();head.name='head';
+      head.add(fw(box(.96,.72,.9)));
+      const brow=fw2(box(1.0,.22,.18));brow.position.set(0,.5,.46);head.add(brow);
+      const jaw=new THREE.Group();jaw.name='jaw';jaw.add(fw(box(.82,.26,.72)));
+      for(let i=0;i<5;i++){const t=fw(cone(.055,.22,3));t.position.set(-0.3+i*.15,-.2,.35);t.rotation.x=.18;jaw.add(t);}
+      jaw.position.set(0,-.06,.04);head.add(jaw);
+      for(let i=0;i<4;i++){const t=fw2(cone(.065,.25,3));t.position.set(-0.26+i*.18,.08,.46);t.rotation.x=-.12;head.add(t);}
+      [-1,1].forEach(s=>{
+        const eye=fw(sph(.17,5));eye.position.set(s*.3,.34,.46);head.add(eye);
+        const gl=new THREE.Mesh(new THREE.SphereGeometry(.1,5,4),new THREE.MeshBasicMaterial({color:0xff8800}));
+        gl.position.set(s*.3,.34,.46);head.add(gl);
+      });
+      [[0,.58,-.3],[-.3,.48,-.2],[.3,.48,-.2]].forEach(([hx,hy,hz])=>{const hn=fw2(cone(.1,.4,4));hn.position.set(hx,hy,hz);hn.rotation.x=-.35;head.add(hn);});
+      head.position.y=.38;neck3.add(head);
+      // ── Left arm (upper arm → forearm → claws) ──────────────────
+      const lArm=new THREE.Group();lArm.name='lArm';lArm.add(fw(cyl(.25,.21,1.1,6)));
+      const lEB=fw(sph(.2,5));lEB.position.y=-.58;lArm.add(lEB);
+      const lSP=fw2(cone(.28,.36,5));lSP.position.set(0,.45,0);lSP.rotation.x=Math.PI;lArm.add(lSP);
+      const lArmFore=new THREE.Group();lArmFore.name='lArmFore';lArmFore.add(fw(cyl(.19,.15,.88,6)));
+      for(let i=0;i<2;i++){const sp=fw2(cone(.07,.26,3));sp.position.set(-.12,.18-i*.32,-.12);sp.rotation.x=-.28;lArmFore.add(sp);}
+      for(let i=0;i<3;i++){const cf=fw(cyl(.05,.03,.38,4));cf.position.set(-0.14+i*.14,-.3,.02);cf.rotation.x=.18;lArmFore.add(cf);const tip=fw2(cone(.04,.18,3));tip.position.set(-0.14+i*.14,-.52,.08);tip.rotation.x=.28;lArmFore.add(tip);}
+      lArmFore.position.y=-.56;lArm.add(lArmFore);
+      lArm.position.set(-.76,2.78,.02);lArm.rotation.z=.52;g.add(lArm);
+      // ── Right arm (upper arm → forearm → claws) ─────────────────
+      const rArm=new THREE.Group();rArm.name='rArm';rArm.add(fw(cyl(.25,.21,1.1,6)));
+      const rEB=fw(sph(.2,5));rEB.position.y=-.58;rArm.add(rEB);
+      const rSP=fw2(cone(.28,.36,5));rSP.position.set(0,.45,0);rSP.rotation.x=Math.PI;rArm.add(rSP);
+      const rArmFore=new THREE.Group();rArmFore.name='rArmFore';rArmFore.add(fw(cyl(.19,.15,.88,6)));
+      for(let i=0;i<2;i++){const sp=fw2(cone(.07,.26,3));sp.position.set(.12,.18-i*.32,.12);sp.rotation.x=.28;rArmFore.add(sp);}
+      for(let i=0;i<3;i++){const cf=fw(cyl(.05,.03,.38,4));cf.position.set(-0.14+i*.14,-.3,.02);cf.rotation.x=.18;rArmFore.add(cf);const tip=fw2(cone(.04,.18,3));tip.position.set(-0.14+i*.14,-.52,.08);tip.rotation.x=.28;rArmFore.add(tip);}
+      rArmFore.position.y=-.56;rArm.add(rArmFore);
+      rArm.position.set(.76,2.78,.02);rArm.rotation.z=-.52;g.add(rArm);
+      // ── Left leg (thigh → shin → foot) ──────────────────────────
+      const lLeg=new THREE.Group();lLeg.name='lLeg';lLeg.add(fw(cyl(.28,.24,1.22,6)));
+      const lKP=fw(sph(.22,5));lKP.position.y=-.68;lLeg.add(lKP);
+      const lLegLower=new THREE.Group();lLegLower.name='lLegLower';lLegLower.add(fw(cyl(.22,.18,.98,6)));
+      for(let i=0;i<2;i++){const sp=fw2(cone(.06,.22,3));sp.position.set(0,.18-i*.28,-.12);sp.rotation.x=-.22;lLegLower.add(sp);}
+      const lFoot=new THREE.Group();lFoot.name='lFoot';lFoot.add(fw(box(.48,.18,.7)));
+      for(let i=0;i<3;i++){const tc=fw2(cone(.06,.26,3));tc.position.set(-0.16+i*.16,-.14,.3+i*.04);tc.rotation.x=.32;lFoot.add(tc);}
+      lFoot.position.y=-.56;lLegLower.add(lFoot);lLegLower.position.y=-.68;lLeg.add(lLegLower);
+      lLeg.position.set(-.38,.3,.06);g.add(lLeg);
+      // ── Right leg (thigh → shin → foot) ─────────────────────────
+      const rLeg=new THREE.Group();rLeg.name='rLeg';rLeg.add(fw(cyl(.28,.24,1.22,6)));
+      const rKP=fw(sph(.22,5));rKP.position.y=-.68;rLeg.add(rKP);
+      const rLegLower=new THREE.Group();rLegLower.name='rLegLower';rLegLower.add(fw(cyl(.22,.18,.98,6)));
+      for(let i=0;i<2;i++){const sp=fw2(cone(.06,.22,3));sp.position.set(0,.18-i*.28,-.12);sp.rotation.x=-.22;rLegLower.add(sp);}
+      const rFoot=new THREE.Group();rFoot.name='rFoot';rFoot.add(fw(box(.48,.18,.7)));
+      for(let i=0;i<3;i++){const tc=fw2(cone(.06,.26,3));tc.position.set(-0.16+i*.16,-.14,.3+i*.04);tc.rotation.x=.32;rFoot.add(tc);}
+      rFoot.position.y=-.56;rLegLower.add(rFoot);rLegLower.position.y=-.68;rLeg.add(rLegLower);
+      rLeg.position.set(.38,.3,.06);g.add(rLeg);
+      // ── 5-segment tail (on g for independent Y-rotation wave) ────
+      [[.75,.88,1.10,.27,.22,.62],[1.22,1.30,1.26,.23,.18,.58],[1.62,1.65,1.40,.19,.14,.52],[1.96,1.94,1.52,.15,.10,.46],[2.24,2.14,1.62,.10,.04,.40]].forEach(([tz,ty,rx,r1,r2,rl],i)=>{
+        const tg=new THREE.Group();tg.name='tail'+(i+1);tg.add(fw(cyl(r1,r2,rl,5)));
+        if(i<3){const sp=fw2(cone(.07-.01*i,.24-.03*i,3));sp.position.set(0,rl*.28,-(r1+.05));sp.rotation.x=-.22;tg.add(sp);}
+        if(i===4){const tip=fw2(cone(.08,.34,4));tip.position.set(0,-(rl*.5+.1),0);tg.add(tip);}
+        tg.position.set(0,ty,tz);tg.rotation.x=rx;g.add(tg);
+      });
       break;}
     default:break;
   }
@@ -29852,39 +30707,918 @@ function _startColosseumAmbushCine(){
     }
   },2500);
 }
-// v7.247: Pilot in blue boxing shorts (shirtless, no helmet)
+// v7.255: Rebuilt boxer pilot — 2× scale, forest-quality joints, boxing helmet + gloves + boots
 function _makeColoBoxerPilot(){
   const g=new THREE.Group();g.name='coloBoxerPilot';
   const skin=0xffcc99,skinFill=0x1a0f00;
+  const blue=0x2255cc,blueFill=0x001133;
+  const red=0xdd1100,redFill=0x1a0000;
   const fw=(geo,col,fillCol)=>{
     const grp=new THREE.Group();
     grp.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fillCol||skinFill,depthWrite:true})));
     grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:col||skin,transparent:true,opacity:.92})));
     return grp;
   };
-  // Head
-  const head=fw(new THREE.SphereGeometry(.28,7,5),skin);
-  head.position.y=2.0;g.add(head);
-  // Eyes
-  [-1,1].forEach(s=>{const eye=fw(new THREE.SphereGeometry(.055,4,3),0x222222,0x000000);eye.position.set(s*.11,.04,.23);head.add(eye);});
-  // Neck
-  const neck=fw(new THREE.CylinderGeometry(.12,.14,.18,5),skin);neck.position.y=1.76;g.add(neck);
-  // Torso
-  const torso=fw(new THREE.BoxGeometry(.52,.72,.32),skin);torso.name='torso';torso.position.y=1.22;g.add(torso);
-  // Pec bumps
-  [-1,1].forEach(s=>{const pec=fw(new THREE.SphereGeometry(.16,5,3),skin);pec.position.set(s*.16,1.35,.14);g.add(pec);});
-  // Shorts
-  const shorts=fw(new THREE.BoxGeometry(.52,.44,.32),0x2255cc,0x001133);shorts.position.y=.72;g.add(shorts);
-  // Yellow trim stripe at top of shorts
-  const trim=fw(new THREE.BoxGeometry(.54,.05,.34),0xffff00,0x333300);trim.position.y=.92;g.add(trim);
-  // Arms
-  const lArm=fw(new THREE.CylinderGeometry(.1,.09,.52,5),skin);lArm.name='lArm';lArm.position.set(-.38,1.18,0);g.add(lArm);
-  const rArm=fw(new THREE.CylinderGeometry(.1,.09,.52,5),skin);rArm.name='rArm';rArm.position.set(.38,1.18,0);g.add(rArm);
-  // Legs
-  const lLeg=fw(new THREE.CylinderGeometry(.11,.1,.5,5),skin);lLeg.name='lLeg';lLeg.position.set(-.14,.35,0);g.add(lLeg);
-  const rLeg=fw(new THREE.CylinderGeometry(.11,.1,.5,5),skin);rLeg.name='rLeg';rLeg.position.set(.14,.35,0);g.add(rLeg);
+  const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  const cyl=(rt,rb,h,s)=>new THREE.CylinderGeometry(rt||.1,rb||.1,h||1,s||6);
+  const sph=(r,s)=>new THREE.SphereGeometry(r,s||6,s||4);
+
+  // ── HEAD: boxing helmet ──────────────────────────────────
+  const head=new THREE.Group();head.name='head';
+  // Skull base
+  head.add(fw(sph(.27,8),skin));
+  // Red helmet shell — slightly larger
+  const helmetShell=fw(sph(.31,7),red,redFill);helmetShell.position.y=.04;head.add(helmetShell);
+  // Chin guard
+  const chinG=fw(box(.34,.1,.26),red,redFill);chinG.position.set(0,-.2,.04);head.add(chinG);
+  // Ear guards L/R
+  [-1,1].forEach(s=>{const ear=fw(box(.07,.22,.2),red,redFill);ear.position.set(s*.31,.04,0);head.add(ear);});
+  // Nose bridge (chrome)
+  const noseB=fw(box(.055,.2,.04),0xcccccc,0x111111);noseB.position.set(0,-.04,.28);head.add(noseB);
+  // Eyes (peeking below helmet)
+  [-1,1].forEach(s=>{const eye=fw(sph(.055,4),0x222222,0x000000);eye.position.set(s*.1,-.04,.25);head.add(eye);});
+  // v7.261: Hair spikes — black tufts on back of helmet (local -Z) for front/back clarity
+  [-0.08,0,0.08].forEach((hx,hi)=>{
+    const spike=fw(cyl(.025,.006,.26,3),0x1a1a1a,0x080808);
+    spike.position.set(hx,.2,-.22);spike.rotation.x=.38+hi*.03;
+    head.add(spike);
+  });
+  // Helmet back yellow stripe — visible from behind
+  const bkStripe=fw(box(.24,.055,.04),0xffff00,0x333300);bkStripe.position.set(0,.07,-.29);head.add(bkStripe);
+  head.position.y=2.04;g.add(head);
+
+  // ── NECK ──────────────────────────────────────────────────
+  const neck=fw(cyl(.13,.15,.19,5),skin);neck.position.y=1.78;g.add(neck);
+
+  // ── TORSO ─────────────────────────────────────────────────
+  const torso=new THREE.Group();torso.name='torso';
+  torso.add(fw(box(.58,.52,.34),skin));
+  // Pec detail
+  [-1,1].forEach(s=>{const pec=fw(box(.22,.2,.06),skin);pec.position.set(s*.17,.08,.17);torso.add(pec);});
+  // Abs ridges × 3
+  for(let i=0;i<3;i++){const ab=fw(box(.44,.05,.08),0xddbb88,skinFill);ab.position.set(0,-.1-i*.12,.17);torso.add(ab);}
+  // v7.261: Chest star emblem — gold, front-facing only (local +Z)
+  const chestEm=fw(new THREE.OctahedronGeometry(.09,0),0xffdd00,0x222200);chestEm.position.set(0,.08,.18);torso.add(chestEm);
+  torso.position.y=1.29;g.add(torso);
+
+  // ── SHORTS + WAISTBAND ────────────────────────────────────
+  const hips=new THREE.Group();hips.name='hips';
+  hips.add(fw(box(.52,.44,.34),blue,blueFill));
+  // Waistband (yellow)
+  const waist=fw(box(.54,.06,.36),0xffff00,0x333300);waist.position.y=.24;hips.add(waist);
+  // Side stripes
+  [-1,1].forEach(s=>{const str=fw(box(.04,.38,.06),0xffff00,0x333300);str.position.set(s*.25,0,.18);hips.add(str);});
+  hips.position.y=.77;g.add(hips);
+
+  // ── LEFT ARM: upper arm + elbow + forearm + glove ─────────
+  const lArm=new THREE.Group();lArm.name='lArm';
+  lArm.add(fw(cyl(.11,.1,.46,6),skin));
+  const lElbow=fw(sph(.12,5),skin);lElbow.position.y=-.28;lArm.add(lElbow);
+  const lArmFore=new THREE.Group();lArmFore.name='lArmFore';
+  lArmFore.add(fw(cyl(.1,.09,.42,6),skin));
+  // Boxing glove (red puff)
+  const lGlv=new THREE.Group();
+  lGlv.add(fw(sph(.17,6),red,redFill));
+  const lGThumb=fw(sph(.09,4),red,redFill);lGThumb.position.set(-.13,-.02,.09);lGlv.add(lGThumb);
+  lGlv.position.y=-.28;lArmFore.add(lGlv);
+  lArmFore.position.y=-.28;lArm.add(lArmFore);
+  lArm.position.set(-.36,1.58,0);lArm.rotation.z=.2;g.add(lArm);
+
+  // ── RIGHT ARM: mirror ─────────────────────────────────────
+  const rArm=new THREE.Group();rArm.name='rArm';
+  rArm.add(fw(cyl(.11,.1,.46,6),skin));
+  const rElbow=fw(sph(.12,5),skin);rElbow.position.y=-.28;rArm.add(rElbow);
+  const rArmFore=new THREE.Group();rArmFore.name='rArmFore';
+  rArmFore.add(fw(cyl(.1,.09,.42,6),skin));
+  const rGlv=new THREE.Group();
+  rGlv.add(fw(sph(.17,6),red,redFill));
+  const rGThumb=fw(sph(.09,4),red,redFill);rGThumb.position.set(.13,-.02,.09);rGlv.add(rGThumb);
+  rGlv.position.y=-.28;rArmFore.add(rGlv);
+  rArmFore.position.y=-.28;rArm.add(rArmFore);
+  rArm.position.set(.36,1.58,0);rArm.rotation.z=-.2;g.add(rArm);
+
+  // ── LEFT LEG: thigh + knee + lower leg + boot ─────────────
+  const lLeg=new THREE.Group();lLeg.name='lLeg';
+  lLeg.add(fw(cyl(.13,.12,.48,6),skin));
+  const lKnee=fw(sph(.13,5),skin);lKnee.position.y=-.3;lLeg.add(lKnee);
+  const lLegLower=new THREE.Group();lLegLower.name='lLegLower';
+  lLegLower.add(fw(cyl(.12,.1,.42,6),skin));
+  // Boot
+  const lBootGrp=new THREE.Group();
+  lBootGrp.add(fw(box(.22,.14,.28),0x333333,0x0a0a0a));
+  const lSole=fw(box(.24,.05,.32),0x222222,0x080808);lSole.position.set(0,-.08,.02);lBootGrp.add(lSole);
+  // v7.261: Toe cap — extends forward (local +Z) so direction is clear
+  const lToe=fw(box(.17,.07,.1),0x555555,0x111111);lToe.position.set(0,-.05,.19);lBootGrp.add(lToe);
+  lBootGrp.position.y=-.27;lLegLower.add(lBootGrp);
+  lLegLower.position.y=-.3;lLeg.add(lLegLower);
+  lLeg.position.set(-.16,.44,0);g.add(lLeg);
+
+  // ── RIGHT LEG: mirror ─────────────────────────────────────
+  const rLeg=new THREE.Group();rLeg.name='rLeg';
+  rLeg.add(fw(cyl(.13,.12,.48,6),skin));
+  const rKnee=fw(sph(.13,5),skin);rKnee.position.y=-.3;rLeg.add(rKnee);
+  const rLegLower=new THREE.Group();rLegLower.name='rLegLower';
+  rLegLower.add(fw(cyl(.12,.1,.42,6),skin));
+  const rBootGrp=new THREE.Group();
+  rBootGrp.add(fw(box(.22,.14,.28),0x333333,0x0a0a0a));
+  const rSole=fw(box(.24,.05,.32),0x222222,0x080808);rSole.position.set(0,-.08,.02);rBootGrp.add(rSole);
+  const rToe=fw(box(.17,.07,.1),0x555555,0x111111);rToe.position.set(0,-.05,.19);rBootGrp.add(rToe);
+  rBootGrp.position.y=-.27;rLegLower.add(rBootGrp);
+  rLegLower.position.y=-.3;rLeg.add(rLegLower);
+  rLeg.position.set(.16,.44,0);g.add(rLeg);
+
+  g.scale.setScalar(2.0);return g;
+}
+
+// ============================================================
+// v7.264: ARMADA — 銀河大艦隊決戦ステージ
+// ============================================================
+
+function startArmada(){
+  try{cleanupBossResidue()}catch(_){}
+  S.phase='ARMADA';
+  S._armPhase=0;S._armPhaseT=0;S._armKills=0;S._armFleetHP=100;
+  S._armEscort=null;S._armTitan=null;S._armTitanHP={};S._armIonDisableT=0;
+  S._armBeamT=1.5;S._armWaveT=0;S._armPhaseAnnounced=false;
+  S._armTitanPhase='APPROACH';S._armTitanRage=false;S._armTitanT=0;S._armEscapeT=0;
+  S._armBgFleet=[];
+  // Build background fleet — 6 Imperial + 4 Rebel far in background
+  const bgDefs=[
+    {fn:makeImperialSD,  s:0.38,x:80, y:40, z:camera.position.z-520,drift:0.22, col:'imperial'},
+    {fn:makeImperialSD,  s:0.50,x:55, y:60, z:camera.position.z-680,drift:-0.16,col:'imperial'},
+    {fn:makeImperialSD,  s:0.32,x:130,y:25, z:camera.position.z-820,drift:0.14, col:'imperial'},
+    {fn:makeImperialSD,  s:0.45,x:100,y:-30,z:camera.position.z-960,drift:-0.20,col:'imperial'},
+    {fn:makeImperialSD,  s:0.36,x:65, y:50, z:camera.position.z-1100,drift:0.18,col:'imperial'},
+    {fn:makeImperialSD,  s:0.42,x:85, y:-20,z:camera.position.z-790,drift:-0.12,col:'imperial'},
+    {fn:makeRebelCruiser,s:0.48,x:-75,y:30, z:camera.position.z-550,drift:0.12, col:'rebel'},
+    {fn:makeRebelCruiser,s:0.40,x:-100,y:50,z:camera.position.z-700,drift:-0.14,col:'rebel'},
+    {fn:makeRebelCruiser,s:0.35,x:-120,y:20,z:camera.position.z-880,drift:0.16, col:'rebel'},
+    {fn:makeRebelCruiser,s:0.52,x:-60, y:-25,z:camera.position.z-650,drift:-0.10,col:'rebel'},
+  ];
+  bgDefs.forEach(d=>{
+    try{
+      const m=d.fn(d.s);m.position.set(d.x,d.y,d.z);scene.add(m);
+      S._armBgFleet.push({mesh:m,drift:d.drift,beamCD:1.5+Math.random()*3,col:d.col});
+    }catch(_){}
+  });
+  // Formation allies
+  try{_spawnFormationAllies()}catch(_){}
+  // Show fleet HP HUD
+  try{
+    const af=document.getElementById('arm-fleet-hp');
+    if(af){af.style.display='block';const ff=document.getElementById('arm-fleet-fill');if(ff)ff.style.width='100%';}
+  }catch(_){}
+  // Start BGM
+  try{sfx.startFortBGM?sfx.startFortBGM():sfx.startBGM(5)}catch(_){}
+  // Announcement
+  wfCineSubtitle('◆ ARMADA BATTLE — ALL WINGS ENGAGE! ◆','#aa00ff');
+  setTimeout(()=>{try{playComm('hq','ARMADA FORMATION DETECTED!! All wings — ENGAGE THE FIGHTER SCREEN NOW!!')}catch(_){}},800);
+  setTimeout(()=>{try{playComm('pilot','Copy that. Engaging the enemy fleet — let\'s GO!!')}catch(_){}},4000);
+}
+
+function _armNextPhase(){
+  S._armPhase++;
+  S._armPhaseT=0;
+  S._armPhaseAnnounced=false;
+  S._armKills=0;
+  // Remove lingering escort
+  if(S._armEscort&&S._armEscort.mesh){try{scene.remove(S._armEscort.mesh)}catch(_){}; S._armEscort=null;}
+  const phases=['FIGHTER SCREEN CLEARED!','ESCORT ALPHA DESTROYED!','ESCORT BETA DOWN!','FIGHTER SCREEN CLEARED!'];
+  const announces=['ALL WINGS TO TRENCH POSITION!','PUSH FORWARD — SECOND DESTROYER INCOMING!','ALL OUT WAR BEGINS!','THE TITAN IS MOBILIZING — MAXIMUM FIREPOWER!'];
+  const colors=['#ffaa00','#44ff88','#ff4400','#ff0000'];
+  const idx=S._armPhase-1;
+  if(idx>=0&&idx<phases.length){
+    wfCineSubtitle('◆ '+phases[idx]+' '+announces[idx]+' ◆',colors[idx]);
+    screenFlash(.5);S.shakeT=0.8;S.shakeI=1.5;
+  }
+  // Phase-specific spawns
+  if(S._armPhase===1){
+    setTimeout(()=>{try{_spawnArmadaEscort(0)}catch(_){}},1500);
+    setTimeout(()=>{try{playComm('hq','ESCORT DESTROYER ALPHA — destroy it before it flanks our fleet!!')}catch(_){}},600);
+  } else if(S._armPhase===2){
+    setTimeout(()=>{try{_spawnArmadaEscort(1)}catch(_){}},1500);
+    setTimeout(()=>{try{playComm('pilot','Another destroyer! And its got an ION CANNON — watch out!!')}catch(_){}},600);
+  } else if(S._armPhase===3){
+    S._armWaveT=0;
+    setTimeout(()=>{try{playComm('hq','THE IMPERIAL FLAGSHIP IS MOBILIZING — ALL OUT WAR!!')}catch(_){}},600);
+    wfCineSubtitle('◆ ARMADA CLASH — DESTROY 30 FIGHTERS! ◆','#ff6600');
+  } else if(S._armPhase===4){
+    setTimeout(()=>{try{_spawnTitanDreadnought()}catch(_){}},2000);
+  } else if(S._armPhase===5){
+    // Escape phase
+    S._armEscapeT=0;
+    wfCineSubtitle('◆ TITAN DESTROYED!! THE EMPIRE IS RETREATING!! ◆','#ffdd00');
+    screenFlash(1.0);S.shakeT=3;S.shakeI=4;
+    setTimeout(()=>{try{playComm('hq','TITAN IS DOWN!! All forces — fall back to home coordinates!!')}catch(_){}},800);
+    setTimeout(()=>{try{playComm('pilot','Haha!! YEAH!! Let\'s get out of here!!')}catch(_){}},3500);
+    setTimeout(()=>{
+      try{
+        markStageCleared('armada');
+        try{const af=document.getElementById('arm-fleet-hp');if(af)af.style.display='none';}catch(_){}
+        try{const ai=document.getElementById('arm-ion-warn');if(ai)ai.style.display='none';}catch(_){}
+        startReturn();
+      }catch(_){}
+    },7000);
+  }
+}
+
+function updateArmada(dt){
+  if(S.phase!=='ARMADA')return;
+  S._armPhaseT+=dt;
+  // Ion disable countdown
+  if(S._armIonDisableT>0){
+    S._armIonDisableT=Math.max(0,S._armIonDisableT-dt);
+    try{
+      const iw=document.getElementById('arm-ion-warn');
+      if(iw)iw.style.display=S._armIonDisableT>0?'block':'none';
+    }catch(_){}
+  }
+  // Update background fleet
+  _updateArmadaBgFleet(dt);
+  // Formation allies
+  try{_updateFormationAllies(dt)}catch(_){}
+  // Phase logic
+  switch(S._armPhase){
+    case 0:// Fighter screen
+      _spawnArmadaFighters(dt,8,14);
+      if(!S._armPhaseAnnounced&&S._armPhaseT>1){
+        S._armPhaseAnnounced=true;
+        announce('◆ FIGHTER SCREEN — DESTROY 25 FIGHTERS! ◆');
+      }
+      // Progress announcements
+      if(S._armKills===10){try{announce('◆ 10 DOWN — PUSH THROUGH! ◆')}catch(_){}}
+      if(S._armKills===20){try{announce('◆ 20 DOWN — ALMOST CLEAR! ◆')}catch(_){}}
+      if(S._armKills>=25||S._armPhaseT>=90){_armNextPhase();}
+      break;
+    case 1:// Escort Alpha
+      _updateArmadaEscort(dt);
+      _spawnArmadaFighters(dt,6,18);
+      if(!S._armEscort&&S._armPhaseT>4){_armNextPhase();}
+      break;
+    case 2:// Escort Beta
+      _updateArmadaEscort(dt);
+      _spawnArmadaFighters(dt,6,18);
+      if(!S._armEscort&&S._armPhaseT>4){_armNextPhase();}
+      break;
+    case 3:// Armada clash — 30 kills
+      _spawnArmadaFighters(dt,12,8);
+      if(!S._armPhaseAnnounced&&S._armPhaseT>0.5){
+        S._armPhaseAnnounced=true;
+        announce('◆ ALL OUT WAR — DESTROY 30 FIGHTERS! ◆');
+      }
+      if(S._armKills===15){try{announce('◆ 15 DOWN — HALFWAY! ◆')}catch(_){}}
+      if(S._armKills>=30||S._armPhaseT>=80){_armNextPhase();}
+      break;
+    case 4:// Titan Dreadnought
+      _updateTitanDreadnought(dt);
+      // Titan fires its own weapons internally
+      break;
+    case 5:// Escape — handled by timeout in _armNextPhase
+      break;
+  }
+  // Check armada hits
+  _checkArmadaHits();
+}
+
+function _updateArmadaBgFleet(dt){
+  if(!S._armBgFleet)return;
+  S._armBeamT=(S._armBeamT||1.5)-dt;
+  const beamRate=S._armPhase>=3?0.8:1.5;// Phase 3+ = double freq
+  if(S._armBeamT<=0){
+    S._armBeamT=beamRate+Math.random()*2;
+    try{_spawnArmadaFleetBeam()}catch(_){}
+  }
+  S._armBgFleet.forEach(f=>{
+    if(!f.mesh)return;
+    // Slow lateral drift
+    f.mesh.position.x+=f.drift*dt*6;
+    if(Math.abs(f.mesh.position.x)>160){f.drift=-f.drift;}
+    f.mesh.rotation.y+=dt*0.015;
+    // Fleet HP reflects how many are "alive" conceptually
+  });
+  // Update fleet HP HUD (cosmetic — decreases over time in phase 3+)
+  if(S._armPhase>=3&&S._armFleetHP>0){
+    S._armFleetHP=Math.max(0,S._armFleetHP-dt*2);
+    try{
+      const ff=document.getElementById('arm-fleet-fill');
+      if(ff)ff.style.width=S._armFleetHP+'%';
+    }catch(_){}
+  }
+}
+
+function _spawnArmadaFleetBeam(){
+  const fleet=S._armBgFleet||[];
+  const imperials=fleet.filter(f=>f.col==='imperial');
+  const rebels=fleet.filter(f=>f.col==='rebel');
+  if(!imperials.length||!rebels.length)return;
+  const src=imperials[Math.floor(Math.random()*imperials.length)];
+  const dst=rebels[Math.floor(Math.random()*rebels.length)];
+  const sp=src.mesh.position,dp=dst.mesh.position;
+  const mid=sp.clone().lerp(dp,0.5).add(new THREE.Vector3((Math.random()-.5)*30,(Math.random()-.5)*15,0));
+  const geo=new THREE.BufferGeometry().setFromPoints([sp.clone(),mid,dp.clone()]);
+  const isEmp=Math.random()<0.5;
+  const mat=new THREE.LineBasicMaterial({color:isEmp?0xff6600:0x00ff88,transparent:true,opacity:.6,linewidth:2});
+  const beam=new THREE.Line(geo,mat);
+  scene.add(beam);
+  spawnP(mid.clone(),isEmp?0xff6600:0x00ff88,3,.5,.3);
+  setTimeout(()=>{try{scene.remove(beam)}catch(_){}},500+Math.random()*300);
+}
+
+function _spawnArmadaFighters(dt,waveSize,interval){
+  S._armWaveT=(S._armWaveT||0)-dt;
+  if(S._armWaveT<=0){
+    S._armWaveT=interval+Math.random()*4;
+    for(let i=0;i<waveSize;i++){
+      const angle=(i/(waveSize-1||1)-.5)*1.8;
+      const sx=Math.sin(angle)*30+(Math.random()-.5)*10;
+      const sy=(Math.random()-.5)*14;
+      const sz=camera.position.z-95-i*8;
+      const mesh=_makeArmadaTIE();
+      mesh.position.set(sx,sy,sz);
+      scene.add(mesh);
+      const e={
+        mesh,
+        hp:1,maxHp:1,
+        type:2,
+        size:1.5,
+        _armFighter:true,
+        // Standard enemy movement fields
+        baseX:sx,baseY:sy,
+        sineAmp:4+Math.random()*4,sineFreq:0.5+Math.random()*0.5,sinePhase:Math.random()*6.28,
+        speedZ:8+Math.random()*4,// approach speed
+        spiralR:0,spiralA:0,spinRate:0,
+        isBoss:false,
+        shootTimer:1.8+Math.random()*2,shootCD:2.5+Math.random()*2,
+        isAsteroid:false,isBonus:false,
+      };
+      enemies.push(e);
+    }
+  }
+}
+
+function _makeArmadaTIE(){
+  const g=new THREE.Group();
+  const fw2=(geo,c,ef)=>{
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.85}));
+    const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:ef}));
+    g.add(m);g.add(l);
+    return g;// return group for chaining convenience
+  };
+  // Cockpit ball
+  const cg=new THREE.SphereGeometry(1.0,6,5);
+  const cm=new THREE.Mesh(cg,new THREE.MeshBasicMaterial({color:0x1a1a2e,transparent:true,opacity:0.9}));
+  const cl=new THREE.LineSegments(new THREE.EdgesGeometry(cg),new THREE.LineBasicMaterial({color:0x5566aa}));
+  g.add(cm);g.add(cl);
+  // Wings (hexagonal flat plates approximated with box)
+  const makeWing=(side)=>{
+    const wg=new THREE.BoxGeometry(3.2,0.08,2.8);
+    const wm=new THREE.Mesh(wg,new THREE.MeshBasicMaterial({color:0x0d0d1a,transparent:true,opacity:0.9}));
+    const wl=new THREE.LineSegments(new THREE.EdgesGeometry(wg),new THREE.LineBasicMaterial({color:0x334466}));
+    wm.position.x=side*3.0;wl.position.x=side*3.0;
+    g.add(wm);g.add(wl);
+    // Strut
+    const sg=new THREE.CylinderGeometry(0.1,0.1,2.2,4);
+    const sm=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:0x334466}));
+    sm.position.x=side*1.5;sm.rotation.z=Math.PI/2;
+    g.add(sm);
+  };
+  makeWing(-1);makeWing(1);
+  g.scale.setScalar(0.9);
   return g;
 }
+
+// ---- Escort Destroyer ----
+function makeEscortDestroyerMesh(){
+  const g=new THREE.Group();
+  const fw=(geo,fill,edge)=>{
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.85}));
+    const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
+    g.add(m);g.add(l);
+  };
+  // Main hull
+  fw(new THREE.BoxGeometry(30,9,6),0x111122,0x5566cc);
+  // Bridge tower
+  const bt=new THREE.Group();
+  const btGeo=new THREE.BoxGeometry(5,6,5);
+  bt.add(new THREE.Mesh(btGeo,new THREE.MeshBasicMaterial({color:0x192240,transparent:true,opacity:0.85})));
+  bt.add(new THREE.LineSegments(new THREE.EdgesGeometry(btGeo),new THREE.LineBasicMaterial({color:0x7788ee})));
+  bt.position.set(10,7,0);g.add(bt);
+  // Forward wedge
+  const fwd=new THREE.Group();
+  const fwdGeo=new THREE.BoxGeometry(8,5,4);
+  const fwdM=new THREE.Mesh(fwdGeo,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.85}));
+  const fwdL=new THREE.LineSegments(new THREE.EdgesGeometry(fwdGeo),new THREE.LineBasicMaterial({color:0x5566cc}));
+  fwdM.position.set(-17,0,0);fwdL.position.set(-17,0,0);
+  fwdM.rotation.z=0.2;fwdL.rotation.z=0.2;
+  g.add(fwdM);g.add(fwdL);
+  // Turrets
+  for(let i=0;i<2;i++){
+    const tg=new THREE.CylinderGeometry(0.5,0.5,2,5);
+    const tm=new THREE.Mesh(tg,new THREE.MeshBasicMaterial({color:0x334477}));
+    tm.position.set(-6+i*8,5.5,0);
+    g.add(tm);
+  }
+  // Engine glows
+  for(let i=0;i<2;i++){
+    const eg=new THREE.TorusGeometry(1.5,0.3,4,10);
+    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x3344aa,transparent:true,opacity:0.8}));
+    em.position.set(13+i*0,-1+i*2.5,0);em.rotation.x=Math.PI/2;
+    g.add(em);
+  }
+  return g;
+}
+
+function _spawnArmadaEscort(type){
+  if(S._armEscort&&S._armEscort.mesh){try{scene.remove(S._armEscort.mesh)}catch(_){}; S._armEscort=null;}
+  const mesh=makeEscortDestroyerMesh();
+  const sz=camera.position.z-88;
+  mesh.position.set(0,2,sz);
+  scene.add(mesh);
+  S._armEscort={mesh,hp:60,maxHp:60,type,attackT:0,ionCD:10,phase:'APPROACH',phaseT:0};
+  // Boss HP bar
+  try{
+    const bh=document.getElementById('boss-hp-bar');
+    const bn=document.getElementById('boss-hp-name');
+    const bf=document.getElementById('boss-hp-fill');
+    if(bh&&bn&&bf){
+      bh.style.display='block';
+      bn.textContent=type===0?'⚡ ESCORT DESTROYER ALPHA':'⚡ ESCORT DESTROYER BETA';
+      bf.style.width='100%';
+    }
+  }catch(_){}
+  const name=type===0?'ALPHA':'BETA';
+  wfCineSubtitle('◆ ESCORT DESTROYER '+name+' — INCOMING! ◆','#ff6600');
+  playComm(type===0?'hq':'enemy','Escort Destroyer '+name+' engaging — target its hull!!');
+}
+
+function _updateArmadaEscort(dt){
+  const e=S._armEscort;if(!e||!e.mesh)return;
+  e.phaseT+=dt;
+  e.attackT+=dt;
+  const mesh=e.mesh;
+  const targetZ=camera.position.z-75;
+  // Approach
+  mesh.position.z+=(targetZ-mesh.position.z)*0.025;
+  // Gentle sway
+  mesh.position.x=Math.sin(e.phaseT*0.35)*20;
+  mesh.rotation.z=Math.sin(e.phaseT*0.3)*0.05;
+  // Attack timing — type 0: turbolaser every 6s, type 1: turbolaser every 5s + ion every 12s
+  const atkInterval=e.type===0?6:5;
+  if(e.attackT>=atkInterval){
+    e.attackT=0;
+    _armEscortFireTurbolaser(e);
+  }
+  if(e.type===1&&e.phaseT>0){
+    e.ionCD-=dt;
+    if(e.ionCD<=0){
+      e.ionCD=12;
+      _armEscortFireIon(e);
+    }
+  }
+  // HP bar
+  try{
+    const bf=document.getElementById('boss-hp-fill');
+    if(bf)bf.style.width=Math.max(0,(e.hp/e.maxHp)*100)+'%';
+  }catch(_){}
+  // Death check
+  if(e.hp<=0){
+    // Chain explosions
+    for(let i=0;i<5;i++){
+      setTimeout(()=>{
+        try{
+          if(e.mesh){
+            const pos=e.mesh.position.clone().add(new THREE.Vector3((Math.random()-.5)*15,(Math.random()-.5)*6,(Math.random()-.5)*5));
+            spawnMegaExplosion(pos,0.4);
+            sfx.bigExplosion&&sfx.bigExplosion();
+          }
+        }catch(_){}
+      },i*350+100);
+    }
+    setTimeout(()=>{try{if(e.mesh)scene.remove(e.mesh)}catch(_){}; S._armEscort=null;},1800);
+    try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
+    playComm('pilot','ESCORT DOWN!! PUSH FORWARD!!');
+    screenFlash(.6);S.shakeT=1.5;S.shakeI=2;
+  }
+}
+
+function _armEscortFireTurbolaser(e){
+  if(!e||!e.mesh)return;
+  // 3 spread beams
+  for(let i=0;i<3;i++){
+    const ang=(i-1)*0.15;
+    const bGeo=new THREE.BoxGeometry(0.5,0.5,8);
+    const bMat=new THREE.MeshBasicMaterial({color:0xff6600,transparent:true,opacity:0.9});
+    const bMesh=new THREE.Mesh(bGeo,bMat);
+    const bLine=new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),new THREE.LineBasicMaterial({color:0xffaa00}));
+    const grp=new THREE.Group();grp.add(bMesh);grp.add(bLine);
+    const sp=e.mesh.position.clone().add(new THREE.Vector3((i-1)*8,0,2));
+    grp.position.copy(sp);
+    scene.add(grp);
+    const vel=new THREE.Vector3(Math.sin(ang)*4,0,18);
+    eBeams.push({mesh:grp,vel,life:4,col:0xff6600,dmg:1,_armBoss:true});
+  }
+  try{sfx.shoot&&sfx.shoot()}catch(_){}
+}
+
+function _armEscortFireIon(e){
+  if(!e||!e.mesh)return;
+  wfCineSubtitle('◆ ION CANNON CHARGING! ◆','#44aaff');
+  // 1s charge then fire
+  setTimeout(()=>{
+    if(!e||!e.mesh)return;
+    const bGeo=new THREE.BoxGeometry(1.2,1.2,12);
+    const bMat=new THREE.MeshBasicMaterial({color:0x44aaff,transparent:true,opacity:0.95});
+    const bMesh=new THREE.Mesh(bGeo,bMat);
+    const bLine=new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),new THREE.LineBasicMaterial({color:0x88ccff}));
+    const grp=new THREE.Group();grp.add(bMesh);grp.add(bLine);
+    grp.position.copy(e.mesh.position).add(new THREE.Vector3(0,0,3));
+    scene.add(grp);
+    const vel=new THREE.Vector3(0,0,16);
+    eBeams.push({mesh:grp,vel,life:5,col:0x44aaff,dmg:1,_isIon:true,_armBoss:true});
+    wfCineSubtitle('◆ ION CANNON FIRED! ◆','#44aaff');
+    try{
+      // Spark effect
+      spawnP(grp.position.clone(),0x44aaff,12,1.2,0.6);
+    }catch(_){}
+  },1000);
+}
+
+// ---- Titan Dreadnought ----
+function makeTitanDreadnought(){
+  const g=new THREE.Group();
+  const fw=(geo,fill,edge,name)=>{
+    const grp=new THREE.Group();
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.9}));
+    const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
+    grp.add(m);grp.add(l);
+    if(name)grp.name=name;
+    g.add(grp);
+    return grp;
+  };
+  // Main hull — massive
+  fw(new THREE.BoxGeometry(90,24,8),0x1a001a,0x660088,'armHull');
+  // Left wing section
+  const lwg=new THREE.BoxGeometry(25,14,6);
+  const lw=new THREE.Group();
+  const lwm=new THREE.Mesh(lwg,new THREE.MeshBasicMaterial({color:0x150015,transparent:true,opacity:0.9}));
+  const lwl=new THREE.LineSegments(new THREE.EdgesGeometry(lwg),new THREE.LineBasicMaterial({color:0x550077}));
+  lwm.position.set(-52,-2,0);lwl.position.set(-52,-2,0);lw.add(lwm);lw.add(lwl);g.add(lw);
+  // Right wing section
+  const rwg=new THREE.BoxGeometry(25,14,6);
+  const rw=new THREE.Group();
+  const rwm=new THREE.Mesh(rwg,new THREE.MeshBasicMaterial({color:0x150015,transparent:true,opacity:0.9}));
+  const rwl=new THREE.LineSegments(new THREE.EdgesGeometry(rwg),new THREE.LineBasicMaterial({color:0x550077}));
+  rwm.position.set(52,-2,0);rwl.position.set(52,-2,0);rw.add(rwm);rw.add(rwl);g.add(rw);
+  // Port Turret 1 (left)
+  const pt1=fw(new THREE.BoxGeometry(14,7,5),0x2a0033,0x9900cc,'armP1');
+  pt1.position.set(-35,9,0);
+  // Port Turret 2 (right)
+  const pt2=fw(new THREE.BoxGeometry(14,7,5),0x2a0033,0x9900cc,'armP2');
+  pt2.position.set(35,9,0);
+  // Starboard Pods
+  const sp1=fw(new THREE.BoxGeometry(10,10,7),0x1a0025,0x7700aa,'armS1');
+  sp1.position.set(-25,-11,0);
+  const sp2=fw(new THREE.BoxGeometry(10,10,7),0x1a0025,0x7700aa,'armS2');
+  sp2.position.set(25,-11,0);
+  // Ventral cannon
+  const vent=fw(new THREE.CylinderGeometry(2,4,18,6),0x200028,0x8800bb,'armVent');
+  vent.position.set(0,-13,0);
+  vent.children.forEach(c=>{c.rotation.x=Math.PI/2});
+  // Bridge (weakpoint — gold)
+  const bridge=fw(new THREE.BoxGeometry(12,20,7),0x220022,0xffdd00,'armBridge');
+  bridge.position.set(0,16,0);
+  // Bridge window (golden glowing sphere — true weakpoint)
+  const wGeo=new THREE.SphereGeometry(3.5,6,6);
+  const wMesh=new THREE.Mesh(wGeo,new THREE.MeshBasicMaterial({color:0xffdd00,transparent:true,opacity:0.9}));
+  wMesh.name='armBridgeWin';
+  bridge.add(wMesh);
+  // Engine array (4 engines at rear)
+  for(let i=0;i<4;i++){
+    const eg=new THREE.TorusGeometry(3,0.5,4,12);
+    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x330055,transparent:true,opacity:0.9}));
+    em.position.set(-22+i*15,0,0);em.rotation.x=Math.PI/2;
+    g.add(em);
+  }
+  return g;
+}
+
+function _spawnTitanDreadnought(){
+  if(S._armTitan&&S._armTitan.mesh){try{scene.remove(S._armTitan.mesh)}catch(_){};}
+  const mesh=makeTitanDreadnought();
+  // Start well below/behind and rise dramatically
+  mesh.position.set(0,-60,camera.position.z-400);
+  scene.add(mesh);
+  S._armTitan={
+    mesh,
+    phase:'APPROACH',
+    phaseT:0,
+    rage:false,
+    systemT:{p1:0,p2:0,s1:0,s2:0,vent:0,bridge:0},
+    ventCharging:false,
+    ventChargeT:0,
+  };
+  S._armTitanHP={p1:30,p2:30,s1:25,s2:25,vent:40,bridge:50};
+  S._armTitanPhase='APPROACH';
+  S._armTitanRage=false;
+  S._armTitanT=0;
+  // Boss HP bar
+  try{
+    const bh=document.getElementById('boss-hp-bar');
+    const bn=document.getElementById('boss-hp-name');
+    const bf=document.getElementById('boss-hp-fill');
+    if(bh&&bn&&bf){
+      bh.style.display='block';
+      bn.textContent='⚡ TITAN-CLASS DREADNOUGHT';
+      bf.style.width='100%';
+    }
+  }catch(_){}
+  wfCineSubtitle('◆ TITAN-CLASS DREADNOUGHT ◆','#aa00ff');
+  screenFlash(.6);S.shakeT=2;S.shakeI=3;
+  playComm('hq','TITAN-CLASS DETECTED!! Maximum firepower — NOW!!');
+  setTimeout(()=>{playComm('pilot','That thing is ENORMOUS!! Targeting weapon systems — FIRE EVERYTHING!!')},2500);
+}
+
+function _updateTitanDreadnought(dt){
+  const t=S._armTitan;if(!t||!t.mesh)return;
+  t.phaseT+=dt;
+  S._armTitanT+=dt;
+  const mesh=t.mesh;
+  const targetZ=camera.position.z-100;
+  const targetY=0;
+  // Approach: rise from below and approach
+  if(S._armTitanPhase==='APPROACH'){
+    mesh.position.z+=(targetZ-mesh.position.z)*0.018;
+    mesh.position.y+=(targetY-mesh.position.y)*0.022;
+    if(Math.abs(mesh.position.z-targetZ)<30&&Math.abs(mesh.position.y-targetY)<5){
+      S._armTitanPhase='IDLE';t.phaseT=0;
+      wfCineSubtitle('◆ TITAN IN RANGE — TARGET ITS WEAPON SYSTEMS! ◆','#ff00ff');
+    }
+    return;
+  }
+  // Gentle drift
+  mesh.position.x=Math.sin(S._armTitanT*0.18)*28;
+  mesh.position.z+=(targetZ-mesh.position.z)*0.008;
+  mesh.rotation.z=Math.sin(S._armTitanT*0.15)*0.03;
+  // Bridge window pulse
+  const bw=mesh.getObjectByName('armBridgeWin');
+  if(bw){bw.scale.setScalar(0.8+Math.sin(S._armTitanT*4)*0.25);}
+  // Check for rage mode
+  const totalHP=Object.values(S._armTitanHP).reduce((a,b)=>a+b,0);
+  const maxHP=30+30+25+25+40+50;
+  if(!S._armTitanRage&&totalHP<maxHP*0.5){
+    S._armTitanRage=true;
+    wfCineSubtitle('◆ TITAN RAGE MODE!! ATTACK RATE DOUBLED! ◆','#ff0000');
+    screenFlash(.5);S.shakeT=1;S.shakeI=2;
+    playComm('hq','THE TITAN IS IN RAGE MODE — PUSH IT TO THE LIMIT!!');
+    // Red-tint all edges on hull
+    try{
+      mesh.traverse(c=>{
+        if(c.isLineSegments&&c.name!=='armBridgeWin'){
+          c.material.color.setHex(0xff2200);
+        }
+      });
+    }catch(_){}
+  }
+  const rageM=S._armTitanRage?0.5:1.0;
+  // System attack timers
+  const hp=S._armTitanHP;
+  // P1/P2 turrets — only if alive
+  if(hp.p1>0){t.systemT.p1+=dt;if(t.systemT.p1>=(5*rageM)){t.systemT.p1=0;_titanFireTurbolaser(mesh,'armP1',-35);}}
+  if(hp.p2>0){t.systemT.p2+=dt;if(t.systemT.p2>=(5*rageM)){t.systemT.p2=0;_titanFireTurbolaser(mesh,'armP2',35);}}
+  // S1/S2 spread pods
+  if(hp.s1>0){t.systemT.s1+=dt;if(t.systemT.s1>=(8*rageM)){t.systemT.s1=0;_titanFireSpread(mesh,'armS1',-25);}}
+  if(hp.s2>0){t.systemT.s2+=dt;if(t.systemT.s2>=(8*rageM)){t.systemT.s2=0;_titanFireSpread(mesh,'armS2',25);}}
+  // Ventral — 12s charge then sweep
+  if(hp.vent>0){
+    if(!t.ventCharging){
+      t.systemT.vent+=dt;
+      if(t.systemT.vent>=(12*rageM)){
+        t.ventCharging=true;t.ventChargeT=0;
+        wfCineSubtitle('◆ VENTRAL CANNON CHARGING!! EVADE!! ◆','#ff4400');
+        playComm('nav','Ventral cannon charging — break away NOW!!');
+      }
+    } else {
+      t.ventChargeT+=dt;
+      // Charge visual: particles toward ventral
+      if(Math.floor(t.ventChargeT*10)%3===0){
+        const vp=mesh.getObjectByName('armVent');
+        if(vp){
+          const wp=new THREE.Vector3();vp.getWorldPosition(wp);
+          spawnP(wp.clone().add(new THREE.Vector3((Math.random()-.5)*10,(Math.random()-.5)*10,0)),0xff4400,3,.4,.2);
+        }
+      }
+      if(t.ventChargeT>=1.5){
+        t.ventCharging=false;t.systemT.vent=0;
+        // Sweep beam — wide horizontal beam at player height
+        _titanVentralFire(mesh);
+      }
+    }
+  }
+  // Bridge — only fires when all other systems down
+  const outerDestroyed=(hp.p1<=0&&hp.p2<=0&&hp.s1<=0&&hp.s2<=0&&hp.vent<=0);
+  if(outerDestroyed&&hp.bridge>0){
+    t.systemT.bridge+=dt;
+    if(t.systemT.bridge>=4*rageM){
+      t.systemT.bridge=0;
+      _titanFireTurbolaser(mesh,'armBridge',0);
+    }
+    // Make bridge window pulse faster as weakpoint
+    if(bw){bw.scale.setScalar(0.9+Math.sin(S._armTitanT*12)*0.35);}
+    if(!t._bridgeExposed){
+      t._bridgeExposed=true;
+      wfCineSubtitle('◆ OUTER SYSTEMS DOWN — TARGET THE BRIDGE!! ◆','#ffdd00');
+      playComm('pilot','All outer weapons destroyed!! Hit the BRIDGE — that\'s the weak point!!');
+    }
+  }
+  // Update HP bar (total HP %)
+  try{
+    const bf=document.getElementById('boss-hp-fill');
+    if(bf){
+      const totalCur=Object.values(S._armTitanHP).reduce((a,b)=>a+b,0);
+      bf.style.width=Math.max(0,(totalCur/maxHP)*100)+'%';
+    }
+  }catch(_){}
+  // Check bridge death
+  if(hp.bridge<=0&&!t._dead){
+    t._dead=true;
+    _titanDeath(mesh);
+  }
+}
+
+function _titanFireTurbolaser(mesh,sysName,xOff){
+  const sysObj=mesh.getObjectByName(sysName);
+  const sp=new THREE.Vector3();
+  if(sysObj){sysObj.getWorldPosition(sp);}
+  else{sp.copy(mesh.position).add(new THREE.Vector3(xOff,0,2));}
+  // 2 orange beams spread
+  for(let i=0;i<2;i++){
+    const bGeo=new THREE.BoxGeometry(0.6,0.6,7);
+    const bMat=new THREE.MeshBasicMaterial({color:0xff7700,transparent:true,opacity:0.9});
+    const grp=new THREE.Group();
+    grp.add(new THREE.Mesh(bGeo,bMat));
+    grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),new THREE.LineBasicMaterial({color:0xffaa00})));
+    grp.position.copy(sp).add(new THREE.Vector3((i-.5)*4,0,1));
+    scene.add(grp);
+    const vel=new THREE.Vector3((i-.5)*3,0,20);
+    eBeams.push({mesh:grp,vel,life:4,col:0xff7700,dmg:1,_armBoss:true});
+  }
+}
+
+function _titanFireSpread(mesh,sysName,xOff){
+  const sysObj=mesh.getObjectByName(sysName);
+  const sp=new THREE.Vector3();
+  if(sysObj){sysObj.getWorldPosition(sp);}
+  else{sp.copy(mesh.position).add(new THREE.Vector3(xOff,0,2));}
+  // 5 spread shots
+  for(let i=0;i<5;i++){
+    const ang=(i/4-.5)*1.5;
+    const bGeo=new THREE.BoxGeometry(0.5,0.5,5);
+    const bMat=new THREE.MeshBasicMaterial({color:0xcc00ff,transparent:true,opacity:0.9});
+    const grp=new THREE.Group();
+    grp.add(new THREE.Mesh(bGeo,bMat));
+    grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),new THREE.LineBasicMaterial({color:0xee44ff})));
+    grp.position.copy(sp).add(new THREE.Vector3(0,0,1));
+    scene.add(grp);
+    const vel=new THREE.Vector3(Math.sin(ang)*8,(Math.random()-.5)*3,18);
+    eBeams.push({mesh:grp,vel,life:4,col:0xcc00ff,dmg:1,_armBoss:true});
+  }
+}
+
+function _titanVentralFire(mesh){
+  // Wide horizontal sweep beam
+  const sp=mesh.position.clone().add(new THREE.Vector3(0,-15,2));
+  const bGeo=new THREE.BoxGeometry(50,2,6);
+  const bMat=new THREE.MeshBasicMaterial({color:0xff4400,transparent:true,opacity:0.85});
+  const grp=new THREE.Group();
+  grp.add(new THREE.Mesh(bGeo,bMat));
+  grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),new THREE.LineBasicMaterial({color:0xff8800})));
+  grp.position.copy(sp);
+  scene.add(grp);
+  const vel=new THREE.Vector3(0,0,16);
+  eBeams.push({mesh:grp,vel,life:3,col:0xff4400,dmg:1,_armBoss:true,_wide:true});
+  spawnP(sp.clone(),0xff4400,15,1.2,0.5);
+  screenFlash(.25);
+  try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
+}
+
+function _titanDeath(mesh){
+  // 10-chain explosions
+  try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
+  screenFlash(1.0);S.shakeT=4;S.shakeI=5;
+  wfCineSubtitle('◆ TITAN BRIDGE DESTROYED!! ◆','#ffdd00');
+  playComm('pilot','BRIDGE IS DOWN!! The Titan is DONE!! HAHAHA!!');
+  for(let i=0;i<10;i++){
+    setTimeout(()=>{
+      try{
+        if(mesh&&mesh.parent){
+          const pos=mesh.position.clone().add(new THREE.Vector3((Math.random()-.5)*60,(Math.random()-.5)*20,(Math.random()-.5)*10));
+          spawnMegaExplosion(pos,0.5);
+          sfx.bigExplosion&&sfx.bigExplosion();
+        }
+      }catch(_){}
+    },i*400+200);
+  }
+  setTimeout(()=>{try{if(mesh&&mesh.parent)scene.remove(mesh);}catch(_){}; S._armTitan=null;},5000);
+  // Move to escape phase after 5.5s
+  setTimeout(()=>{
+    try{_armNextPhase();}catch(_){}
+  },5500);
+}
+
+function _checkArmadaHits(){
+  if(S.phase!=='ARMADA')return;
+  // pBeams vs escort destroyer
+  if(S._armEscort&&S._armEscort.mesh&&S._armEscort.hp>0){
+    const e=S._armEscort;
+    for(let bi=pBeams.length-1;bi>=0;bi--){
+      const b=pBeams[bi];if(!b||!b.mesh)continue;
+      const bp=b.mesh.position;
+      const ep=e.mesh.position;
+      const dx=bp.x-ep.x,dy=bp.y-ep.y,dz=bp.z-ep.z;
+      if(Math.abs(dz)<20&&Math.sqrt(dx*dx+dy*dy)<22){
+        e.hp-=(b.dmg||1);
+        spawnP(bp.clone(),0x5566cc,5,.6,.4);
+        try{sfx.beamClash&&sfx.beamClash()}catch(_){}
+        try{scene.remove(b.mesh)}catch(_){}; pBeams.splice(bi,1);
+        try{const bf=document.getElementById('boss-hp-fill');if(bf)bf.style.width=Math.max(0,(e.hp/e.maxHp)*100)+'%';}catch(_){}
+        if(e.hp<=0&&!e._dying){e._dying=true;}
+      }
+    }
+  }
+  // pBeams vs Titan systems
+  if(S._armTitan&&S._armTitan.mesh&&!S._armTitan._dead){
+    const t=S._armTitan;
+    const hp=S._armTitanHP;
+    const mesh=t.mesh;
+    // System hit data: [name, hp_key, hitRadius]
+    const systems=[
+      {name:'armP1',  key:'p1',  r:12},
+      {name:'armP2',  key:'p2',  r:12},
+      {name:'armS1',  key:'s1',  r:10},
+      {name:'armS2',  key:'s2',  r:10},
+      {name:'armVent',key:'vent',r:10},
+      {name:'armBridge',key:'bridge',r:14},
+    ];
+    for(let bi=pBeams.length-1;bi>=0;bi--){
+      const b=pBeams[bi];if(!b||!b.mesh)continue;
+      const bp=b.mesh.position;
+      // Only allow bridge hits when outer systems gone (except bridge)
+      const outerAlive=(hp.p1>0||hp.p2>0||hp.s1>0||hp.s2>0||hp.vent>0);
+      for(const sys of systems){
+        if(hp[sys.key]<=0)continue;
+        // Bridge blocked until outer systems down
+        if(sys.key==='bridge'&&outerAlive)continue;
+        const sysObj=mesh.getObjectByName(sys.name);
+        if(!sysObj)continue;
+        const wp=new THREE.Vector3();sysObj.getWorldPosition(wp);
+        const dx=bp.x-wp.x,dy=bp.y-wp.y,dz=bp.z-wp.z;
+        if(Math.sqrt(dx*dx+dy*dy+dz*dz)<sys.r+4){
+          hp[sys.key]-=(b.dmg||1);
+          spawnP(bp.clone(),0xaa00ff,6,.7,.4);
+          try{sfx.beamClash&&sfx.beamClash()}catch(_){}
+          try{scene.remove(b.mesh)}catch(_){}; pBeams.splice(bi,1);
+          // System destroyed
+          if(hp[sys.key]<=0){
+            try{spawnMegaExplosion(wp.clone(),.35);sfx.bigExplosion&&sfx.bigExplosion();screenFlash(.3);}catch(_){}
+            // Visually mark destroyed: dim the system mesh
+            try{
+              sysObj.traverse(c=>{
+                if(c.isMesh)c.material.color.setHex(0x111111);
+                if(c.isLineSegments)c.material.color.setHex(0x222222);
+              });
+            }catch(_){}
+            const sysNames={p1:'PORT TURRET 1',p2:'PORT TURRET 2',s1:'STARBOARD POD 1',s2:'STARBOARD POD 2',vent:'VENTRAL CANNON',bridge:'BRIDGE'};
+            announce('◆ '+sysNames[sys.key]+' DESTROYED! ◆');
+          }
+          break;
+        }
+      }
+    }
+  }
+  // eBeam ion vs player — handled in updateBeams, but check _isIon flag
+  for(let bi=eBeams.length-1;bi>=0;bi--){
+    const b=eBeams[bi];if(!b||!b.mesh||!b._isIon)continue;
+    const bp=b.mesh.position;
+    const dx=bp.x-player.x,dy=bp.y-player.y;
+    if(Math.hypot(dx,dy)<3&&Math.abs(bp.z-camera.position.z+8)<12){
+      // Ion hit
+      S._armIonDisableT=4;
+      try{scene.remove(b.mesh)}catch(_){}; eBeams.splice(bi,1);
+      wfCineSubtitle('◆ ION HIT! WEAPONS OFFLINE 4s ◆','#44aaff');
+      playComm('nav','ION CANNON HIT!! Weapons offline — switching to backup!');
+      screenFlash(.3);S.shakeT=0.5;S.shakeI=1;
+      try{
+        const iw=document.getElementById('arm-ion-warn');
+        if(iw)iw.style.display='block';
+      }catch(_){}
+    }
+  }
+}
+
+// ============================================================
+// END v7.264 ARMADA
+// ============================================================
+
 function startColosseum(){
   try{cleanupSceneCompletely()}catch(_){}
   S.phase='COLOSSEUM';S.onFootMode=false;
@@ -29893,7 +31627,10 @@ function startColosseum(){
   scene.fog=new THREE.Fog(0x0a0005,35,85);
   colosseumScene=new THREE.Group();colosseumScene.name='colosseumScene';
   scene.add(colosseumScene);
-  colosseumScene.add(makeColosseumArena());
+  const _arenaGrp=makeColosseumArena();
+  colosseumScene.add(_arenaGrp);
+  // v7.261: collect crowd animation refs from arena group
+  const _crowdFigs=(_arenaGrp&&_arenaGrp.userData&&_arenaGrp.userData._crowdFigs)||[];
   let pilotMesh=null;
   try{pilotMesh=_makeColoBoxerPilot();}catch(e){pilotMesh=new THREE.Group();}
   pilotMesh.position.set(0,.42,5);colosseumScene.add(pilotMesh);
@@ -29905,6 +31642,8 @@ function startColosseum(){
       state:'WAITING',stateT:0,attackCD:0,circleDir:1,_hitThisAttack:false,
       lArm:mesh.getObjectByName('lArm')||null,rArm:mesh.getObjectByName('rArm')||null,
       lLeg:mesh.getObjectByName('lLeg')||null,rLeg:mesh.getObjectByName('rLeg')||null,
+      lArmFore:mesh.getObjectByName('lArmFore')||null,rArmFore:mesh.getObjectByName('rArmFore')||null,
+      lLegLower:mesh.getObjectByName('lLegLower')||null,rLegLower:mesh.getObjectByName('rLegLower')||null,
       head:mesh.getObjectByName('head')||null};
   });
   // Baby alien cage — story prop (placed ringside at x=14)
@@ -29922,6 +31661,8 @@ function startColosseum(){
     pilotState:'IDLE',pilotActionT:0,walkT:0,
     hitboxActive:false,hitboxT:0,hitboxType:'',hitboxPos:new THREE.Vector3(),hitboxR:0,
     fighters,activeFighters:[],ringR:11.8,audienceT:0,
+    // v7.261: crowd animation
+    _crowdFigs:_crowdFigs,_crowdT:0,
     _spaceWas:false,_kickWas:false,_grapWas:false,
     _swingTarget:null,_swingAngle:0,_frankTarget:null,_frankHit:false,
     _zapTimer:0,_zapFlash:0,_hitCam:null,_swingCenter:null,
@@ -29966,7 +31707,7 @@ function _colosseumPilotMove(dt){
   // Scale speed by joystick magnitude for analogue feel
   const stMag=tk?Math.max(Math.abs(stX),Math.abs(stY)):1;
   const speedMul=tk?Math.max(0.35,stMag):1;
-  const TURN=2.8*dt,WALK=6*dt*speedMul,BACK=3.5*dt*speedMul;
+  const TURN=2.8*dt,WALK=7.2*dt*speedMul,BACK=4.2*dt*speedMul;// v7.261: ×1.2 speed
   let moved=false;
   // Keyboard A/D: turn in place
   if(lt)cs.pilotAngle+=TURN;
@@ -29974,20 +31715,28 @@ function _colosseumPilotMove(dt){
   // v7.247: world-space movement — W/S always go -Z/+Z regardless of facing
   if(fwd){cs.pilotPos.z-=WALK;moved=true;cs.walkT+=dt*6;}
   if(bk){cs.pilotPos.z+=BACK;moved=true;cs.walkT+=dt*4;}
-  // Joystick: stickX strafes + lightly steers, stickY = world -Z forward
-  if(tk&&Math.abs(stX)>0.18){cs.pilotPos.x+=stX*WALK;cs.pilotAngle-=stX*TURN*0.5;moved=true;cs.walkT+=dt*5;}
-  if(tk&&Math.abs(stY)>0.18){cs.pilotPos.z-=stY*WALK;moved=true;cs.walkT+=dt*6;}
+  // v7.261: Joystick TANK controls — stickX rotates, stickY moves in pilot's facing direction
+  if(tk&&Math.abs(stX)>0.15){cs.pilotAngle-=stX*TURN*1.8;moved=true;cs.walkT+=dt*3;}
+  if(tk&&Math.abs(stY)>0.15){cs.pilotPos.x-=Math.sin(cs.pilotAngle)*stY*WALK;cs.pilotPos.z-=Math.cos(cs.pilotAngle)*stY*WALK;moved=true;cs.walkT+=dt*6;}
   const d=Math.hypot(cs.pilotPos.x,cs.pilotPos.z);
   if(d>cs.ringR){const a=Math.atan2(cs.pilotPos.x,cs.pilotPos.z);cs.pilotPos.x=Math.sin(a)*cs.ringR*.93;cs.pilotPos.z=Math.cos(a)*cs.ringR*.93;}
   cs.pilotMesh.position.copy(cs.pilotPos);cs.pilotMesh.rotation.y=cs.pilotAngle;
   const pm=cs.pilotMesh;
   const la=pm.getObjectByName('lArm'),ra=pm.getObjectByName('rArm'),ll=pm.getObjectByName('lLeg'),rl=pm.getObjectByName('rLeg');
+  const laf=pm.getObjectByName('lArmFore'),raf=pm.getObjectByName('rArmFore');
+  const llw=pm.getObjectByName('lLegLower'),rlw=pm.getObjectByName('rLegLower');
   if(moved){const wt=cs.walkT;
     if(la)la.rotation.x=Math.sin(wt)*.5;if(ra)ra.rotation.x=-Math.sin(wt)*.5;
     if(ll)ll.rotation.x=-Math.sin(wt)*.5;if(rl)rl.rotation.x=Math.sin(wt)*.5;
+    // v7.255: forearm + lower-leg joints during walk
+    if(laf)laf.rotation.x=Math.sin(wt)*.25+.22;if(raf)raf.rotation.x=-Math.sin(wt)*.25+.22;
+    if(llw)llw.rotation.x=Math.max(0,Math.sin(wt+.8)*.35);if(rlw)rlw.rotation.x=Math.max(0,Math.sin(wt-.8)*.35);
     cs.pilotState='WALK';
   } else {
     if(la)la.rotation.x=0;if(ra)ra.rotation.x=0;if(ll)ll.rotation.x=0;if(rl)rl.rotation.x=0;
+    // v7.255: idle — boxing guard pose (arms slightly forward-raised)
+    if(laf)laf.rotation.x=.28;if(raf)raf.rotation.x=.28;
+    if(llw)llw.rotation.x=0;if(rlw)rlw.rotation.x=0;
     if(cs.pilotState==='WALK')cs.pilotState='IDLE';
   }
   // v7.249 ★ AUTO-PICKUP: walk near a ring weapon to grab it automatically
@@ -30016,8 +31765,8 @@ function _colosseumDoAttack(type){
     try{sfx.chopCrack&&sfx.chopCrack()}catch(_){}
     try{screenFlash(.18)}catch(_){}
   } else if(type==='GIANTSWING'){
-    // Find nearest active fighter within grab range
-    let best=null,bestD=2.8;
+    // v7.261: Find nearest active fighter — range increased 2.8→3.5 for more forgiving grab
+    let best=null,bestD=3.5;
     cs.activeFighters.forEach(f=>{
       if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING')return;
       const d=Math.hypot(f.pos.x-cs.pilotPos.x,f.pos.z-cs.pilotPos.z);
@@ -30029,7 +31778,9 @@ function _colosseumDoAttack(type){
       const ra=pm&&pm.getObjectByName('rArm');if(ra)ra.rotation.x=-Math.PI*.6;
       return;
     }
-    cs.pilotState='GIANTSWING';cs.pilotActionT=0;
+    // v7.261: Auto-snap pilot to face the grabbed fighter
+    cs.pilotAngle=Math.atan2(cs.pilotPos.x-best.pos.x,cs.pilotPos.z-best.pos.z);
+    cs.pilotState='GIANTSWING';cs.pilotActionT=0;cs._grabSFXPlayed=false;
     cs._swingTarget=best;
     // Angle = current bearing to fighter
     cs._swingAngle=Math.atan2(best.pos.x-cs.pilotPos.x,best.pos.z-cs.pilotPos.z);
@@ -30096,7 +31847,7 @@ function _colosseumHitDetect(){
     f.hp-=dmg;
     if(!isAoe)cs.hitboxActive=false;// AOE keeps hitbox active for multiple targets
     hitCount++;
-    if(isSlow)f._slowTimer=2.0;
+    if(isSlow){f._tumbleTimer=3.5;f._tumbleSpinDir=(Math.random()<.5)?1:-1;f._tumbleT=0;try{wfCineSubtitle(_L('💩 STINKY SHOT!!','💩 くさい一撃！！'),'#884400');}catch(_){}}
     try{screenFlash(.28)}catch(_){}
     try{spawnP(f.pos.clone().add(new THREE.Vector3(0,1.2,0)),f.def.col,10,1.1,.5)}catch(_){}
     try{sfx.hit&&sfx.hit()}catch(_){}
@@ -30175,6 +31926,66 @@ function _coloKnockOrDown(f,dx,dz,pushDist){
   } else {f.state='STAGGER';f.stateT=0;}
 }
 // v7.247 ★ IMPALE — push fighter onto ring-side spike, leaves body visible throughout battle
+// v7.266: GORGON special ring-out cinematic — BBQ celebration + galaxy peace
+function _gorgonRingOutCine(f){
+  const cs=colosseumState;if(!cs)return;
+  cs.waveActive=false;cs._gorgonCineActive=true;
+  const mesh=f.mesh;
+  const flyStart=mesh.position.clone();
+  const flyDir=new THREE.Vector3(flyStart.x,0,flyStart.z).normalize();
+  if(flyDir.lengthSq()<0.01)flyDir.set(0,0,1);
+  announce(_L('GORGON RING OUT!! THE KAIJU IS FLYING!!','GORGON リングアウト！！ カイジュウ飛んでった！！'));
+  try{screenFlash(1.0);}catch(_){}try{sfx.bigExplosion&&sfx.bigExplosion();}catch(_){}
+  try{sfx.playCrowdCheer(8);}catch(_){}
+  playComm('pilot',_L('IT FLEW!! THE KAIJU IS GONE!! YYYEAAAH!!','飛んだ！！カイジュウが飛んでいった！！ヤーーー！！'));
+  // Phase 1: GORGON flies upward and away (0-2.8s)
+  let flyT=0;
+  const flyAnim=()=>{
+    flyT+=0.016;
+    if(flyT>2.8||!cs._gorgonCineActive){
+      try{if(mesh.parent)mesh.parent.remove(mesh);}catch(_){}
+      _gorgonCelebration();return;
+    }
+    const p=flyT/2.8;
+    mesh.position.x=flyStart.x+flyDir.x*p*28;
+    mesh.position.y=flyStart.y+Math.sin(p*Math.PI)*20;
+    mesh.position.z=flyStart.z+flyDir.z*p*28;
+    mesh.rotation.x+=0.18;mesh.rotation.z+=0.25;mesh.scale.setScalar(1+p*.4);
+    if(p%0.06<0.02){try{spawnP(mesh.position.clone(),0xff4400,6,.9,.6);}catch(_){}}
+    requestAnimationFrame(flyAnim);
+  };
+  flyAnim();
+}
+function _gorgonCelebration(){
+  const cs=colosseumState;if(!cs)return;
+  // BBQ fires erupt around the arena
+  [new THREE.Vector3(9,0,9),new THREE.Vector3(-9,0,9),new THREE.Vector3(9,0,-9),new THREE.Vector3(-9,0,-9)].forEach(p=>{
+    try{_spawnBBQScene(p);}catch(_){}
+  });
+  try{wfCineSubtitle(_L('◆ KAIJU RING OUT!! THE CROWD ERUPTS!! ◆','◆ カイジュウ場外！！ 観客大爆発！！ ◆'),'#ff8800');}catch(_){}
+  try{sfx.playCrowdCheer(5);}catch(_){}
+  // Text sequence
+  setTimeout(()=>{
+    try{wfCineSubtitle(_L('🔥 KAIJU BBQ FOR EVERYONE!! 🔥','🔥 カイジュウBBQ大会！！ 🔥'),'#ff4400');}catch(_){}
+    try{_spawnMoneyBurst(colosseumState&&colosseumState.pilotPos?colosseumState.pilotPos.clone():new THREE.Vector3(0,2,0),200);}catch(_){}
+    try{spawnConfetti(new THREE.Vector3(0,8,0),120);}catch(_){}
+  },2800);
+  setTimeout(()=>{
+    try{wfCineSubtitle(_L('◆ THE PILOT IS CHAMPION OF THE GALAXY!! ◆','◆ パイロットが銀河のチャンピオン！！ ◆'),'#ffdd00');}catch(_){}
+    try{sfx.playCrowdCheer(5);}catch(_){}
+    playComm('hq',_L('INCREDIBLE!! You beat the KAIJU!! The galaxy is FREE, #N!!','信じられない！！カイジュウを倒した！！ 銀河が自由だ！ #N！！'));
+    try{spawnConfetti(new THREE.Vector3(0,6,0),100);}catch(_){}
+    for(let i=0;i<10;i++){setTimeout(()=>{try{spawnP(new THREE.Vector3((Math.random()-.5)*22,5+Math.random()*9,(Math.random()-.5)*22),0x88aaff,10,1.8,1.0);}catch(_){}},i*350);}
+  },5500);
+  setTimeout(()=>{
+    try{wfCineSubtitle(_L('★  THE GALAXY IS AT PEACE  ★','★  銀河に平和が訪れた  ★'),'#aaddff');}catch(_){}
+    playComm('nav',_L('The stars are at peace, #N. You did it! I\'m so proud of you!','星が平和になりました、#N！ やりましたね！ 誇りに思います！'));
+  },8500);
+  setTimeout(()=>{
+    if(colosseumState)colosseumState._gorgonCineActive=false;
+    try{endColosseum(true);}catch(e){}
+  },12000);
+}
 function _impaleFighter(f,overrideX,overrideZ){
   const cs=colosseumState;if(!cs)return;
   f.hp=0;f.state='IMPALED';
@@ -30222,7 +32033,15 @@ function _impaleFighter(f,overrideX,overrideZ){
 function _updateColoFighter(f,dt){
   const cs=colosseumState;if(!cs)return;
   f.stateT+=dt;if(f.attackCD>0)f.attackCD-=dt;
-  // v7.249: slow effect (poop weapon)
+  // v7.261: TUMBLE effect (poop weapon) — fighter spins/flails uncontrollably for 3.5s
+  if(f._tumbleTimer>0){f._tumbleTimer-=dt;f._tumbleT=(f._tumbleT||0)+dt;
+    const spinSpd=(f._tumbleSpinDir||1)*12*(0.4+f._tumbleTimer/3.5);
+    f.mesh.rotation.y+=spinSpd*dt;
+    const flail=Math.sin(f._tumbleT*16);
+    if(f.lArm)f.lArm.rotation.x=flail*1.3;if(f.rArm)f.rArm.rotation.x=-flail*1.3;
+    if(f.lLeg)f.lLeg.rotation.x=flail*0.8;if(f.rLeg)f.rLeg.rotation.x=-flail*0.8;
+    f.mesh.position.copy(f.pos);return;}
+  // v7.249: slow effect (legacy fallback)
   if(f._slowTimer>0){f._slowTimer-=dt;if(f.state==='APPROACH'||f.state==='CIRCLE'||f.state==='ATTACK'){f.mesh.position.copy(f.pos);return;}}
   // v7.247: Eel body undulation
   if(f.def.id==='eel'&&f.mesh._segs){
@@ -30233,11 +32052,36 @@ function _updateColoFighter(f,dt){
       seg.position.z=-i*.38;
     });
   }
+  // v7.266: Kaiju continuous fluid animation (tail wave, neck sway, jaw)
+  if(f.def.id==='kaiju'&&f.state!=='ELIMINATED'){
+    if(f._tailshowCD>0)f._tailshowCD-=dt;
+    const kt=cs.t;
+    const tAmp=f.state==='TAILSHOW'?0.38:0.19;
+    const tFreq=f.state==='TAILSHOW'?2.7:1.7;
+    for(let ti=0;ti<5;ti++){const ts=f.mesh.getObjectByName('tail'+(ti+1));if(ts){ts.rotation.y=Math.sin(kt*tFreq-ti*.62)*(tAmp+ti*.06);ts.rotation.z=Math.sin(kt*1.1+ti*.4)*.06;}}
+    const n1=f.mesh.getObjectByName('neck1'),n2=f.mesh.getObjectByName('neck2'),n3=f.mesh.getObjectByName('neck3');
+    if(n1){n1.rotation.z=Math.sin(kt*1.4)*.09;n1.rotation.y=Math.sin(kt*.8)*.07;}
+    if(n2){n2.rotation.z=Math.sin(kt*1.4+.5)*.07;n2.rotation.y=Math.sin(kt*.8+.4)*.06;}
+    if(n3)n3.rotation.z=Math.sin(kt*1.4+1.0)*.05;
+    const jaw=f.mesh.getObjectByName('jaw');
+    if(jaw){jaw.rotation.x=f.state==='ATTACK'?Math.abs(Math.sin(f.stateT*14))*.3+.08:Math.sin(kt*1.3)*.04+.03;}
+    const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.z=Math.sin(kt*1.05)*.05;
+    if(f.lArmFore)f.lArmFore.rotation.z=Math.sin(kt*1.2)*.09;
+    if(f.rArmFore)f.rArmFore.rotation.z=-Math.sin(kt*1.2+.6)*.09;
+  }
   const pp=cs.pilotPos;const dx=pp.x-f.pos.x,dz=pp.z-f.pos.z;
   const dist=Math.hypot(dx,dz);const spd=f.def.speed*dt;
   const _walk=(wt)=>{const la=f.lArm,ra=f.rArm,ll=f.lLeg,rl=f.rLeg;
     if(la)la.rotation.x=Math.sin(wt)*.45;if(ra)ra.rotation.x=-Math.sin(wt)*.45;
-    if(ll)ll.rotation.x=-Math.sin(wt)*.45;if(rl)rl.rotation.x=Math.sin(wt)*.45;};
+    if(ll)ll.rotation.x=-Math.sin(wt)*.45;if(rl)rl.rotation.x=Math.sin(wt)*.45;
+    // v7.255: forearm + lower-leg joint animation
+    if(f.lArmFore)f.lArmFore.rotation.x=Math.sin(wt)*.2+.15;
+    if(f.rArmFore)f.rArmFore.rotation.x=-Math.sin(wt)*.2+.15;
+    if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,Math.sin(wt+.7)*.3);
+    if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,Math.sin(wt-.7)*.3);
+    // v7.266: kaiju tail accent during walk
+    if(f.def.id==='kaiju'){for(let ti=0;ti<5;ti++){const ts=f.mesh.getObjectByName('tail'+(ti+1));if(ts)ts.rotation.y=Math.sin(wt*1.2-ti*.55)*(0.1+ti*.04);}}
+  };
   switch(f.state){
     case 'INTRO':{
       const ddx=-f.pos.x,ddz=-f.pos.z,d2=Math.hypot(ddx,ddz);
@@ -30259,7 +32103,11 @@ function _updateColoFighter(f,dt){
       if(f.rArm){f.rArm.rotation.x=Math.sin(cs.t*1.8)*0.12;}
       // Slug sways side to side while idle
       if(f.def.style==='slug'){f.mesh.rotation.z=Math.sin(cs.t*1.2)*0.08;}
-      if(f.stateT>dur){f.state='APPROACH';f.stateT=0;}break;}
+      if(f.stateT>dur){
+        if(f.def.id==='kaiju'&&Math.random()<.55&&(f._tailshowCD||0)<=0){
+          f.state='TAILSHOW';f.stateT=0;f._tailshowCD=12;
+        } else {f.state='APPROACH';f.stateT=0;}
+      }break;}
     case 'APPROACH':{
       const strikeR=f.def.sz*1.8+.8;
       if(dist<strikeR){
@@ -30293,7 +32141,7 @@ function _updateColoFighter(f,dt){
             cs.pilotState='STAGGER';cs.pilotActionT=0;
             // v7.250: eel uses charge system — actual zap fires via _eelCharging flag in updateColosseum
             if(f.def.id==='eel'&&!cs._eelCharging&&!cs._eelChargeFired){
-              cs._eelCharging=true;cs._eelChargeT=1.0;cs._eelChargeFired=true;cs._eelCrackCD=0;
+              cs._eelCharging=true;cs._eelChargeT=3.0;cs._eelChargeFired=true;cs._eelCrackCD=0;// v7.261: 1.0→3.0s charge
               cs._eelFighter=f;
               try{wfCineSubtitle(_L('⚡ CHARGING UP...','⚡ チャージ中...'),'#00ffff')}catch(_){}
             } else if(f.def.id!=='eel'){
@@ -30322,6 +32170,27 @@ function _updateColoFighter(f,dt){
       if(f.head)f.head.rotation.z=Math.sin(fT*.4)*.35;
       break;}
 
+    case 'TAILSHOW':{
+      // v7.266: Kaiju intimidation — turns back to player, shows off tail
+      const SHOW_DUR=3.8;
+      if(f.stateT>SHOW_DUR){f.state='ATTACK';f.stateT=0;break;}
+      // Face away from player (tail toward player)
+      f.angle=Math.atan2(dx,dz);f.mesh.rotation.y=f.angle;
+      // Slow menacing backing walk
+      const wt3=f.stateT*3.2;
+      if(f.lLeg)f.lLeg.rotation.x=-Math.sin(wt3)*.5;if(f.rLeg)f.rLeg.rotation.x=Math.sin(wt3)*.5;
+      if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,Math.sin(wt3+.7)*.3);
+      if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,Math.sin(wt3-.7)*.3);
+      // Arms wide — threatening spread
+      if(f.lArm){f.lArm.rotation.z=.72+Math.sin(f.stateT*1.2)*.18;f.lArm.rotation.x=Math.sin(f.stateT*1.9)*.22;}
+      if(f.rArm){f.rArm.rotation.z=-.72-Math.sin(f.stateT*1.2)*.18;f.rArm.rotation.x=-Math.sin(f.stateT*1.9)*.22;}
+      // Move slightly away from player, staying in ring
+      if(dist<9.5){f.pos.x-=dx/Math.max(dist,.01)*f.def.speed*dt*.45;f.pos.z-=dz/Math.max(dist,.01)*f.def.speed*dt*.45;}
+      const rdt=Math.hypot(f.pos.x,f.pos.z);if(rdt>cs.ringR-1){const ra2=Math.atan2(f.pos.x,f.pos.z);f.pos.x=Math.sin(ra2)*(cs.ringR-1);f.pos.z=Math.cos(ra2)*(cs.ringR-1);}
+      f.mesh.position.copy(f.pos);
+      f.mesh.rotation.z=Math.sin(f.stateT*1.8)*.1;
+      break;}
+
     case 'ELIMINATED':break;
     default:break;
   }
@@ -30335,7 +32204,7 @@ function _colosseumWaveCheck(dt){
   if(!cs.waveActive)return;
   if(cs.activeFighters.every(f=>f.state==='ELIMINATED')){
     cs.waveActive=false;
-    if(cs.waveNum>=4){setTimeout(()=>{try{endColosseum(true)}catch(_){}},2000);}
+    if(cs.waveNum>=4&&!cs._gorgonCineActive){setTimeout(()=>{try{endColosseum(true)}catch(_){}},2000);}
     else{announce(_L('ROUND '+cs.waveNum+' CLEAR!','ラウンド '+cs.waveNum+' クリア！'));try{sfx.playCrowdCheer(3)}catch(_){}cs.nextWaveT=3.0;}
   }
 }
@@ -30373,6 +32242,18 @@ function _colosseumStartWave(){
 function updateColosseum(dt){
   const cs=colosseumState;if(!cs||!cs.active)return;
   cs.t+=dt;if(cs.pilotInvT>0)cs.pilotInvT-=dt;
+  // v7.261: Crowd animation — bob + sway all 504+ audience figures
+  cs._crowdT=(cs._crowdT||0)+dt;
+  if(cs._crowdFigs&&cs._crowdFigs.length){
+    const ct=cs._crowdT;
+    for(let ci=0;ci<cs._crowdFigs.length;ci++){
+      const fd=cs._crowdFigs[ci];
+      const phase=fd.userData._crowdPhase||0;
+      const freq=fd.userData._crowdFreq||3;
+      fd.position.y=(fd.userData._crowdOrigY||0)+Math.sin(ct*freq+phase)*.055;
+      fd.rotation.z=Math.sin(ct*freq*.62+phase+1.1)*.06;
+    }
+  }
   const pm=cs.pilotMesh;
   const pst=cs.pilotState;
   // v7.247: Zap timer (eel attack effect)
@@ -30425,12 +32306,14 @@ function updateColosseum(dt){
       b.mesh.position.copy(b.pos);
       // Spin for visual flair
       b.mesh.rotation.y+=dt*3.5;b.mesh.rotation.x+=dt*2.1;
-      // Pulse color
-      const pulse=0.6+0.35*Math.sin(cs.t*8);
-      if(b.mesh.material)b.mesh.material.opacity=pulse;
-      // Catch: pilot within 1.8 units
+      // v7.261: Sparkle visual — rapid scale + opacity + color flicker + burst particles
+      const pulse=0.5+0.5*Math.sin(cs.t*10+b.pos.x*.7);
+      b.mesh.scale.setScalar(0.7+pulse*0.7);
+      if(b.mesh.material){b.mesh.material.opacity=0.55+pulse*0.45;try{b.mesh.material.color.setHex(pulse>0.55?0xffff00:0x00ffcc);}catch(_){}}
+      if(Math.random()<dt*8){try{spawnP(b.pos.clone(),pulse>0.5?0xffff00:0x00ffcc,2,0.35,0.18)}catch(_){}}
+      // v7.261: Catch — widened radius 1.8→2.5, Y threshold 2.5→3.5
       const catchDist=Math.hypot(b.pos.x-cs.pilotPos.x,b.pos.z-cs.pilotPos.z);
-      if(!b.caught&&catchDist<1.8&&b.pos.y<2.5){
+      if(!b.caught&&catchDist<2.5&&b.pos.y<3.5){
         b.caught=true;
         // Heal pilot
         const healed=Math.min(cs.pilotMaxHP,cs.pilotHP+2);
@@ -30471,22 +32354,48 @@ function updateColosseum(dt){
   // ── GIANT SWING orbit + release ───────────────────────────────
   else if(pst==='GIANTSWING'){
     cs.pilotActionT+=dt;
-    const GRAB_DUR=.22;
-    const ORBIT_DUR=2.4;   // longer spin — more rotations
+    const GRAB_DUR=.38;  // v7.261: extended for visible reach→squeeze animation
+    const ORBIT_DUR=2.4;
     const TOTAL=GRAB_DUR+ORBIT_DUR;
     const orbitT=Math.max(0,cs.pilotActionT-GRAB_DUR);
     const orbitProg=Math.min(1,orbitT/ORBIT_DUR);
     const f=cs._swingTarget;
     const la=pm&&pm.getObjectByName('lArm'),ra2=pm&&pm.getObjectByName('rArm');
+    const lafG=pm&&pm.getObjectByName('lArmFore'),rafG=pm&&pm.getObjectByName('rArmFore');
     if(cs.pilotActionT<GRAB_DUR){
+      const gp=cs.pilotActionT/GRAB_DUR;
       // Lunge toward target
       if(f&&f.state==='GRAPPLED'){
         const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
         const d=Math.hypot(dx,dz)||.01;
-        cs.pilotPos.x+=dx/d*Math.min(d,.18);cs.pilotPos.z+=dz/d*Math.min(d,.18);
+        cs.pilotPos.x+=dx/d*Math.min(d,.2);cs.pilotPos.z+=dz/d*Math.min(d,.2);
       }
-      if(la){la.rotation.x=-Math.PI*.5;la.rotation.z=-.18;}
-      if(ra2){ra2.rotation.x=-Math.PI*.5;ra2.rotation.z=.18;}
+      if(gp<0.5){
+        // v7.261: REACH — arms thrust forward, body leans in
+        const rp=gp/0.5;
+        if(pm)pm.rotation.x=-rp*.3;
+        if(la){la.rotation.x=-Math.PI*(.5+rp*.3);la.rotation.z=-.18-rp*.2;}
+        if(ra2){ra2.rotation.x=-Math.PI*(.5+rp*.3);ra2.rotation.z=.18+rp*.2;}
+        if(lafG)lafG.rotation.x=rp*.6;if(rafG)rafG.rotation.x=rp*.6;
+      } else {
+        // v7.261: SQUEEZE — arms close, ムギュっ! hands grip target
+        const sp=(gp-0.5)/0.5;
+        if(pm)pm.rotation.x=-(1-sp)*.3;
+        if(la){la.rotation.x=-Math.PI*.82;la.rotation.z=-.38+sp*.28;}
+        if(ra2){ra2.rotation.x=-Math.PI*.82;ra2.rotation.z=.38-sp*.28;}
+        if(lafG){lafG.rotation.x=.6+sp*.55;lafG.rotation.z=-sp*.25;}
+        if(rafG){rafG.rotation.x=.6+sp*.55;rafG.rotation.z= sp*.25;}
+        // Target bulge-then-compress (grabbed!)
+        if(f&&f.mesh){const sq=Math.sin(sp*Math.PI);f.mesh.scale.setScalar(1+sq*.25);}
+        // One-shot grab impact FX at ~40% into squeeze
+        if(sp>=0.38&&sp<=0.52&&!cs._grabSFXPlayed){
+          cs._grabSFXPlayed=true;
+          try{spawnP((f?f.pos.clone():cs.pilotPos.clone()).add(new THREE.Vector3(0,1.2,0)),0xffff00,16,1.1,.5);}catch(_){}
+          try{screenFlash(.32)}catch(_){}
+          try{if(sfx.chopCrack)sfx.chopCrack();}catch(_){}
+          try{wfCineSubtitle(_L('ムギュ!!','ムギュ!!'),'#ffff00');}catch(_){}
+        }
+      }
     } else if(cs.pilotActionT<TOTAL){
       // ── Accelerating orbit ──────────────────────────────────
       const SWING_SPD=3.2+orbitProg*4.8;// 3.2→8.0 rad/s
@@ -30570,12 +32479,17 @@ function updateColosseum(dt){
         try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3((Math.random()-.5)*.6,.05,(Math.random()-.5)*.6)),16)}catch(_){}
         try{sfx.playCrowdCheer(4+rotBonus*.5)}catch(_){}
         // v7.247: Announce + ring-out → impale on spikes
+        // v7.266: GORGON special ring-out cinematic when HP=0
         const isRO=Math.hypot(nx,nz)>cs.ringR+.5;
         if(isRO){
-          // fly to spike position — impale!
-          _impaleFighter(f,nx,nz);
-          announce(rotBonus>=2?_L(rotBonus+'-ROTATION RING OUT!! IMPALED!!',rotBonus+'回転 リングアウト！！串刺し！！'):
-            _L(f.def.ring+' RING OUT!! IMPALED!!',f.def.ring+' リングアウト！！串刺し！！'));
+          if(f.def.id==='kaiju'&&f.hp<=0){
+            f.state='ELIMINATED';
+            try{_gorgonRingOutCine(f);}catch(e){console.warn(e);_impaleFighter(f,nx,nz);}
+          } else {
+            _impaleFighter(f,nx,nz);
+            announce(rotBonus>=2?_L(rotBonus+'-ROTATION RING OUT!! IMPALED!!',rotBonus+'回転 リングアウト！！串刺し！！'):
+              _L(f.def.ring+' RING OUT!! IMPALED!!',f.def.ring+' リングアウト！！串刺し！！'));
+          }
         } else {
           announce(rotBonus>=3?_L('MONSTER THROW!! '+f.def.ring+' DOWN!','モンスタースロー！ '+f.def.ring+' ダウン！'):
             rotBonus>=2?_L('GIANT SWING!! '+f.def.ring+' IS DOWN!','ジャイアントスイング！ '+f.def.ring+' ダウン！'):
@@ -30584,10 +32498,12 @@ function updateColosseum(dt){
         }
         updateColosseumHUD();
       }
-      // Reset pilot pose
+      // Reset pilot + enemy scale
       if(pm)pm.rotation.x=0;
       if(la){la.rotation.x=0;la.rotation.z=0;}if(ra2){ra2.rotation.x=0;ra2.rotation.z=0;}
-      cs.pilotState='IDLE';cs.pilotActionT=0;cs._swingTarget=null;
+      if(lafG){lafG.rotation.x=0;lafG.rotation.z=0;}if(rafG){rafG.rotation.x=0;rafG.rotation.z=0;}
+      if(f&&f.mesh)f.mesh.scale.setScalar(1); // v7.261: restore scale after squeeze
+      cs.pilotState='IDLE';cs.pilotActionT=0;cs._swingTarget=null;cs._grabSFXPlayed=false;
     }
   }
   // ── FRANKENSTEINER dash + flying scissors ─────────────────────
@@ -30686,6 +32602,26 @@ function updateColosseum(dt){
   // Invincibility blink
   if(pm)pm.visible=!(cs.pilotInvT>0&&Math.floor(cs.t*18)%2===0);
 }
+// v7.261: COLOSSEUM CHALLENGE MODE helpers ──────────────────────────
+function _allMainStagesCleared(){
+  const MAIN=['space','fire','ruins','forest','ice'];
+  const cl=(typeof OPT!=='undefined'&&OPT&&OPT.campaignClear)?OPT.campaignClear:[];
+  return MAIN.every(id=>cl.includes(id));
+}
+function updateTitleUnlocks(){
+  try{
+    const sec=document.getElementById('colosseum-unlock-section');
+    if(sec)sec.style.display=_allMainStagesCleared()?'block':'none';
+  }catch(_){}
+}
+function startColosseumChallenge(){
+  try{
+    const ts=document.getElementById('title-screen');if(ts)ts.style.display='none';
+  }catch(_){}
+  S._colosseumChallengeMode=true;
+  try{startColosseum();}catch(e){console.error('colosseumChallenge:',e);}
+}
+// ────────────────────────────────────────────────────────────────────
 function endColosseum(won){
   const cs=colosseumState;if(!cs)return;
   cs.active=false;
@@ -30701,11 +32637,27 @@ function endColosseum(won){
     // Open the baby alien cage
     try{if(cs._babyCage)_openBabyCage(cs._babyCage);}catch(_){}
     try{OPT.colosseumDone=true;if(typeof saveOpt==='function')saveOpt()}catch(_){}
-    setTimeout(()=>{
-      try{if(colosseumScene){scene.remove(colosseumScene);colosseumScene=null;}colosseumState=null;
-        scene.fog=null;scene.background=null;
-        _startColosseumVictoryReturn();}catch(e){console.error('colosseum→victory:',e)}
-    },3500);
+    if(S._colosseumChallengeMode){
+      // v7.261: CHALLENGE MODE — celebrate then return to title
+      S._colosseumChallengeMode=false;
+      try{wfCineSubtitle(_L('◆ COLOSSEUM CHAMPION!! ◆','◆ コロッセウム チャンピオン！！ ◆'),'#ffaa00');}catch(_){}
+      setTimeout(()=>{
+        try{
+          if(colosseumScene){scene.remove(colosseumScene);colosseumScene=null;}
+          colosseumState=null;scene.fog=null;scene.background=null;
+          try{cleanupBossResidue();}catch(_){}
+          S.phase='TITLE';
+          const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';
+          try{updateTitleUnlocks();}catch(_){}
+        }catch(e){}
+      },4200);
+    } else {
+      setTimeout(()=>{
+        try{if(colosseumScene){scene.remove(colosseumScene);colosseumScene=null;}colosseumState=null;
+          scene.fog=null;scene.background=null;
+          _startColosseumVictoryReturn();}catch(e){console.error('colosseum→victory:',e)}
+      },3500);
+    }
   } else {
     playComm('hq',_L('You are down! Fight back for your freedom, #N!','ダウン！自由のために戦え！ #N！'));
     setTimeout(()=>{
@@ -30845,6 +32797,38 @@ function launchColosseumTest(){
   setTimeout(()=>{try{startColosseum();showTestModeExitButton('colosseum')}catch(e){console.error('colosseum test:',e)}},350);
 }
 
+// ─── v7.270: ARMADA stage test launcher ──────────────────────────────
+// mode: 'full' = start from Phase 0 | 'titan' = skip to Phase 4 Titan Dreadnought
+function launchTestArmada(mode){
+  const ov=document.getElementById('test-stage');if(ov)ov.remove();
+  selectedStage=STAGES.find(s=>s.id==='armada');
+  if(!selectedStage){try{announce('ARMADA stage not found')}catch(_){}return;}
+  if(!S.callsign){const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}
+  if(!selectedShip&&typeof SHIP_ROSTER!=='undefined')selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
+  ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  try{sfx.init();sfx.resume()}catch(e){}
+  S._testFromOptions=true;
+  try{actualStartGame&&actualStartGame()}catch(e){console.error('armada test init:',e)}
+  setTimeout(()=>{
+    try{
+      enemies.forEach(e=>{try{scene.remove(e.mesh)}catch(_){}});enemies.length=0;
+      eBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});eBeams.length=0;
+      startArmada();
+      if(mode==='titan'){
+        setTimeout(()=>{
+          try{
+            S._armPhase=4;S._armKills=55;S._armPhaseAnnounced=false;
+            if(S._armEscort){try{scene.remove(S._armEscort.mesh)}catch(_){}S._armEscort=null;}
+            if(typeof _spawnTitanDreadnought==='function')_spawnTitanDreadnought();
+            else{announce('Entering Phase 4 — Titan Dreadnought');}
+          }catch(e){console.warn('armada titan skip:',e)}
+        },600);
+      }
+      try{showTestModeExitButton&&showTestModeExitButton('armada');}catch(_){}
+    }catch(e){console.error('armada test:',e)}
+  },400);
+}
+
 // ─── v7.254: Fortress finale test (Options → STORY TEST MODE) ───────
 // skipTo: 'shields' | 'dhand' | 'core'
 function launchFortressFinaleTest(skipTo){
@@ -30877,11 +32861,14 @@ function launchFortressFinaleTest(skipTo){
       if(skipTo==='shields'){
         _directFortress(null,'◆ SHIELD GENERATORS TEST ◆');
       } else if(skipTo==='dhand'){
-        _directFortress(()=>{S._shieldGensSpawned=true;S._fortShieldsDown=true;},'◆ DEATH HAND TEST ◆');
+        // v7.263: SD Boss test (replaces DEATH HAND)
+        _directFortress(()=>{S._shieldGensSpawned=true;S._fortShieldsDown=true;
+          S._fleetKills=(S._fleetKillTarget||12);// skip fleet battle
+        },'◆ EXECUTOR DESTROYER TEST ◆');
       } else if(skipTo==='core'){
         _directFortress(()=>{
           S._shieldGensSpawned=true;S._fortShieldsDown=true;
-          S._deathHandSpawned=true;S._deathHandDone=true;
+          S._sdBossSpawned=true;S._sdBossDone=true;// v7.263
         },'◆ REACTOR CORE TEST ◆');
       }
     }catch(e){console.error('fortress finale test:',e)}
@@ -37180,6 +39167,13 @@ function continueWithShip(){
 }
 
 function triggerGameOver(){
+  // v7.261: Save continue context BEFORE phase changes and scene cleanup
+  S._continueTarget=null;
+  try{
+    if(S.phase==='FOREST'){S._continueTarget={type:'speeder'};}
+    else if(S.phase==='COLOSSEUM'){S._continueTarget={type:'colosseum',wave:1,challenge:S._colosseumChallengeMode||false};}
+    else if(S.phase==='FORTRESS'){S._continueTarget={type:'fortress'};}
+  }catch(_){}
   S.phase='GAMEOVER';
   try{sfx.stopBGM()}catch(e){}
   try{sfx.gameOver()}catch(e){}
@@ -37235,6 +39229,9 @@ function triggerGameOver(){
       }
       document.getElementById('final-score').textContent=`SCORE: ${S.score}`;
       document.getElementById('new-record').style.display=(S.score>=S.hiScore&&S.score>0)?'block':'none';
+      // v7.261: Show CONTINUE button if a continue target was saved
+      const cb=document.getElementById('go-continue-btn');
+      if(cb)cb.style.display=S._continueTarget?'block':'none';
     }catch(e){console.error('game over display error:',e)}
   },1800)
 }
@@ -37244,6 +39241,42 @@ function showStamp(){const rank=RANKS.slice().reverse().find(r=>S.score>=r[0]);
   document.getElementById('stamp-score').textContent=`${S.score} PTS`;
   const el=document.getElementById('stamp');el.style.display='flex';el.classList.remove('animate');
   void el.offsetWidth;el.classList.add('animate');sfx.stamp()}
+
+// v7.261: Continue from a special stage without restarting from the beginning
+function continueGame(){
+  const ct=S._continueTarget;
+  if(!ct){restartFromGameOver();return;}
+  S._continueTarget=null;
+  // Hide game-over screen + stamp
+  try{const go=document.getElementById('gameover-screen');if(go)go.style.display='none';}catch(_){}
+  try{const st=document.getElementById('stamp');if(st){st.style.display='none';st.classList.remove('animate');}}catch(_){}
+  // Reinitialize basic state
+  S.score=0;S.kills=0;S.heat=0;S.overheated=false;S.invTimer=0;
+  S.shieldMax=getDifficultyShieldMax();S.lives=S.shieldMax;
+  if(ct.type==='speeder'){
+    // Restart speeder bike chase — set up forest scene then enter bike phase
+    selectedStage=STAGES.find(s=>s.id==='forest')||STAGES[0];
+    try{startForestOnFootMode();}catch(e){console.error('continue speeder setup:',e);}
+    setTimeout(()=>{
+      try{
+        if(typeof forestState!=='undefined'&&forestState)forestState.phase='bike';
+        if(typeof forestGuards!=='undefined'&&forestGuards){
+          forestGuards.forEach(g=>{try{if(forestScene)forestScene.remove(g.mesh)}catch(_){}});
+          forestGuards.length=0;
+        }
+        enterForestSpeederEscape();
+        wfCineSubtitle('◆ CONTINUE — SPEEDER BIKE ◆','#ff88ff');
+      }catch(e){console.error('continue speeder:',e);}
+    },600);
+  } else if(ct.type==='colosseum'){
+    S._colosseumChallengeMode=ct.challenge||false; // v7.261: restore challenge flag
+    try{startColosseum();}catch(e){console.error('continue colosseum:',e);}
+  } else if(ct.type==='fortress'){
+    try{launchTrenchTest();}catch(e){console.error('continue fortress:',e);}
+  } else {
+    restartFromGameOver();
+  }
+}
 
 function announce(text){const el=document.getElementById('wave-announce');el.textContent=text;
   el.style.display='block';el.style.animation='none';void el.offsetWidth;
@@ -37664,6 +39697,8 @@ try{
   }
 }catch(_){}
 function saveOpt(){try{localStorage.setItem('ciOpt',JSON.stringify(OPT))}catch(e){}}
+// v7.261: Show colosseum challenge button if all stages cleared (called after OPT is ready)
+setTimeout(()=>{try{updateTitleUnlocks();}catch(_){}},400);
 // v7.159: After loading OPT from localStorage, apply any saved nav name overrides to NAV_ROSTER
 function _applyCharNameOverrides(){
   try{
@@ -38533,6 +40568,28 @@ function toggleDebug(){
         dbg(ev+' '+tag)},true)})}}
 // Auto-enable debug if ?debug=1 in URL
 if(location.search.indexOf('debug')>=0){setTimeout(()=>toggleDebug(),500)}
+
+// v7.270: Auto-launch colosseum if ?colosseum in URL (for standalone colosseum.html page)
+if(location.search.indexOf('colosseum')>=0){
+  setTimeout(()=>{
+    try{
+      ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{
+        const e=document.getElementById(id);if(e)e.style.display='none';
+      });
+      if(!S.callsign){const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}
+      if(!selectedShip&&typeof SHIP_ROSTER!=='undefined')selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
+      try{sfx.init();sfx.resume()}catch(_){}
+      S._testFromOptions=false;// allow normal colosseum win/loss flow
+      S.phase='BRIDGE';S.score=0;S.kills=0;S.wave=1;S.waveLeft=0;S.heat=0;S.overheated=false;S.invTimer=0;S.gameTime=0;
+      S.shieldMax=getDifficultyShieldMax();S.lives=S.shieldMax;
+      try{enemies.forEach(e=>{try{scene.remove(e.mesh)}catch(_){}});enemies.length=0}catch(_){}
+      try{eBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});eBeams.length=0}catch(_){}
+      try{particles.forEach(p=>{try{scene.remove(p.mesh)}catch(_){}});particles.length=0}catch(_){}
+      selectedStage=STAGES.find(s=>s.id==='ice')||STAGES[0];
+      startColosseum();
+    }catch(e){console.error('colosseum autolaunch:',e);}
+  },800);
+}
 
 // ============================================================================
 // v7.42 ★ LAUNCH PREP — Onboarding + Personal-Best + Share
@@ -39826,10 +41883,18 @@ function actualStartGame(){
   const tpEl=document.getElementById('tp-timer');if(tpEl)tpEl.style.display='none';
   S.replayTimer=0;S.replayCut=0;S.escapeTimer=0;S.lastCommTime=0;commCooldown=8;
   player.x=0;player.y=0;fortPhase=0;
-  // v7.254: reset fortress sub-phase flags so test mode / new run starts clean
-  S._deathHandSpawned=false;S._deathHandDone=false;S._corePending=false;
+  // v7.263: reset fortress sub-phase flags (SD Boss replaces DEATH HAND)
+  S._sdBossSpawned=false;S._sdBossDone=false;S._corePending=false;
   S._fortShieldsDown=false;S._shieldGensSpawned=false;S._shieldGens=[];
+  S._sdBossMesh=null;S._bgFleet=[];S._fleetKills=0;S._fleetKillTarget=12;
+  S._tieWaveT=3;S._fleetBattleAnnounced=false;S._fleetBeamT=2;
+  S._sdBossStuckT=0;S._shieldGenSpawnT=0;// v7.263: reset new timers
   S._fortAllyShips=null;S._fortAllyRadioT=0;
+  // v7.264: armada stage state reset
+  S._armPhase=0;S._armPhaseT=0;S._armKills=0;S._armBgFleet=[];S._armFleetHP=100;
+  S._armEscort=null;S._armTitan=null;S._armTitanHP={};S._armIonDisableT=0;
+  S._armBeamT=1.5;S._armWaveT=0;S._armPhaseAnnounced=false;
+  S._armTitanPhase='APPROACH';S._armTitanRage=false;S._armTitanT=0;S._armEscapeT=0;
   enemies.forEach(e=>scene.remove(e.mesh));enemies.length=0;
   pBeams.forEach(b=>scene.remove(b.mesh));pBeams.length=0;
   eBeams.forEach(b=>scene.remove(b.mesh));eBeams.length=0;
@@ -39986,6 +42051,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
     case 'EJECTING':updateEject(dt);updateParticles(dt);break;
     case 'CONTINUE':updateContinueScene(dt);updateParticles(dt);break;
     case 'COLOSSEUM':S.gameTime+=dt;try{updateColosseum(dt)}catch(e){console.error('colosseum:',e)}updateParticles(dt);break;
+    case 'ARMADA':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();try{updateArmada(dt)}catch(e){console.error('armada:',e)}updateComms(dt);updateRadar();try{_updateFormationAllies(dt)}catch(e){}break;
     case 'FOREST':S.gameTime+=dt;try{updateForestOnFoot(dt)}catch(e){console.error('forest:',e)}updateParticles(dt);break;
     case 'FIRE_ONFOOT':S.gameTime+=dt;try{updateFirePlanetOnFoot(dt)}catch(e){console.error('fire-onfoot:',e)}updateParticles(dt);break;
     case 'FIRE_LANDING':S.gameTime+=dt;updateParticles(dt);break;
@@ -41030,7 +43096,7 @@ function init(){setupThree();createStars();createSpeedLines();createGrid();creat
 // Wrap init in try/catch so any error doesn't prevent auto-launch
 try{init();
   // Update banner: success
-  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.254 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
+  try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.261 - READY | AUTO-LAUNCH ACTIVE'}catch(e){}
 }catch(initErr){
   // Show error on screen (for iPhone debugging)
   try{const b=document.getElementById('version-banner');
