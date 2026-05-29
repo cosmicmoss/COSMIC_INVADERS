@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.272</title>
+<title>COSMIC INVADERS v7.273</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -7982,7 +7982,7 @@ function _spawnEnergyBall(cs){
   const targetX=cs.pilotPos.x+(Math.random()-.5)*3;
   const targetZ=cs.pilotPos.z+(Math.random()-.5)*3;
   const dir=new THREE.Vector3(targetX-startPos.x,0,targetZ-startPos.z).normalize();
-  const speed=5.5+Math.random()*2;
+  const speed=3.5+Math.random()*1.5; // v7.273: slower so it stays in play longer
   // Glowing sphere mesh
   const eGeo=new THREE.SphereGeometry(0.28,5,4);
   const eMat=new THREE.LineBasicMaterial({color:0x00ffcc,transparent:true,opacity:0.95});
@@ -7992,8 +7992,8 @@ function _spawnEnergyBall(cs){
   const ball={
     mesh:eMesh,
     pos:startPos.clone(),
-    vel:new THREE.Vector3(dir.x*speed, 0.8, dir.z*speed),
-    life:3.5,
+    vel:new THREE.Vector3(dir.x*speed, 2.5, dir.z*speed), // v7.273: higher lob
+    life:10.0, // v7.273: 10s so it crosses the arena
     caught:false
   };
   cs._energyBalls.push(ball);
@@ -32553,9 +32553,11 @@ function updateColosseum(dt){
     for(let i=cs._energyBalls.length-1;i>=0;i--){
       const b=cs._energyBalls[i];
       b.life-=dt;
-      // Gravity arc
-      b.vel.y-=4.5*dt;
+      // v7.273: lighter gravity so ball arcs gently across the arena
+      b.vel.y-=2.2*dt;
       b.pos.addScaledVector(b.vel,dt);
+      // v7.273: floor bounce — ball bounces like a beach ball rather than dying
+      if(b.pos.y<0.35&&b.vel.y<0){b.vel.y=Math.abs(b.vel.y)*.55+.15;b.pos.y=0.35;}
       b.mesh.position.copy(b.pos);
       // Spin for visual flair
       b.mesh.rotation.y+=dt*3.5;b.mesh.rotation.x+=dt*2.1;
