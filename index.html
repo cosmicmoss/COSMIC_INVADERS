@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.277</title>
+<title>COSMIC INVADERS v7.278</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -31786,8 +31786,8 @@ function startColosseum(){
     _energyBalls:[],_energyBallTimer:18,
     _babyCage:babyCage,
     _pilotArrow,   // v7.277: facing direction arrow
-    // v7.276: SLAG REBORN wave
-    _slagRebornActive:false,_slagRebornFighter:null,_friendCineFired:false,
+    // v7.276: SLAG REBORN wave  // v7.278: _slagRebornTriggered prevents double-fire
+    _slagRebornActive:false,_slagRebornFighter:null,_friendCineFired:false,_slagRebornTriggered:false,
     pilotMesh,
     // v7.249 ★ RING WEAPONS
     _weapons:[
@@ -32104,7 +32104,11 @@ function _gorgonCelebration(){
   },8500);
   setTimeout(()=>{
     if(colosseumState)colosseumState._gorgonCineActive=false;
-    try{_startSlagRebornWave();}catch(e){try{endColosseum(true);}catch(_){}} // v7.276: SLAG REBORN
+    // v7.278: guard against double-fire (normal defeat may have already triggered it)
+    if(colosseumState&&!colosseumState._slagRebornTriggered){
+      colosseumState._slagRebornTriggered=true;
+      try{_startSlagRebornWave();}catch(e){try{endColosseum(true);}catch(_){}}
+    }
   },12000);
 }
 // ─── v7.276: SLAG REBORN — Mega SLUG returns with two axes ─────────────────
@@ -32553,7 +32557,11 @@ function _colosseumWaveCheck(dt){
       cs._slagRebornActive=false;
       if(!cs._friendCineFired){cs._friendCineFired=true;setTimeout(()=>{try{_slagFriendshipCine();}catch(e){endColosseum(true);}},1500);}
     } else if(cs.waveNum>=4&&!cs._gorgonCineActive){
-      setTimeout(()=>{try{endColosseum(true)}catch(_){}},2000);
+      // v7.278: always trigger SLAG REBORN after wave 4, regardless of ring-out or normal defeat
+      if(!cs._slagRebornTriggered){
+        cs._slagRebornTriggered=true;
+        setTimeout(()=>{try{_startSlagRebornWave();}catch(e){try{endColosseum(true);}catch(_){};}},2000);
+      }
     } else {
       announce(_L('ROUND '+cs.waveNum+' CLEAR!','ラウンド '+cs.waveNum+' クリア！'));try{sfx.playCrowdCheer(3)}catch(_){}cs.nextWaveT=3.0;
     }
