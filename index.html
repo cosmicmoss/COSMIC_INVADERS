@@ -13756,6 +13756,27 @@ function cleanupBossResidue(){
       try{const ai=document.getElementById('arm-ion-warn');if(ai)ai.style.display='none';}catch(_){}
     }
   }catch(_){}
+  // v7.283: pod race stage cleanup
+  try{
+    if(typeof S!=='undefined'&&S){
+      if(S._prGround){try{scene.remove(S._prGround)}catch(_){}; S._prGround=null;}
+      if(S._prPlayerPod){try{scene.remove(S._prPlayerPod)}catch(_){}; S._prPlayerPod=null;}
+      if(S._prWalls&&S._prWalls.length){
+        S._prWalls.forEach(w=>{try{scene.remove(w)}catch(_){}});
+        S._prWalls=[];
+      }
+      if(S._prProps&&S._prProps.length){
+        S._prProps.forEach(p=>{try{scene.remove(p)}catch(_){}});
+        S._prProps=[];
+      }
+      if(S._prAI&&S._prAI.length){
+        S._prAI.forEach(ai=>{try{if(ai&&ai.mesh)scene.remove(ai.mesh)}catch(_){}});
+        S._prAI=[];
+      }
+      S._prRaceStarted=false; S._prFinished=false;
+    }
+    try{const ph=document.getElementById('pr-hud');if(ph)ph.style.display='none';}catch(_){}
+  }catch(_){}
 }
 
 function startFortressApproachCine(){
