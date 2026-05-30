@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.278</title>
+<title>COSMIC INVADERS v7.279</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -2321,6 +2321,105 @@ class SFX{
         o.connect(og);og.connect(this.g||ac.destination);o.start(t);o.stop(t+.25);}
     }catch(e){}
   }
+  // v7.279: Colosseum POP BGM — upbeat pop arrangement of main theme at BPM 140
+  startColosseumBGM(){
+    this.stopColosseumBGM();if(!this.ctx)return;this._coloBgmOn=true;
+    const self=this,ac=this.ctx;
+    const BPM=140,bt=60/BPM;
+    const melA=[293.66,0,349.23,0,392,392,440,0,523.25,0,440,392,349.23,0,293.66,0];
+    const melB=[293.66,349.23,0,392,440,0,523.25,440,392,0,349.23,293.66,261.63,0,293.66,0];
+    const bass=[73.42,0,73.42,87.31,98,0,73.42,65.41,73.42,0,87.31,98,73.42,65.41,87.31,0];
+    let bar=0;
+    const sched=()=>{
+      if(!self._coloBgmOn)return;
+      const dst=self.bgmG||self.g;
+      const now=ac.currentTime+.05;
+      for(let i=0;i<16;i++){const t=now+i*bt;
+        // Four-on-floor kick
+        if(i%4===0){const ko=ac.createOscillator(),kg=ac.createGain();ko.type='sine';
+          ko.frequency.setValueAtTime(180,t);ko.frequency.exponentialRampToValueAtTime(35,t+.1);
+          kg.gain.setValueAtTime(.28,t);kg.gain.exponentialRampToValueAtTime(.001,t+.12);
+          ko.connect(kg);kg.connect(dst);ko.start(t);ko.stop(t+.15);
+          ko.onended=()=>{try{kg.disconnect();ko.disconnect()}catch(_){}}}
+        // Snare on 2 & 4
+        if(i%8===4){self._n(t,.12,.05,4000,2500,dst);}
+        // Hi-hat 8ths
+        if(i%2===1){self._n(t,.016,.018,13000,6000,dst);}
+        // Punchy bass (octave up from original)
+        const bf=bass[(i+bar*3)%16];
+        if(bf>0){const o=ac.createOscillator(),g=ac.createGain();o.type='sawtooth';o.frequency.value=bf*2;
+          g.gain.setValueAtTime(.13,t);g.gain.exponentialRampToValueAtTime(.001,t+bt*.45);
+          o.connect(g);g.connect(dst);o.start(t);o.stop(t+bt*.5);
+          o.onended=()=>{try{g.disconnect();o.disconnect()}catch(_){}}}
+        // Bright melody (same notes, triangle, octave up)
+        const mel=bar%4<2?melA:melB,mf=mel[i];
+        if(mf>0){const o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=mf*1.5;
+          g.gain.setValueAtTime(.09,t);g.gain.exponentialRampToValueAtTime(.001,t+bt*.55);
+          o.connect(g);g.connect(dst);o.start(t);o.stop(t+bt*.6);
+          o.onended=()=>{try{g.disconnect();o.disconnect()}catch(_){}}}
+        // Counter harmony (square, fills gaps)
+        if(i%4===0&&mf>0){const o2=ac.createOscillator(),g2=ac.createGain();o2.type='square';o2.frequency.value=mf*.75;
+          g2.gain.setValueAtTime(.035,t);g2.gain.exponentialRampToValueAtTime(.001,t+bt*1.8);
+          o2.connect(g2);g2.connect(dst);o2.start(t);o2.stop(t+bt*2);
+          o2.onended=()=>{try{g2.disconnect();o2.disconnect()}catch(_){}}}
+      }
+      bar++;self._coloBgmIv=setTimeout(sched,(bt*16*1000)-.06);
+    };
+    sched();
+  },
+  stopColosseumBGM(){
+    this._coloBgmOn=false;
+    if(this._coloBgmIv){clearTimeout(this._coloBgmIv);this._coloBgmIv=null;}
+  },
+  // Continuous crowd ambient noise — looping bandpass-filtered noise + random yells
+  startCrowdAmbient(){
+    this.stopCrowdAmbient();if(!this.ctx)return;
+    const ac=this.ctx,dst=this.g||ac.destination;
+    try{
+      const dur=8,buf=ac.createBuffer(1,ac.sampleRate*dur,ac.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ac.createBufferSource();src.buffer=buf;src.loop=true;
+      const bp1=ac.createBiquadFilter();bp1.type='bandpass';bp1.frequency.value=550;bp1.Q.value=0.4;
+      const bp2=ac.createBiquadFilter();bp2.type='bandpass';bp2.frequency.value=1400;bp2.Q.value=0.45;
+      const g=ac.createGain();g.gain.value=0.065;
+      src.connect(bp1);bp1.connect(bp2);bp2.connect(g);g.connect(dst);
+      src.start();this._crowdAmbSrc=src;this._crowdAmbG=g;
+      // Random individual yells/heckles every 1.5-4s
+      const yellFn=()=>{
+        if(!this._crowdAmbSrc)return;
+        try{const o=ac.createOscillator(),og=ac.createGain();o.type='sawtooth';
+          o.frequency.setValueAtTime(350+Math.random()*250,ac.currentTime);
+          o.frequency.exponentialRampToValueAtTime(180+Math.random()*120,ac.currentTime+.28);
+          og.gain.setValueAtTime(0,ac.currentTime);og.gain.linearRampToValueAtTime(.11+Math.random()*.06,ac.currentTime+.04);
+          og.gain.linearRampToValueAtTime(0,ac.currentTime+.32);
+          o.connect(og);og.connect(dst);o.start();o.stop(ac.currentTime+.35);}catch(_){}
+        this._crowdYellT=setTimeout(yellFn,1500+Math.random()*2500);
+      };
+      this._crowdYellT=setTimeout(yellFn,800);
+    }catch(_){}
+  },
+  stopCrowdAmbient(){
+    if(this._crowdAmbSrc){try{this._crowdAmbSrc.stop();}catch(_){}this._crowdAmbSrc=null;}
+    if(this._crowdAmbG){try{this._crowdAmbG.disconnect();}catch(_){}this._crowdAmbG=null;}
+    if(this._crowdYellT){clearTimeout(this._crowdYellT);this._crowdYellT=null;}
+  },
+  // Crowd "OOOOOH" reaction — rising filtered noise burst on successful technique
+  crowdOoh(){
+    if(!this.ctx)return;
+    const ac=this.ctx,now=ac.currentTime,dst=this.g||ac.destination;
+    try{
+      const dur=1.5,buf=ac.createBuffer(1,ac.sampleRate*dur,ac.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const src=ac.createBufferSource();src.buffer=buf;
+      const bp=ac.createBiquadFilter();bp.type='bandpass';
+      bp.frequency.setValueAtTime(300,now);bp.frequency.linearRampToValueAtTime(950,now+.65);
+      bp.frequency.linearRampToValueAtTime(650,now+dur);bp.Q.value=0.55;
+      const g=ac.createGain();
+      g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(.30,now+.22);
+      g.gain.setValueAtTime(.26,now+.9);g.gain.linearRampToValueAtTime(0,now+dur);
+      src.connect(bp);bp.connect(g);g.connect(dst);src.start(now);src.stop(now+dur);
+    }catch(_){}
+  },
   // v7.254: Cinematic timpani drum hit for character parade entry
   cinematicDrum(){
     if(!this.ctx)return;const ac=this.ctx,now=ac.currentTime;
@@ -30269,14 +30368,14 @@ function makeColosseumArena(){
   // v7.261: crowd figs stored in g.userData._crowdFigs for per-frame animation
   const audMat=new THREE.LineBasicMaterial({color:0x446688,transparent:true,opacity:.55});
   g.userData._crowdFigs=[];
-  [[18,120],[24,168],[30,216]].forEach(([r,cnt],ti)=>{
+  // v7.279: 7 tiers × ~360 each = 2520 total (5× original 504)
+  [[17,240],[20,300],[23,360],[26,420],[29,480],[32,420],[36,300]].forEach(([r,cnt],ti)=>{
     for(let i=0;i<cnt;i++){
       const ang=i/cnt*Math.PI*2;
       const isMonster=(i%7===0);
       const fig=_makeColoAudienceFig(audMat,i+ti*1000,{isMonster});
-      fig.position.set(Math.cos(ang)*r,ti*2.2-1.5,Math.sin(ang)*r);
+      fig.position.set(Math.cos(ang)*r,ti*1.7-1.5,Math.sin(ang)*r);
       fig.rotation.y=-ang+Math.PI;g.add(fig);
-      // Store animation data on each figure
       fig.userData._crowdOrigY=fig.position.y;
       fig.userData._crowdPhase=((i+ti*500)*2.71828)%(Math.PI*2);
       fig.userData._crowdFreq=2.6+((i*1.618)%1.4);
@@ -31803,6 +31902,10 @@ function startColosseum(){
     _introOnDone:null,_introCamTargetPos:null,_introCamTargetLook:null,_introSkipBound:null};
   try{showTouchControls(true,'colosseum')}catch(_){}
   showColosseumHUD();
+  // v7.279: POP BGM + ambient crowd noise for colosseum
+  try{sfx.stopBGM&&sfx.stopBGM();}catch(_){}
+  try{sfx.startColosseumBGM&&sfx.startColosseumBGM();}catch(_){}
+  try{sfx.startCrowdAmbient&&sfx.startCrowdAmbient();}catch(_){}
   announce(_L('SPACE COLOSSEUM!','宇宙コロッセウム！'));
   playComm('hq',_L('They have the baby alien hostage! WIN every round to free them both, #N!','ベイビーエイリアンが人質だ！ 全ラウンド勝って、二人とも自由にしろ！ #N！'));
   setTimeout(()=>{try{playComm('nav',_L('That cage… #N, the baby is watching you! Give them a show!','あの檻… #N！ ベイビーが見てます！ みんなに見せてやって！'))}catch(_){}},3200);
@@ -31837,6 +31940,14 @@ function _colosseumPilotMove(dt){
   // v7.261: Joystick TANK controls — stickX rotates, stickY moves in pilot's facing direction
   if(tk&&Math.abs(stX)>0.15){cs.pilotAngle-=stX*TURN*1.8;moved=true;cs.walkT+=dt*3;}
   if(tk&&Math.abs(stY)>0.15){cs.pilotPos.x-=Math.sin(cs.pilotAngle)*stY*WALK;cs.pilotPos.z-=Math.cos(cs.pilotAngle)*stY*WALK;moved=true;cs.walkT+=dt*6;}
+  // v7.279: player-fighter collision — prevent walking through enemies
+  {const PR=0.55;cs.activeFighters.forEach(f=>{
+    if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='GRAPPLED')return;
+    const cdx=cs.pilotPos.x-f.pos.x,cdz=cs.pilotPos.z-f.pos.z;
+    const cdist=Math.hypot(cdx,cdz);
+    const minD=PR+(f.def.sz||1)*0.72;
+    if(cdist<minD&&cdist>0.01){const psh=(minD-cdist)/cdist;cs.pilotPos.x+=cdx*psh*.55;cs.pilotPos.z+=cdz*psh*.55;}
+  });}
   const d=Math.hypot(cs.pilotPos.x,cs.pilotPos.z);
   if(d>cs.ringR){const a=Math.atan2(cs.pilotPos.x,cs.pilotPos.z);cs.pilotPos.x=Math.sin(a)*cs.ringR*.93;cs.pilotPos.z=Math.cos(a)*cs.ringR*.93;}
   cs.pilotMesh.position.copy(cs.pilotPos);cs.pilotMesh.rotation.y=cs.pilotAngle;
@@ -31916,6 +32027,7 @@ function _colosseumDoAttack(type){
     try{sfx.chopCrack&&sfx.chopCrack()}catch(_){}// grab impact
     // v7.250: pilot grapple shout
     try{const sh=_GRAPPLE_SHOUTS[Math.floor(Math.random()*_GRAPPLE_SHOUTS.length)];playComm('pilot',sh);}catch(_){}
+          try{sfx.crowdOoh&&sfx.crowdOoh();}catch(_){} // v7.279: crowd roar on technique
     announce(_L('GIANT SWING!','ジャイアント スイング！'));
     try{sfx.playCrowdCheer(1.5)}catch(_){}
   } else if(type==='FRANKENSTEINER'){
@@ -31943,6 +32055,25 @@ function _colosseumDoAttack(type){
     const ll=pm&&pm.getObjectByName('lLeg'),rl=pm&&pm.getObjectByName('rLeg');
     if(ll)ll.rotation.x=-Math.PI*.65;if(rl)rl.rotation.x=-Math.PI*.65;
     announce(_L('FRANKENSTEINER!','フランケンシュタイナー！'));
+  }
+}
+// v7.279: push overlapping fighters apart — prevents enemies stacking on top of each other
+function _coloFighterSeparation(){
+  const cs=colosseumState;if(!cs)return;
+  const af=cs.activeFighters;
+  for(let i=0;i<af.length;i++){
+    const fi=af[i];if(fi.state==='ELIMINATED'||fi.state==='WAITING'||fi.state==='GRAPPLED')continue;
+    for(let j=i+1;j<af.length;j++){
+      const fj=af[j];if(fj.state==='ELIMINATED'||fj.state==='WAITING'||fj.state==='GRAPPLED')continue;
+      const dx=fi.pos.x-fj.pos.x,dz=fi.pos.z-fj.pos.z;
+      const dist=Math.hypot(dx,dz);
+      const minD=(fi.def.sz||1)*.72+(fj.def.sz||1)*.72;
+      if(dist<minD&&dist>0.01){
+        const p=(minD-dist)/dist*.5;
+        fi.pos.x+=dx*p;fi.pos.z+=dz*p;fi.mesh.position.copy(fi.pos);
+        fj.pos.x-=dx*p;fj.pos.z-=dz*p;fj.mesh.position.copy(fj.pos);
+      }
+    }
   }
 }
 function _colosseumHitDetect(){
@@ -31975,6 +32106,7 @@ function _colosseumHitDetect(){
     _coloKnockOrDown(f,dx,dz,1.2);
     updateColosseumHUD();
   });
+  if(hitCount>0){try{sfx.crowdOoh&&sfx.crowdOoh();}catch(_){}} // v7.279: crowd reacts
   if(isAoe&&hitCount===0)cs.hitboxActive=false;
   // v7.249: deplete weapon uses on hit
   if(hw&&hitCount>0){
@@ -33074,6 +33206,7 @@ function updateColosseum(dt){
       cs._frankHit=true;
       // v7.250: pilot grapple shout on impact
       try{const sh=_GRAPPLE_SHOUTS[Math.floor(Math.random()*_GRAPPLE_SHOUTS.length)];playComm('pilot',sh);}catch(_){}
+          try{sfx.crowdOoh&&sfx.crowdOoh();}catch(_){} // v7.279: crowd roar on technique
       if(f&&f.state!=='ELIMINATED'&&f.state!=='DOWN'){
         f.hp=Math.max(0,f.hp-3.5);
         const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
@@ -33119,6 +33252,7 @@ function updateColosseum(dt){
   if(cs.hitboxActive){cs.hitboxT+=dt;if(cs.hitboxT>.14)_colosseumHitDetect();if(cs.hitboxT>.35)cs.hitboxActive=false;}
   _colosseumPilotMove(dt);
   _updateColosseumFighters(dt);
+  _coloFighterSeparation(); // v7.279: prevent fighter overlap
   _colosseumWaveCheck(dt);
   // ── Camera follow + hit-zoom ─────────────────────────────────
   if(cs._introActive){
@@ -33171,6 +33305,9 @@ function startColosseumChallenge(){
 // ────────────────────────────────────────────────────────────────────
 function endColosseum(won){
   const cs=colosseumState;if(!cs)return;
+  // v7.279: stop colosseum BGM + crowd ambient
+  try{sfx.stopColosseumBGM&&sfx.stopColosseumBGM();}catch(_){}
+  try{sfx.stopCrowdAmbient&&sfx.stopCrowdAmbient();}catch(_){}
   cs.active=false;
   try{const h=document.getElementById('colosseum-hud');if(h)h.remove();const c=document.getElementById('colo-controls');if(c)c.remove();}catch(_){}
   try{const f3=document.getElementById('touch-frank');if(f3)f3.style.display='none';}catch(_){}
