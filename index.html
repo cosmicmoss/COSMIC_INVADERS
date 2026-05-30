@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.279</title>
+<title>COSMIC INVADERS v7.280</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -5097,78 +5097,28 @@ function makeMegaFortress(){
   return g}
 
 // ---- Capital Ships (v7.263: Fortress background fleet; v7.264: Armada stage) ----
+// Note: makeImperialSD and makeRebelCruiser are fully defined later in the file.
+// These stubs are overridden by the later definitions.
 function makeImperialSD(scale){
-  scale=scale||1;
-  const g=new THREE.Group();
-  const fw=(geo,fill,edge)=>{
-    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.85}));
-    const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
-    g.add(m);g.add(l);
-  };
-  // Central spine
-  fw(new THREE.BoxGeometry(28,2,48),0x111122,0x3344aa);
-  // Left wedge wing
-  const lwg=new THREE.BoxGeometry(14,7,42);
-  const lm=new THREE.Mesh(lwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.85}));
-  const ll=new THREE.LineSegments(new THREE.EdgesGeometry(lwg),new THREE.LineBasicMaterial({color:0x3344aa}));
-  lm.rotation.y=0.5;ll.rotation.y=0.5;lm.position.set(-12,0,2);ll.position.set(-12,0,2);g.add(lm);g.add(ll);
-  // Right wedge wing
-  const rwg=new THREE.BoxGeometry(14,7,42);
-  const rm=new THREE.Mesh(rwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.85}));
-  const rl=new THREE.LineSegments(new THREE.EdgesGeometry(rwg),new THREE.LineBasicMaterial({color:0x3344aa}));
-  rm.rotation.y=-0.5;rl.rotation.y=-0.5;rm.position.set(12,0,2);rl.position.set(12,0,2);g.add(rm);g.add(rl);
-  // Bridge tower
-  fw(new THREE.BoxGeometry(6,8,10),0x192240,0x6677cc);
-  // Bridge window
-  const bwg=new THREE.SphereGeometry(2.2,5,4);
-  const bwm=new THREE.Mesh(bwg,new THREE.MeshBasicMaterial({color:0x88bbff,transparent:true,opacity:0.9}));
-  bwm.position.set(0,5,0);g.add(bwm);
-  // Turrets (6 small ones on deck)
-  for(let i=0;i<6;i++){
-    const tg=new THREE.CylinderGeometry(0.4,0.4,1.5,4);
-    const tm=new THREE.Mesh(tg,new THREE.MeshBasicMaterial({color:0x334477}));
-    tm.position.set(-8+i*3.5,2,(i%2===0)?-8:5);g.add(tm);
-  }
-  // Engine glow (3 engines at rear)
-  for(let i=0;i<3;i++){
-    const eg=new THREE.TorusGeometry(2.5,0.4,4,10);
-    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x334488,transparent:true,opacity:0.8}));
-    em.position.set(-5+i*5,0,22);em.rotation.x=Math.PI/2;g.add(em);
-  }
-  g.scale.setScalar(scale);
+  const s=scale||1;const g=new THREE.Group();const hF=new THREE.MeshBasicMaterial({color:0x111122});const hE=new THREE.LineBasicMaterial({color:0x3355bb});
+  function ab(w,h,d,ox,oy,oz,ry,rz){const geo=new THREE.BoxGeometry(w*s,h*s,d*s);const m=new THREE.Group();m.add(new THREE.Mesh(geo,hF));m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),hE));m.position.set(ox*s,oy*s,oz*s);if(ry)m.rotation.y=ry;if(rz)m.rotation.z=rz;g.add(m);return m;}
+  ab(2,1.5,20,0,1,2);ab(28,1.5,48,0,0,0);ab(8,0.5,16,-5,0,2,0,0.18);ab(8,0.5,16,5,0,2,0,-0.18);
+  const lwg=new THREE.BoxGeometry(14*s,5*s,40*s);const lm=new THREE.Mesh(lwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.88}));const ll=new THREE.LineSegments(new THREE.EdgesGeometry(lwg),hE);lm.rotation.y=0.52;ll.rotation.y=0.52;lm.position.set(-16*s,0,2*s);ll.position.set(-16*s,0,2*s);g.add(lm);g.add(ll);
+  const rwg=new THREE.BoxGeometry(14*s,5*s,40*s);const rm=new THREE.Mesh(rwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.88}));const rl=new THREE.LineSegments(new THREE.EdgesGeometry(rwg),hE);rm.rotation.y=-0.52;rl.rotation.y=-0.52;rm.position.set(16*s,0,2*s);rl.position.set(16*s,0,2*s);g.add(rm);g.add(rl);
+  ab(2,3,2,0,4,16);const bdG=new THREE.SphereGeometry(1.1*s,5,4);const bd=new THREE.Group();bd.add(new THREE.Mesh(bdG,new THREE.MeshBasicMaterial({color:0x88bbff,transparent:true,opacity:.85})));bd.add(new THREE.LineSegments(new THREE.EdgesGeometry(bdG),new THREE.LineBasicMaterial({color:0xaaddff})));bd.position.set(0,6.2*s,16*s);g.add(bd);
+  const tF=new THREE.MeshBasicMaterial({color:0x222244});const tE=new THREE.LineBasicMaterial({color:0x4455bb});[[-7,1.5,-12],[-7,1.5,-4],[7,1.5,-12],[7,1.5,-4],[0,1.5,2],[0,1.5,10]].forEach(([tx,ty,tz])=>{const tbG=new THREE.BoxGeometry(0.8*s,0.5*s,0.8*s);const tcG=new THREE.CylinderGeometry(0.25*s,0.3*s,1.2*s,4);const tb=new THREE.Group();tb.add(new THREE.Mesh(tbG,tF));tb.add(new THREE.LineSegments(new THREE.EdgesGeometry(tbG),tE));const tc=new THREE.Mesh(tcG,tF);tc.position.y=0.85*s;tb.add(tc);tb.position.set(tx*s,ty*s,tz*s);g.add(tb);});
+  const eF=new THREE.MeshBasicMaterial({color:0x4466cc,transparent:true,opacity:.75});const eE=new THREE.LineBasicMaterial({color:0x88aaff});for(let ei=0;ei<3;ei++){const ex=(ei-1)*5*s;const eG=new THREE.TorusGeometry(2*s,0.38*s,4,8);const em=new THREE.Group();em.add(new THREE.Mesh(eG,eF));em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eG),eE));em.position.set(ex,0,-22*s);em.rotation.x=Math.PI/2;g.add(em);}
   return g;
 }
 
 function makeRebelCruiser(scale){
-  scale=scale||1;
-  const g=new THREE.Group();
-  const fw=(geo,fill,edge)=>{
-    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.85}));
-    const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
-    g.add(m);g.add(l);
-  };
-  // Main organic hull (Mon Calamari style — elongated sphere approximated)
-  const hg=new THREE.SphereGeometry(8,8,6);
-  const hm=new THREE.Mesh(hg,new THREE.MeshBasicMaterial({color:0x223322,transparent:true,opacity:0.85}));
-  hm.scale.set(1,0.6,2.5);// stretch into oval shape
-  const hl=new THREE.LineSegments(new THREE.EdgesGeometry(hg),new THREE.LineBasicMaterial({color:0x44aa66}));
-  hl.scale.set(1,0.6,2.5);
-  g.add(hm);g.add(hl);
-  // Dorsal superstructure
-  fw(new THREE.BoxGeometry(4,5,12),0x1a2d1a,0x44aa66);
-  // Surface bumps
-  for(let i=0;i<5;i++){
-    const bg=new THREE.SphereGeometry(1.5,4,4);
-    const bm=new THREE.Mesh(bg,new THREE.MeshBasicMaterial({color:0x1e2e1e,transparent:true,opacity:0.85}));
-    bm.position.set((i-2)*4,1+Math.sin(i)*2,(-2+i)*3);bm.scale.y=0.5;g.add(bm);
-  }
-  // Engines (4 at rear)
-  for(let i=0;i<4;i++){
-    const eg=new THREE.CylinderGeometry(1.0,1.5,3,6);
-    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x224422,transparent:true,opacity:0.85}));
-    em.position.set(-5+i*3.5,-1.5,18);em.rotation.x=Math.PI/2;g.add(em);
-  }
-  g.scale.setScalar(scale);
+  const s=scale||1;const g=new THREE.Group();const hF=new THREE.MeshBasicMaterial({color:0x152215});const hE=new THREE.LineBasicMaterial({color:0x33aa55});
+  const hullGeo=new THREE.SphereGeometry(4*s,6,5);const hull=new THREE.Group();hull.scale.z=2.8;hull.add(new THREE.Mesh(hullGeo,hF));hull.add(new THREE.LineSegments(new THREE.EdgesGeometry(hullGeo),hE));g.add(hull);
+  const cbG=new THREE.SphereGeometry(1.6*s,5,4);const cb=new THREE.Group();cb.add(new THREE.Mesh(cbG,new THREE.MeshBasicMaterial({color:0x1e3022})));cb.add(new THREE.LineSegments(new THREE.EdgesGeometry(cbG),hE));cb.position.set(0,3.8*s,4*s);g.add(cb);
+  [[-4.5,1,0],[4.5,1,0]].forEach(([bx,by,bz])=>{const bG=new THREE.SphereGeometry(1*s,4,3);const bm=new THREE.Group();bm.add(new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x1c2e1c})));bm.add(new THREE.LineSegments(new THREE.EdgesGeometry(bG),hE));bm.position.set(bx*s,by*s,bz*s);g.add(bm);});
+  const rF=new THREE.MeshBasicMaterial({color:0x1a2e1a});const rE=new THREE.LineBasicMaterial({color:0x44bb66});[[-3,1.2,0,0.15],[3,1.2,0,-0.15],[-2,-1.5,0,0.1],[2,-1.5,0,-0.1]].forEach(([rx,ry,rz,rrot])=>{const rG=new THREE.BoxGeometry(0.3*s,0.15*s,8*s);const rm2=new THREE.Mesh(rG,rF);const rl2=new THREE.LineSegments(new THREE.EdgesGeometry(rG),rE);rm2.position.set(rx*s,ry*s,rz*s);rl2.position.set(rx*s,ry*s,rz*s);rm2.rotation.z=rrot;rl2.rotation.z=rrot;g.add(rm2);g.add(rl2);});
+  [[-3,3,-3],[3,3,-3],[-3,3,3],[3,3,3]].forEach(([tx,ty,tz])=>{const tsG=new THREE.SphereGeometry(0.5*s,4,3);const tcG=new THREE.CylinderGeometry(0.18*s,0.22*s,1.2*s,4);const t=new THREE.Group();t.add(new THREE.Mesh(tsG,new THREE.MeshBasicMaterial({color:0x1e301e})));const tc=new THREE.Mesh(tcG,new THREE.MeshBasicMaterial({color:0x1a281a}));tc.position.y=0.9*s;t.add(tc);t.position.set(tx*s,ty*s,tz*s);g.add(t);});
+  const eF=new THREE.MeshBasicMaterial({color:0x1a3320,transparent:true,opacity:.85});const eE=new THREE.LineBasicMaterial({color:0x00ffaa});[[-3,-1,-9],[3,-1,-9]].forEach(([px,py,pz])=>{const pG=new THREE.BoxGeometry(2*s,1.5*s,3*s);const pm=new THREE.Mesh(pG,eF);const pl=new THREE.LineSegments(new THREE.EdgesGeometry(pG),eE);pm.position.set(px*s,py*s,pz*s);pl.position.set(px*s,py*s,pz*s);g.add(pm);g.add(pl);const toG=new THREE.TorusGeometry(0.9*s,0.18*s,4,8);const tom=new THREE.Mesh(toG,eF);tom.position.set(px*s,py*s,(pz-1.8)*s);tom.rotation.x=Math.PI/2;g.add(tom);});
   return g;
 }
 
@@ -14958,110 +14908,145 @@ function _updateDHTentacle(dt){
 
 // ============ v7.263: STAR WARS FLEET BATTLE ============
 
-// Imperial Star Destroyer — wedge silhouette
+// Imperial Star Destroyer — angular wedge warship
 function makeImperialSD(scale){
   const s=scale||1;
   const g=new THREE.Group();
-  const hullFill=new THREE.MeshBasicMaterial({color:0x111122});
-  const hullEdge=new THREE.LineBasicMaterial({color:0x3344aa});
-  function addBox(w,h,d,ox,oy,oz,ry){
+  const hF=new THREE.MeshBasicMaterial({color:0x111122});
+  const hE=new THREE.LineBasicMaterial({color:0x3355bb});
+  function ab(w,h,d,ox,oy,oz,ry,rz){
     const geo=new THREE.BoxGeometry(w*s,h*s,d*s);
     const m=new THREE.Group();
-    m.add(new THREE.Mesh(geo,hullFill));
-    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),hullEdge));
+    m.add(new THREE.Mesh(geo,hF));
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),hE));
     m.position.set(ox*s,oy*s,oz*s);
     if(ry)m.rotation.y=ry;
-    g.add(m);
+    if(rz)m.rotation.z=rz;
+    g.add(m);return m;
   }
+  // Dorsal spine ridge
+  ab(2,1.5,20, 0,1,2);
   // Main flat deck
-  addBox(28,2,48, 0,0,0);
-  // Left angled wing
-  addBox(14,7,42, -16,0,2, 0.52);
-  // Right angled wing
-  addBox(14,7,42,  16,0,2,-0.52);
+  ab(28,1.5,48, 0,0,0);
+  // Port hull plate — angled
+  ab(8,0.5,16, -5,0,2, 0,0.18);
+  // Starboard hull plate — mirror
+  ab(8,0.5,16,  5,0,2, 0,-0.18);
+  // Port wedge wing
+  const lwg=new THREE.BoxGeometry(14*s,5*s,40*s);
+  const lm=new THREE.Mesh(lwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.88}));
+  const ll=new THREE.LineSegments(new THREE.EdgesGeometry(lwg),hE);
+  lm.rotation.y=0.52;ll.rotation.y=0.52;lm.position.set(-16*s,0,2*s);ll.position.set(-16*s,0,2*s);g.add(lm);g.add(ll);
+  // Starboard wedge wing
+  const rwg=new THREE.BoxGeometry(14*s,5*s,40*s);
+  const rm=new THREE.Mesh(rwg,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.88}));
+  const rl=new THREE.LineSegments(new THREE.EdgesGeometry(rwg),hE);
+  rm.rotation.y=-0.52;rl.rotation.y=-0.52;rm.position.set(16*s,0,2*s);rl.position.set(16*s,0,2*s);g.add(rm);g.add(rl);
   // Bridge tower
-  addBox(6,8,10, 0,6,14);
-  // Bridge viewport (glow)
-  const bwFill=new THREE.MeshBasicMaterial({color:0x88bbff,transparent:true,opacity:.85});
-  const bwEdge=new THREE.LineBasicMaterial({color:0xaaddff});
-  const bwGeo=new THREE.SphereGeometry(2.2*s,6,4);
-  const bw=new THREE.Group();bw.name='sdBW';
-  bw.add(new THREE.Mesh(bwGeo,bwFill));
-  bw.add(new THREE.LineSegments(new THREE.EdgesGeometry(bwGeo),bwEdge));
-  bw.position.set(0,10*s,18*s);
-  g.add(bw);
-  // Turret towers x8 on deck
-  const tFill=new THREE.MeshBasicMaterial({color:0x222244});
-  const tEdge=new THREE.LineBasicMaterial({color:0x4455bb});
-  for(let ti=0;ti<8;ti++){
-    const tx=(ti%4-1.5)*6*s, tz=(Math.floor(ti/4)===0?-8:4)*s+(ti%4)*3*s;
-    const tGeo=new THREE.CylinderGeometry(.35*s,.35*s,2*s,4);
-    const tm=new THREE.Group();
-    tm.add(new THREE.Mesh(tGeo,tFill));
-    tm.add(new THREE.LineSegments(new THREE.EdgesGeometry(tGeo),tEdge));
-    tm.position.set(tx,3*s,tz);
-    g.add(tm);
-  }
-  // Rear engine glow x3
-  const eFill=new THREE.MeshBasicMaterial({color:0x334499,transparent:true,opacity:.7});
-  const eEdge=new THREE.LineBasicMaterial({color:0x5566cc});
+  ab(2,3,2, 0,4,16);
+  // Bridge dome
+  const bdG=new THREE.SphereGeometry(1.1*s,5,4);
+  const bd=new THREE.Group();
+  bd.add(new THREE.Mesh(bdG,new THREE.MeshBasicMaterial({color:0x88bbff,transparent:true,opacity:.85})));
+  bd.add(new THREE.LineSegments(new THREE.EdgesGeometry(bdG),new THREE.LineBasicMaterial({color:0xaaddff})));
+  bd.position.set(0,6.2*s,16*s);g.add(bd);
+  // Diagonal hull strip port
+  const dsp=new THREE.BoxGeometry(0.5*s,0.4*s,22*s);
+  const dspm=new THREE.Mesh(dsp,new THREE.MeshBasicMaterial({color:0x1a1a33}));
+  const dspl=new THREE.LineSegments(new THREE.EdgesGeometry(dsp),hE);
+  dspm.position.set(-10*s,1.2*s,0);dspl.position.set(-10*s,1.2*s,0);
+  dspm.rotation.z=0.12;dspl.rotation.z=0.12;g.add(dspm);g.add(dspl);
+  // Diagonal hull strip starboard
+  const dss=new THREE.BoxGeometry(0.5*s,0.4*s,22*s);
+  const dssm=new THREE.Mesh(dss,new THREE.MeshBasicMaterial({color:0x1a1a33}));
+  const dssl=new THREE.LineSegments(new THREE.EdgesGeometry(dss),hE);
+  dssm.position.set(10*s,1.2*s,0);dssl.position.set(10*s,1.2*s,0);
+  dssm.rotation.z=-0.12;dssl.rotation.z=-0.12;g.add(dssm);g.add(dssl);
+  // 6 turret bumps on dorsal surface
+  const tF=new THREE.MeshBasicMaterial({color:0x222244});
+  const tE=new THREE.LineBasicMaterial({color:0x4455bb});
+  const tPos=[[-7,1.5,-12],[-7,1.5,-4],[7,1.5,-12],[7,1.5,-4],[0,1.5,2],[0,1.5,10]];
+  tPos.forEach(([tx,ty,tz])=>{
+    const tbG=new THREE.BoxGeometry(0.8*s,0.5*s,0.8*s);
+    const tcG=new THREE.CylinderGeometry(0.25*s,0.3*s,1.2*s,4);
+    const tb=new THREE.Group();
+    tb.add(new THREE.Mesh(tbG,tF));tb.add(new THREE.LineSegments(new THREE.EdgesGeometry(tbG),tE));
+    const tc=new THREE.Mesh(tcG,tF);tc.position.y=0.85*s;
+    tb.add(tc);tb.position.set(tx*s,ty*s,tz*s);g.add(tb);
+  });
+  // 3 sensor antennas
+  [[4,2,18,0.3],[-4,2,18,-0.3],[0,2,20,0]].forEach(([ax,ay,az,ar])=>{
+    const aG=new THREE.CylinderGeometry(0.06*s,0.06*s,2.5*s,4);
+    const am=new THREE.Mesh(aG,tF);am.position.set(ax*s,ay*s,az*s);am.rotation.z=ar;g.add(am);
+  });
+  // 3 engine rings at stern — blue-white glow
+  const eF=new THREE.MeshBasicMaterial({color:0x4466cc,transparent:true,opacity:.75});
+  const eE=new THREE.LineBasicMaterial({color:0x88aaff});
   for(let ei=0;ei<3;ei++){
     const ex=(ei-1)*5*s;
-    const eGeo=new THREE.TorusGeometry(2*s,.45*s,4,10);
+    const eG=new THREE.TorusGeometry(2*s,0.38*s,4,8);
     const em=new THREE.Group();
-    em.add(new THREE.Mesh(eGeo,eFill));
-    em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eGeo),eEdge));
-    em.position.set(ex,0,-22*s);
-    em.rotation.x=Math.PI/2;
-    g.add(em);
+    em.add(new THREE.Mesh(eG,eF));em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eG),eE));
+    em.position.set(ex,0,-22*s);em.rotation.x=Math.PI/2;g.add(em);
   }
   return g;
 }
 
-// Rebel Mon Cal Cruiser — bulbous organic shape
+// Rebel Mon Cal Cruiser — organic structured warship
 function makeRebelCruiser(scale){
   const s=scale||1;
   const g=new THREE.Group();
-  const hFill=new THREE.MeshBasicMaterial({color:0x223322});
-  const hEdge=new THREE.LineBasicMaterial({color:0x44aa66});
-  // Main hull (elongated sphere)
-  const hullGeo=new THREE.SphereGeometry(7*s,8,6);
-  const hull=new THREE.Group();hull.scale.z=2.5;
-  hull.add(new THREE.Mesh(hullGeo,hFill));
-  hull.add(new THREE.LineSegments(new THREE.EdgesGeometry(hullGeo),hEdge));
+  const hF=new THREE.MeshBasicMaterial({color:0x152215});
+  const hE=new THREE.LineBasicMaterial({color:0x33aa55});
+  // Main hull — elongated sphere with scale.z=2.8
+  const hullGeo=new THREE.SphereGeometry(4*s,6,5);
+  const hull=new THREE.Group();hull.scale.z=2.8;
+  hull.add(new THREE.Mesh(hullGeo,hF));
+  hull.add(new THREE.LineSegments(new THREE.EdgesGeometry(hullGeo),hE));
   g.add(hull);
-  // Surface blisters x6
-  const bFill=new THREE.MeshBasicMaterial({color:0x334433});
-  const bEdge=new THREE.LineBasicMaterial({color:0x55bb77});
-  const blisterPos=[[6,3,5],[- 5,4,3],[6,-3,-5],[-5,-3,8],[0,6,-8],[0,-5,10]];
-  blisterPos.forEach(([bx,by,bz])=>{
-    const bGeo=new THREE.SphereGeometry(1.5*s,4,3);
+  // Command blister — top front
+  const cbG=new THREE.SphereGeometry(1.6*s,5,4);
+  const cb=new THREE.Group();
+  cb.add(new THREE.Mesh(cbG,new THREE.MeshBasicMaterial({color:0x1e3022})));
+  cb.add(new THREE.LineSegments(new THREE.EdgesGeometry(cbG),hE));
+  cb.position.set(0,3.8*s,4*s);g.add(cb);
+  // Side blisters x2
+  [[-4.5,1,0],[4.5,1,0]].forEach(([bx,by,bz])=>{
+    const bG=new THREE.SphereGeometry(1*s,4,3);
     const bm=new THREE.Group();
-    bm.add(new THREE.Mesh(bGeo,bFill));
-    bm.add(new THREE.LineSegments(new THREE.EdgesGeometry(bGeo),bEdge));
-    bm.position.set(bx*s,by*s,bz*s);
-    g.add(bm);
+    bm.add(new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x1c2e1c})));
+    bm.add(new THREE.LineSegments(new THREE.EdgesGeometry(bG),hE));
+    bm.position.set(bx*s,by*s,bz*s);g.add(bm);
   });
-  // Command tower
-  const tGeo=new THREE.BoxGeometry(4*s,5*s,12*s);
-  const tm=new THREE.Group();
-  tm.add(new THREE.Mesh(tGeo,new THREE.MeshBasicMaterial({color:0x334433})));
-  tm.add(new THREE.LineSegments(new THREE.EdgesGeometry(tGeo),hEdge));
-  tm.position.set(0,9*s,2*s);
-  g.add(tm);
-  // Engines x4
-  const eFill=new THREE.MeshBasicMaterial({color:0x225522,transparent:true,opacity:.8});
-  const eEdge=new THREE.LineBasicMaterial({color:0x44cc66});
-  for(let ei=0;ei<4;ei++){
-    const ex=((ei%2)-.5)*5*s, ey=(Math.floor(ei/2)-.5)*3*s;
-    const eGeo=new THREE.TorusGeometry(1.6*s,.35*s,4,8);
-    const em=new THREE.Group();
-    em.add(new THREE.Mesh(eGeo,eFill));
-    em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eGeo),eEdge));
-    em.position.set(ex,ey,-17*s);
-    em.rotation.x=Math.PI/2;
-    g.add(em);
-  }
+  // 4 hull ridge strips at angles
+  const rF=new THREE.MeshBasicMaterial({color:0x1a2e1a});
+  const rE=new THREE.LineBasicMaterial({color:0x44bb66});
+  [[-3,1.2,0,0.15],[3,1.2,0,-0.15],[-2,-1.5,0,0.1],[2,-1.5,0,-0.1]].forEach(([rx,ry,rz,rrot])=>{
+    const rG=new THREE.BoxGeometry(0.3*s,0.15*s,8*s);
+    const rm=new THREE.Mesh(rG,rF);const rl=new THREE.LineSegments(new THREE.EdgesGeometry(rG),rE);
+    rm.position.set(rx*s,ry*s,rz*s);rl.position.set(rx*s,ry*s,rz*s);
+    rm.rotation.z=rrot;rl.rotation.z=rrot;g.add(rm);g.add(rl);
+  });
+  // 4 turrets — sphere base + cylinder
+  [[-3,3,-3],[3,3,-3],[-3,3,3],[3,3,3]].forEach(([tx,ty,tz])=>{
+    const tsG=new THREE.SphereGeometry(0.5*s,4,3);
+    const tcG=new THREE.CylinderGeometry(0.18*s,0.22*s,1.2*s,4);
+    const t=new THREE.Group();
+    t.add(new THREE.Mesh(tsG,new THREE.MeshBasicMaterial({color:0x1e301e})));
+    const tc=new THREE.Mesh(tcG,new THREE.MeshBasicMaterial({color:0x1a281a}));tc.position.y=0.9*s;
+    t.add(tc);t.position.set(tx*s,ty*s,tz*s);g.add(t);
+  });
+  // Engine pods x2 — box + torus glow
+  const eF=new THREE.MeshBasicMaterial({color:0x1a3320,transparent:true,opacity:.85});
+  const eE=new THREE.LineBasicMaterial({color:0x00ffaa});
+  [[-3,-1,-9],[3,-1,-9]].forEach(([px,py,pz])=>{
+    const pG=new THREE.BoxGeometry(2*s,1.5*s,3*s);
+    const pm=new THREE.Mesh(pG,eF);const pl=new THREE.LineSegments(new THREE.EdgesGeometry(pG),eE);
+    pm.position.set(px*s,py*s,pz*s);pl.position.set(px*s,py*s,pz*s);g.add(pm);g.add(pl);
+    const toG=new THREE.TorusGeometry(0.9*s,0.18*s,4,8);
+    const tom=new THREE.Mesh(toG,eF);
+    tom.position.set(px*s,py*s,(pz-1.8)*s);tom.rotation.x=Math.PI/2;g.add(tom);
+  });
   return g;
 }
 
@@ -31297,41 +31282,59 @@ function _makeArmadaTIE(){
 // ---- Escort Destroyer ----
 function makeEscortDestroyerMesh(){
   const g=new THREE.Group();
-  const fw=(geo,fill,edge)=>{
-    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.85}));
+  const hF=0x0a0a20,hE=0x4455dd;
+  const fw=(geo,fill,edge,nm)=>{
+    const grp=new THREE.Group();
+    const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.88}));
     const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
-    g.add(m);g.add(l);
+    grp.add(m);grp.add(l);if(nm)grp.name=nm;g.add(grp);return grp;
   };
-  // Main hull
-  fw(new THREE.BoxGeometry(30,9,6),0x111122,0x5566cc);
-  // Bridge tower
-  const bt=new THREE.Group();
-  const btGeo=new THREE.BoxGeometry(5,6,5);
-  bt.add(new THREE.Mesh(btGeo,new THREE.MeshBasicMaterial({color:0x192240,transparent:true,opacity:0.85})));
-  bt.add(new THREE.LineSegments(new THREE.EdgesGeometry(btGeo),new THREE.LineBasicMaterial({color:0x7788ee})));
-  bt.position.set(10,7,0);g.add(bt);
-  // Forward wedge
-  const fwd=new THREE.Group();
-  const fwdGeo=new THREE.BoxGeometry(8,5,4);
-  const fwdM=new THREE.Mesh(fwdGeo,new THREE.MeshBasicMaterial({color:0x0d0d22,transparent:true,opacity:0.85}));
-  const fwdL=new THREE.LineSegments(new THREE.EdgesGeometry(fwdGeo),new THREE.LineBasicMaterial({color:0x5566cc}));
-  fwdM.position.set(-17,0,0);fwdL.position.set(-17,0,0);
-  fwdM.rotation.z=0.2;fwdL.rotation.z=0.2;
-  g.add(fwdM);g.add(fwdL);
-  // Turrets
-  for(let i=0;i<2;i++){
-    const tg=new THREE.CylinderGeometry(0.5,0.5,2,5);
-    const tm=new THREE.Mesh(tg,new THREE.MeshBasicMaterial({color:0x334477}));
-    tm.position.set(-6+i*8,5.5,0);
-    g.add(tm);
-  }
-  // Engine glows
-  for(let i=0;i<2;i++){
-    const eg=new THREE.TorusGeometry(1.5,0.3,4,10);
-    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x3344aa,transparent:true,opacity:0.8}));
-    em.position.set(13+i*0,-1+i*2.5,0);em.rotation.x=Math.PI/2;
-    g.add(em);
-  }
+  // Center spine
+  fw(new THREE.BoxGeometry(4,2.5,28),hF,hE,'armEscHull');
+  // Port wing — angled
+  const pwg=new THREE.BoxGeometry(10,1.2,22);
+  const pwm=new THREE.Mesh(pwg,new THREE.MeshBasicMaterial({color:0x08081a,transparent:true,opacity:0.88}));
+  const pwl=new THREE.LineSegments(new THREE.EdgesGeometry(pwg),new THREE.LineBasicMaterial({color:hE}));
+  pwm.position.set(-6,0,0);pwl.position.set(-6,0,0);pwm.rotation.z=0.22;pwl.rotation.z=0.22;g.add(pwm);g.add(pwl);
+  // Starboard wing — mirror
+  const swg=new THREE.BoxGeometry(10,1.2,22);
+  const swm=new THREE.Mesh(swg,new THREE.MeshBasicMaterial({color:0x08081a,transparent:true,opacity:0.88}));
+  const swl=new THREE.LineSegments(new THREE.EdgesGeometry(swg),new THREE.LineBasicMaterial({color:hE}));
+  swm.position.set(6,0,0);swl.position.set(6,0,0);swm.rotation.z=-0.22;swl.rotation.z=-0.22;g.add(swm);g.add(swl);
+  // Prow ram
+  const pr=fw(new THREE.BoxGeometry(4,2,6),0x060618,hE);pr.position.set(0,0,-17);pr.rotation.z=0.08;
+  // Dorsal fin
+  const df=fw(new THREE.BoxGeometry(1.2,3,8),0x0d0d26,hE);df.position.set(0,2.5,6);
+  // Bridge box + dome
+  const br=fw(new THREE.BoxGeometry(3,3,3),0x141432,0x6677ee);br.position.set(0,3,8);
+  const bdG=new THREE.SphereGeometry(1.2,5,4);const bd=new THREE.Group();
+  bd.add(new THREE.Mesh(bdG,new THREE.MeshBasicMaterial({color:0x88aaff,transparent:true,opacity:.9})));
+  bd.add(new THREE.LineSegments(new THREE.EdgesGeometry(bdG),new THREE.LineBasicMaterial({color:0xaaccff})));
+  bd.position.set(0,5.5,8);g.add(bd);
+  // 4 weapon turrets — box base + cylinder barrel
+  [[-4,2,2],[4,2,2],[-4,2,-4],[4,2,-4]].forEach(([tx,ty,tz])=>{
+    const tbG=new THREE.BoxGeometry(1.2,0.8,1.2);const tcG=new THREE.CylinderGeometry(0.2,0.24,2.5,4);
+    const t=new THREE.Group();
+    t.add(new THREE.Mesh(tbG,new THREE.MeshBasicMaterial({color:0x141430})));
+    t.add(new THREE.LineSegments(new THREE.EdgesGeometry(tbG),new THREE.LineBasicMaterial({color:hE})));
+    const tc=new THREE.Mesh(tcG,new THREE.MeshBasicMaterial({color:0x0e0e28}));tc.rotation.z=Math.PI/2;tc.position.x=1.5;
+    t.add(tc);t.position.set(tx,ty,tz);g.add(t);
+  });
+  // Diagonal detail strips on wings
+  [[-6,0.8,2,0.22],[6,0.8,2,-0.22]].forEach(([dx,dy,dz,dr])=>{
+    const dG=new THREE.BoxGeometry(0.3,0.3,16);
+    const dm=new THREE.Mesh(dG,new THREE.MeshBasicMaterial({color:0x12122a}));
+    const dl=new THREE.LineSegments(new THREE.EdgesGeometry(dG),new THREE.LineBasicMaterial({color:hE}));
+    dm.position.set(dx,dy,dz);dl.position.set(dx,dy,dz);dm.rotation.z=dr;dl.rotation.z=dr;g.add(dm);g.add(dl);
+  });
+  // 4 engine rings at stern
+  const eF=new THREE.MeshBasicMaterial({color:0x1a22aa,transparent:true,opacity:.8});
+  const eE=new THREE.LineBasicMaterial({color:0x6677ff});
+  [[-4.5,1,13],[4.5,1,13],[-4.5,-1,13],[4.5,-1,13]].forEach(([ex,ey,ez])=>{
+    const eG=new THREE.TorusGeometry(1.3,0.28,4,8);
+    const em=new THREE.Group();em.add(new THREE.Mesh(eG,eF));em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eG),eE));
+    em.position.set(ex,ey,ez);em.rotation.x=Math.PI/2;g.add(em);
+  });
   return g;
 }
 
@@ -31453,59 +31456,85 @@ function _armEscortFireIon(e){
 // ---- Titan Dreadnought ----
 function makeTitanDreadnought(){
   const g=new THREE.Group();
-  const fw=(geo,fill,edge,name)=>{
+  const fw=(geo,fill,edge,nm)=>{
     const grp=new THREE.Group();
     const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fill,transparent:true,opacity:0.9}));
     const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:edge}));
-    grp.add(m);grp.add(l);
-    if(name)grp.name=name;
-    g.add(grp);
-    return grp;
+    grp.add(m);grp.add(l);if(nm)grp.name=nm;g.add(grp);return grp;
   };
-  // Main hull — massive
-  fw(new THREE.BoxGeometry(90,24,8),0x1a001a,0x660088,'armHull');
-  // Left wing section
-  const lwg=new THREE.BoxGeometry(25,14,6);
-  const lw=new THREE.Group();
-  const lwm=new THREE.Mesh(lwg,new THREE.MeshBasicMaterial({color:0x150015,transparent:true,opacity:0.9}));
-  const lwl=new THREE.LineSegments(new THREE.EdgesGeometry(lwg),new THREE.LineBasicMaterial({color:0x550077}));
-  lwm.position.set(-52,-2,0);lwl.position.set(-52,-2,0);lw.add(lwm);lw.add(lwl);g.add(lw);
-  // Right wing section
-  const rwg=new THREE.BoxGeometry(25,14,6);
-  const rw=new THREE.Group();
-  const rwm=new THREE.Mesh(rwg,new THREE.MeshBasicMaterial({color:0x150015,transparent:true,opacity:0.9}));
-  const rwl=new THREE.LineSegments(new THREE.EdgesGeometry(rwg),new THREE.LineBasicMaterial({color:0x550077}));
-  rwm.position.set(52,-2,0);rwl.position.set(52,-2,0);rw.add(rwm);rw.add(rwl);g.add(rw);
-  // Port Turret 1 (left)
-  const pt1=fw(new THREE.BoxGeometry(14,7,5),0x2a0033,0x9900cc,'armP1');
-  pt1.position.set(-35,9,0);
-  // Port Turret 2 (right)
-  const pt2=fw(new THREE.BoxGeometry(14,7,5),0x2a0033,0x9900cc,'armP2');
-  pt2.position.set(35,9,0);
-  // Starboard Pods
-  const sp1=fw(new THREE.BoxGeometry(10,10,7),0x1a0025,0x7700aa,'armS1');
-  sp1.position.set(-25,-11,0);
-  const sp2=fw(new THREE.BoxGeometry(10,10,7),0x1a0025,0x7700aa,'armS2');
-  sp2.position.set(25,-11,0);
-  // Ventral cannon
-  const vent=fw(new THREE.CylinderGeometry(2,4,18,6),0x200028,0x8800bb,'armVent');
-  vent.position.set(0,-13,0);
-  vent.children.forEach(c=>{c.rotation.x=Math.PI/2});
-  // Bridge (weakpoint — gold)
+  // Keel — massive center spine
+  fw(new THREE.BoxGeometry(18,5,75),0x1a0022,0x8800cc,'armHull');
+  // Upper deck plate
+  const ud=fw(new THREE.BoxGeometry(65,4,55),0x160020,0x7700bb);ud.position.set(0,4.5,0);
+  // Port broadside
+  const pb=new THREE.Group();
+  const pbg=new THREE.BoxGeometry(28,10,45);
+  const pbm=new THREE.Mesh(pbg,new THREE.MeshBasicMaterial({color:0x130018,transparent:true,opacity:0.9}));
+  const pbl=new THREE.LineSegments(new THREE.EdgesGeometry(pbg),new THREE.LineBasicMaterial({color:0x660099}));
+  pbm.position.set(-34,0,0);pbl.position.set(-34,0,0);pbm.rotation.z=0.12;pbl.rotation.z=0.12;pb.add(pbm);pb.add(pbl);g.add(pb);
+  // Starboard broadside
+  const sb=new THREE.Group();
+  const sbg=new THREE.BoxGeometry(28,10,45);
+  const sbm=new THREE.Mesh(sbg,new THREE.MeshBasicMaterial({color:0x130018,transparent:true,opacity:0.9}));
+  const sbl=new THREE.LineSegments(new THREE.EdgesGeometry(sbg),new THREE.LineBasicMaterial({color:0x660099}));
+  sbm.position.set(34,0,0);sbl.position.set(34,0,0);sbm.rotation.z=-0.12;sbl.rotation.z=-0.12;sb.add(sbm);sb.add(sbl);g.add(sb);
+  // Forward prow — aggressive wedge
+  const fp=fw(new THREE.BoxGeometry(14,7,12),0x1a0025,0x9900cc);fp.position.set(0,1,-38);fp.rotation.x=-0.08;
+  // Command island
+  const ci=fw(new THREE.BoxGeometry(16,18,10),0x200028,0xaa00dd);ci.position.set(0,14,22);
+  // Bridge flanks x2
+  const bfl=fw(new THREE.BoxGeometry(4,7,5),0x180020,0x8800cc);bfl.position.set(-10,10,22);
+  const bfr=fw(new THREE.BoxGeometry(4,7,5),0x180020,0x8800cc);bfr.position.set(10,10,22);
+  // Bridge dome — gold weakpoint
   const bridge=fw(new THREE.BoxGeometry(12,20,7),0x220022,0xffdd00,'armBridge');
-  bridge.position.set(0,16,0);
-  // Bridge window (golden glowing sphere — true weakpoint)
+  bridge.position.set(0,16,22);
   const wGeo=new THREE.SphereGeometry(3.5,6,6);
   const wMesh=new THREE.Mesh(wGeo,new THREE.MeshBasicMaterial({color:0xffdd00,transparent:true,opacity:0.9}));
-  wMesh.name='armBridgeWin';
-  bridge.add(wMesh);
-  // Engine array (4 engines at rear)
-  for(let i=0;i<4;i++){
-    const eg=new THREE.TorusGeometry(3,0.5,4,12);
-    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:0x330055,transparent:true,opacity:0.9}));
-    em.position.set(-22+i*15,0,0);em.rotation.x=Math.PI/2;
-    g.add(em);
-  }
+  wMesh.name='armBridgeWin';bridge.add(wMesh);
+  // Port Turret 1 — left side
+  const pt1=fw(new THREE.BoxGeometry(12,5,8),0x2a0033,0x9900cc,'armP1');pt1.position.set(-30,8,5);
+  // Twin barrels on pt1
+  [[-2,3,3],[2,3,3]].forEach(([bx,by,bz])=>{const bG=new THREE.CylinderGeometry(0.5,0.7,6,4);const bm=new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x1e0028}));bm.rotation.x=Math.PI/2;bm.position.set(bx,by,bz);pt1.add(bm);});
+  // Port Turret 2 — right side
+  const pt2=fw(new THREE.BoxGeometry(12,5,8),0x2a0033,0x9900cc,'armP2');pt2.position.set(30,8,-10);
+  [[-2,3,3],[2,3,3]].forEach(([bx,by,bz])=>{const bG=new THREE.CylinderGeometry(0.5,0.7,6,4);const bm=new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x1e0028}));bm.rotation.x=Math.PI/2;bm.position.set(bx,by,bz);pt2.add(bm);});
+  // Turret rings on pt1/pt2
+  [[pt1,-30,9,5],[pt2,30,9,-10]].forEach(([tp,px,py,pz])=>{
+    const rG=new THREE.TorusGeometry(3.5,0.5,4,8);const rm=new THREE.Mesh(rG,new THREE.MeshBasicMaterial({color:0x280030,transparent:true,opacity:0.9}));rm.rotation.x=Math.PI/2;rm.position.set(px,py,pz);g.add(rm);
+  });
+  // Starboard pod 1
+  const sp1=fw(new THREE.BoxGeometry(9,7,9),0x1a0025,0x7700aa,'armS1');sp1.position.set(-22,-9,8);
+  // Starboard pod 2
+  const sp2=fw(new THREE.BoxGeometry(9,7,9),0x1a0025,0x7700aa,'armS2');sp2.position.set(22,-9,8);
+  // Triple barrels on sp1/sp2
+  [[sp1,-22,-7,8],[sp2,22,-7,8]].forEach(([tp,px,py,pz])=>{
+    [-2,0,2].forEach(ox=>{const bG=new THREE.CylinderGeometry(0.4,0.55,5,4);const bm=new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x180020}));bm.rotation.x=Math.PI/2;bm.position.set(px+ox,py,pz-4.5);g.add(bm);});
+  });
+  // Ventral cannon — big gun
+  const vent=fw(new THREE.CylinderGeometry(2.5,4,14,6),0x200028,0x8800bb,'armVent');
+  vent.position.set(0,-12,0);vent.children.forEach(c=>{c.rotation.x=Math.PI/2;});
+  // 6 engine rings in 2x3 grid — purple glow
+  const eF=new THREE.MeshBasicMaterial({color:0x3a0055,transparent:true,opacity:0.9});
+  const eE=new THREE.LineBasicMaterial({color:0xaa00ff});
+  [[-12,0,36],[-12,-6,36],[-12,-12,36],[12,0,36],[12,-6,36],[12,-12,36]].forEach(([ex,ey,ez])=>{
+    const eG=new THREE.TorusGeometry(3,0.55,4,10);
+    const em=new THREE.Group();em.add(new THREE.Mesh(eG,eF));em.add(new THREE.LineSegments(new THREE.EdgesGeometry(eG),eE));
+    em.position.set(ex,ey,ez);em.rotation.x=Math.PI/2;g.add(em);
+  });
+  // Greeble boxes scattered on hull at angles
+  [[-25,7,10,0.15],[-15,7,-5,-0.1],[20,7,15,0.12],[30,7,-5,-0.14],[-38,3,-8,0.18],[38,3,0,-0.2],[0,8,30,0],[0,8,-18,0.05]].forEach(([gx,gy,gz,gr])=>{
+    const gG=new THREE.BoxGeometry(4+Math.random()*3,2+Math.random()*2,4+Math.random()*3);
+    const gm=new THREE.Mesh(gG,new THREE.MeshBasicMaterial({color:0x180020,transparent:true,opacity:0.9}));
+    const gl=new THREE.LineSegments(new THREE.EdgesGeometry(gG),new THREE.LineBasicMaterial({color:0x660088}));
+    gm.position.set(gx,gy,gz);gl.position.set(gx,gy,gz);gm.rotation.z=gr;gl.rotation.z=gr;g.add(gm);g.add(gl);
+  });
+  // Diagonal ridge strips across main deck
+  [[-20,7,0,0.14],[0,7,0,0],[20,7,0,-0.14]].forEach(([rx,ry,rz,rr])=>{
+    const rG=new THREE.BoxGeometry(0.8,0.6,50);
+    const rm=new THREE.Mesh(rG,new THREE.MeshBasicMaterial({color:0x1e0028}));
+    const rl=new THREE.LineSegments(new THREE.EdgesGeometry(rG),new THREE.LineBasicMaterial({color:0x7700aa}));
+    rm.position.set(rx,ry,rz);rl.position.set(rx,ry,rz);rm.rotation.z=rr;rl.rotation.z=rr;g.add(rm);g.add(rl);
+  });
   return g;
 }
 
