@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.281</title>
+<title>COSMIC INVADERS v7.282</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -32303,7 +32303,9 @@ function _makeSlagRebornFighter(){
     const bG=new THREE.BoxGeometry(.62,.46,.12);
     const bM=new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x1a1a2a}));
     bM.position.set(side*.6,.05,0);g.add(bM);
-    g.add(Object.assign(new THREE.LineSegments(new THREE.EdgesGeometry(bG),mEdge(0xdd6600)),{position:bM.position.clone()}));
+    const bEdge=new THREE.LineSegments(new THREE.EdgesGeometry(bG),mEdge(0xdd6600));
+    bEdge.position.copy(bM.position);
+    g.add(bEdge);
     // Back nub
     const nG=new THREE.BoxGeometry(.28,.26,.1);
     const nE=new THREE.LineSegments(new THREE.EdgesGeometry(nG),mEdge(0xcc4400));
@@ -32362,7 +32364,7 @@ function _startSlagRebornWave(){
         try{wfCineSubtitle(_L('"I\'M YOUR OPPONENT AGAIN, PILOT!!" — SLAG','"俺がもう一度相手だ、パイロット！！" — スラグ'),'#dd4400')}catch(_){}
         try{playComm('hq',_L('SLAG IS BACK AND BIGGER!! FINISH THIS, #N!!','スラグが復活！ でかくなってる！！ 決めろ、#N！！'))}catch(_){}
       },2400);
-    }catch(e){endColosseum(true);}
+    }catch(e){console.error('_startSlagRebornWave spawn error:',e);/* do NOT end colosseum on spawn error */}
   },3800);
 }
 function _slagFriendshipCine(){
