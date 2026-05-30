@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.275</title>
+<title>COSMIC INVADERS v7.276</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -2217,13 +2217,15 @@ class SFX{
       } else if(id==='predator'){
         // プレデター下顎「クリッ!」: 3 quick sine pops
         for(let i=0;i<3;i++){const t=now+i*.062;const o=ac.createOscillator();o.type='sine';o.frequency.value=1600-i*120;const og=ac.createGain();og.gain.setValueAtTime(.3,t);og.gain.exponentialRampToValueAtTime(.001,t+.05);o.connect(og);og.connect(this.g||ac.destination);o.start(t);o.stop(t+.06);}
-      } else if(id==='jabba'){
+      } else if(id==='jabba'||id==='jabba_reborn'){
         // ジャバのゲップ「ぶりゅっ!」: low sawtooth + deep lowpass + chorus
-        const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(85,now);o.frequency.exponentialRampToValueAtTime(38,now+.45);
-        const lfo=ac.createOscillator();lfo.type='sine';lfo.frequency.value=8;const lfoG=ac.createGain();lfoG.gain.value=12;lfo.connect(lfoG);lfoG.connect(o.frequency);
-        const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=180;
-        o.connect(lp);lp.connect(g);g.gain.setValueAtTime(.38,now);g.gain.exponentialRampToValueAtTime(.001,now+.5);
-        o.start(now);o.stop(now+.52);lfo.start(now);lfo.stop(now+.52);
+        // jabba_reborn: deeper + louder (bigger body)
+        const pitchMul=id==='jabba_reborn'?.65:1;const volMul=id==='jabba_reborn'?1.55:1;
+        const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(85*pitchMul,now);o.frequency.exponentialRampToValueAtTime(38*pitchMul,now+.55);
+        const lfo=ac.createOscillator();lfo.type='sine';lfo.frequency.value=6;const lfoG=ac.createGain();lfoG.gain.value=16;lfo.connect(lfoG);lfoG.connect(o.frequency);
+        const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=160;
+        o.connect(lp);lp.connect(g);g.gain.setValueAtTime(.38*volMul,now);g.gain.exponentialRampToValueAtTime(.001,now+.65);
+        o.start(now);o.stop(now+.68);lfo.start(now);lfo.stop(now+.68);
       } else if(id==='queen'){
         // エイリアンクイーン「キィッ!」: dual sawtooth beating + high transient spike
         const o1=ac.createOscillator();o1.type='sawtooth';o1.frequency.value=420;const o2=ac.createOscillator();o2.type='sawtooth';o2.frequency.value=510;
@@ -30213,6 +30215,7 @@ const _FIGHTER_HINTS={
   eel:       "Wait — that's a THUNDER EEL from Alpha Star!! It crackles BEFORE it shocks — dodge right after the sparks!",
   predator:  "THE HUNTER... it stalks from behind. Keep moving — don't let it get to my six!",
   jabba:     "THE SLUG is massive but SLOW. Watch out — it ROLLS at you from a distance! Dodge sideways!",
+  jabba_reborn:"SLAG IS BACK AND BIGGER!! He rolls AND swings axes — keep moving, never stand still!!", // v7.276
   queen:     "HER MAJESTY! That inner jaw is deadly up close — grapple from the flank!",
   kaiju:     "GORGON!! The big one! Full power — GIANT SWING everything it throws at me!!"
 };
@@ -30221,6 +30224,7 @@ const _COLO_TITLES={
   tengu:'WIND SPIRIT OF DESTRUCTION',mantis:'BLADE WING ASSASSIN',
   centipede:'ARMORED CENTIPEDE LORD',eel:'THUNDER EEL OF ALPHA STAR',
   predator:'THE GALAXY HUNTER',jabba:'SLIME KING OF THE OUTER RIM',
+  jabba_reborn:'TWICE THE SIZE — TWICE THE FURY', // v7.276
   queen:'HER MAJESTY OF THE HIVE',kaiju:'KAIJU GOD OF THE COSMOS',
 };
 // v7.255: monsters set to 1.5× original sizes (non-Kaiju); joints + detail upgrades added
@@ -31762,6 +31766,8 @@ function startColosseum(){
     // v7.254: energy balls thrown from audience
     _energyBalls:[],_energyBallTimer:18,
     _babyCage:babyCage,
+    // v7.276: SLAG REBORN wave
+    _slagRebornActive:false,_slagRebornFighter:null,_friendCineFired:false,
     pilotMesh,
     // v7.249 ★ RING WEAPONS
     _weapons:[
@@ -32076,11 +32082,156 @@ function _gorgonCelebration(){
   },8500);
   setTimeout(()=>{
     if(colosseumState)colosseumState._gorgonCineActive=false;
-    try{endColosseum(true);}catch(e){}
+    try{_startSlagRebornWave();}catch(e){try{endColosseum(true);}catch(_){}} // v7.276: SLAG REBORN
   },12000);
 }
+// ─── v7.276: SLAG REBORN — Mega SLUG returns with two axes ─────────────────
+function _makeSlagRebornFighter(){
+  const def={id:'jabba_reborn',ring:'SLAG REBORN',hp:18,speed:5.5,wave:5,style:'slug',col:0xcc3300,sz:3.2,boss:true};
+  // Reuse jabba body with darker-red colour and bigger scale
+  const baseDef={id:'jabba',ring:'SLAG REBORN',hp:18,speed:5.5,wave:5,style:'slug',col:0xcc3300,sz:3.2,boss:true};
+  const mesh=makeColosseumFighter(baseDef);
+  mesh.name='coloFighter_jabba_reborn';
+  // Attach two axe meshes to arms
+  function makeAxe(side){ // side: -1=left  +1=right
+    const g=new THREE.Group();g.name=side<0?'axeL':'axeR';
+    const mEdge=c=>new THREE.LineBasicMaterial({color:c});
+    // Handle
+    const hG=new THREE.CylinderGeometry(.06,.06,1.1,5);
+    g.add(new THREE.Mesh(hG,new THREE.MeshBasicMaterial({color:0x110800})));
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(hG),mEdge(0x553322)));
+    // Main blade — large crescent-ish shape faked as rotated box
+    const bG=new THREE.BoxGeometry(.62,.46,.12);
+    const bM=new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x1a1a2a}));
+    bM.position.set(side*.6,.05,0);g.add(bM);
+    g.add(Object.assign(new THREE.LineSegments(new THREE.EdgesGeometry(bG),mEdge(0xdd6600)),{position:bM.position.clone()}));
+    // Back nub
+    const nG=new THREE.BoxGeometry(.28,.26,.1);
+    const nE=new THREE.LineSegments(new THREE.EdgesGeometry(nG),mEdge(0xcc4400));
+    nE.position.set(-side*.32,0,0);g.add(nE);
+    g.rotation.z=side>0?.3:-.3; // slight outward tilt
+    return g;
+  }
+  ['lArmFore','lArm'].some(n=>{const a=mesh.getObjectByName(n);if(a){const ax=makeAxe(-1);ax.position.set(0,-.48,0);a.add(ax);return true;}});
+  ['rArmFore','rArm'].some(n=>{const a=mesh.getObjectByName(n);if(a){const ax=makeAxe(1);ax.position.set(0,-.48,0);a.add(ax);return true;}});
+  return {mesh,def};
+}
+function _startSlagRebornWave(){
+  const cs=colosseumState;if(!cs)return;
+  cs.waveActive=false;
+  // "But wait…" beat
+  setTimeout(()=>{try{wfCineSubtitle(_L('... BUT WAIT ...','... しかし ...'),'#666666')}catch(_){}},600);
+  setTimeout(()=>{
+    try{screenFlash(.8)}catch(_){}
+    try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
+    try{announce(_L('SLAG IS BACK!!','スラグが復活！！'))}catch(_){}
+    try{wfCineSubtitle(_L('★ SLAG REBORN ★','★ スラグ復活 ★'),'#dd4400')}catch(_){}
+    try{sfx.slugRollSFX&&sfx.slugRollSFX()}catch(_){}
+  },2200);
+  setTimeout(()=>{
+    // spawn fighter from outside ring edge
+    try{
+      const {mesh,def}=_makeSlagRebornFighter();
+      const entryA=Math.PI*.62; // back-right entry
+      const entryD=cs.ringR+7;
+      const sx=Math.sin(entryA)*entryD,sz=Math.cos(entryA)*entryD;
+      mesh.position.set(sx,.42,sz);mesh.rotation.y=entryA+Math.PI;
+      if(colosseumScene)colosseumScene.add(mesh);
+      const sr={
+        def,mesh,hp:def.hp,maxHP:def.hp,
+        pos:new THREE.Vector3(sx,.42,sz),angle:entryA+Math.PI,
+        state:'INTRO',stateT:0,attackCD:0,circleDir:1,
+        _hitThisAttack:false,_roaredThisAttack:false,
+        lArm:mesh.getObjectByName('lArm'),rArm:mesh.getObjectByName('rArm'),
+        lLeg:mesh.getObjectByName('lLeg'),rLeg:mesh.getObjectByName('rLeg'),
+        head:mesh.getObjectByName('head'),
+        lArmFore:mesh.getObjectByName('lArmFore'),rArmFore:mesh.getObjectByName('rArmFore'),
+      };
+      cs._slagRebornFighter=sr;
+      cs._slagRebornActive=true;
+      cs.activeFighters=[sr];
+      cs.waveActive=true;
+      updateColosseumHUD();
+      // v7.272: SF-style intro for SLAG REBORN
+      _startColoWaveIntro([sr],false,()=>{sr.state='INTRO';});
+      // Voice lines
+      try{playComm('pilot',_L('WHAT?! SLAG?! He\'s HUGE — AND HE\'S GOT AXES!!','なんだ！？ スラグ！？ 巨大化して — 斧まで！！'))}catch(_){}
+      setTimeout(()=>{
+        try{wfCineSubtitle(_L('"I\'M YOUR OPPONENT AGAIN, PILOT!!" — SLAG','"俺がもう一度相手だ、パイロット！！" — スラグ'),'#dd4400')}catch(_){}
+        try{playComm('hq',_L('SLAG IS BACK AND BIGGER!! FINISH THIS, #N!!','スラグが復活！ でかくなってる！！ 決めろ、#N！！'))}catch(_){}
+      },2400);
+    }catch(e){endColosseum(true);}
+  },3800);
+}
+function _slagFriendshipCine(){
+  const cs=colosseumState;if(!cs)return;
+  cs.waveActive=false;
+  const sf=cs._slagRebornFighter;
+  const pm=cs.pilotMesh;
+  // SLAG collapses (already in DOWN/ELIMINATED state from fight)
+  try{screenFlash(.5)}catch(_){}
+  try{sfx.playCrowdCheer(3)}catch(_){}
+  // Make SLAG sit/slump visible
+  if(sf&&sf.mesh){sf.mesh.rotation.x=Math.PI*.38;sf.mesh.position.y=.8;
+    // Axes droop
+    ['axeL','axeR'].forEach(n=>{const a=sf.mesh.getObjectByName(n);if(a){a.rotation.z+=(n==='axeL'?.8:-.8);}});
+  }
+  setTimeout(()=>{
+    try{wfCineSubtitle(_L('"...You win, pilot..."','"...パイロット... お前の勝ちだ..."'),'#88aa44')}catch(_){}
+    try{playComm('wingman',_L('SLAG: ...You\'re strong... I lost. Fair and square.','スラグ：...お前は強い... 負けた。 完敗だ。'))}catch(_){}
+  },800);
+  setTimeout(()=>{
+    // Pilot faces SLAG
+    if(pm&&sf){cs.pilotAngle=Math.atan2(-(sf.pos.x-cs.pilotPos.x),-(sf.pos.z-cs.pilotPos.z));pm.rotation.y=cs.pilotAngle;}
+  },2000);
+  setTimeout(()=>{
+    try{wfCineSubtitle(_L('"...Can I... join you?"','"...仲間に... してくれるか？"'),'#88aa44')}catch(_){}
+    try{playComm('wingman',_L('SLAG: Can you take me with you? I have nowhere else to go...','スラグ：連れて行ってくれるか？ 俺には他に行く場所がない...'))}catch(_){}
+  },3400);
+  setTimeout(()=>{
+    try{playComm('pilot',_L('#N: ...Yeah. Come on.','#N：...ああ。 来い。'))}catch(_){}
+  },5200);
+  setTimeout(()=>{
+    // Baby alien cage breaks open!
+    try{
+      if(cs._babyCage){
+        try{spawnP(cs._babyCage.position.clone().add(new THREE.Vector3(0,1,0)),0x00ffcc,30,2.0,1.5)}catch(_){}
+        try{spawnP(cs._babyCage.position.clone().add(new THREE.Vector3(0,.5,0)),0xffffff,20,1.6,1.2)}catch(_){}
+        cs._babyCage.visible=false;
+      }
+      try{screenFlash(.4)}catch(_){}
+    }catch(_){}
+    try{playComm('nav',_L('The cage is OPEN!! Baby alien is FREE!! Running to SLAG!!','檻が開きました！！ ベイビーエイリアンが自由に！！ スラグに向かって走ってる！！'))}catch(_){}
+    try{wfCineSubtitle(_L('★ THE BABY IS FREE! ★','★ ベイビー自由だ！ ★'),'#00ffcc')}catch(_){}
+  },6500);
+  setTimeout(()=>{
+    // Baby reaches SLAG — SLAG stands up!
+    if(sf&&sf.mesh){sf.mesh.rotation.x=0;sf.mesh.position.y=.42;
+      // Axes go back up (celebrating)
+      ['axeL','axeR'].forEach(n=>{const a=sf.mesh.getObjectByName(n);if(a){a.rotation.z=n==='axeL'?-.2:.2;}});
+    }
+    try{wfCineSubtitle(_L('"HAHA!! FRIENDS!! LET\'S ESCAPE TOGETHER!!" — SLAG','"ははは！！ 仲間だ！！ 一緒に逃げよう！！" — スラグ'),'#ffdd00')}catch(_){}
+    try{playComm('wingman',_L('SLAG: HAHAHA!! Now THIS is what I call a team!! Let\'s GO!!','スラグ：はははは！！ これが本物のチームだ！！ 行くぞ！！'))}catch(_){}
+    try{sfx.playCrowdCheer(6)}catch(_){}
+    try{spawnConfetti(new THREE.Vector3(0,7,0),130)}catch(_){}
+    try{_spawnMoneyBurst(new THREE.Vector3(0,2,0),100)}catch(_){}
+    for(let i=0;i<10;i++){setTimeout(()=>{try{spawnP(new THREE.Vector3((Math.random()-.5)*24,4+Math.random()*10,(Math.random()-.5)*24),0x88aaff,10,2,.8)}catch(_){}},i*380);}
+  },8000);
+  setTimeout(()=>{
+    try{wfCineSubtitle(_L('★ NEW ALLY: SLAG ★  JOINS THE CREW!!','★ 新しい仲間: スラグ ★  クルーに加わった！！'),'#88aa44')}catch(_){}
+    try{playComm('hq',_L('AMAZING!! SLAG has joined your crew!! Mission COMPLETE, #N!!','信じられない！！スラグがクルーに！！ ミッション完了、#N！！'))}catch(_){}
+  },10000);
+  setTimeout(()=>{
+    try{wfCineSubtitle(_L('★  THE GALAXY IS AT PEACE  ★','★  銀河に平和が訪れた  ★'),'#aaddff')}catch(_){}
+    try{playComm('nav',_L('The stars are calm, #N... You didn\'t just win — you made a friend.','星が穏やかです、#N... 勝っただけじゃない — 友達ができましたね。'))}catch(_){}
+  },12200);
+  setTimeout(()=>{try{endColosseum(true);}catch(e){}},15500);
+}
+// ────────────────────────────────────────────────────────────────────────────
 function _impaleFighter(f,overrideX,overrideZ){
   const cs=colosseumState;if(!cs)return;
+  // v7.276: SLAG REBORN special — skip impale gore, just collapse
+  if(f.def.id==='jabba_reborn'){f.hp=0;f.state='DOWN';f.stateT=0;setTimeout(()=>{try{if(colosseumState)f.state='ELIMINATED';}catch(_){}},1800);return;}
   f.hp=0;f.state='IMPALED';
   // Position on spike ring (use override pos if provided, else use current pos angle)
   const px=overrideX!==undefined?overrideX:f.pos.x;
@@ -32376,8 +32527,14 @@ function _colosseumWaveCheck(dt){
   if(!cs.waveActive)return;
   if(cs.activeFighters.every(f=>f.state==='ELIMINATED')){
     cs.waveActive=false;
-    if(cs.waveNum>=4&&!cs._gorgonCineActive){setTimeout(()=>{try{endColosseum(true)}catch(_){}},2000);}
-    else{announce(_L('ROUND '+cs.waveNum+' CLEAR!','ラウンド '+cs.waveNum+' クリア！'));try{sfx.playCrowdCheer(3)}catch(_){}cs.nextWaveT=3.0;}
+    if(cs._slagRebornActive){ // v7.276: SLAG REBORN wave complete → friendship ending
+      cs._slagRebornActive=false;
+      if(!cs._friendCineFired){cs._friendCineFired=true;setTimeout(()=>{try{_slagFriendshipCine();}catch(e){endColosseum(true);}},1500);}
+    } else if(cs.waveNum>=4&&!cs._gorgonCineActive){
+      setTimeout(()=>{try{endColosseum(true)}catch(_){}},2000);
+    } else {
+      announce(_L('ROUND '+cs.waveNum+' CLEAR!','ラウンド '+cs.waveNum+' クリア！'));try{sfx.playCrowdCheer(3)}catch(_){}cs.nextWaveT=3.0;
+    }
   }
 }
 function _colosseumStartWave(){
@@ -32838,6 +32995,8 @@ function updateColosseum(dt){
           if(f.def.id==='kaiju'&&f.hp<=0){
             f.state='ELIMINATED';
             try{_gorgonRingOutCine(f);}catch(e){console.warn(e);_impaleFighter(f,nx,nz);}
+          } else if(f.def.id==='jabba_reborn'&&f.hp<=0){ // v7.276: SLAG REBORN ring-out → friendship
+            _impaleFighter(f,nx,nz); // uses jabba_reborn override path (no BBQ)
           } else {
             _impaleFighter(f,nx,nz);
             announce(rotBonus>=2?_L(rotBonus+'-ROTATION RING OUT!! IMPALED!!',rotBonus+'回転 リングアウト！！串刺し！！'):
