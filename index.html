@@ -31894,7 +31894,8 @@ function startColosseum(){
     _babyCage:babyCage,
     _pilotArrow,   // v7.277: facing direction arrow
     // v7.276: SLAG REBORN wave  // v7.278: _slagRebornTriggered prevents double-fire
-    _slagRebornActive:false,_slagRebornFighter:null,_friendCineFired:false,_slagRebornTriggered:false,
+    // v7.281: _slagRebornPendingSpawn true only during the gap between trigger and actual spawn
+    _slagRebornActive:false,_slagRebornFighter:null,_friendCineFired:false,_slagRebornTriggered:false,_slagRebornPendingSpawn:false,
     pilotMesh,
     // v7.249 ★ RING WEAPONS
     _weapons:[
@@ -32247,7 +32248,8 @@ function _gorgonCelebration(){
     // v7.278: guard against double-fire (normal defeat may have already triggered it)
     if(colosseumState&&!colosseumState._slagRebornTriggered){
       colosseumState._slagRebornTriggered=true;
-      try{_startSlagRebornWave();}catch(e){try{endColosseum(true);}catch(_){}}
+      colosseumState._slagRebornPendingSpawn=true; // v7.281: block wave check until SLAG is spawned
+      try{_startSlagRebornWave();}catch(e){if(colosseumState)colosseumState._slagRebornPendingSpawn=false;try{endColosseum(true);}catch(_){}}
     }
   },12000);
 }
@@ -32315,6 +32317,7 @@ function _startSlagRebornWave(){
       };
       cs._slagRebornFighter=sr;
       cs._slagRebornActive=true;
+      cs._slagRebornPendingSpawn=false; // v7.281: SLAG is now spawned — release the wave check guard
       cs.activeFighters=[sr];
       cs.waveActive=true;
       updateColosseumHUD();
@@ -32689,6 +32692,9 @@ function _updateColoFighter(f,dt){
 function _updateColosseumFighters(dt){const cs=colosseumState;if(!cs)return;cs.activeFighters.forEach(f=>{try{_updateColoFighter(f,dt)}catch(e){}});}
 function _colosseumWaveCheck(dt){
   const cs=colosseumState;if(!cs)return;
+  // v7.281: Guard the window between slag reborn being triggered and SLAG actually spawning.
+  // During that gap activeFighters may be empty → vacuous .every(ELIMINATED)=true → false endColosseum(true).
+  if(cs._slagRebornPendingSpawn)return;
   if(cs.nextWaveT>0){cs.nextWaveT-=dt;if(cs.nextWaveT<=0){cs.nextWaveT=-1;_colosseumStartWave();}return;}
   if(!cs.waveActive)return;
   if(cs.activeFighters.every(f=>f.state==='ELIMINATED')){
@@ -32700,7 +32706,8 @@ function _colosseumWaveCheck(dt){
       // v7.278: always trigger SLAG REBORN after wave 4, regardless of ring-out or normal defeat
       if(!cs._slagRebornTriggered){
         cs._slagRebornTriggered=true;
-        setTimeout(()=>{try{_startSlagRebornWave();}catch(e){try{endColosseum(true);}catch(_){};}},2000);
+        cs._slagRebornPendingSpawn=true; // v7.281: block wave check until SLAG is spawned
+        setTimeout(()=>{try{_startSlagRebornWave();}catch(e){if(colosseumState)colosseumState._slagRebornPendingSpawn=false;try{endColosseum(true);}catch(_){};}},2000);
       }
     } else {
       announce(_L('ROUND '+cs.waveNum+' CLEAR!','ラウンド '+cs.waveNum+' クリア！'));try{sfx.playCrowdCheer(3)}catch(_){}cs.nextWaveT=3.0;
@@ -32927,9 +32934,14 @@ function updateColosseum(dt){
     for(let ci=0;ci<cs._crowdFigs.length;ci++){
       const fd=cs._crowdFigs[ci];
       const phase=fd.userData._crowdPhase||0;
-      const freq=fd.userData._crowdFreq||3;
-      fd.position.y=(fd.userData._crowdOrigY||0)+Math.sin(ct*freq+phase)*.055;
-      fd.rotation.z=Math.sin(ct*freq*.62+phase+1.1)*.06;
+      const freq=(fd.userData._crowdFreq||3)*1.8; // v7.281: faster base cadence
+      // Jump impulse: only the positive half of a fast sine — sharp upward pops
+      const jump=Math.max(0,Math.sin(ct*freq*2.1+phase))*0.28;
+      // Gentle vertical sway on top of the jump
+      const sway=Math.sin(ct*freq+phase)*0.07;
+      fd.position.y=(fd.userData._crowdOrigY||0)+jump+sway;
+      // Side-to-side lean for crowd wave effect
+      fd.rotation.z=Math.sin(ct*freq*1.3+phase+1.2)*0.18;
     }
   }
   const pm=cs.pilotMesh;
