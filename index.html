@@ -32038,7 +32038,7 @@ function _colosseumDoAttack(type){
     // v7.261: Find nearest active fighter — range increased 2.8→3.5 for more forgiving grab
     let best=null,bestD=3.5;
     cs.activeFighters.forEach(f=>{
-      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING')return;
+      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='INTRO')return;// v7.106: skip INTRO walkin
       const d=Math.hypot(f.pos.x-cs.pilotPos.x,f.pos.z-cs.pilotPos.z);
       if(d<bestD){bestD=d;best=f;}
     });
@@ -32072,7 +32072,7 @@ function _colosseumDoAttack(type){
     // Find nearest active fighter roughly in front within 4.5m
     let best=null,bestD=4.5;
     cs.activeFighters.forEach(f=>{
-      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING')return;
+      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='INTRO')return;// v7.106: skip INTRO walkin
       const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
       const d=Math.hypot(dx,dz);
       if(d>4.5)return;
@@ -32127,7 +32127,7 @@ function _colosseumHitDetect(){
   const px=cs.pilotPos.x,pz=cs.pilotPos.z,pa=cs.pilotAngle;
   let hitCount=0;
   cs.activeFighters.forEach(f=>{
-    if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='GRAPPLED')return;
+    if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='GRAPPLED'||f.state==='INTRO')return;// v7.106: skip INTRO walkin (SLAG spawns outside ring)
     const dx=f.pos.x-px,dz=f.pos.z-pz;
     const dist=Math.hypot(dx,dz);
     if(dist>hitR+f.def.sz*.9)return;
@@ -32318,6 +32318,7 @@ function _makeSlagRebornFighter(){
 function _startSlagRebornWave(){
   const cs=colosseumState;if(!cs)return;
   cs.waveActive=false;
+  cs._friendCineFired=false; // v7.106: reset so a retry/re-trigger always starts clean
   // "But wait…" beat
   setTimeout(()=>{try{wfCineSubtitle(_L('... BUT WAIT ...','... しかし ...'),'#666666')}catch(_){}},600);
   setTimeout(()=>{
@@ -32730,8 +32731,8 @@ function _colosseumWaveCheck(dt){
   if(cs._slagRebornTriggered||cs._slagRebornActive||cs._slagRebornPendingSpawn){
     // Kill any stale nextWaveT that could fire _colosseumStartWave during SLAG wave
     cs.nextWaveT=-1;
-    // Only end if SLAG itself is defeated
-    if(cs._slagRebornActive&&cs._slagRebornFighter&&cs._slagRebornFighter.state==='ELIMINATED'){
+    // Only end if SLAG itself is defeated AND has actually been fought (hp drained)
+    if(cs._slagRebornActive&&cs._slagRebornFighter&&cs._slagRebornFighter.state==='ELIMINATED'&&cs._slagRebornFighter.hp<=0){
       if(!cs._friendCineFired){
         cs._friendCineFired=true;
         cs._slagRebornActive=false;
