@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.274</title>
+<title>COSMIC INVADERS v7.275</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -2298,6 +2298,25 @@ class SFX{
         o.connect(bf);bf.connect(g);g.connect(this.g||ac.destination);
         o.start(now+delay);o.stop(now+delay+.38);
       });
+    }catch(e){}
+  }
+  // v7.275: Slug rolling attack — heavy bass rumble + rhythmic thumps
+  slugRollSFX(){
+    if(!this.ctx)return;const ac=this.ctx,now=ac.currentTime;
+    try{
+      // Sub-bass rumble (rolling noise)
+      const dur=2.0;
+      const buf=ac.createBuffer(1,Math.floor(ac.sampleRate*dur),ac.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+      const ns=ac.createBufferSource();ns.buffer=buf;
+      const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=100;lp.Q.value=10;
+      const gr=ac.createGain();gr.gain.setValueAtTime(.28,now);gr.gain.linearRampToValueAtTime(.32,now+.4);gr.gain.exponentialRampToValueAtTime(.001,now+dur);
+      ns.connect(lp);lp.connect(gr);gr.connect(this.g||ac.destination);ns.start(now);ns.stop(now+dur);
+      // Rhythmic ground-thumps (slug mass hitting floor)
+      for(let i=0;i<7;i++){const t=now+.08+i*.25;
+        const o=ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t);o.frequency.exponentialRampToValueAtTime(28,t+.18);
+        const og=ac.createGain();og.gain.setValueAtTime(.55,t);og.gain.exponentialRampToValueAtTime(.001,t+.22);
+        o.connect(og);og.connect(this.g||ac.destination);o.start(t);o.stop(t+.25);}
     }catch(e){}
   }
   // v7.254: Cinematic timpani drum hit for character parade entry
@@ -30193,7 +30212,7 @@ const _FIGHTER_HINTS={
   centipede: "CENTI-DOOM! The head is the weak point — keep hammering it!",
   eel:       "Wait — that's a THUNDER EEL from Alpha Star!! It crackles BEFORE it shocks — dodge right after the sparks!",
   predator:  "THE HUNTER... it stalks from behind. Keep moving — don't let it get to my six!",
-  jabba:     "THE SLUG is massive but SLOW. Keep circling and watch out for that tail sweep!",
+  jabba:     "THE SLUG is massive but SLOW. Watch out — it ROLLS at you from a distance! Dodge sideways!",
   queen:     "HER MAJESTY! That inner jaw is deadly up close — grapple from the flank!",
   kaiju:     "GORGON!! The big one! Full power — GIANT SWING everything it throws at me!!"
 };
@@ -32265,11 +32284,90 @@ function _updateColoFighter(f,dt){
       f.mesh.rotation.z=Math.sin(f.stateT*1.8)*.1;
       break;}
 
+    // v7.275: Slug ROLLING attack state
+    case 'ROLLING':{
+      const WIND=0.5,ROLLEND=2.4,STOPEND=2.9;
+      if(f.stateT<WIND){
+        // Phase 1: Windup — lean back and wobble menacingly
+        const wp=f.stateT/WIND;
+        f.mesh.rotation.x=-(wp*.55)+Math.sin(wp*Math.PI*5)*.1;
+        f.mesh.rotation.z=Math.sin(wp*Math.PI*6)*.12;
+        if(f.stateT<.05){
+          try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}
+          try{sfx.slugRollSFX&&sfx.slugRollSFX()}catch(_){}
+          try{announce(_L('ROLLING!!','ローリング！！'))}catch(_){}
+          try{wfCineSubtitle(_L('💚 ROLLING ATTACK!!','💚 ローリング アタック！！'),'#88aa44')}catch(_){}
+        }
+        // Dust kick-up at windup end
+        if(wp>.8&&!f._rollWindupPuff){f._rollWindupPuff=true;try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(0,.05,0)),12)}catch(_){}}
+      } else if(f.stateT<ROLLEND){
+        // Phase 2: Rolling charge — spin and ram
+        const rp=(f.stateT-WIND)/(ROLLEND-WIND);
+        const rollSpd=(spd*3.0+rp*spd*2.2)*dt;
+        // Lock roll direction at start, with very gentle steering
+        if(!f._rollDirX||f._rollDirX===0){f._rollDirX=dx/Math.max(dist,.01);f._rollDirZ=dz/Math.max(dist,.01);}
+        const tdx=dx/Math.max(dist,.01),tdz=dz/Math.max(dist,.01);
+        f._rollDirX+=(tdx-f._rollDirX)*.06;f._rollDirZ+=(tdz-f._rollDirZ)*.06;
+        const rl=Math.hypot(f._rollDirX,f._rollDirZ)||1;
+        f.pos.x+=f._rollDirX/rl*rollSpd;f.pos.z+=f._rollDirZ/rl*rollSpd;
+        // Ring boundary bounce
+        const rbd=Math.hypot(f.pos.x,f.pos.z);
+        if(rbd>cs.ringR-f.def.sz*.4){
+          const ra2=Math.atan2(f.pos.x,f.pos.z);
+          f.pos.x=Math.sin(ra2)*(cs.ringR-f.def.sz*.4);f.pos.z=Math.cos(ra2)*(cs.ringR-f.def.sz*.4);
+          const bnx=Math.sin(ra2),bnz=Math.cos(ra2);
+          const dot2=f._rollDirX*bnx+f._rollDirZ*bnz;
+          f._rollDirX-=2*dot2*bnx;f._rollDirZ-=2*dot2*bnz;
+        }
+        f.mesh.position.copy(f.pos);
+        // Spin animation (fast roll)
+        f.mesh.rotation.x+=9.0*dt*(1+rp);
+        f.mesh.rotation.y+=3.0*dt;
+        f.angle=Math.atan2(-f._rollDirX,-f._rollDirZ);f.mesh.rotation.y=f.angle+f.stateT*3.0;
+        // Dust trail
+        f._rollDustT=(f._rollDustT||0)+dt;
+        if(f._rollDustT>.1){f._rollDustT=0;try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(0,.08,0)),5)}catch(_){}}
+        // Hit detection — rolling hits for 2 damage
+        f._rollHitCD=Math.max(0,(f._rollHitCD||0)-dt);
+        if(dist<f.def.sz*1.4+0.7&&f._rollHitCD<=0&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
+          f._rollHitCD=0.7;
+          cs.pilotHP=Math.max(0,cs.pilotHP-2);cs.pilotInvT=1.1;
+          try{screenFlash(.7)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
+          updateColosseumHUD();
+          if(cs.pilotHP<=0){endColosseum(false);return;}
+          cs.pilotState='STAGGER';cs.pilotActionT=0;
+          // Knockback
+          const kbA=Math.atan2(cs.pilotPos.x-f.pos.x,cs.pilotPos.z-f.pos.z);
+          const kbPx=cs.pilotPos.x+Math.sin(kbA)*3.2,kbPz=cs.pilotPos.z+Math.cos(kbA)*3.2;
+          const kbD=Math.hypot(kbPx,kbPz);
+          cs.pilotPos.x=kbD>cs.ringR-0.5?Math.sin(kbA)*(cs.ringR-0.5):kbPx;
+          cs.pilotPos.z=kbD>cs.ringR-0.5?Math.cos(kbA)*(cs.ringR-0.5):kbPz;
+          if(cs.pilotMesh){cs.pilotMesh.position.x=cs.pilotPos.x;cs.pilotMesh.position.z=cs.pilotPos.z;}
+          try{_spawnDustPuff(cs.pilotPos.clone().add(new THREE.Vector3(0,.3,0)),14)}catch(_){}
+        }
+      } else if(f.stateT<STOPEND){
+        // Phase 3: Brake — wobble to a halt
+        const sp2=(f.stateT-ROLLEND)/(STOPEND-ROLLEND);
+        f.mesh.rotation.x*=(1-sp2*.92);
+        f.mesh.rotation.z=Math.sin(f.stateT*20)*(1-sp2)*.2;
+        if(!f._rollBrakePuff){f._rollBrakePuff=true;try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(0,.1,0)),20)}catch(_){}}
+      } else {
+        // Reset all roll state
+        f.mesh.rotation.x=0;f.mesh.rotation.z=0;
+        f._rollDirX=0;f._rollDirZ=0;f._rollHitCD=0;f._rollDustT=0;f._rollWindupPuff=false;f._rollBrakePuff=false;
+        f.attackCD=3.5;f.state='IDLE';f.stateT=0;
+      }
+      break;}
     case 'ELIMINATED':break;
     default:break;
   }
-  // slug: trigger attack when pilot gets close
-  if(f.def.style==='slug'&&f.state==='IDLE'&&f.stateT>2.0&&dist<5&&f.attackCD<=0){f.state='ATTACK';f.stateT=0;}
+  // slug: trigger ROLLING or normal ATTACK when conditions met
+  if(f.def.style==='slug'&&f.state==='IDLE'&&f.stateT>2.0&&f.attackCD<=0){
+    if(dist<5){f.state='ATTACK';f.stateT=0;}// normal close-range attack
+    else if(dist<9&&Math.random()<0.42){// v7.275: rolling attack from medium range
+      f.state='ROLLING';f.stateT=0;f._rollHitCD=0;f._rollDirX=0;f._rollDirZ=0;f._rollWindupPuff=false;f._rollBrakePuff=false;f._rollDustT=0;
+    }
+  }
 }
 function _updateColosseumFighters(dt){const cs=colosseumState;if(!cs)return;cs.activeFighters.forEach(f=>{try{_updateColoFighter(f,dt)}catch(e){}});}
 function _colosseumWaveCheck(dt){
