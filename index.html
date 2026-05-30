@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.280</title>
+<title>COSMIC INVADERS v7.281</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -32724,27 +32724,32 @@ function _updateColoFighter(f,dt){
 function _updateColosseumFighters(dt){const cs=colosseumState;if(!cs)return;cs.activeFighters.forEach(f=>{try{_updateColoFighter(f,dt)}catch(e){}});}
 function _colosseumWaveCheck(dt){
   const cs=colosseumState;if(!cs)return;
-  // v7.281: Guard the window between slag reborn being triggered and SLAG actually spawning.
-  // During that gap activeFighters may be empty → vacuous .every(ELIMINATED)=true → false endColosseum(true).
-  if(cs._slagRebornPendingSpawn)return;
-  // v7.282: While SLAG REBORN wave is active, block nextWaveT countdown entirely.
-  // In the GORGON ring-out path, CASE C could set nextWaveT=3.0 (empty waves cycling while
-  // _gorgonCineActive=true). That countdown is paused by _slagRebornPendingSpawn but NOT
-  // decremented, so it survives into the SLAG wave and eventually fires _colosseumStartWave()
-  // which overwrites activeFighters=[] → vacuous ELIMINATED check → premature friendship cine.
-  if(cs._slagRebornActive||cs._slagRebornTriggered){cs.nextWaveT=-1;} // kill any stale countdown
+  // v7.283: Unified SLAG REBORN guard — once any slag flag is set, the normal wave-advance
+  // logic must never run. We only check for SLAG's own defeat here; everything else returns
+  // early so nextWaveT can't countdown and _colosseumStartWave can't overwrite activeFighters.
+  if(cs._slagRebornTriggered||cs._slagRebornActive||cs._slagRebornPendingSpawn){
+    // Kill any stale nextWaveT that could fire _colosseumStartWave during SLAG wave
+    cs.nextWaveT=-1;
+    // Only end if SLAG itself is defeated
+    if(cs._slagRebornActive&&cs._slagRebornFighter&&cs._slagRebornFighter.state==='ELIMINATED'){
+      if(!cs._friendCineFired){
+        cs._friendCineFired=true;
+        cs._slagRebornActive=false;
+        cs.waveActive=false;
+        setTimeout(()=>{try{_slagFriendshipCine();}catch(e){endColosseum(true);}},1500);
+      }
+    }
+    return; // always return early during the entire SLAG REBORN sequence
+  }
   if(cs.nextWaveT>0){cs.nextWaveT-=dt;if(cs.nextWaveT<=0){cs.nextWaveT=-1;_colosseumStartWave();}return;}
   if(!cs.waveActive)return;
   if(cs.activeFighters.every(f=>f.state==='ELIMINATED')){
     cs.waveActive=false;
-    if(cs._slagRebornActive){ // v7.276: SLAG REBORN wave complete → friendship ending
-      cs._slagRebornActive=false;
-      if(!cs._friendCineFired){cs._friendCineFired=true;setTimeout(()=>{try{_slagFriendshipCine();}catch(e){endColosseum(true);}},1500);}
-    } else if(cs.waveNum>=4&&!cs._gorgonCineActive){
-      // v7.278: always trigger SLAG REBORN after wave 4, regardless of ring-out or normal defeat
+    if(cs.waveNum>=4&&!cs._gorgonCineActive){
+      // v7.278: trigger SLAG REBORN after wave 4, regardless of ring-out or normal defeat
       if(!cs._slagRebornTriggered){
         cs._slagRebornTriggered=true;
-        cs._slagRebornPendingSpawn=true; // v7.281: block wave check until SLAG is spawned
+        cs._slagRebornPendingSpawn=true; // block wave check until SLAG is spawned
         setTimeout(()=>{try{_startSlagRebornWave();}catch(e){if(colosseumState)colosseumState._slagRebornPendingSpawn=false;try{endColosseum(true);}catch(_){};}},2000);
       }
     } else {
