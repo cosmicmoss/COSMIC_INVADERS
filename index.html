@@ -2366,11 +2366,11 @@ class SFX{
       bar++;self._coloBgmIv=setTimeout(sched,(bt*16*1000)-.06);
     };
     sched();
-  },
+  }
   stopColosseumBGM(){
     this._coloBgmOn=false;
     if(this._coloBgmIv){clearTimeout(this._coloBgmIv);this._coloBgmIv=null;}
-  },
+  }
   // Continuous crowd ambient noise — looping bandpass-filtered noise + random yells
   startCrowdAmbient(){
     this.stopCrowdAmbient();if(!this.ctx)return;
@@ -2397,12 +2397,12 @@ class SFX{
       };
       this._crowdYellT=setTimeout(yellFn,800);
     }catch(_){}
-  },
+  }
   stopCrowdAmbient(){
     if(this._crowdAmbSrc){try{this._crowdAmbSrc.stop();}catch(_){}this._crowdAmbSrc=null;}
     if(this._crowdAmbG){try{this._crowdAmbG.disconnect();}catch(_){}this._crowdAmbG=null;}
     if(this._crowdYellT){clearTimeout(this._crowdYellT);this._crowdYellT=null;}
-  },
+  }
   // Crowd "OOOOOH" reaction — rising filtered noise burst on successful technique
   crowdOoh(){
     if(!this.ctx)return;
@@ -2419,7 +2419,7 @@ class SFX{
       g.gain.setValueAtTime(.26,now+.9);g.gain.linearRampToValueAtTime(0,now+dur);
       src.connect(bp);bp.connect(g);g.connect(dst);src.start(now);src.stop(now+dur);
     }catch(_){}
-  },
+  }
   // v7.254: Cinematic timpani drum hit for character parade entry
   cinematicDrum(){
     if(!this.ctx)return;const ac=this.ctx,now=ac.currentTime;
@@ -18557,6 +18557,14 @@ function openTestStage(){
       '<div style="font-size:13px;font-weight:bold">'+(hk?'コロッセウム':'COLOSSEUM')+'</div>'+
       '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'7体のモンスターとバトルロイヤル':'7-monster battle royale')+'</div>'+
     '</button>'+
+    // v7.279: SLAG REBORN direct test
+    '<button type="button" onclick="launchSlagRebornTest()" '+
+      'style="padding:12px 16px;background:rgba(40,5,0,0.85);border:2px solid #dd4400;'+
+      'color:#dd4400;font-family:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;min-width:190px;'+
+      'border-radius:8px;box-shadow:0 0 12px #dd440066;text-align:left;-webkit-appearance:none;touch-action:manipulation">'+
+      '<div style="font-size:13px;font-weight:bold">'+(hk?'★ スラグ復活':'★ SLAG REBORN')+'</div>'+
+      '<div style="font-size:10px;color:#aaa;margin-top:3px">'+(hk?'ウェーブ4後 — スラグが巨大化して斧持ちで復活':'Post-wave 4 — mega SLUG returns with axes')+'</div>'+
+    '</button>'+
     '</div>';
   // v7.270: ARMADA — 銀河大艦隊決戦 TEST
   html+='<div style="font-size:15px;color:#4af;letter-spacing:4px;margin:18px 0 8px;text-shadow:0 0 10px #4af">▼ '+(hk?'ARMADA — 銀河大艦隊決戦':'ARMADA — FLEET BATTLE')+' ▼</div>'+
@@ -33479,6 +33487,37 @@ function launchColosseumTest(){
   try{particles.forEach(p=>{try{scene.remove(p.mesh)}catch(_){}});particles.length=0}catch(_){}
   try{closeOptions()}catch(_){}
   setTimeout(()=>{try{startColosseum();showTestModeExitButton('colosseum')}catch(e){console.error('colosseum test:',e)}},350);
+}
+
+// v7.279: Jump directly to SLAG REBORN wave — skips waves 1-4
+function launchSlagRebornTest(){
+  const ov=document.getElementById('test-stage');if(ov)ov.remove();
+  selectedStage=STAGES.find(s=>s.id==='ice')||STAGES[0];
+  if(!S.callsign){const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}
+  if(!selectedShip&&typeof SHIP_ROSTER!=='undefined')selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
+  ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  try{sfx.init();sfx.resume()}catch(e){}
+  S._testFromOptions=true;
+  S.phase='BRIDGE';S.score=0;S.kills=0;S.wave=1;S.waveLeft=0;S.heat=0;S.overheated=false;S.invTimer=0;S.gameTime=0;
+  S.shieldMax=getDifficultyShieldMax();S.lives=S.shieldMax;S.hasCrystalLaser=false;S.ruinsPhase=0;
+  try{enemies.forEach(e=>{try{scene.remove(e.mesh)}catch(_){}});enemies.length=0}catch(_){}
+  try{pBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});pBeams.length=0}catch(_){}
+  try{eBeams.forEach(b=>{try{scene.remove(b.mesh)}catch(_){}});eBeams.length=0}catch(_){}
+  try{particles.forEach(p=>{try{scene.remove(p.mesh)}catch(_){}});particles.length=0}catch(_){}
+  try{closeOptions()}catch(_){}
+  setTimeout(()=>{
+    try{
+      startColosseum();
+      showTestModeExitButton('colosseum');
+      // Skip waves 1-4: mark as post-wave-4, prevent double-fire, then trigger SLAG REBORN
+      const cs=colosseumState;
+      if(cs){
+        cs.waveNum=4;cs.nextWaveT=0;cs.waveActive=false;
+        cs._slagRebornTriggered=true; // prevent _colosseumWaveCheck from also firing it
+        setTimeout(()=>{try{_startSlagRebornWave();}catch(e){console.error('slag reborn test:',e);}},800);
+      }
+    }catch(e){console.error('slag reborn test launch:',e)}
+  },350);
 }
 
 // ─── v7.270: ARMADA stage test launcher ──────────────────────────────
