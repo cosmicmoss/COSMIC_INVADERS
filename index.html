@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.276</title>
+<title>COSMIC INVADERS v7.277</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -13618,6 +13618,8 @@ function cleanupBossResidue(){
     }
     try{const bh=document.getElementById('boss-hp-bar');if(bh)bh.style.display='none';}catch(_){}
   }catch(_){}
+  // v7.277: pilot direction arrow cleanup
+  try{if(typeof colosseumState!=='undefined'&&colosseumState&&colosseumState._pilotArrow){scene.remove(colosseumState._pilotArrow);}}catch(_){}
   // v7.250: BBQ scene cleanup (colosseum impalement BBQ objects)
   try{
     if(typeof colosseumState!=='undefined'&&colosseumState&&colosseumState._bbqObjects&&colosseumState._bbqObjects.length){
@@ -30852,6 +30854,11 @@ function _makeColoBoxerPilot(){
   for(let i=0;i<3;i++){const ab=fw(box(.44,.05,.08),0xddbb88,skinFill);ab.position.set(0,-.1-i*.12,.17);torso.add(ab);}
   // v7.261: Chest star emblem — gold, front-facing only (local +Z)
   const chestEm=fw(new THREE.OctahedronGeometry(.09,0),0xffdd00,0x222200);chestEm.position.set(0,.08,.18);torso.add(chestEm);
+  // v7.277: Back panel — bright orange, clearly marks the BACK of the pilot
+  const backPanel=fw(box(.44,.38,.04),0xff6600,0x220800);backPanel.position.set(0,0,-.18);torso.add(backPanel);
+  // Back panel number "1" — two short lines forming it (vertical + top serif)
+  const bpV=fw(box(.05,.28,.03),0xffaa44,0x221100);bpV.position.set(0,.02,-.215);torso.add(bpV);
+  const bpT=fw(box(.15,.05,.03),0xffaa44,0x221100);bpT.position.set(0,.16,-.215);torso.add(bpT);
   torso.position.y=1.29;g.add(torso);
 
   // ── SHORTS + WAISTBAND ────────────────────────────────────
@@ -31727,6 +31734,18 @@ function startColosseum(){
   let pilotMesh=null;
   try{pilotMesh=_makeColoBoxerPilot();}catch(e){pilotMesh=new THREE.Group();}
   pilotMesh.position.set(0,.42,5);colosseumScene.add(pilotMesh);
+  // v7.277: direction arrow on ring floor — shows which way pilot is facing
+  const _arrowPts=[
+    new THREE.Vector3(0,.04,.55),          // tip (forward)
+    new THREE.Vector3(-.28,.04,-.22),      // left base
+    new THREE.Vector3(0,.04,-.02),         // back centre
+    new THREE.Vector3(.28,.04,-.22),       // right base
+    new THREE.Vector3(0,.04,.55),          // close
+  ];
+  const _arrowGeo=new THREE.BufferGeometry().setFromPoints(_arrowPts);
+  const _pilotArrow=new THREE.Line(_arrowGeo,new THREE.LineBasicMaterial({color:0xffff00,transparent:true,opacity:.82}));
+  _pilotArrow.position.set(0,.01,5);
+  colosseumScene.add(_pilotArrow);
   const fighters=_COLO_DEFS.map(def=>{
     const mesh=makeColosseumFighter(def);mesh.position.set(0,-100,0);
     colosseumScene.add(mesh);
@@ -31766,6 +31785,7 @@ function startColosseum(){
     // v7.254: energy balls thrown from audience
     _energyBalls:[],_energyBallTimer:18,
     _babyCage:babyCage,
+    _pilotArrow,   // v7.277: facing direction arrow
     // v7.276: SLAG REBORN wave
     _slagRebornActive:false,_slagRebornFighter:null,_friendCineFired:false,
     pilotMesh,
@@ -31820,6 +31840,8 @@ function _colosseumPilotMove(dt){
   const d=Math.hypot(cs.pilotPos.x,cs.pilotPos.z);
   if(d>cs.ringR){const a=Math.atan2(cs.pilotPos.x,cs.pilotPos.z);cs.pilotPos.x=Math.sin(a)*cs.ringR*.93;cs.pilotPos.z=Math.cos(a)*cs.ringR*.93;}
   cs.pilotMesh.position.copy(cs.pilotPos);cs.pilotMesh.rotation.y=cs.pilotAngle;
+  // v7.277: keep floor arrow in sync
+  if(cs._pilotArrow){cs._pilotArrow.position.x=cs.pilotPos.x;cs._pilotArrow.position.z=cs.pilotPos.z;cs._pilotArrow.rotation.y=cs.pilotAngle;}
   const pm=cs.pilotMesh;
   const la=pm.getObjectByName('lArm'),ra=pm.getObjectByName('rArm'),ll=pm.getObjectByName('lLeg'),rl=pm.getObjectByName('rLeg');
   const laf=pm.getObjectByName('lArmFore'),raf=pm.getObjectByName('rArmFore');
