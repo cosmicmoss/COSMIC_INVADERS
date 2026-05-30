@@ -32249,6 +32249,8 @@ function _gorgonCelebration(){
     if(colosseumState&&!colosseumState._slagRebornTriggered){
       colosseumState._slagRebornTriggered=true;
       colosseumState._slagRebornPendingSpawn=true; // v7.281: block wave check until SLAG is spawned
+      colosseumState.nextWaveT=-1; // v7.282: kill empty-wave cycling (CASE C set nextWaveT while _gorgonCineActive=true)
+      colosseumState.waveActive=false; // ensure no lingering wave active from empty wave cycle
       try{_startSlagRebornWave();}catch(e){if(colosseumState)colosseumState._slagRebornPendingSpawn=false;try{endColosseum(true);}catch(_){}}
     }
   },12000);
@@ -32318,6 +32320,7 @@ function _startSlagRebornWave(){
       cs._slagRebornFighter=sr;
       cs._slagRebornActive=true;
       cs._slagRebornPendingSpawn=false; // v7.281: SLAG is now spawned — release the wave check guard
+      cs.nextWaveT=-1; // v7.282: kill any stale nextWaveT that could fire _colosseumStartWave during SLAG wave
       cs.activeFighters=[sr];
       cs.waveActive=true;
       updateColosseumHUD();
@@ -32695,6 +32698,12 @@ function _colosseumWaveCheck(dt){
   // v7.281: Guard the window between slag reborn being triggered and SLAG actually spawning.
   // During that gap activeFighters may be empty → vacuous .every(ELIMINATED)=true → false endColosseum(true).
   if(cs._slagRebornPendingSpawn)return;
+  // v7.282: While SLAG REBORN wave is active, block nextWaveT countdown entirely.
+  // In the GORGON ring-out path, CASE C could set nextWaveT=3.0 (empty waves cycling while
+  // _gorgonCineActive=true). That countdown is paused by _slagRebornPendingSpawn but NOT
+  // decremented, so it survives into the SLAG wave and eventually fires _colosseumStartWave()
+  // which overwrites activeFighters=[] → vacuous ELIMINATED check → premature friendship cine.
+  if(cs._slagRebornActive||cs._slagRebornTriggered){cs.nextWaveT=-1;} // kill any stale countdown
   if(cs.nextWaveT>0){cs.nextWaveT-=dt;if(cs.nextWaveT<=0){cs.nextWaveT=-1;_colosseumStartWave();}return;}
   if(!cs.waveActive)return;
   if(cs.activeFighters.every(f=>f.state==='ELIMINATED')){
@@ -33524,8 +33533,9 @@ function launchSlagRebornTest(){
       // Skip waves 1-4: mark as post-wave-4, prevent double-fire, then trigger SLAG REBORN
       const cs=colosseumState;
       if(cs){
-        cs.waveNum=4;cs.nextWaveT=0;cs.waveActive=false;
+        cs.waveNum=4;cs.nextWaveT=-1;cs.waveActive=false;
         cs._slagRebornTriggered=true; // prevent _colosseumWaveCheck from also firing it
+        cs._slagRebornPendingSpawn=true; // v7.282: block wave check until SLAG spawns
         setTimeout(()=>{try{_startSlagRebornWave();}catch(e){console.error('slag reborn test:',e);}},800);
       }
     }catch(e){console.error('slag reborn test launch:',e)}
