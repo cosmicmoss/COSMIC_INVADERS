@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.273</title>
+<title>COSMIC INVADERS v7.274</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -32640,8 +32640,8 @@ function updateColosseum(dt){
         if(ra2){ra2.rotation.x=-Math.PI*.82;ra2.rotation.z=.38-sp*.28;}
         if(lafG){lafG.rotation.x=.6+sp*.55;lafG.rotation.z=-sp*.25;}
         if(rafG){rafG.rotation.x=.6+sp*.55;rafG.rotation.z= sp*.25;}
-        // Target bulge-then-compress (grabbed!)
-        if(f&&f.mesh){const sq=Math.sin(sp*Math.PI);f.mesh.scale.setScalar(1+sq*.25);}
+        // Target bulge-then-compress (grabbed!) — v7.274: base scale on def.sz so large enemies stay large
+        if(f&&f.mesh){const sq=Math.sin(sp*Math.PI);f.mesh.scale.setScalar((f.def.sz||1)*(1+sq*.25));}
         // One-shot grab impact FX at ~40% into squeeze
         if(sp>=0.38&&sp<=0.52&&!cs._grabSFXPlayed){
           cs._grabSFXPlayed=true;
@@ -32757,7 +32757,7 @@ function updateColosseum(dt){
       if(pm)pm.rotation.x=0;
       if(la){la.rotation.x=0;la.rotation.z=0;}if(ra2){ra2.rotation.x=0;ra2.rotation.z=0;}
       if(lafG){lafG.rotation.x=0;lafG.rotation.z=0;}if(rafG){rafG.rotation.x=0;rafG.rotation.z=0;}
-      if(f&&f.mesh)f.mesh.scale.setScalar(1); // v7.261: restore scale after squeeze
+      if(f&&f.mesh)f.mesh.scale.setScalar(f.def.sz||1); // v7.274: restore to def.sz (was 1 — caused shrink bug)
       cs.pilotState='IDLE';cs.pilotActionT=0;cs._swingTarget=null;cs._grabSFXPlayed=false;
     }
   }
