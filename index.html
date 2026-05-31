@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.283</title>
+<title>COSMIC INVADERS v7.284</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -768,7 +768,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.283 - LOADED
+  COSMIC INVADERS v7.284 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1111,7 +1111,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.283</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.284</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1400,12 +1400,26 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <div id="pr-hud" style="display:none;position:fixed;top:0;left:0;right:0;z-index:90;pointer-events:none;font-family:monospace;">
   <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);text-align:center;">
     <div id="pr-lap" style="font-size:22px;font-weight:bold;color:#ffcc00;letter-spacing:4px;">LAP 1 / 3</div>
-    <div id="pr-pos" style="font-size:14px;color:#88ccff;letter-spacing:2px;margin-top:2px;">P1 / 6</div>
+    <div id="pr-pos" style="font-size:14px;color:#88ccff;letter-spacing:2px;margin-top:2px;">P1 / 9</div>
   </div>
   <div style="position:absolute;top:8px;right:12px;text-align:right;">
     <div id="pr-speed" style="font-size:18px;color:#ff8800;letter-spacing:2px;">55 km/h</div>
     <div id="pr-hp" style="font-size:12px;color:#44ff88;letter-spacing:1px;margin-top:2px;">HULL: 笆遺毎笆遺毎笆遺毎</div>
   </div>
+</div>
+
+<!-- v7.284: Pod race F1 start lights -->
+<div id="pr-startlights" style="display:none;position:fixed;top:17%;left:50%;transform:translateX(-50%);z-index:96;pointer-events:none;display:flex;gap:12px;align-items:center;">
+  <div class="pr-sl" id="pr-sl-0" style="width:32px;height:32px;border-radius:50%;border:2px solid #550000;background:#1a0000;transition:background .1s,box-shadow .1s"></div>
+  <div class="pr-sl" id="pr-sl-1" style="width:32px;height:32px;border-radius:50%;border:2px solid #550000;background:#1a0000;transition:background .1s,box-shadow .1s"></div>
+  <div class="pr-sl" id="pr-sl-2" style="width:32px;height:32px;border-radius:50%;border:2px solid #550000;background:#1a0000;transition:background .1s,box-shadow .1s"></div>
+  <div class="pr-sl" id="pr-sl-3" style="width:32px;height:32px;border-radius:50%;border:2px solid #550000;background:#1a0000;transition:background .1s,box-shadow .1s"></div>
+  <div class="pr-sl" id="pr-sl-4" style="width:32px;height:32px;border-radius:50%;border:2px solid #550000;background:#1a0000;transition:background .1s,box-shadow .1s"></div>
+</div>
+<!-- v7.284: Pod race racer intro name card -->
+<div id="pr-intro-card" style="display:none;position:fixed;top:28%;left:50%;transform:translateX(-50%);z-index:96;pointer-events:none;text-align:center;font-family:monospace;">
+  <div id="pr-intro-name" style="font-size:28px;font-weight:bold;letter-spacing:4px;text-shadow:0 0 20px currentColor;"></div>
+  <div id="pr-intro-title" style="font-size:13px;letter-spacing:4px;opacity:0.7;margin-top:4px;"></div>
 </div>
 
 <!-- v7.272: SF-style colosseum character intro namecard -->
@@ -1436,7 +1450,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.283 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.284 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1471,7 +1485,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.283 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.284 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -2121,6 +2135,68 @@ class SFX{
           k.connect(kg);kg.connect(self.g);k.start(t);k.stop(t+.12);// v7.32: was k.connect(self.g) — pre-existing bug also fixed
           k.onended=()=>{try{kg.disconnect();k.disconnect()}catch(_){}}}}bar++};
     sched();this.bgmIv=setInterval(()=>{if(self.bgmOn)sched()},8*bt*1000)}
+  // v7.284: Pod race SFX
+  _prLightBeep(){
+    try{
+      const ctx=this.ctx,now=ctx.currentTime;
+      const o=ctx.createOscillator();o.type='square';
+      o.frequency.setValueAtTime(880,now);
+      const g=ctx.createGain();g.gain.setValueAtTime(0.14,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.09);
+      o.connect(g);g.connect(this.g);o.start(now);o.stop(now+0.09);
+    }catch(_){}
+  }
+  _prGoBeep(){
+    try{
+      const ctx=this.ctx,now=ctx.currentTime;
+      // Rising sweep + triumphant burst
+      const o=ctx.createOscillator();o.type='square';
+      o.frequency.setValueAtTime(440,now);
+      o.frequency.exponentialRampToValueAtTime(1760,now+0.22);
+      const g=ctx.createGain();g.gain.setValueAtTime(0.22,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.28);
+      o.connect(g);g.connect(this.g);o.start(now);o.stop(now+0.28);
+      // second layer
+      const o2=ctx.createOscillator();o2.type='sawtooth';
+      o2.frequency.setValueAtTime(880,now+0.05);
+      const g2=ctx.createGain();g2.gain.setValueAtTime(0.12,now+0.05);g2.gain.exponentialRampToValueAtTime(0.001,now+0.3);
+      o2.connect(g2);g2.connect(this.g);o2.start(now+0.05);o2.stop(now+0.3);
+    }catch(_){}
+  }
+  _prLapFanfare(){
+    try{
+      const ctx=this.ctx,now=ctx.currentTime;
+      const notes=[523,659,784,1047];// C5 E5 G5 C6
+      notes.forEach((freq,i)=>{
+        const o=ctx.createOscillator();o.type='square';
+        o.frequency.setValueAtTime(freq,now+i*0.07);
+        const g=ctx.createGain();g.gain.setValueAtTime(0.13,now+i*0.07);g.gain.exponentialRampToValueAtTime(0.001,now+i*0.07+0.18);
+        o.connect(g);g.connect(this.g);o.start(now+i*0.07);o.stop(now+i*0.07+0.18);
+      });
+    }catch(_){}
+  }
+  _prRacerRev(col){
+    try{
+      const ctx=this.ctx,now=ctx.currentTime;
+      const o=ctx.createOscillator();o.type='sawtooth';
+      o.frequency.setValueAtTime(80,now);o.frequency.linearRampToValueAtTime(220,now+0.18);
+      o.frequency.linearRampToValueAtTime(140,now+0.4);
+      const g=ctx.createGain();g.gain.setValueAtTime(0.10,now);g.gain.linearRampToValueAtTime(0.001,now+0.42);
+      o.connect(g);g.connect(this.g);o.start(now);o.stop(now+0.42);
+    }catch(_){}
+  }
+  // v7.284: Baby alien happy sounds
+  babyAlienCheer(){
+    try{
+      const ctx=this.ctx,now=ctx.currentTime;
+      const freqs=[2200,3200,2500,3600,2800];
+      freqs.forEach((f,i)=>{
+        const o=ctx.createOscillator();o.type='sine';
+        o.frequency.setValueAtTime(f,now+i*0.11);
+        o.frequency.linearRampToValueAtTime(f*1.25,now+i*0.11+0.09);
+        const g=ctx.createGain();g.gain.setValueAtTime(0.11,now+i*0.11);g.gain.exponentialRampToValueAtTime(0.001,now+i*0.11+0.1);
+        o.connect(g);g.connect(this.g);o.start(now+i*0.11);o.stop(now+i*0.11+0.11);
+      });
+    }catch(_){}
+  }
   // v7.207: crowd cheering SFX for victory celebrations
   playCrowdCheer(duration){
     if(!this.ctx)return;const ctx=this.ctx;
@@ -13687,6 +13763,13 @@ function cleanupBossResidue(){
       colosseumState._bbqObjects.forEach(o=>{try{scene.remove(o)}catch(_){}});
       colosseumState._bbqObjects.length=0;
       colosseumState._bbqActive=false;
+    }
+  }catch(_){}
+  // v7.284: baby alien mesh cleanup
+  try{
+    if(typeof colosseumState!=='undefined'&&colosseumState&&colosseumState._babyMesh){
+      scene.remove(colosseumState._babyMesh);
+      colosseumState._babyMesh=null;colosseumState._babyPlayActive=false;
     }
   }catch(_){}
   // v7.254: energy ball cleanup
@@ -32434,6 +32517,38 @@ function _startSlagRebornWave(){
     }catch(e){console.error('_startSlagRebornWave spawn error:',e);/* do NOT end colosseum on spawn error */}
   },3800);
 }
+function _makeBabyAlienMesh(){
+  const g=new THREE.Group();g.name='babyAlien';
+  // Egg-shaped body
+  const bG=new THREE.SphereGeometry(0.35,7,6);
+  g.add(new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:0x00ddcc,transparent:true,opacity:0.82})));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(bG),new THREE.LineBasicMaterial({color:0x00ffff})));
+  // Big cute eyes
+  [-1,1].forEach(side=>{
+    const eG=new THREE.SphereGeometry(0.10,5,4);
+    const eye=new THREE.Mesh(eG,new THREE.MeshBasicMaterial({color:0xffffff}));
+    eye.position.set(side*0.14,0.12,0.28);g.add(eye);
+    const pupG=new THREE.SphereGeometry(0.06,4,4);
+    const pup=new THREE.Mesh(pupG,new THREE.MeshBasicMaterial({color:0x111133}));
+    pup.position.set(side*0.14,0.12,0.33);g.add(pup);
+  });
+  // Tiny waving arms
+  [-1,1].forEach(side=>{
+    const hG=new THREE.BoxGeometry(0.07,0.22,0.07);
+    const hand=new THREE.LineSegments(new THREE.EdgesGeometry(hG),new THREE.LineBasicMaterial({color:0x00ffcc}));
+    hand.position.set(side*0.44,0.05,0);
+    hand.rotation.z=side*0.4;
+    g.add(hand);
+  });
+  // Nubby tail
+  const tG=new THREE.ConeGeometry(0.08,0.22,5);
+  const tail=new THREE.LineSegments(new THREE.EdgesGeometry(tG),new THREE.LineBasicMaterial({color:0x00ffcc}));
+  tail.position.set(0,-0.28,-0.15);tail.rotation.x=Math.PI*0.8;
+  g.add(tail);
+  g.scale.setScalar(0.75);
+  return g;
+}
+
 function _slagFriendshipCine(){
   const cs=colosseumState;if(!cs)return;
   cs.waveActive=false;
@@ -32475,8 +32590,49 @@ function _slagFriendshipCine(){
     try{playComm('nav',_L('The cage is OPEN!! Baby alien is FREE!! Running to SLAG!!','檻が開きました！！ ベイビーエイリアンが自由に！！ スラグに向かって走ってる！！'))}catch(_){}
     try{wfCineSubtitle(_L('★ THE BABY IS FREE! ★','★ ベイビー自由だ！ ★'),'#00ffcc')}catch(_){}
   },6500);
+  // v7.284: Baby alien plays with pilot + SLAG for 5s
   setTimeout(()=>{
-    // Baby reaches SLAG — SLAG stands up!
+    // Spawn baby alien mesh
+    try{
+      const baby=_makeBabyAlienMesh();
+      const bpos=cs._babyCage?cs._babyCage.position.clone().add(new THREE.Vector3(0,0.5,0)):new THREE.Vector3(2,0.5,3);
+      baby.position.copy(bpos);
+      scene.add(baby);
+      cs._babyMesh=baby;cs._babyPlayActive=true;cs._babyPlayT=0;
+    }catch(_){}
+  },7000);
+  setTimeout(()=>{
+    try{sfx.babyAlienCheer&&sfx.babyAlienCheer()}catch(_){}
+    try{wfCineSubtitle(_L('★ THE BABY IS HAPPY! ★','★ ベイビーが喜んでる！ ★'),'#00ffcc')}catch(_){}
+  },7200);
+  setTimeout(()=>{
+    try{sfx.babyAlienCheer&&sfx.babyAlienCheer()}catch(_){}
+    try{spawnP(new THREE.Vector3(2,2,2),0x00ffcc,14,1.2,0.7)}catch(_){}
+    try{spawnP(new THREE.Vector3(-1,1.5,3),0xffffff,10,1.0,0.5)}catch(_){}
+  },8300);
+  setTimeout(()=>{
+    // Pilot crouches to pet baby alien
+    try{
+      const pm=cs.pilotMesh;
+      if(pm){
+        const lArm=pm.getObjectByName('lArm');
+        if(lArm)lArm.rotation.x=-Math.PI*1.05; // reach down
+      }
+    }catch(_){}
+    try{playComm('pilot',_L('#N: Hey little guy... You\'re free now.','#N：おい、ちびっこ... お前は自由だ。'))}catch(_){}
+  },9000);
+  setTimeout(()=>{
+    try{sfx.babyAlienCheer&&sfx.babyAlienCheer()}catch(_){}
+    try{spawnConfetti(new THREE.Vector3(0,5,0),25)}catch(_){}
+    try{spawnP(new THREE.Vector3(0,3,0),0x88ffcc,18,1.5,0.9)}catch(_){}
+    try{wfCineSubtitle(_L('キャッキャ♪  ★','キャッキャ♪  ★'),'#00ffcc')}catch(_){}
+  },9900);
+  setTimeout(()=>{
+    // Stop baby anim
+    if(cs)cs._babyPlayActive=false;
+  },11400);
+  setTimeout(()=>{
+    // Baby reaches SLAG — SLAG stands up! (+5000ms from original 8000ms)
     if(sf&&sf.mesh){sf.mesh.rotation.x=0;sf.mesh.position.y=.42;
       // Axes go back up (celebrating)
       ['axeL','axeR'].forEach(n=>{const a=sf.mesh.getObjectByName(n);if(a){a.rotation.z=n==='axeL'?-.2:.2;}});
@@ -32487,16 +32643,16 @@ function _slagFriendshipCine(){
     try{spawnConfetti(new THREE.Vector3(0,7,0),130)}catch(_){}
     try{_spawnMoneyBurst(new THREE.Vector3(0,2,0),100)}catch(_){}
     for(let i=0;i<10;i++){setTimeout(()=>{try{spawnP(new THREE.Vector3((Math.random()-.5)*24,4+Math.random()*10,(Math.random()-.5)*24),0x88aaff,10,2,.8)}catch(_){}},i*380);}
-  },8000);
+  },13000);
   setTimeout(()=>{
     try{wfCineSubtitle(_L('★ NEW ALLY: SLAG ★  JOINS THE CREW!!','★ 新しい仲間: スラグ ★  クルーに加わった！！'),'#88aa44')}catch(_){}
     try{playComm('hq',_L('AMAZING!! SLAG has joined your crew!! Mission COMPLETE, #N!!','信じられない！！スラグがクルーに！！ ミッション完了、#N！！'))}catch(_){}
-  },10000);
+  },15000);
   setTimeout(()=>{
     try{wfCineSubtitle(_L('★  THE GALAXY IS AT PEACE  ★','★  銀河に平和が訪れた  ★'),'#aaddff')}catch(_){}
     try{playComm('nav',_L('The stars are calm, #N... You didn\'t just win — you made a friend.','星が穏やかです、#N... 勝っただけじゃない — 友達ができましたね。'))}catch(_){}
-  },12200);
-  setTimeout(()=>{try{endColosseum(true);}catch(e){}},15500);
+  },17200);
+  setTimeout(()=>{try{endColosseum(true);}catch(e){}},20500);
 }
 // ────────────────────────────────────────────────────────────────────────────
 function _impaleFighter(f,overrideX,overrideZ){
@@ -33082,6 +33238,16 @@ function updateColosseum(dt){
       try{sfx.monsterRoar&&sfx.monsterRoar('eel')}catch(_){}
     }
   }
+  // v7.284: baby alien bounce animation
+  if(cs._babyMesh&&cs._babyPlayActive){
+    cs._babyPlayT=(cs._babyPlayT||0)+dt;
+    cs._babyMesh.position.x=(cs._babyCage?cs._babyCage.position.x:2)+Math.sin(cs._babyPlayT*4.5)*2.5;
+    cs._babyMesh.position.y=Math.abs(Math.sin(cs._babyPlayT*6))*1.6+0.3;
+    cs._babyMesh.position.z=(cs._babyCage?cs._babyCage.position.z:3)+Math.cos(cs._babyPlayT*3.5)*1.5;
+    cs._babyMesh.rotation.y+=dt*3.5;
+    // Arm waves
+    cs._babyMesh.traverse(c=>{if(c.isLineSegments&&c.position.x!==0)c.rotation.z=Math.sin(cs._babyPlayT*8)*0.6*Math.sign(c.position.x);});
+  }
   // v7.250 ★ BBQ scene: fire + smoke particles
   if(cs._bbqActive&&cs._bbqFirePos){
     cs._bbqSmokeT=(cs._bbqSmokeT||0)+dt;
@@ -33601,16 +33767,20 @@ function startPodRace(){
   cleanupBossResidue();
   S._prLap=1;S._prPos=1;S._prFinished=false;S._prTime=0;
   S._prBoost=0;S._prBoostCD=0;S._prHP=6;S._prMaxHP=6;
-  S._prSpeed=55;S._prMaxSpeed=140;
+  S._prSpeed=55;S._prMaxSpeed=155;
   S._prSwerve=0;S._prVertical=0;
-  S._prDistance=0;S._prLapDist=2000;
+  S._prDistance=0;S._prLapDist=2200;
   S._prWalls=[];S._prProps=[];S._prAI=[];
   S._prHitCooldown=0;S._prRaceStarted=false;
   S._prEngineT=0;
+  // v7.284: curve system
+  S._prCurveX=0;S._prCurveV=0;S._prCurveT=4;
+  // v7.284: intro state
+  S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
   scene.background=new THREE.Color(0x220a00);
   scene.fog=new THREE.FogExp2(0x220a00,0.008);
-  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshBasicMaterial({color:0x8b3a00}));
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(800,800),new THREE.MeshBasicMaterial({color:0x8b3a00}));
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-3;scene.add(gnd);
   S._prGround=gnd;
   camera.position.set(0,4,C.CAM_Z+5);camera.rotation.set(0,0,0);
@@ -33618,31 +33788,34 @@ function startPodRace(){
   S._prPlayerPod=makePodRacerPod('player');
   S._prPlayerPod.position.set(0,1.5,camera.position.z-8);
   scene.add(S._prPlayerPod);
+  // v7.284: 8 racers \u2014 all colosseum monsters
   const AI_DEFS=[
-    {id:'tengu',   name:'TENGU',   col:0x44aaff, speed:1.15, agg:0.9, startX:-8},
-    {id:'mantis',  name:'MANTIS',  col:0x44ff44, speed:1.05, agg:0.7, startX:8},
-    {id:'predator',name:'PREDATOR',col:0xffaa00, speed:1.00, agg:0.5, startX:-16},
-    {id:'queen',   name:'QUEEN',   col:0xff44aa, speed:0.95, agg:0.8, startX:16},
-    {id:'eel',     name:'EEL',     col:0x00ffcc, speed:0.90, agg:0.4, startX:0},
+    {id:'tengu',    name:'TENGU',    title:'WIND SPIRIT',  col:0x44aaff, speed:1.18, agg:0.90, gridX:-28},
+    {id:'mantis',   name:'MANTIS',  title:'BLADE WING',   col:0x44ff44, speed:1.10, agg:0.80, gridX:-20},
+    {id:'centipede',name:'CENTIPEDE',title:'ARMORED LORD', col:0xff8800, speed:1.05, agg:0.65, gridX:-12},
+    {id:'eel',      name:'EEL',     title:'THUNDER EEL',  col:0x00ffcc, speed:0.98, agg:0.55, gridX:-4},
+    {id:'predator', name:'PREDATOR',title:'THE HUNTER',   col:0xffaa00, speed:1.02, agg:0.85, gridX:4},
+    {id:'jabba',    name:'JABBA',   title:'SLUG KING',    col:0xff88cc, speed:0.88, agg:0.40, gridX:12},
+    {id:'queen',    name:'QUEEN',   title:'HER MAJESTY',  col:0xff44aa, speed:0.95, agg:0.75, gridX:20},
+    {id:'kaiju',    name:'GORGON',  title:'KAIJU GOD',    col:0xdd2244, speed:0.92, agg:1.00, gridX:28},
   ];
   AI_DEFS.forEach((def,i)=>{
     const pod=makePodRacerPod(def.id,def.col);
-    const startZ=camera.position.z-20-i*15;
-    pod.position.set(def.startX,1.5,startZ);
+    // grid start: behind player, spread across X
+    const startZ=camera.position.z-30-i*5;
+    pod.position.set(def.gridX,1.5,startZ);
     scene.add(pod);
-    S._prAI.push({def,pod,x:def.startX,y:1.5,z:startZ,speed:def.speed,lap:1,dist:0,targetX:def.startX,swerveT:0,eliminated:false,hp:3,pos:i+2});
+    S._prAI.push({def,pod,x:def.gridX,y:1.5,z:startZ,
+      speed:def.speed,lap:1,raceDist:-(i+1)*20,targetX:def.gridX,
+      swerveT:Math.random()*Math.PI*2,eliminated:false,hp:3,pos:i+2});
   });
-  for(let i=0;i<20;i++) _spawnPodRaceSegment(camera.position.z-20-i*120);
+  // Spawn initial track segments
+  for(let i=0;i<25;i++) _spawnPodRaceSegment(camera.position.z-20-i*120, 0);
   _showPodRaceHUD();
   try{wfCineSubtitle('\u2605 BOONTA EVE CLASSIC \u2605','#ff8800')}catch(_){}
-  announce('LAP 1 / 3');
-  try{playComm('hq','Racers! Start your engines! The Boonta Eve Classic BEGINS!!')}catch(_){}
-  ['3','2','1','GO!!'].forEach((t,i)=>{
-    setTimeout(()=>{
-      try{wfCineSubtitle(t,i<3?'#ffffff':'#ffff00')}catch(_){}
-      if(i===3){S._prRaceStarted=true;}
-    },i*1000+500);
-  });
+  try{playComm('hq','Racers! The Boonta Eve Classic is about to begin!! Grid inspection!')}catch(_){}
+  // v7.284: start with racer intro parade, then F1 lights
+  setTimeout(()=>_startPodRaceIntro(),1500);
 }
 
 function makePodRacerPod(type,color){
@@ -33698,10 +33871,21 @@ function makePodRacerPod(type,color){
 }
 
 function updatePodRace(dt){
+  // v7.284: intro phase — AI parade, no player control yet
+  if(S._prIntroActive){_updatePodRaceIntroAnim(dt);return;}
   if(!S._prRaceStarted)return;
   if(S._prFinished)return;
   S._prTime+=dt;
   S._prHitCooldown=Math.max(0,S._prHitCooldown-dt);
+  // v7.284: curve system — track drifts left/right like Mario Kart
+  S._prCurveT-=dt;
+  if(S._prCurveT<=0){
+    S._prCurveV=(Math.random()-0.5)*56; // -28 to +28 units/s
+    S._prCurveT=3+Math.random()*5;
+  }
+  S._prCurveX+=S._prCurveV*dt;
+  if(S._prCurveX>42){S._prCurveX=42;S._prCurveV=-Math.abs(S._prCurveV);}
+  if(S._prCurveX<-42){S._prCurveX=-42;S._prCurveV=Math.abs(S._prCurveV);}
   const accel=keys['KeyW']||keys['ArrowUp'];
   const brake=keys['KeyS']||keys['ArrowDown'];
   const boost=(keys['ShiftLeft']||keys['ShiftRight'])&&S._prBoost>0;
@@ -33726,7 +33910,7 @@ function updatePodRace(dt){
   pod.position.x+=(targetX-pod.position.x)*4*dt;
   pod.position.y+=(targetY-pod.position.y)*3*dt;
   pod.position.z=camera.position.z-8;
-  pod.rotation.z=-S._prSwerve*0.25;
+  pod.rotation.z=-S._prSwerve*0.25-S._prCurveV*0.004;
   pod.rotation.x=S._prVertical*0.1;
   S._prEngineT+=dt;
   const scrollSpd=S._prSpeed;
@@ -33738,7 +33922,7 @@ function updatePodRace(dt){
   S._prProps=S._prProps.filter(p=>{
     if(p.position.z>camera.position.z+50){scene.remove(p);return false;}return true;
   });
-  if(S._prWalls.length<15)_spawnPodRaceSegment(camera.position.z-180);
+  if(S._prWalls.length<15)_spawnPodRaceSegment(camera.position.z-180, S._prCurveX);
   S._prDistance+=scrollSpd*dt;
   if(S._prDistance>=S._prLapDist){
     S._prDistance-=S._prLapDist;
@@ -33750,70 +33934,85 @@ function updatePodRace(dt){
     } else {
       try{wfCineSubtitle('LAP '+S._prLap+' / 3','#ffff00')}catch(_){}
       announce('LAP '+S._prLap);
-      S._prMaxSpeed+=15;
-      try{screenFlash(0.3)}catch(_){}
+      S._prMaxSpeed+=18;
+      try{screenFlash(0.4)}catch(_){}
+      S.shakeT=0.4;S.shakeI=1.2;
+      try{sfx._prLapFanfare&&sfx._prLapFanfare()}catch(_){}
     }
   }
   _updatePodRaceAI(dt);
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
   const camBob=Math.sin(S._prTime*8)*0.05*Math.min(1,S._prSpeed/80);
-  camera.position.x+=(pod.position.x*0.3-camera.position.x)*3*dt;
+  // v7.284: curve lean — camera tilts opposite to curve direction (F-ZERO feel)
+  const curveLean=S._prCurveV*0.014;
+  camera.position.x+=(pod.position.x*0.35+curveLean-camera.position.x)*3*dt;
   camera.position.y+=(pod.position.y+2+camBob-camera.position.y)*4*dt;
-  camera.lookAt(pod.position.x,pod.position.y,pod.position.z-20);
+  // v7.284: FOV widens at high speed (F-ZERO sensation)
+  const speedRatio=Math.min(1,S._prSpeed/S._prMaxSpeed);
+  camera.fov=Math.max(60,75+speedRatio*12);
+  camera.updateProjectionMatrix();
+  // v7.284: high-speed micro-vibration
+  if(S._prSpeed>110){
+    camera.position.y+=(Math.random()-0.5)*0.05;
+    camera.position.x+=(Math.random()-0.5)*0.03;
+  }
+  camera.lookAt(pod.position.x,pod.position.y,pod.position.z-22);
 }
 
-function _spawnPodRaceSegment(startZ){
+function _spawnPodRaceSegment(startZ, curveX){
+  curveX=curveX||0;
   const type=Math.floor(Math.random()*4);
   const wallCol=0xcc4400;
   const edgeMat=new THREE.LineBasicMaterial({color:wallCol});
   const segLen=120;
-  const widths=[28,18,22,30];
+  const widths=[28,20,24,32];
   const w=widths[type];
+  // v7.284: all X positions offset by curveX for curved track
   const lwG=new THREE.BoxGeometry(4,14,segLen);
   const lw=new THREE.LineSegments(new THREE.EdgesGeometry(lwG),edgeMat);
-  lw.position.set(-w/2-2,3,startZ-segLen/2);
+  lw.position.set(curveX-w/2-2,3,startZ-segLen/2);
   scene.add(lw);S._prWalls.push(lw);
   const rw=lw.clone();
-  rw.position.set(w/2+2,3,startZ-segLen/2);
+  rw.position.set(curveX+w/2+2,3,startZ-segLen/2);
   scene.add(rw);S._prWalls.push(rw);
   [-1,1].forEach(side=>{
     for(let ci=0;ci<3;ci++){
       const cG=new THREE.BoxGeometry(3+Math.random()*4,8+Math.random()*12,8+Math.random()*15);
       const cliff=new THREE.LineSegments(new THREE.EdgesGeometry(cG),edgeMat);
-      cliff.position.set(side*(w/2+5+Math.random()*8),8+Math.random()*6,startZ-20-ci*35-Math.random()*10);
+      cliff.position.set(curveX+side*(w/2+5+Math.random()*8),8+Math.random()*6,startZ-20-ci*35-Math.random()*10);
       scene.add(cliff);S._prWalls.push(cliff);
     }
   });
   if(type===2){
     const archTopG=new THREE.BoxGeometry(w+12,5,8);
     const arch=new THREE.LineSegments(new THREE.EdgesGeometry(archTopG),edgeMat);
-    arch.position.set(0,20,startZ-40);
+    arch.position.set(curveX,20,startZ-40);
     scene.add(arch);S._prWalls.push(arch);
     [-1,1].forEach(side=>{
       const pilG=new THREE.BoxGeometry(5,20,6);
       const pil=new THREE.LineSegments(new THREE.EdgesGeometry(pilG),edgeMat);
-      pil.position.set(side*(w/2+6),7,startZ-40);
+      pil.position.set(curveX+side*(w/2+6),7,startZ-40);
       scene.add(pil);S._prWalls.push(pil);
     });
   }
   if(Math.random()<0.4){
     [-1,1].forEach(side=>{
-      const standG=new THREE.BoxGeometry(12,6,20);
+      const standG=new THREE.BoxGeometry(14,6,22);
       const stand=new THREE.LineSegments(new THREE.EdgesGeometry(standG),new THREE.LineBasicMaterial({color:0xffaa44,transparent:true,opacity:0.6}));
-      stand.position.set(side*(w/2+12),0,startZ-25);
+      stand.position.set(curveX+side*(w/2+13),0,startZ-25);
       scene.add(stand);S._prProps.push(stand);
-      for(let si=0;si<8;si++){
+      for(let si=0;si<10;si++){
         const sfG=new THREE.BoxGeometry(0.4,1.2,0.4);
         const sf=new THREE.LineSegments(new THREE.EdgesGeometry(sfG),new THREE.LineBasicMaterial({color:[0xff4444,0x44ff44,0x4444ff,0xffff44][si%4]}));
-        sf.position.set(side*(w/2+8+Math.random()*8),3+Math.random()*3,startZ-15-Math.random()*15);
+        sf.position.set(curveX+side*(w/2+8+Math.random()*10),3+Math.random()*3,startZ-15-Math.random()*18);
         scene.add(sf);S._prProps.push(sf);
       }
     });
   }
-  for(let ri=0;ri<4;ri++){
-    const rx=(Math.random()-0.5)*100;
-    if(Math.abs(rx)<w/2+3)continue;
+  for(let ri=0;ri<5;ri++){
+    const rx=curveX+(Math.random()-0.5)*120;
+    if(Math.abs(rx-curveX)<w/2+3)continue;
     const rG=new THREE.BoxGeometry(3+Math.random()*8,2+Math.random()*6,3+Math.random()*8);
     const rock=new THREE.LineSegments(new THREE.EdgesGeometry(rG),new THREE.LineBasicMaterial({color:0x884422}));
     rock.position.set(rx,-1+Math.random()*2,startZ-Math.random()*segLen);
@@ -33822,29 +34021,56 @@ function _spawnPodRaceSegment(startZ){
 }
 
 function _updatePodRaceAI(dt){
-  S._prAI.forEach((ai)=>{
+  const curveCenter=S._prCurveX||0;
+  S._prAI.forEach((ai,idx)=>{
     if(ai.eliminated)return;
-    const aiSpd=(S._prSpeed||55)*ai.speed*(0.85+Math.random()*0.08);
+    // v7.284: rubber band — lagging AI catches up, leading AI slows slightly
+    const distDiff=S._prDistance-(ai.raceDist||0);
+    const rbFactor=distDiff>350?1.16:(distDiff<-250?0.87:1.0);
+    const aiSpd=(S._prSpeed||55)*ai.speed*rbFactor*(0.91+Math.random()*0.07);
+    ai.raceDist=(ai.raceDist||0)+aiSpd*dt;
     ai.pod.position.z+=aiSpd*dt;
+    // Recycle pod if too far behind
     const camZ=camera.position.z;
-    if(ai.pod.position.z>camZ+60){
-      ai.pod.position.z=camZ-100-Math.random()*50;
+    if(ai.pod.position.z>camZ+80){
+      ai.pod.position.z=camZ-200-Math.random()*100;
+      ai.raceDist=Math.min(ai.raceDist, S._prDistance+800);
     }
-    ai.swerveT+=dt*(0.4+Math.random()*0.3);
-    ai.targetX=Math.sin(ai.swerveT*ai.def.agg)*12+(ai.def.startX*0.3);
-    ai.x+=(ai.targetX-ai.x)*1.5*dt;
+    // v7.284: follow curve + swerving
+    ai.swerveT+=dt*(0.45+Math.random()*0.3);
+    let targetX=curveCenter+Math.sin(ai.swerveT*ai.def.agg)*11+(ai.def.gridX*0.15);
+    // Avoid other pods (overtaking)
+    S._prAI.forEach((other,oi)=>{
+      if(oi===idx||other.eliminated)return;
+      const dx=ai.x-other.x, dz=Math.abs(ai.pod.position.z-other.pod.position.z);
+      if(dz<8&&Math.abs(dx)<5){
+        targetX+=dx>0?4:-4; // push apart
+      }
+    });
+    // Also avoid player pod
+    const pp=S._prPlayerPod;
+    if(pp){
+      const pdx=ai.x-pp.position.x, pdz=Math.abs(ai.pod.position.z-pp.position.z);
+      if(pdz<8&&Math.abs(pdx)<5) targetX+=pdx>0?5:-5;
+    }
+    ai.x+=(targetX-ai.x)*2*dt;
     ai.pod.position.x=ai.x;
     ai.pod.position.y=1.5+Math.sin(ai.swerveT*3)*0.2;
-    ai.pod.rotation.z=(ai.targetX-ai.x)*0.05;
+    ai.pod.rotation.z=(targetX-ai.x)*0.05-S._prCurveV*0.004;
   });
+  // v7.284: realtime position calculation (1=leader)
+  const allDists=[{d:S._prDistance,p:true},...S._prAI.filter(a=>!a.eliminated).map(a=>({d:a.raceDist||0,p:false}))];
+  allDists.sort((a,b)=>b.d-a.d);
+  S._prPos=allDists.findIndex(r=>r.p)+1;
+  if(S._prPos<1)S._prPos=1;
 }
 
 function _checkPodRaceCollisions(){
   if(S._prHitCooldown>0)return;
   const pod=S._prPlayerPod;
   const px=pod.position.x,py=pod.position.y;
-  const trackHalfW=16+S._prSpeed/20;
-  if(Math.abs(px)>trackHalfW-1){
+  const trackHalfW=16+S._prSpeed/22;
+  if(Math.abs(px-(S._prCurveX||0))>trackHalfW-1){
     S._prSpeed*=0.6;
     S._prHitCooldown=1.5;
     S._prHP=Math.max(0,S._prHP-1);
@@ -33853,7 +34079,7 @@ function _checkPodRaceCollisions(){
     try{playComm('nav','Hull impact! Shields down!')}catch(_){}
     try{spawnP(new THREE.Vector3(px,py,pod.position.z-5),0xff6600,12,0.8,0.4)}catch(_){}
     if(S._prHP<=0){_prPlayerEliminated();return;}
-    pod.position.x=Math.sign(px)*(trackHalfW-2);
+    pod.position.x=(S._prCurveX||0)+Math.sign(px-(S._prCurveX||0))*(trackHalfW-2);
   }
   S._prAI.forEach(ai=>{
     if(ai.eliminated)return;
@@ -33898,9 +34124,89 @@ function _updatePodRaceHUD(){
   const speedEl=document.getElementById('pr-speed');
   const hpEl=document.getElementById('pr-hp');
   if(lapEl)lapEl.textContent='LAP '+(S._prLap||1)+' / 3';
-  if(posEl)posEl.textContent='P'+(S._prPos||1)+' / 6';
+  if(posEl)posEl.textContent='P'+(S._prPos||1)+' / 9';
   if(speedEl)speedEl.textContent=Math.floor(S._prSpeed||55)+' km/h';
   if(hpEl)hpEl.textContent='HULL: '+'\u2588'.repeat(Math.max(0,S._prHP||0))+'\u2591'.repeat(Math.max(0,(S._prMaxHP||6)-(S._prHP||0)));
+}
+
+// v7.284: Pod race intro — each racer drives past camera one by one
+function _startPodRaceIntro(){
+  S._prIntroActive=true;
+  S._prIntroIdx=0;
+  const card=document.getElementById('pr-intro-card');
+  const nameEl=document.getElementById('pr-intro-name');
+  const titleEl=document.getElementById('pr-intro-title');
+  if(card){card.style.display='block';card.style.opacity='0';}
+  try{playComm('hq','Grid inspection! 8 racers ready for the Boonta Eve Classic!!')}catch(_){}
+  _showNextPodRacer(0);
+}
+function _showNextPodRacer(idx){
+  if(!S._prIntroActive)return;
+  const ai=S._prAI[idx];
+  if(!ai){_endPodRaceIntro();return;}
+  const card=document.getElementById('pr-intro-card');
+  const nameEl=document.getElementById('pr-intro-name');
+  const titleEl=document.getElementById('pr-intro-title');
+  if(nameEl){nameEl.textContent=ai.def.name;nameEl.style.color=ai.def.colCss||('#'+ai.def.col.toString(16).padStart(6,'0'));}
+  if(titleEl){titleEl.textContent=ai.def.title||'';}
+  if(card){card.style.transition='opacity 0.3s';card.style.opacity='1';}
+  // Move pod to intro position — sweeps past camera
+  ai.pod.position.set(40,1.5,camera.position.z+5);
+  const sweepInterval=setInterval(()=>{
+    if(!S._prIntroActive){clearInterval(sweepInterval);return;}
+    ai.pod.position.x-=1.8;
+  },16);
+  // Engine rev SFX per racer
+  try{sfx._prRacerRev&&sfx._prRacerRev(ai.def.col)}catch(_){}
+  setTimeout(()=>{
+    clearInterval(sweepInterval);
+    // Return pod to grid slot
+    ai.pod.position.set(ai.def.gridX,1.5,camera.position.z-30-idx*5);
+    if(card)card.style.opacity='0';
+    setTimeout(()=>_showNextPodRacer(idx+1),280);
+  },1400);
+}
+function _endPodRaceIntro(){
+  S._prIntroActive=false;
+  const card=document.getElementById('pr-intro-card');
+  if(card)card.style.display='none';
+  try{playComm('hq','All racers on the grid!! F1 sequence — STAND BY!!')}catch(_){}
+  setTimeout(()=>_startF1Lights(),600);
+}
+function _updatePodRaceIntroAnim(dt){
+  // During intro: gently rotate pods on grid
+  if(!S._prAI)return;
+  S._prAI.forEach(ai=>{
+    if(ai&&ai.pod)ai.pod.rotation.y+=dt*0.5;
+  });
+}
+function _startF1Lights(){
+  const slEl=document.getElementById('pr-startlights');
+  if(slEl)slEl.style.display='flex';
+  // Light up 5 red lamps one by one
+  for(let i=0;i<5;i++){
+    setTimeout(()=>{
+      const sl=document.getElementById('pr-sl-'+i);
+      if(sl){sl.style.background='#ff0000';sl.style.boxShadow='0 0 18px #ff0000,0 0 36px #ff4400';}
+      try{sfx._prLightBeep&&sfx._prLightBeep()}catch(_){}
+    },i*500);
+  }
+  // 3.2s: all out → green → GO!
+  setTimeout(()=>{
+    for(let i=0;i<5;i++){
+      const sl=document.getElementById('pr-sl-'+i);
+      if(sl){sl.style.background='#00ff44';sl.style.boxShadow='0 0 24px #00ff44,0 0 48px #00aa22';}
+    }
+    try{screenFlash(0.6)}catch(_){}
+    try{wfCineSubtitle('GO!!','#00ff44')}catch(_){}
+    try{sfx._prGoBeep&&sfx._prGoBeep()}catch(_){}
+    S._prRaceStarted=true;
+    announce('LAP 1 / 3');
+    setTimeout(()=>{
+      const slEl=document.getElementById('pr-startlights');
+      if(slEl)slEl.style.display='none';
+    },800);
+  },3200);
 }
 
 // v7.283: Pod race test launcher
