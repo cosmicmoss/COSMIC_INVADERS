@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.288</title>
+<title>COSMIC INVADERS v7.289</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -770,7 +770,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.288 - LOADED
+  COSMIC INVADERS v7.289 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1113,7 +1113,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.288</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.289</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1475,7 +1475,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.288 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.289 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1510,7 +1510,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.288 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.289 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -33979,6 +33979,7 @@ function startPodRace(){
   // v7.288: nitro / smoke / wrench item state
   S._prNitroT=0;S._prNitroCD=0;S._prSmokeCD=0;S._prWrenchCD=0;
   S._prSmokeZone=null;S._prWrenches=[];
+  S._prBounceVX=0;// v7.289: lateral knockback velocity from pod-to-pod ramming
   S._prMapDots=null;// v7.288: rebuild minimap dots for this race
   S._prSpeed=55;S._prMaxSpeed=155;
   S._prSwerve=0;S._prVertical=0;
@@ -33998,23 +33999,23 @@ function startPodRace(){
   S._prGround=gnd;
   camera.position.set(0,4,C.CAM_Z+5);camera.rotation.set(0,0,0);
   camera.lookAt(0,2,C.CAM_Z-20);
-  S._prPlayerPod=makePodRacerPod('player');
+  S._prPlayerPod=makePodRacerPod('player',null,'speeder');// v7.289: player rides the forest speeder bike
   S._prPlayerPod.position.set(0,1.5,camera.position.z-8);
   scene.add(S._prPlayerPod);
-  // v7.284: 8 racers \u2014 all colosseum monsters
+  // v7.284: 8 racers \u2014 all colosseum monsters. v7.289: JABBA slot \u2192 SLAG REBORN (slag-only war-pod).
   const AI_DEFS=[
-    {id:'tengu',    name:'TENGU',    title:'WIND SPIRIT',  col:0x44aaff, speed:1.18, agg:0.90, gridX:-28},
-    {id:'mantis',   name:'MANTIS',  title:'BLADE WING',   col:0x44ff44, speed:1.10, agg:0.80, gridX:-20},
-    {id:'centipede',name:'CENTIPEDE',title:'ARMORED LORD', col:0xff8800, speed:1.05, agg:0.65, gridX:-12},
-    {id:'eel',      name:'EEL',     title:'THUNDER EEL',  col:0x00ffcc, speed:0.98, agg:0.55, gridX:-4},
-    {id:'predator', name:'PREDATOR',title:'THE HUNTER',   col:0xffaa00, speed:1.02, agg:0.85, gridX:4},
-    {id:'jabba',    name:'JABBA',   title:'SLUG KING',    col:0xff88cc, speed:0.88, agg:0.40, gridX:12},
-    {id:'queen',    name:'QUEEN',   title:'HER MAJESTY',  col:0xff44aa, speed:0.95, agg:0.75, gridX:20},
-    {id:'kaiju',    name:'GORGON',  title:'KAIJU GOD',    col:0xdd2244, speed:0.92, agg:1.00, gridX:28},
+    {id:'tengu',    name:'TENGU',    title:'WIND SPIRIT',  col:0x44aaff, speed:1.18, agg:0.90, gridX:-28, variant:'pod'},
+    {id:'mantis',   name:'MANTIS',  title:'BLADE WING',   col:0x44ff44, speed:1.10, agg:0.80, gridX:-20, variant:'pod'},
+    {id:'centipede',name:'CENTIPEDE',title:'ARMORED LORD', col:0xff8800, speed:1.05, agg:0.65, gridX:-12, variant:'pod'},
+    {id:'eel',      name:'EEL',     title:'THUNDER EEL',  col:0x00ffcc, speed:0.98, agg:0.55, gridX:-4, variant:'pod'},
+    {id:'predator', name:'PREDATOR',title:'THE HUNTER',   col:0xffaa00, speed:1.02, agg:0.85, gridX:4, variant:'pod'},
+    {id:'slag',     name:'SLAG REBORN',title:'THE TYRANT',col:0xcc3300, speed:1.12, agg:0.95, gridX:12, variant:'slag'},
+    {id:'queen',    name:'QUEEN',   title:'HER MAJESTY',  col:0xff44aa, speed:0.95, agg:0.75, gridX:20, variant:'pod'},
+    {id:'kaiju',    name:'GORGON',  title:'KAIJU GOD',    col:0xdd2244, speed:0.92, agg:1.00, gridX:28, variant:'pod'},
   ];
   // v7.285: F1-style 2-column grid \u2014 all 8 racers line up simultaneously
   AI_DEFS.forEach((def,i)=>{
-    const pod=makePodRacerPod(def.id,def.col);
+    const pod=makePodRacerPod(def.id,def.col,def.variant);
     // 2-column grid: odd index=left(-5), even index=right(+5)
     const gridCol=(i%2===0)?-5:5;
     const gridRow=Math.floor(i/2); // 0-3
@@ -34038,23 +34039,45 @@ function startPodRace(){
   setTimeout(()=>_startF1Lights(),1800);
 }
 
-function makePodRacerPod(type,color){
+// v7.289: pod racers now come in THREE variants:
+//   'speeder' (player) — the forest tactical speeder bike (rider already onboard)
+//   'pod'     (AI x7)   — the classic twin-engine pod + a seated flight-suit pilot
+//   'slag'    (AI x1)   — SLAG REBORN's red war-pod + a bulky crime-lord rider
+// Every variant has a visible pilot. g.userData.halfW = lateral collision half-width.
+function makePodRacerPod(type,color,variant){
+  variant=variant||(type==='player'?'speeder':'pod');
   const g=new THREE.Group();g.name='podRacer_'+type;
   const isPlayer=(type==='player');
   const col=color||(isPlayer?0xffcc00:0x888888);
+  // --- SPEEDER variant (player): reuse the forest speeder bike, drop the pillion doctor ---
+  if(variant==='speeder'){
+    let bike;
+    try{bike=makeSpeederBike(true);}catch(_){bike=new THREE.Group();}
+    try{const doc=bike.getObjectByName('bikeDoctor');if(doc&&doc.parent)doc.parent.remove(doc);}catch(_){}
+    bike.scale.setScalar(2.4);
+    bike.rotation.y=Math.PI;       // nose → -Z (into the screen / race forward)
+    bike.position.y=-0.5;
+    g.add(bike);
+    g.userData.halfW=3.5;g.userData.variant='speeder';
+    return g;
+  }
+  // --- classic pod body (shared by 'pod' and 'slag') ---
+  const big=(variant==='slag');
   const mFill=c=>new THREE.MeshBasicMaterial({color:c});
   const mEdge=c=>new THREE.LineBasicMaterial({color:c});
+  const engFill=big?0x2a0a00:(isPlayer?0x1a1a00:0x111111);
+  const body=new THREE.Group();
   [-1,1].forEach(side=>{
     const eng=new THREE.Group();
     const eG=new THREE.CylinderGeometry(0.8,1.0,4.5,8);
-    eng.add(new THREE.Mesh(eG,mFill(isPlayer?0x1a1a00:0x111111)));
+    eng.add(new THREE.Mesh(eG,mFill(engFill)));
     eng.add(new THREE.LineSegments(new THREE.EdgesGeometry(eG),mEdge(col)));
     const iG=new THREE.TorusGeometry(1.0,0.15,6,12);
     const intake=new THREE.LineSegments(new THREE.EdgesGeometry(iG),mEdge(col));
     intake.position.z=-2.5;intake.rotation.x=Math.PI/2;
     eng.add(intake);
     const exG=new THREE.CylinderGeometry(0.5,0.3,0.8,8);
-    const exMesh=new THREE.LineSegments(new THREE.EdgesGeometry(exG),mEdge(0xff6600));
+    const exMesh=new THREE.LineSegments(new THREE.EdgesGeometry(exG),mEdge(big?0xff3300:0xff6600));
     exMesh.position.z=2.5;exMesh.rotation.x=Math.PI/2;
     eng.add(exMesh);
     const fG=new THREE.BoxGeometry(0.1,1.0,2.0);
@@ -34063,30 +34086,78 @@ function makePodRacerPod(type,color){
     eng.add(fin);
     eng.rotation.x=Math.PI/2;
     eng.position.set(side*5,0.5,0);
-    g.add(eng);
+    body.add(eng);
   });
   const cpG=new THREE.BoxGeometry(1.4,0.9,2.2);
-  g.add(new THREE.Mesh(cpG,mFill(0x0a0a1a)));
-  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(cpG),mEdge(col)));
+  body.add(new THREE.Mesh(cpG,mFill(big?0x1a0500:0x0a0a1a)));
+  body.add(new THREE.LineSegments(new THREE.EdgesGeometry(cpG),mEdge(col)));
   const canG=new THREE.SphereGeometry(0.6,6,4);
-  const can=new THREE.LineSegments(new THREE.EdgesGeometry(canG),mEdge(0x44aaff));
+  const can=new THREE.LineSegments(new THREE.EdgesGeometry(canG),mEdge(big?0xffaa44:0x44aaff));
   can.scale.set(0.9,0.6,1.2);can.position.set(0,0.5,-0.2);
-  g.add(can);
+  body.add(can);
   const antG=new THREE.CylinderGeometry(0.03,0.03,0.8,4);
   const ant=new THREE.LineSegments(new THREE.EdgesGeometry(antG),mEdge(col));
   ant.rotation.x=Math.PI/2;ant.position.set(0,0.3,-1.3);
-  g.add(ant);
+  body.add(ant);
   const pts=[new THREE.Vector3(-5,0,0),new THREE.Vector3(-2,-0.3,0),new THREE.Vector3(0,0,0),new THREE.Vector3(2,-0.3,0),new THREE.Vector3(5,0,0)];
   const cableGeo=new THREE.BufferGeometry().setFromPoints(pts);
   const cable=new THREE.Line(cableGeo,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.7}));
   cable.position.y=0.2;
-  g.add(cable);
+  body.add(cable);
   [-1,1].forEach(side=>{
     const sG=new THREE.BoxGeometry(0.08,0.08,1.5);
     const strut=new THREE.LineSegments(new THREE.EdgesGeometry(sG),mEdge(col));
     strut.position.set(side*2.5,-0.2,0);
-    g.add(strut);
+    body.add(strut);
   });
+  if(big)body.scale.setScalar(1.18);
+  g.add(body);
+  // --- visible pilot/rider ---
+  if(variant==='slag'){
+    const rider=_makeSlagPilot();
+    rider.position.set(0,0.05,-0.05);
+    g.add(rider);
+    g.userData.halfW=6;
+  }else{
+    const pilot=makePilotFigure();
+    pilot.scale.setScalar(0.42);
+    pilot.position.set(0,-0.1,0.0);
+    pilot.rotation.y=Math.PI;       // seat facing forward (-Z); we view the pilot's back
+    pilot.traverse(o=>{o.userData.preserveColor=true;});
+    g.add(pilot);
+    g.userData.halfW=5;
+  }
+  g.userData.variant=variant;
+  return g;
+}
+
+// v7.289: bulky red crime-lord rider for the SLAG war-pod (lightweight line/mesh build).
+function _makeSlagPilot(){
+  const g=new THREE.Group();g.name='slagPilot';
+  const mFill=c=>new THREE.MeshBasicMaterial({color:c});
+  const mEdge=c=>new THREE.LineBasicMaterial({color:c});
+  const addSolid=(geo,fc,ec,pos,scl)=>{
+    const m=new THREE.Mesh(geo,mFill(fc));m.position.set(pos[0],pos[1],pos[2]);
+    if(scl)m.scale.set(scl[0],scl[1],scl[2]);g.add(m);
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),mEdge(ec));
+    e.position.copy(m.position);e.scale.copy(m.scale);g.add(e);return m;
+  };
+  // fat slug-like torso
+  addSolid(new THREE.SphereGeometry(0.72,8,6),0x7a1500,0xff5522,[0,0.55,0],[1,1.15,0.9]);
+  // chest plate
+  addSolid(new THREE.BoxGeometry(0.7,0.5,0.18),0x4a0d00,0xff7744,[0,0.7,0.55],null);
+  // domed head
+  addSolid(new THREE.SphereGeometry(0.44,8,6),0x8a2a10,0xff7733,[0,1.32,0.02],[1.1,0.9,1]);
+  // glowing eyes
+  [-0.16,0.16].forEach(x=>addSolid(new THREE.SphereGeometry(0.07,5,4),0xffdd33,0xffff99,[x,1.34,0.36],null));
+  // stubby arms
+  [-1,1].forEach(s=>{
+    const aG=new THREE.CylinderGeometry(0.16,0.13,0.7,6);
+    const m=addSolid(aG,0x7a1500,0xff5522,[s*0.72,0.62,0.18],null);
+    m.rotation.z=s*0.5;m.rotation.x=-0.5;
+    const e=g.children[g.children.length-1];e.rotation.copy(m.rotation);
+  });
+  g.traverse(o=>{o.userData.preserveColor=true;});
   return g;
 }
 
@@ -34137,6 +34208,8 @@ function updatePodRace(dt){
   const targetX=S._prSwerve*18;
   const targetY=1.5+S._prVertical*3;
   pod.position.x+=(targetX-pod.position.x)*4*dt;
+  pod.position.x+=(S._prBounceVX||0)*dt;// v7.289: ramming knockback
+  S._prBounceVX=(S._prBounceVX||0)*0.86;
   pod.position.y+=(targetY-pod.position.y)*3*dt;
   pod.position.z=camera.position.z-8;
   pod.rotation.z=-S._prSwerve*0.25-S._prCurveV*0.004;
@@ -34366,12 +34439,18 @@ function _updatePodRaceAI(dt){
     // v7.284: follow curve + swerving
     ai.swerveT+=dt*(0.45+Math.random()*0.3);
     let targetX=curveCenter+Math.sin(ai.swerveT*ai.def.agg)*11+(ai.def.gridX*0.15);
-    // Avoid other pods (overtaking)
+    // Avoid other pods (overtaking) + v7.289: physical bounce when they actually collide
     S._prAI.forEach((other,oi)=>{
       if(oi===idx||other.eliminated)return;
       const dx=ai.x-other.x, dz=Math.abs(ai.pod.position.z-other.pod.position.z);
       if(dz<8&&Math.abs(dx)<5){
         targetX+=dx>0?4:-4; // push apart
+      }
+      // v7.289: hard contact → exchange lateral impulse (they bounce off each other)
+      if(dz<5&&Math.abs(dx)<3.5){
+        const s=dx>=0?1:-1;
+        ai.vx=(ai.vx||0)+s*9;
+        other.vx=(other.vx||0)-s*9;
       }
     });
     // Also avoid player pod
@@ -34381,6 +34460,8 @@ function _updatePodRaceAI(dt){
       if(pdz<8&&Math.abs(pdx)<5) targetX+=pdx>0?5:-5;
     }
     ai.x+=(targetX-ai.x)*2*dt;
+    ai.x+=(ai.vx||0)*dt;// v7.289: apply knockback velocity
+    ai.vx=(ai.vx||0)*0.85;// decay
     ai.pod.position.x=ai.x;
     ai.pod.position.y=1.5+Math.sin(ai.swerveT*3)*0.2;
     ai.pod.rotation.z=(targetX-ai.x)*0.05-S._prCurveV*0.004;
@@ -34414,16 +34495,37 @@ function _checkPodRaceCollisions(){
     if(S._prHP<=0){_prPlayerEliminated();return;}
     pod.position.x=(S._prCurveX||0)+Math.sign(px-(S._prCurveX||0))*(trackHalfW-2);
   }
+  // v7.289: pod-to-pod ramming — bounce both apart, nitro ram damages the rival
+  const nitroRam=(S._prNitroT||0)>0;
+  const myHalf=(pod.userData&&pod.userData.halfW)||4;
   S._prAI.forEach(ai=>{
-    if(ai.eliminated)return;
+    if(ai.eliminated||!ai.pod)return;
     const dx=px-ai.pod.position.x;
     const dz=pod.position.z-ai.pod.position.z;
-    if(Math.abs(dz)<6&&Math.abs(dx)<5){
-      S._prSpeed*=0.75;
-      S._prHitCooldown=0.8;
-      try{screenFlash(0.2)}catch(_){}
-      S.shakeT=0.3;S.shakeI=1.0;
-      try{spawnP(new THREE.Vector3(px,py,pod.position.z-3),0xff8800,8,0.6,0.3)}catch(_){}
+    const aiHalf=(ai.pod.userData&&ai.pod.userData.halfW)||5;
+    const lat=(myHalf+aiHalf)*0.5;
+    if(Math.abs(dz)<6&&Math.abs(dx)<lat){
+      const sign=dx>=0?1:-1;// +1 = player on the right of the AI
+      const imp=nitroRam?22:13;
+      S._prBounceVX=(S._prBounceVX||0)+sign*imp*0.5;// player recoils
+      ai.vx=(ai.vx||0)-sign*imp;                    // rival flung the opposite way (lighter)
+      // immediate de-overlap so they don't stick
+      ai.x-=sign*(lat-Math.abs(dx))*0.6;ai.pod.position.x=ai.x;
+      S._prSpeed*=nitroRam?0.92:0.8;
+      S._prHitCooldown=0.35;
+      try{screenFlash(nitroRam?0.35:0.2)}catch(_){}
+      S.shakeT=0.3;S.shakeI=nitroRam?1.4:1.0;
+      try{spawnP(new THREE.Vector3(px,py,pod.position.z-3),nitroRam?0x66ccff:0xff8800,nitroRam?14:8,0.7,0.35)}catch(_){}
+      // nitro body-slam knocks a rival out of the race
+      if(nitroRam){
+        ai.hp=(ai.hp!=null?ai.hp:3)-1;
+        if(ai.hp<=0){
+          ai.eliminated=true;
+          try{spawnP(ai.pod.position.clone(),0xff5522,22,1.2,0.7)}catch(_){}
+          try{ai.pod.visible=false}catch(_){}
+          try{wfCineSubtitle((ai.def&&ai.def.name||'RIVAL')+' WRECKED!','#ff7733')}catch(_){}
+        }
+      }
     }
   });
 }
@@ -43978,7 +44080,13 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
   updateAutoQuality();
   switch(S.phase){
     case 'TITLE':updateTitle(dt);break;
-    case 'PLAYING':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateComms(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();updateTargetPractice(dt);try{updateBossShrapnel(dt)}catch(_){}if(selectedStage&&selectedStage.id==='podrace'){try{updatePodRace(dt)}catch(e){console.error('podrace:',e)}}break;
+    case 'PLAYING':S.gameTime+=dt;
+      // v7.289 ★ POD RACE ISOLATION: while the pod race runs inside the PLAYING phase, the normal
+      // combat updaters (updateEnemies/spawnWave/checkCollisions/updateReinforcements/…) must NOT run —
+      // otherwise updateEnemies' "enemies empty → auto-spawn next wave" logic re-spawns Stage-1 Wave-1
+      // grunts on the track. Run ONLY particles (nitro/wrench/smoke sparks) + comms + the pod-race loop.
+      if(selectedStage&&selectedStage.id==='podrace'){updateParticles(dt);updateComms(dt);try{updatePodRace(dt)}catch(e){console.error('podrace:',e)}break;}
+      updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateComms(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();updateTargetPractice(dt);try{updateBossShrapnel(dt)}catch(_){}break;
     case 'BONUS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateBonus(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();try{updateBossShrapnel(dt)}catch(_){}break;
     case 'FORTRESS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateFortress(dt);updateRadar();updateBossHP();try{updateEscortRetreat(dt)}catch(e){};try{_updatePursuitFighters(dt)}catch(e){};try{_updateFormationAllies(dt)}catch(e){}break;
     case 'FORTRESS_APPROACH':try{updateFortressApproachCine(dt)}catch(e){console.error('fortress approach:',e);S.phase='FORTRESS'}break;
