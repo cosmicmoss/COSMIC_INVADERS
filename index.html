@@ -34261,11 +34261,12 @@ function _updatePodRaceItems(dt){
       let hit=false;
       if(w.target&&!w.target.eliminated&&w.target.pod){
         const tp=w.target.pod.position;
-        const d=w.mesh.position.distanceTo(tp);
         const step=Math.min(1,9*dt);
         w.mesh.position.lerp(new THREE.Vector3(tp.x,tp.y+0.6,tp.z),step);
         w.mesh.rotation.z+=dt*18;w.mesh.rotation.x+=dt*12;
-        if(d<3.2)hit=true;
+        // lerp後の距離で判定（即ヒットバグ防止）＋最小飛行時間0.3s保証
+        const dAfter=w.mesh.position.distanceTo(tp);
+        if(dAfter<3.2&&w.life<2.2)hit=true;
       } else {
         w.mesh.position.z-=120*dt;// no target — fly forward then expire
         w.mesh.rotation.z+=dt*18;
