@@ -1117,7 +1117,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
-      <input type="text" id="callsign-input-main" placeholder="JOHN RAMBO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="_updateCallsignCount()">
+      <input type="text" id="callsign-input-main" placeholder="RAMBO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="_updateCallsignCount()">
       <input type="hidden" id="callsign-input">
       <div id="callsign-count">0 / 10</div>
       <button type="button" style="display:block;margin:18px auto 0;font-size:18px;color:#ff0;padding:18px 40px;border:3px solid #ff0;cursor:pointer;letter-spacing:3px;background:rgba(60,40,0,0.4);border-radius:6px;font-family:inherit;min-height:64px;min-width:280px;box-shadow:0 0 20px rgba(255,200,0,0.5);-webkit-tap-highlight-color:rgba(255,255,0,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold" id="btn-confirm-name" onclick="confirmCallsign()">&#9654; BEGIN ODYSSEY &#9664;</button>
@@ -1584,7 +1584,7 @@ const S={
   cycle:0, heat:0,overheated:false, napalmAmmo:0,
   returnTimer:0, dockTimer:0,dockPhase:0,
   invertY:false,
-  callsign:'JOHN RAMBO',
+  callsign:'RAMBO',
   shipIdx:1,willRescue:false,// v6.69: default ship = EASY (index 1)
   replayTimer:0,replayCut:0,
   escapeTimer:0,escapeFortMesh:null,
@@ -19224,7 +19224,7 @@ function launchTrenchTest(){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
   selectedStage=STAGES.find(s=>s.id==='space')||STAGES[0];
   if(!S.callsign){
-    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
   if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
@@ -19255,7 +19255,7 @@ function launchAsteroidTest(){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
   selectedStage=STAGES.find(s=>s.id==='space')||STAGES[0];
   if(!S.callsign){
-    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
   if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
@@ -19282,7 +19282,7 @@ function launchDockingTest(){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
   selectedStage=STAGES.find(s=>s.id==='space')||STAGES[0];
   if(!S.callsign){
-    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
   if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
@@ -19321,7 +19321,7 @@ function launchFireBossTest(){
   // Force fire stage selection
   selectedStage=STAGES.find(s=>s.id==='fire')||STAGES[0];
   if(!S.callsign){
-    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
   if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
@@ -19366,7 +19366,7 @@ function launchForestPhaseTest(phase){
   // Force Forest Planet selection
   selectedStage=STAGES.find(s=>s.id==='forest')||STAGES[0];
   if(!S.callsign){
-    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
   if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
@@ -19568,7 +19568,7 @@ function launchTestStage(idx){
   }
   // Set defaults
   if(!S.callsign){
-    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
   if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
@@ -19707,7 +19707,7 @@ function closeBossTest(){
 function launchBossTest(id){
   const ov=document.getElementById('boss-test');if(ov)ov.remove();
   if(!S.callsign){
-    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['RAMBO'];
     S.callsign=pool[Math.floor(Math.random()*pool.length)];
   }
   if(!selectedShip)selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
@@ -34174,156 +34174,160 @@ function startPodRace(){
 //   'pod'     (AI x7)   — the classic twin-engine pod + a seated flight-suit pilot
 //   'slag'    (AI x1)   — SLAG REBORN's red war-pod + a bulky crime-lord rider
 // Every variant has a visible pilot. g.userData.halfW = lateral collision half-width.
+// v7.293: each AI pod has a unique shape themed to its colosseum monster.
+// Monster rider is built via makeColosseumFighter (or _makeSlagPilot for slag).
 function makePodRacerPod(type,color,variant){
-  variant=variant||(type==='player'?'speeder':'pod');
   const g=new THREE.Group();g.name='podRacer_'+type;
   const isPlayer=(type==='player');
   const col=color||(isPlayer?0xffcc00:0x888888);
-  // --- SPEEDER variant (player): reuse the forest speeder bike, drop the pillion doctor ---
-  if(variant==='speeder'){
+  // helpers
+  const mF=c=>new THREE.MeshBasicMaterial({color:c});
+  const mE=c=>new THREE.LineBasicMaterial({color:c});
+  const wf=(geo,wCol)=>{const gr=new THREE.Group();gr.add(new THREE.Mesh(geo,mF((wCol*0.12)|0)));gr.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),mE(wCol)));return gr;};
+  const cab=(pts,lCol)=>{const cg=new THREE.BufferGeometry().setFromPoints(pts.map(p=>new THREE.Vector3(p[0],p[1],p[2])));g.add(new THREE.Line(cg,mE(lCol||col)));};
+  // --- SPEEDER (player) ---
+  if(isPlayer){
     let bike;
     try{bike=makeSpeederBike(true);}catch(_){bike=new THREE.Group();}
     try{const doc=bike.getObjectByName('bikeDoctor');if(doc&&doc.parent)doc.parent.remove(doc);}catch(_){}
-    bike.scale.setScalar(2.4);
-    bike.rotation.y=Math.PI;       // nose → -Z (into the screen / race forward)
-    bike.position.y=-0.5;
-    g.add(bike);
-    g.userData.halfW=3.5;g.userData.variant='speeder';
-    return g;
+    bike.scale.setScalar(2.4);bike.rotation.y=Math.PI;bike.position.y=-0.5;
+    g.add(bike);g.userData.halfW=3.5;g.userData.variant='speeder';return g;
   }
-  // --- classic pod body (shared by 'pod' and 'slag') ---
-  const big=(variant==='slag');
-  const mFill=c=>new THREE.MeshBasicMaterial({color:c});
-  const mEdge=c=>new THREE.LineBasicMaterial({color:c});
-  const engFill=big?0x2a0a00:(isPlayer?0x1a1a00:0x111111);
-  const body=new THREE.Group();
-  // v7.291: engines at 70% width (side*3.5 instead of *5), angled forward like real pod racer
-  // Each engine group is positioned to the side AND forward, then rotated inward so it
-  // points toward the cockpit — mimicking Anakin's Radon-Ulzer 620C layout.
-  const ENG_X=big?4.1:3.5;   // lateral spread (70% of old side*5=3.5)
-  const ENG_Z=-1.8;           // engines pushed forward relative to cockpit
-  const ENG_TOE=big?0.18:0.22;// toe-in angle (rad): front of engine points slightly inward
-  [-1,1].forEach(side=>{
-    const eng=new THREE.Group();
-    // Turbine barrel — longer to look more Star-Wars-y
-    const eG=new THREE.CylinderGeometry(0.75,0.95,5.5,10);
-    eng.add(new THREE.Mesh(eG,mFill(engFill)));
-    eng.add(new THREE.LineSegments(new THREE.EdgesGeometry(eG),mEdge(col)));
-    // Intake ring at front (forward = local -Z after rotation)
-    const iG=new THREE.TorusGeometry(0.96,0.13,7,14);
-    const intake=new THREE.LineSegments(new THREE.EdgesGeometry(iG),mEdge(col));
-    intake.position.z=-3.0;intake.rotation.x=Math.PI/2;
-    eng.add(intake);
-    // Second intake band mid-engine
-    const iG2=new THREE.TorusGeometry(0.88,0.09,6,12);
-    const intake2=new THREE.LineSegments(new THREE.EdgesGeometry(iG2),mEdge(col));
-    intake2.position.z=-0.8;intake2.rotation.x=Math.PI/2;
-    eng.add(intake2);
-    // Exhaust cone at rear
-    const exG=new THREE.CylinderGeometry(0.6,0.35,1.0,8);
-    const exMesh=new THREE.LineSegments(new THREE.EdgesGeometry(exG),mEdge(big?0xff3300:0xff6600));
-    exMesh.position.z=3.2;exMesh.rotation.x=Math.PI/2;
-    eng.add(exMesh);
-    // Exhaust glow fill
-    eng.add(new THREE.Mesh(exG,mFill(big?0x660000:0x331100)));
-    eng.children[eng.children.length-1].position.copy(exMesh.position);
-    eng.children[eng.children.length-1].rotation.copy(exMesh.rotation);
-    // Top stabiliser fin
-    const fG=new THREE.BoxGeometry(0.1,0.9,2.2);
-    const fin=new THREE.LineSegments(new THREE.EdgesGeometry(fG),mEdge(col));
-    fin.position.set(0,1.0,0.2);
-    eng.add(fin);
-    // Engine pitched to run along Z, then toe-in around Y
-    eng.rotation.set(Math.PI/2, -side*ENG_TOE, 0);
-    eng.position.set(side*ENG_X, 0.5, ENG_Z);
-    body.add(eng);
-  });
-  // Cockpit pod — small, between and slightly behind the engines (authentic look)
-  const cpG=new THREE.BoxGeometry(1.2,0.8,2.0);
-  body.add(new THREE.Mesh(cpG,mFill(big?0x1a0500:0x0a0a1a)));
-  body.add(new THREE.LineSegments(new THREE.EdgesGeometry(cpG),mEdge(col)));
-  // Canopy dome
-  const canG=new THREE.SphereGeometry(0.55,7,5);
-  const can=new THREE.LineSegments(new THREE.EdgesGeometry(canG),mEdge(big?0xffaa44:0x44aaff));
-  can.scale.set(0.85,0.55,1.1);can.position.set(0,0.45,-0.15);
-  body.add(can);
-  // Antenna/tail fin
-  const antG=new THREE.CylinderGeometry(0.025,0.025,0.7,4);
-  const ant=new THREE.LineSegments(new THREE.EdgesGeometry(antG),mEdge(col));
-  ant.rotation.x=Math.PI/2;ant.position.set(0,0.28,-1.2);
-  body.add(ant);
-  // Energy cables: cockpit → each engine (catenary droop, 5 points)
-  [-1,1].forEach(side=>{
-    const ex=side*ENG_X, ez=ENG_Z;
-    const pts=[
-      new THREE.Vector3(side*0.55,0.1,0),
-      new THREE.Vector3(side*(ENG_X*0.5),  -0.35, ez*0.3),
-      new THREE.Vector3(side*(ENG_X*0.75), -0.5,  ez*0.6),
-      new THREE.Vector3(side*(ENG_X*0.9),  -0.3,  ez*0.85),
-      new THREE.Vector3(ex, 0.1, ez+1.0)
-    ];
-    const cableGeo=new THREE.BufferGeometry().setFromPoints(pts);
-    body.add(new THREE.Line(cableGeo,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.8})));
-    // Secondary cable slightly above (dual cable per side like the movie)
-    const pts2=pts.map((p,i)=>new THREE.Vector3(p.x,p.y+0.18+Math.sin(i*0.7)*0.1,p.z));
-    const cg2=new THREE.BufferGeometry().setFromPoints(pts2);
-    body.add(new THREE.Line(cg2,new THREE.LineBasicMaterial({color:0xaaaaaa,transparent:true,opacity:0.5})));
-  });
-  // Cockpit-side struts (short arms to cable attachment)
-  [-1,1].forEach(side=>{
-    const sG=new THREE.BoxGeometry(0.07,0.07,1.2);
-    const strut=new THREE.LineSegments(new THREE.EdgesGeometry(sG),mEdge(col));
-    strut.position.set(side*1.8,-0.18,0.2);
-    body.add(strut);
-  });
-  if(big)body.scale.setScalar(1.18);
-  g.add(body);
-  // --- visible pilot/rider ---
-  if(variant==='slag'){
-    const rider=_makeSlagPilot();
-    rider.position.set(0,0.05,-0.05);
+  // --- per-monster unique pod bodies ---
+  switch(type){
+    case 'tengu':{// Fan-turbine engines (5 blade slats + hub), beak-nose cockpit
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        for(let i=0;i<5;i++){const sl=wf(new THREE.BoxGeometry(0.1,1.8,0.09),col);sl.rotation.y=(i-2)*0.2;eng.add(sl);}
+        const hub=wf(new THREE.CylinderGeometry(0.38,0.38,0.25,8),col);eng.add(hub);
+        const exR=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.45,0.07,6,10)),mE(col));
+        exR.position.z=1.3;exR.rotation.x=Math.PI/2;eng.add(exR);
+        eng.rotation.set(Math.PI/2,0,0);eng.position.set(s*3.2,0.4,-1.5);g.add(eng);
+      });
+      g.add(wf(new THREE.BoxGeometry(1.0,1.0,2.0),col));// cockpit
+      const beak=wf(new THREE.CylinderGeometry(0.06,0.2,1.1,4),col);beak.rotation.x=Math.PI/2;beak.position.set(0,0.25,-1.4);g.add(beak);
+      const cn=wf(new THREE.SphereGeometry(0.48,6,5),col);cn.scale.set(0.8,0.6,1.0);cn.position.set(0,0.55,0);g.add(cn);
+      cab([[-0.4,0.1,0.8],[-1.8,-0.3,-0.2],[-3.2,0.2,-0.8]]);cab([[0.4,0.1,0.8],[1.8,-0.3,-0.2],[3.2,0.2,-0.8]]);
+      g.userData.halfW=3.5;break;}
+    case 'mantis':{// Sickle-slab engines, wedge cockpit
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        eng.add(wf(new THREE.BoxGeometry(0.5,0.55,5.2),col));// barrel
+        const sk=wf(new THREE.BoxGeometry(0.1,1.6,0.08),col);sk.position.set(0,1.1,-0.7);sk.rotation.z=s*0.55;eng.add(sk);// sickle
+        const ir=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.55,0.08,6,10)),mE(col));
+        ir.position.z=-2.7;ir.rotation.x=Math.PI/2;eng.add(ir);
+        eng.position.set(s*3.4,0,-1.8);g.add(eng);
+      });
+      g.add(wf(new THREE.BoxGeometry(1.4,0.55,2.2),col));// flat cockpit
+      const tip=wf(new THREE.CylinderGeometry(0,0.65,0.9,4),col);tip.rotation.x=Math.PI/2;tip.position.set(0,0.05,-1.6);g.add(tip);
+      g.add(wf(new THREE.BoxGeometry(0.85,0.18,1.5),col)).position.set(0,0.42,0);// visor strip
+      cab([[-0.6,0,0.9],[-2.0,-0.2,-0.3],[-3.4,0,-0.8]]);cab([[0.6,0,0.9],[2.0,-0.2,-0.3],[3.4,0,-0.8]]);
+      g.userData.halfW=3.5;break;}
+    case 'centipede':{// Triple stacked-tube engines, segmented cockpit
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        for(let i=0;i<3;i++){
+          const t=wf(new THREE.CylinderGeometry(0.3,0.36,4.0,7),col);
+          t.rotation.z=Math.PI/2;t.position.y=(i-1)*0.68;eng.add(t);
+          const r=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.34,0.06,5,9)),mE(col));
+          r.rotation.x=Math.PI/2;r.position.set(0,(i-1)*0.68,0.9);eng.add(r);
+        }
+        eng.position.set(s*3.8,0,-1.2);g.add(eng);
+      });
+      for(let i=0;i<3;i++){const seg=wf(new THREE.BoxGeometry(1.1-i*0.05,0.6,0.52),col);seg.position.set(0,0.1,0.55-i*0.6);g.add(seg);}
+      [-1,1].forEach(s=>{const m=wf(new THREE.BoxGeometry(0.12,0.38,0.12),col);m.position.set(s*0.45,-0.18,-1.1);g.add(m);});
+      cab([[-0.5,0.1,0.8],[-2.2,-0.4,-0.1],[-3.8,0,-0.5]]);cab([[0.5,0.1,0.8],[2.2,-0.4,-0.1],[3.8,0,-0.5]]);
+      g.userData.halfW=4.0;break;}
+    case 'eel':{// Torpedo engines with electric fin, teardrop cockpit
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        eng.add(wf(new THREE.CylinderGeometry(0.55,0.22,5.6,9),col));
+        const fin=wf(new THREE.BoxGeometry(0.07,1.1,1.9),col);fin.position.set(0,0.75,-0.4);eng.add(fin);
+        const gl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.26,0.07,6,8)),mE(0x00ffff));
+        gl.position.z=2.6;gl.rotation.x=Math.PI/2;eng.add(gl);
+        eng.rotation.set(Math.PI/2,-s*0.1,0);eng.position.set(s*3.0,0.3,-1.6);g.add(eng);
+      });
+      const cpM=new THREE.Mesh(new THREE.SphereGeometry(0.72,7,5),mF(0x002222));cpM.scale.set(0.9,0.75,1.4);g.add(cpM);
+      const cpW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.72,7,5)),mE(col));cpW.scale.set(0.9,0.75,1.4);g.add(cpW);
+      const sp=wf(new THREE.BoxGeometry(0.1,0.2,2.2),col);sp.position.y=0.72;g.add(sp);
+      cab([[-0.55,0.1,0.6],[-1.8,-0.2,-0.4],[-3.0,0.2,-0.9]]);cab([[0.55,0.1,0.6],[1.8,-0.2,-0.4],[3.0,0.2,-0.9]]);
+      g.userData.halfW=3.5;break;}
+    case 'predator':{// Armored box engines with top cannon, fortified cockpit
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        eng.add(wf(new THREE.BoxGeometry(1.0,0.9,5.2),col));
+        for(let i=0;i<3;i++){const pl=wf(new THREE.BoxGeometry(1.1,0.14,0.88),col);pl.position.set(0,0.55,-1.4+i*1.0);eng.add(pl);}
+        const can=new THREE.Group();can.add(wf(new THREE.CylinderGeometry(0.13,0.13,2.2,6),col));can.rotation.z=Math.PI/2;can.position.set(0,0.73,-0.2);eng.add(can);
+        eng.position.set(s*3.8,0.1,-1.5);g.add(eng);
+      });
+      g.add(wf(new THREE.BoxGeometry(1.3,0.9,2.0),col));
+      g.add(wf(new THREE.BoxGeometry(1.1,0.17,0.18),col)).position.set(0,0.46,-1.0);
+      const cn=wf(new THREE.SphereGeometry(0.5,6,4),col);cn.scale.set(0.85,0.55,1.0);cn.position.set(0,0.57,0);g.add(cn);
+      cab([[-0.55,0.2,0.8],[-2.2,-0.1,-0.2],[-3.8,0.2,-0.8]]);cab([[0.55,0.2,0.8],[2.2,-0.1,-0.2],[3.8,0.2,-0.8]]);
+      g.userData.halfW=4.0;break;}
+    case 'slag':{// Massive brick engines with 3-nozzle exhaust, brutal throne
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        eng.add(wf(new THREE.BoxGeometry(1.3,1.1,5.8),col));
+        const spk=wf(new THREE.ConeGeometry(0.28,1.0,4),col);spk.position.set(0,1.1,-0.4);eng.add(spk);
+        for(let j=0;j<3;j++){
+          const nz=wf(new THREE.CylinderGeometry(0.18,0.12,0.6,6),0xff3300);nz.rotation.z=Math.PI/2;nz.position.set(0,(j-1)*0.34,2.8);eng.add(nz);
+        }
+        eng.position.set(s*4.1,0.1,-1.8);g.add(eng);
+      });
+      g.add(wf(new THREE.BoxGeometry(1.6,1.1,2.2),col));
+      g.add(wf(new THREE.BoxGeometry(1.5,1.8,0.2),col)).position.set(0,0.8,0.9);
+      cab([[-0.7,0.2,0.8],[-2.4,-0.3,0],[-4.1,0.1,-0.8]]);cab([[0.7,0.2,0.8],[2.4,-0.3,0],[4.1,0.1,-0.8]]);
+      g.userData.halfW=4.8;break;}
+    case 'queen':{// Swept tapered nacelles, crown sphere cockpit
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        eng.add(wf(new THREE.CylinderGeometry(0.28,0.7,5.6,8),col));
+        const fin=wf(new THREE.BoxGeometry(0.06,1.25,2.6),col);fin.position.set(0,0.85,0.5);fin.rotation.z=s*0.18;eng.add(fin);
+        const ir=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.72,0.08,6,10)),mE(col));
+        ir.position.z=-2.9;ir.rotation.x=Math.PI/2;eng.add(ir);
+        eng.rotation.set(Math.PI/2,0,0);eng.position.set(s*3.2,0.4,-1.8);g.add(eng);
+      });
+      const cpM=new THREE.Mesh(new THREE.SphereGeometry(0.72,7,5),mF(0x150018));cpM.scale.set(0.85,0.8,1.2);g.add(cpM);
+      const cpW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.72,7,5)),mE(col));cpW.scale.set(0.85,0.8,1.2);g.add(cpW);
+      for(let i=0;i<3;i++){const sp=wf(new THREE.ConeGeometry(0.06,0.55,4),col);sp.position.set((i-1)*0.32,1.0+Math.abs(i-1)*0.28,0);g.add(sp);}
+      cab([[-0.55,0.1,0.55],[-1.9,-0.2,-0.45],[-3.2,0.2,-0.9]]);cab([[0.55,0.1,0.55],[1.9,-0.2,-0.45],[3.2,0.2,-0.9]]);
+      g.userData.halfW=3.5;break;}
+    default:{// GORGON / KAIJU — crushing jaw engines, monster-head cockpit
+      [-1,1].forEach(s=>{
+        const eng=new THREE.Group();
+        eng.add(wf(new THREE.BoxGeometry(1.5,1.2,5.6),col));
+        for(let j=0;j<4;j++){const t=wf(new THREE.ConeGeometry(0.16,0.55,4),col);t.rotation.x=Math.PI;t.position.set((-1.5+j)*0.5,-0.84,-0.8+j*0.5);eng.add(t);}// teeth
+        for(let h=0;h<3;h++){const hn=wf(new THREE.ConeGeometry(0.14,0.72,4),col);hn.position.set(0,1.1,-1.4+h*0.8);eng.add(hn);}// dorsal horns
+        eng.position.set(s*4.2,0.1,-1.8);g.add(eng);
+      });
+      g.add(wf(new THREE.BoxGeometry(1.5,1.0,2.2),col));
+      const jaw=wf(new THREE.BoxGeometry(1.2,0.45,1.0),col);jaw.position.set(0,-0.28,-1.3);g.add(jaw);
+      [-1,1].forEach(s=>{const em=new THREE.Mesh(new THREE.SphereGeometry(0.15,5,4),new THREE.MeshBasicMaterial({color:0xff8800}));em.position.set(s*0.5,0.56,-0.8);g.add(em);});
+      cab([[-0.65,0.2,0.8],[-2.4,-0.2,0],[-4.2,0.1,-0.8]]);cab([[0.65,0.2,0.8],[2.4,-0.2,0],[4.2,0.1,-0.8]]);
+      g.userData.halfW=4.5;break;}
+  }
+  // --- Monster rider: scaled-down colosseum fighter ---
+  try{
+    let rider;
+    if(type==='slag'){
+      // slag has no makeColosseumFighter case — build a compact slug rider
+      rider=new THREE.Group();
+      const fW=c=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.5,7,5),mF((c*0.2)|0));const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.5,7,5)),mE(c));m.scale.set(1,1.1,0.9);e.scale.set(1,1.1,0.9);rider.add(m);rider.add(e);return m;};
+      fW(col);// body blob
+      const hd=new THREE.Mesh(new THREE.SphereGeometry(0.35,6,5),mF((col*0.3)|0));hd.position.y=0.72;rider.add(hd);
+      rider.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.35,6,5)),mE(col))).position.y=0.72;
+      [-0.14,0.14].forEach(x=>{const ey=new THREE.Mesh(new THREE.SphereGeometry(0.07,4,3),new THREE.MeshBasicMaterial({color:0xffdd00}));ey.position.set(x,0.8,0.3);rider.add(ey);});
+      rider.scale.setScalar(0.9);
+    }else{
+      rider=makeColosseumFighter({id:type,col:col,sz:0.38});
+    }
+    rider.position.set(0,0.58,-0.1);
+    rider.rotation.y=Math.PI;
+    rider.traverse(o=>{o.userData.preserveColor=true;});
     g.add(rider);
-    g.userData.halfW=4.5;// v7.291: reduced with engine width
-  }else{
-    const pilot=makePilotFigure();
-    pilot.scale.setScalar(0.42);
-    pilot.position.set(0,-0.1,0.0);
-    pilot.rotation.y=Math.PI;
-    pilot.traverse(o=>{o.userData.preserveColor=true;});
-    g.add(pilot);
-    g.userData.halfW=3.5;// v7.291: 70% of old 5
-  }
-  g.userData.variant=variant;
-  return g;
-}
-
-// v7.289: bulky red crime-lord rider for the SLAG war-pod (lightweight line/mesh build).
-function _makeSlagPilot(){
-  const g=new THREE.Group();g.name='slagPilot';
-  const mFill=c=>new THREE.MeshBasicMaterial({color:c});
-  const mEdge=c=>new THREE.LineBasicMaterial({color:c});
-  const addSolid=(geo,fc,ec,pos,scl)=>{
-    const m=new THREE.Mesh(geo,mFill(fc));m.position.set(pos[0],pos[1],pos[2]);
-    if(scl)m.scale.set(scl[0],scl[1],scl[2]);g.add(m);
-    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),mEdge(ec));
-    e.position.copy(m.position);e.scale.copy(m.scale);g.add(e);return m;
-  };
-  // fat slug-like torso
-  addSolid(new THREE.SphereGeometry(0.72,8,6),0x7a1500,0xff5522,[0,0.55,0],[1,1.15,0.9]);
-  // chest plate
-  addSolid(new THREE.BoxGeometry(0.7,0.5,0.18),0x4a0d00,0xff7744,[0,0.7,0.55],null);
-  // domed head
-  addSolid(new THREE.SphereGeometry(0.44,8,6),0x8a2a10,0xff7733,[0,1.32,0.02],[1.1,0.9,1]);
-  // glowing eyes
-  [-0.16,0.16].forEach(x=>addSolid(new THREE.SphereGeometry(0.07,5,4),0xffdd33,0xffff99,[x,1.34,0.36],null));
-  // stubby arms
-  [-1,1].forEach(s=>{
-    const aG=new THREE.CylinderGeometry(0.16,0.13,0.7,6);
-    const m=addSolid(aG,0x7a1500,0xff5522,[s*0.72,0.62,0.18],null);
-    m.rotation.z=s*0.5;m.rotation.x=-0.5;
-    const e=g.children[g.children.length-1];e.rotation.copy(m.rotation);
-  });
-  g.traverse(o=>{o.userData.preserveColor=true;});
+  }catch(_){}
+  g.userData.variant=type;
   return g;
 }
 
@@ -34366,17 +34370,17 @@ function updatePodRace(dt){
   if((keys['ShiftLeft']||keys['ShiftRight'])&&(S._prWrenchCD||0)<=0){try{_fireWrench()}catch(_){}}
   const leftKey=keys['KeyA']||keys['ArrowLeft'];
   const rightKey=keys['KeyD']||keys['ArrowRight'];
-  // v7.292: reverted to original swerve-based steering (v7.288 style)
-  if(leftKey)S._prSwerve=Math.max(-1,S._prSwerve-2.5*dt);
-  else if(rightKey)S._prSwerve=Math.min(1,S._prSwerve+2.5*dt);
-  else S._prSwerve*=0.85;
-  S._prVertical*=0.9;
+  // v7.293: key-hold steering — pod moves only while key is held, stops on release
   const pod=S._prPlayerPod;
-  const targetX=S._prSwerve*18;
-  const targetY=1.5+S._prVertical*3;
-  pod.position.x+=(targetX-pod.position.x)*4*dt;
-  pod.position.x+=(S._prBounceVX||0)*dt;// v7.289: ramming knockback
+  const lateralSpd=22+S._prSpeed*0.06;
+  if(leftKey) pod.position.x-=lateralSpd*dt;
+  else if(rightKey) pod.position.x+=lateralSpd*dt;
+  pod.position.x+=(S._prBounceVX||0)*dt;
   S._prBounceVX=(S._prBounceVX||0)*0.82;
+  // swerve drives bank tilt only; decays fast on release
+  S._prSwerve=leftKey?Math.max(-1,S._prSwerve-4*dt):rightKey?Math.min(1,S._prSwerve+4*dt):S._prSwerve*Math.pow(0.05,dt);
+  S._prVertical*=0.9;
+  const targetY=1.5+S._prVertical*3;
   pod.position.y+=(targetY-pod.position.y)*3*dt;
   pod.position.z=camera.position.z-8;
   // v7.291: collision wobble shudder (decays over ~0.5s)
@@ -41610,7 +41614,7 @@ function showTitle(){S.phase='TITLE';hideAllUI();showCockpit(false);
   buildNavUI();buildShipUI();buildCallsignPresets();
   // v6.69: pick a random callsign from pool as the default placeholder each title load
   try{
-    const pool=typeof CALLSIGN_POOL!=='undefined'?CALLSIGN_POOL:['JOHN RAMBO'];
+    const pool=typeof CALLSIGN_POOL!=='undefined'?CALLSIGN_POOL:['RAMBO'];
     const pickName=pool[Math.floor(Math.random()*pool.length)];
     const inp=document.getElementById('callsign-input-main');
     // v7.285: pre-fill with saved callsign from previous session
@@ -41671,7 +41675,7 @@ function autoStartCountdown(){
       cancelAutoStart();
       // Force-launch with defaults
       if(titleStep===0){
-        try{S.callsign='JOHN RAMBO';selectedNav=NAV_ROSTER[0];
+        try{S.callsign='RAMBO';selectedNav=NAV_ROSTER[0];
           // Hide title UI immediately
           document.getElementById('step-callsign').style.display='none';
           document.getElementById('step-nav').style.display='none';
@@ -43708,7 +43712,7 @@ if(location.search.indexOf('tool=pose')>=0){
 }
 
 // Callsign pool - default + 8 random picks (cult movie/TV pilots)
-const CALLSIGN_POOL=['JOHN RAMBO','PEEWEE','MARIC','HASSELHOFF','DEVON','RC3','HG'];
+const CALLSIGN_POOL=['RAMBO','PEEWEE','MARIC','HASSELHOFF','DEVON','RC3','HG'];
 
 // Fill preset buttons on page load
 function buildCallsignPresets(){
@@ -43821,7 +43825,7 @@ function confirmCallsign(){
       o.start(sfx.ctx.currentTime);o.stop(sfx.ctx.currentTime+.01)}
   }catch(e){console.error('audio init failed:',e)}
   // Get callsign - check main input first, then legacy
-  let cs=S.callsign||'JOHN RAMBO';
+  let cs=S.callsign||'RAMBO';
   try{const main=document.getElementById('callsign-input-main');
     const legacy=document.getElementById('callsign-input');
     if(main&&main.value&&main.value.trim())cs=main.value.trim().toUpperCase();
@@ -43860,7 +43864,7 @@ function confirmLaunch(){
 // ---- Catapult Launch Sequence ----
 function catapultLaunch(){
   sfx.init();sfx.resume();
-  if(!S.callsign)S.callsign='JOHN RAMBO';
+  if(!S.callsign)S.callsign='RAMBO';
   document.getElementById('title-screen').style.display='none';
   const co=document.getElementById('catapult-overlay');co.style.display='flex';
   const catText=document.getElementById('cat-text');
