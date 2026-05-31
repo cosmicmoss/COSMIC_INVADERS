@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.287</title>
+<title>COSMIC INVADERS v7.288</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -770,7 +770,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.287 - LOADED
+  COSMIC INVADERS v7.288 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1113,7 +1113,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.287</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.288</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1415,6 +1415,22 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <div id="pr-speed" style="font-size:18px;color:#ff8800;letter-spacing:2px;">55 km/h</div>
     <div id="pr-hp" style="font-size:12px;color:#44ff88;letter-spacing:1px;margin-top:2px;">HULL: 笆遺毎笆遺毎笆遺毎</div>
   </div>
+  <!-- v7.288: course overview minimap + gap to leader (top-right) -->
+  <div id="pr-map" style="position:absolute;top:58px;right:12px;width:132px;height:104px;border:1px solid #2a5a7a;border-radius:8px;background:rgba(0,16,28,0.55);box-shadow:0 0 10px rgba(0,120,200,0.25);">
+    <svg width="132" height="84" viewBox="0 0 132 84" style="position:absolute;top:0;left:0;">
+      <ellipse cx="66" cy="42" rx="52" ry="32" fill="none" stroke="#2e6e96" stroke-width="3"/>
+      <ellipse cx="66" cy="42" rx="52" ry="32" fill="none" stroke="#0a2030" stroke-width="1"/>
+      <line x1="66" y1="8" x2="66" y2="16" stroke="#ffffff" stroke-width="2"/>
+    </svg>
+    <div id="pr-map-dots" style="position:absolute;top:0;left:0;width:132px;height:84px;"></div>
+    <div id="pr-map-gap" style="position:absolute;bottom:2px;left:0;width:100%;text-align:center;font-size:11px;letter-spacing:1px;color:#7fd0ff;">P1/9 ・ LEADER</div>
+  </div>
+  <!-- v7.288: item readiness row (nitro / smoke / wrench) -->
+  <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:14px;font-size:13px;letter-spacing:1px;">
+    <div id="pr-nitro" style="color:#66ccff;padding:3px 8px;border:1px solid #2a4a66;border-radius:5px;background:rgba(0,20,40,0.5)">⚡ NITRO</div>
+    <div id="pr-smoke" style="color:#aaaaaa;padding:3px 8px;border:1px solid #444;border-radius:5px;background:rgba(20,20,20,0.5)">💨 SMOKE</div>
+    <div id="pr-wrench" style="color:#cfe6ff;padding:3px 8px;border:1px solid #445566;border-radius:5px;background:rgba(20,30,40,0.5)">🔧 WRENCH</div>
+  </div>
 </div>
 
 <!-- v7.284: Pod race F1 start lights -->
@@ -1459,7 +1475,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.287 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.288 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1494,7 +1510,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.287 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.288 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -13866,6 +13882,11 @@ function cleanupBossResidue(){
         S._prAI.forEach(ai=>{try{if(ai&&ai.pod)scene.remove(ai.pod)}catch(_){}});// v7.287: AI uses .pod not .mesh
         S._prAI=[];
       }
+      if(S._prWrenches&&S._prWrenches.length){// v7.288
+        S._prWrenches.forEach(w=>{try{if(w&&w.mesh)scene.remove(w.mesh)}catch(_){}});
+        S._prWrenches=[];
+      }
+      S._prSmokeZone=null;
       S._prRaceStarted=false; S._prFinished=false;
     }
     try{const ph=document.getElementById('pr-hud');if(ph)ph.style.display='none';}catch(_){}
@@ -30632,8 +30653,8 @@ function makeColosseumArena(){
   // v7.261: crowd figs stored in g.userData._crowdFigs for per-frame animation
   const audMat=new THREE.LineBasicMaterial({color:0x446688,transparent:true,opacity:.55});
   g.userData._crowdFigs=[];
-  // v7.279: 7 tiers × ~360 each = 2520 total (5× original 504)
-  [[17,240],[20,300],[23,360],[26,420],[29,480],[32,420],[36,300]].forEach(([r,cnt],ti)=>{
+  // v7.288 ★ PERF: ~1/3 crowd count (was 2520) + each fig is now 1 draw call → ~840 objects total
+  [[17,80],[20,100],[23,120],[26,140],[29,160],[32,140],[36,100]].forEach(([r,cnt],ti)=>{
     for(let i=0;i<cnt;i++){
       const ang=i/cnt*Math.PI*2;
       const isMonster=(i%7===0);
@@ -30707,43 +30728,37 @@ function makeColosseumArena(){
    g.add(pg);g.userData.weaponMeshes.poop=pg;}
   return g;
 }
-// v7.250 ★ Extended audience figure — colorful clothes, monster variants, VIP gang
+// v7.288 ★ PERF: audience figure baked into a SINGLE LineSegments (one draw call per
+// spectator instead of 6-9). Keeps the colorful stick-figure look. The crowd anim loop
+// only touches fig.position.y / fig.rotation.z, so returning a LineSegments is compatible.
 function _makeColoAudienceFig(mat,seed,opts){
-  const g=new THREE.Group();
   const rng=Math.sin(seed*127.1+3.7)*.5+.5;
   const rng2=Math.sin(seed*53.3+8.1)*.5+.5;
   const isMonster=opts&&opts.isMonster;
   const isVIP=opts&&opts.isVIP;
-  // v7.250: Colorful clothing — each figure gets its own line color
   const CLOTH_COLS=[0xff3300,0x3344ff,0xffaa00,0x44cc44,0xff44aa,0x00ccff,
                     0xcc8800,0x9933ff,0xffffff,0xff6622,0x44ffaa,0xee2288,0x22ccee,0xffff44];
-  const clothCol=isVIP?0x222244:(isMonster?[0x882244,0x224488,0x228844][Math.floor(rng*3)]:CLOTH_COLS[Math.floor(rng2*CLOTH_COLS.length)]);
-  const cMat=new THREE.LineBasicMaterial({color:clothCol,transparent:true,opacity:.7});
-  const pts=(a,b,m)=>{const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a),new THREE.Vector3(...b)]);return new THREE.Line(geo,m||mat);};
-  // Body line
-  g.add(pts([0,.5,0],[0,0,0],cMat));
+  const clothCol=isVIP?0x6688cc:(isMonster?[0x882244,0x224488,0x228844][Math.floor(rng*3)]:CLOTH_COLS[Math.floor(rng2*CLOTH_COLS.length)]);
   const up=rng>.5;
-  g.add(pts([0,.5,0],[-.24,up?.88:.22,0],cMat));g.add(pts([0,.5,0],[.24,up?.88:.22,0],cMat));
-  g.add(pts([0,0,0],[-.18,-.5,0],cMat));g.add(pts([0,0,0],[.18,-.5,0],cMat));
-  // Head
-  if(isMonster){
-    // Pointed/alien head
-    const hdGeo=new THREE.OctahedronGeometry(.13,0);
-    const hd=new THREE.LineSegments(new THREE.EdgesGeometry(hdGeo),cMat);
-    hd.scale.y=1.9;hd.position.y=.7;g.add(hd);
-  } else if(isVIP){
-    // VIP head + flat hat
-    const hd=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(.12,0)),mat);
-    hd.position.y=.65;g.add(hd);
-    const hat=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.32,.07,.28)),cMat);
-    hat.position.y=.82;g.add(hat);
-    // Suit lapel lines
-    g.add(pts([-.06,.42,0],[.0,.18,0],cMat));g.add(pts([.06,.42,0],[.0,.18,0],cMat));
-  } else {
-    const hd=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(.12,0)),mat);
-    hd.position.y=.65;g.add(hd);
+  const V=[];const seg=(a,b)=>{V.push(a[0],a[1],a[2],b[0],b[1],b[2]);};
+  // body + arms + legs
+  seg([0,.5,0],[0,0,0]);
+  seg([0,.5,0],[-.24,up?.88:.22,0]);seg([0,.5,0],[.24,up?.88:.22,0]);
+  seg([0,0,0],[-.18,-.5,0]);seg([0,0,0],[.18,-.5,0]);
+  // head — diamond (taller for monsters)
+  const ht=isMonster?.94:.78,hb=.52,hy=.65,hw=isMonster?.08:.1;
+  seg([0,ht,0],[hw,hy,0]);seg([hw,hy,0],[0,hb,0]);seg([0,hb,0],[-hw,hy,0]);seg([-hw,hy,0],[0,ht,0]);
+  if(isVIP){
+    // flat hat + suit lapels
+    seg([-.16,.82,0],[.16,.82,0]);seg([-.13,.82,0],[-.13,.89,0]);seg([.13,.82,0],[.13,.89,0]);
+    seg([-.06,.42,0],[0,.18,0]);seg([.06,.42,0],[0,.18,0]);
   }
-  g.scale.setScalar(.42+rng*.25);return g;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(V,3));
+  const cMat=new THREE.LineBasicMaterial({color:clothCol,transparent:true,opacity:.7});
+  const fig=new THREE.LineSegments(geo,cMat);
+  fig.scale.setScalar(.42+rng*.25);
+  return fig;
 }
 // v7.247: Giant Electric Eel fighter
 function _makeEelFighter(def){
@@ -33368,11 +33383,14 @@ function _endColoIntro(){
 function updateColosseum(dt){
   const cs=colosseumState;if(!cs||!cs.active)return;
   cs.t+=dt;if(cs.pilotInvT>0)cs.pilotInvT-=dt;
-  // v7.261: Crowd animation — bob + sway all 504+ audience figures
+  // v7.261: Crowd animation — bob + sway.  v7.288 PERF: only animate 1/3 of the
+  // figures each frame (round-robin) — sin calls drop to ~1/3 with no visible change.
   cs._crowdT=(cs._crowdT||0)+dt;
   if(cs._crowdFigs&&cs._crowdFigs.length){
     const ct=cs._crowdT;
-    for(let ci=0;ci<cs._crowdFigs.length;ci++){
+    cs._crowdFrame=((cs._crowdFrame||0)+1)%3;
+    const fr=cs._crowdFrame;
+    for(let ci=fr;ci<cs._crowdFigs.length;ci+=3){
       const fd=cs._crowdFigs[ci];
       const phase=fd.userData._crowdPhase||0;
       const freq=(fd.userData._crowdFreq||3)*1.8; // v7.281: faster base cadence
@@ -33958,6 +33976,10 @@ function startPodRace(){
   cleanupBossResidue();
   S._prLap=1;S._prPos=1;S._prFinished=false;S._prTime=0;
   S._prBoost=0;S._prBoostCD=0;S._prHP=6;S._prMaxHP=6;
+  // v7.288: nitro / smoke / wrench item state
+  S._prNitroT=0;S._prNitroCD=0;S._prSmokeCD=0;S._prWrenchCD=0;
+  S._prSmokeZone=null;S._prWrenches=[];
+  S._prMapDots=null;// v7.288: rebuild minimap dots for this race
   S._prSpeed=55;S._prMaxSpeed=155;
   S._prSwerve=0;S._prVertical=0;
   S._prDistance=0;S._prLapDist=2200;
@@ -34086,22 +34108,31 @@ function updatePodRace(dt){
   if(S._prCurveX<-42){S._prCurveX=-42;S._prCurveV=Math.abs(S._prCurveV);}
   const accel=keys['KeyW']||keys['ArrowUp'];
   const brake=keys['KeyS']||keys['ArrowDown'];
-  const boost=(keys['ShiftLeft']||keys['ShiftRight'])&&S._prBoost>0;
-  if(boost){S._prSpeed=Math.min(S._prMaxSpeed*1.4,S._prSpeed+80*dt);S._prBoost=Math.max(0,S._prBoost-dt);}
+  // v7.288: NITRO (Space) — tap for a 3-second burst, then cooldown
+  S._prNitroCD=Math.max(0,(S._prNitroCD||0)-dt);
+  if(keys['Space']&&(S._prNitroT||0)<=0&&S._prNitroCD<=0){
+    S._prNitroT=3;S._prNitroCD=8;
+    try{wfCineSubtitle('★ NITRO! ★','#66ccff')}catch(_){}
+    try{sfx._prNitro&&sfx._prNitro()}catch(_){}
+  }
+  const nitro=(S._prNitroT||0)>0;
+  if(nitro){
+    S._prNitroT=Math.max(0,S._prNitroT-dt);
+    S._prSpeed=Math.min(S._prMaxSpeed*1.5,S._prSpeed+90*dt);
+    if(S._prPlayerPod)try{spawnP(new THREE.Vector3(S._prPlayerPod.position.x,S._prPlayerPod.position.y,S._prPlayerPod.position.z+2),0x99e0ff,2,1.2,0.4,0.5)}catch(_){}
+  }
   else if(accel){S._prSpeed=Math.min(S._prMaxSpeed,S._prSpeed+40*dt);}
   else if(brake){S._prSpeed=Math.max(20,S._prSpeed-60*dt);}
   else{S._prSpeed=Math.max(S._prSpeed-10*dt,55+(S._prLap-1)*15);}
-  if(!boost){S._prBoostCD=(S._prBoostCD||0)+dt;if(S._prBoostCD>3){S._prBoostCD=0;S._prBoost=Math.min(3,S._prBoost+0.5);}}
+  // v7.288: SMOKE SCREEN (Enter) + WRENCH THROW (Shift) — cooldown-gated
+  if(keys['Enter']&&(S._prSmokeCD||0)<=0){try{_emitPodSmoke()}catch(_){}}
+  if((keys['ShiftLeft']||keys['ShiftRight'])&&(S._prWrenchCD||0)<=0){try{_fireWrench()}catch(_){}}
   const leftKey=keys['KeyA']||keys['ArrowLeft'];
   const rightKey=keys['KeyD']||keys['ArrowRight'];
-  const upKey=keys['Space'];
-  const downKey=keys['KeyN'];
   if(leftKey)S._prSwerve=Math.max(-1,S._prSwerve-2.5*dt);
   else if(rightKey)S._prSwerve=Math.min(1,S._prSwerve+2.5*dt);
   else S._prSwerve*=0.85;
-  if(upKey)S._prVertical=Math.min(1,S._prVertical+2*dt);
-  else if(downKey)S._prVertical=Math.max(-0.5,S._prVertical-2*dt);
-  else S._prVertical*=0.9;
+  S._prVertical*=0.9;// v7.288: vertical control removed (ground race) — settle to 0
   const pod=S._prPlayerPod;
   const targetX=S._prSwerve*18;
   const targetY=1.5+S._prVertical*3;
@@ -34138,6 +34169,7 @@ function updatePodRace(dt){
       try{sfx._prLapFanfare&&sfx._prLapFanfare()}catch(_){}
     }
   }
+  try{_updatePodRaceItems(dt)}catch(_){}// v7.288: nitro/smoke/wrench cooldowns + projectiles
   _updatePodRaceAI(dt);
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
@@ -34156,6 +34188,101 @@ function updatePodRace(dt){
     camera.position.x+=(Math.random()-0.5)*0.03;
   }
   camera.lookAt(pod.position.x,pod.position.y,pod.position.z-22);
+}
+
+// ============================================================
+// v7.288: POD RACE ITEMS — nitro (handled inline), smoke screen, wrench throw
+// ============================================================
+function _emitPodSmoke(){
+  const pod=S._prPlayerPod;if(!pod)return;
+  S._prSmokeCD=6;
+  S._prSmokeZone={z:pod.position.z+6,t:1.6};
+  try{wfCineSubtitle('◆ SMOKE SCREEN! ◆','#888888')}catch(_){}
+  try{sfx._prSmoke&&sfx._prSmoke()}catch(_){}
+  // grey smoke puff behind the pod
+  for(let i=0;i<3;i++){
+    try{spawnP(new THREE.Vector3(pod.position.x+(Math.random()-0.5)*6,pod.position.y+Math.random()*2,pod.position.z+4+Math.random()*8),0x999999,7,0.7,1.8,1.6)}catch(_){}
+  }
+}
+function _fireWrench(){
+  const pod=S._prPlayerPod;if(!pod||!S._prAI)return;
+  // nearest AI AHEAD of the player (smaller z), within lateral reach
+  let best=null,bestD=1e9;
+  for(const ai of S._prAI){
+    if(ai.eliminated||!ai.pod)continue;
+    const dz=ai.pod.position.z-pod.position.z;// negative = ahead
+    if(dz>2)continue;// only target pods ahead
+    const d=Math.hypot(ai.pod.position.x-pod.position.x,dz);
+    if(d<bestD){bestD=d;best=ai;}
+  }
+  if(!best)return;// nobody to hit
+  S._prWrenchCD=5;
+  // build a small spanner mesh (handle + head)
+  const g=new THREE.Group();
+  const mFill=new THREE.MeshBasicMaterial({color:0xbfc8d0});
+  const hG=new THREE.CylinderGeometry(0.12,0.12,1.1,5);hG.rotateZ(Math.PI/2);
+  g.add(new THREE.Mesh(hG,mFill));
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(hG),new THREE.LineBasicMaterial({color:0xeef4ff})));
+  const jG=new THREE.BoxGeometry(0.5,0.5,0.22);const jM=new THREE.Mesh(jG,mFill);jM.position.x=0.6;g.add(jM);
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(jG),new THREE.LineBasicMaterial({color:0xeef4ff}))).position.copy(jM.position);
+  g.position.copy(pod.position);g.position.y+=0.6;
+  g.scale.setScalar(1.4);scene.add(g);
+  if(!S._prWrenches)S._prWrenches=[];
+  S._prWrenches.push({mesh:g,target:best,life:2.5});
+  try{wfCineSubtitle('🔧 WRENCH!','#cfe6ff')}catch(_){}
+  try{sfx._prWrench&&sfx._prWrench()}catch(_){}
+}
+function _updatePodRaceItems(dt){
+  S._prSmokeCD=Math.max(0,(S._prSmokeCD||0)-dt);
+  S._prWrenchCD=Math.max(0,(S._prWrenchCD||0)-dt);
+  // decay AI sabotage slow timers
+  if(S._prAI)for(const ai of S._prAI){if(ai._slowT>0)ai._slowT=Math.max(0,ai._slowT-dt);}
+  // smoke zone: slow trailing AI caught in the cloud
+  if(S._prSmokeZone){
+    S._prSmokeZone.t-=dt;
+    const pod=S._prPlayerPod;
+    if(pod){
+      const z0=pod.position.z, z1=pod.position.z+42;
+      if(S._prAI)for(const ai of S._prAI){
+        if(ai.eliminated||!ai.pod)continue;
+        if(ai.pod.position.z>z0&&ai.pod.position.z<z1&&Math.abs(ai.pod.position.x-pod.position.x)<22){
+          ai._slowT=Math.max(ai._slowT||0,0.5);
+        }
+      }
+      // emit a little lingering smoke
+      if(Math.random()<0.6)try{spawnP(new THREE.Vector3(pod.position.x+(Math.random()-0.5)*10,pod.position.y+Math.random()*2,pod.position.z+8+Math.random()*20),0x9a9a9a,3,0.5,1.6,1.4)}catch(_){}
+    }
+    if(S._prSmokeZone.t<=0)S._prSmokeZone=null;
+  }
+  // advance wrenches toward their target
+  if(S._prWrenches&&S._prWrenches.length){
+    for(let i=S._prWrenches.length-1;i>=0;i--){
+      const w=S._prWrenches[i];w.life-=dt;
+      let hit=false;
+      if(w.target&&!w.target.eliminated&&w.target.pod){
+        const tp=w.target.pod.position;
+        const d=w.mesh.position.distanceTo(tp);
+        const step=Math.min(1,9*dt);
+        w.mesh.position.lerp(new THREE.Vector3(tp.x,tp.y+0.6,tp.z),step);
+        w.mesh.rotation.z+=dt*18;w.mesh.rotation.x+=dt*12;
+        if(d<3.2)hit=true;
+      } else {
+        w.mesh.position.z-=120*dt;// no target — fly forward then expire
+        w.mesh.rotation.z+=dt*18;
+      }
+      if(hit){
+        const ai=w.target;
+        ai._slowT=Math.max(ai._slowT||0,1.6);
+        if(typeof ai.hp==='number'){ai.hp=Math.max(0,ai.hp-1);if(ai.hp<=0){ai.eliminated=true;try{ai.pod.visible=false}catch(_){}}}
+        ai.pod.rotation.y=(ai.pod.rotation.y||0)+1.2;// spin-out kick
+        try{spawnP(w.mesh.position.clone(),0xffdd66,12,1.0,0.7,0.6)}catch(_){}
+        try{sfx._prClang&&sfx._prClang()}catch(_){}
+        try{scene.remove(w.mesh)}catch(_){}
+        S._prWrenches.splice(i,1);continue;
+      }
+      if(w.life<=0){try{scene.remove(w.mesh)}catch(_){}S._prWrenches.splice(i,1);}
+    }
+  }
 }
 
 function _spawnPodRaceSegment(startZ, curveX){
@@ -34225,7 +34352,8 @@ function _updatePodRaceAI(dt){
     // v7.284: rubber band — lagging AI catches up, leading AI slows slightly
     const distDiff=S._prDistance-(ai.raceDist||0);
     const rbFactor=distDiff>350?1.16:(distDiff<-250?0.87:1.0);
-    const aiSpd=(S._prSpeed||55)*ai.speed*rbFactor*(0.91+Math.random()*0.07);
+    const slowF=((ai._slowT||0)>0)?0.45:1;// v7.288: smoke/wrench sabotage slow
+    const aiSpd=(S._prSpeed||55)*ai.speed*rbFactor*(0.91+Math.random()*0.07)*slowF;
     ai.raceDist=(ai.raceDist||0)+aiSpd*dt;
     ai.pod.position.z+=aiSpd*dt;
     // Recycle pod if too far behind
@@ -34257,10 +34385,16 @@ function _updatePodRaceAI(dt){
     ai.pod.rotation.z=(targetX-ai.x)*0.05-S._prCurveV*0.004;
   });
   // v7.284: realtime position calculation (1=leader)
-  const allDists=[{d:S._prDistance,p:true},...S._prAI.filter(a=>!a.eliminated).map(a=>({d:a.raceDist||0,p:false}))];
+  // v7.288: use cumulative total (lap*lapDist + distance) so ranking is correct across laps
+  const playerTotal=(S._prLap-1)*S._prLapDist+S._prDistance;
+  const allDists=[{d:playerTotal,p:true},...S._prAI.filter(a=>!a.eliminated).map(a=>({d:a.raceDist||0,p:false}))];
   allDists.sort((a,b)=>b.d-a.d);
   S._prPos=allDists.findIndex(r=>r.p)+1;
   if(S._prPos<1)S._prPos=1;
+  S._prPlayerTotal=playerTotal;
+  S._prLeaderTotal=allDists.length?allDists[0].d:playerTotal;
+  S._prSecondTotal=allDists.length>1?allDists[1].d:playerTotal;// for lead-margin display
+  S._prRacerCount=allDists.length;
 }
 
 function _checkPodRaceCollisions(){
@@ -34339,6 +34473,74 @@ function _updatePodRaceHUD(){
   if(posEl)posEl.textContent='P'+(S._prPos||1)+' / 9';
   if(speedEl)speedEl.textContent=Math.floor(S._prSpeed||55)+' km/h';
   if(hpEl)hpEl.textContent='HULL: '+'\u2588'.repeat(Math.max(0,S._prHP||0))+'\u2591'.repeat(Math.max(0,(S._prMaxHP||6)-(S._prHP||0)));
+  // v7.288: item readiness \u2014 bright when READY, dim + countdown when on cooldown/active
+  const _item=(id,active,cd,label,onCol)=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(active){el.style.opacity='1';el.style.color=onCol;el.textContent=label+' \u25cf';}
+    else if(cd>0){el.style.opacity='0.45';el.style.color='#667';el.textContent=label+' '+Math.ceil(cd)+'s';}
+    else{el.style.opacity='1';el.style.color=onCol;el.textContent=label;}
+  };
+  _item('pr-nitro',(S._prNitroT||0)>0,S._prNitroCD||0,'\u26a1 NITRO','#66ccff');
+  _item('pr-smoke',!!S._prSmokeZone,S._prSmokeCD||0,'\ud83d\udca8 SMOKE','#bbbbbb');
+  _item('pr-wrench',false,S._prWrenchCD||0,'\ud83d\udd27 WRENCH','#cfe6ff');
+  try{_updatePodRaceMinimap()}catch(_){}
+}
+
+// v7.288: course-overview minimap (racing-game style) + gap to leader
+function _updatePodRaceMinimap(){
+  const host=document.getElementById('pr-map-dots');if(!host)return;
+  const lapDist=S._prLapDist||2200;
+  // ellipse params (must match the SVG in #pr-map)
+  const CX=66,CY=42,RX=52,RY=32;
+  const place=(el,frac,size,color,z)=>{
+    const a=frac*Math.PI*2;// 0 = top, clockwise
+    const x=CX+RX*Math.sin(a), y=CY-RY*Math.cos(a);
+    el.style.left=x+'px';el.style.top=y+'px';
+    el.style.width=size+'px';el.style.height=size+'px';el.style.marginLeft=(-size/2)+'px';el.style.marginTop=(-size/2)+'px';
+    el.style.background=color;el.style.zIndex=z;
+  };
+  // lazily build dot elements: one per AI + the player
+  const need=(S._prAI?S._prAI.length:0)+1;
+  if(!S._prMapDots||S._prMapDots.length!==need){
+    host.innerHTML='';S._prMapDots=[];
+    for(let i=0;i<need;i++){
+      const d=document.createElement('div');
+      d.style.cssText='position:absolute;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,0.8);';
+      host.appendChild(d);S._prMapDots.push(d);
+    }
+  }
+  // AI dots
+  if(S._prAI)for(let i=0;i<S._prAI.length;i++){
+    const ai=S._prAI[i],dot=S._prMapDots[i];if(!dot)continue;
+    if(ai.eliminated){dot.style.display='none';continue;}
+    dot.style.display='block';
+    const frac=((ai.raceDist||0)%lapDist)/lapDist;
+    const col='#'+((ai.def&&ai.def.col)||0x999999).toString(16).padStart(6,'0');
+    place(dot,frac,7,col,2);
+  }
+  // player dot (last) \u2014 bright yellow, larger, on top
+  const pdot=S._prMapDots[need-1];
+  if(pdot){
+    pdot.style.display='block';
+    const pfrac=((S._prDistance||0)%lapDist)/lapDist;
+    place(pdot,pfrac,11,'#ffdd00',5);
+    pdot.style.boxShadow='0 0 6px #ffdd00';
+  }
+  // gap-to-leader text
+  const gapEl=document.getElementById('pr-map-gap');
+  if(gapEl){
+    const pos=S._prPos||1;const pt=S._prPlayerTotal||0;const lt=S._prLeaderTotal||pt;
+    const spd=Math.max(30,S._prSpeed||55);
+    const gapD=lt-pt;
+    if(gapD<=1){// player is leading \u2014 show margin over 2nd
+      const margin=Math.max(0,pt-(S._prSecondTotal||pt))/spd;
+      gapEl.style.color='#7fffd0';
+      gapEl.textContent='P'+pos+'/9 \u30fb LEAD +'+margin.toFixed(1)+'s';
+    } else {
+      gapEl.style.color='#7fd0ff';
+      gapEl.textContent='P'+pos+'/9 \u30fb 1ST +'+(gapD/spd).toFixed(1)+'s';
+    }
+  }
 }
 
 // v7.284: Pod race intro — each racer drives past camera one by one
@@ -34414,6 +34616,8 @@ function _startF1Lights(){
     try{sfx._prGoBeep&&sfx._prGoBeep()}catch(_){}
     S._prRaceStarted=true;
     announce('LAP 1 / 3');
+    // v7.288: control hint for the new sabotage items
+    setTimeout(()=>{try{announce('SPACE=NITRO  ENTER=SMOKE  SHIFT=WRENCH')}catch(_){}},1400);
     setTimeout(()=>{
       const slEl=document.getElementById('pr-startlights');
       if(slEl)slEl.style.display='none';
