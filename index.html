@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.286</title>
+<title>COSMIC INVADERS v7.287</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -770,7 +770,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.286 - LOADED
+  COSMIC INVADERS v7.287 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1113,7 +1113,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.286</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.287</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1149,6 +1149,12 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
         🤼 COLOSSEUM CHALLENGE
       </button>
       <div style="font-size:9px;color:#886600;letter-spacing:2px;margin-top:5px">FIGHT ALL 8 MONSTERS — BEAT YOUR BEST SCORE</div>
+      <!-- v7.287: standalone Boonta Eve pod race -->
+      <button type="button" id="btn-podrace-challenge" onclick="startPodRaceChallenge()"
+        style="margin-top:14px;font-size:16px;color:#ff8800;padding:16px 42px;border:2px solid #ff8800;cursor:pointer;letter-spacing:3px;background:rgba(40,18,0,0.75);border-radius:6px;font-family:inherit;min-height:60px;min-width:280px;box-shadow:0 0 22px rgba(255,136,0,0.5),inset 0 0 12px rgba(255,136,0,0.08);-webkit-tap-highlight-color:rgba(255,136,0,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold;animation:coloUnlockPulse 2.2s ease-in-out infinite">
+        🏁 BOONTA EVE POD RACE
+      </button>
+      <div style="font-size:9px;color:#885500;letter-spacing:2px;margin-top:5px">8-RACER GRID — WIN THE BOONTA EVE CLASSIC</div>
     </div>
     <div class="controls">
       ARROWS/WASD - MANEUVER&ensp;|&ensp;SPACE - FIRE&ensp;|&ensp;[E] - NAPALM<br>
@@ -1453,7 +1459,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.286 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.287 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1488,7 +1494,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.286 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.287 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -13857,7 +13863,7 @@ function cleanupBossResidue(){
         S._prProps=[];
       }
       if(S._prAI&&S._prAI.length){
-        S._prAI.forEach(ai=>{try{if(ai&&ai.mesh)scene.remove(ai.mesh)}catch(_){}});
+        S._prAI.forEach(ai=>{try{if(ai&&ai.pod)scene.remove(ai.pod)}catch(_){}});// v7.287: AI uses .pod not .mesh
         S._prAI=[];
       }
       S._prRaceStarted=false; S._prFinished=false;
@@ -32562,43 +32568,70 @@ function _makeSlagRebornFighter(){
   mesh.name='coloFighter_jabba_reborn';
   // Attach two axe meshes to arms
   function makeAxe(side){ // side: -1=left  +1=right
+    // v7.287: VIBRO-AXE redesign — metal shaft + crescent blade + hammer head
+    // (modeled after the Rotta the Hutt collectible's twin vibro-axes)
     const g=new THREE.Group();g.name=side<0?'axeL':'axeR';
     const mFill=c=>new THREE.MeshBasicMaterial({color:c});
     const mEdge=c=>new THREE.LineBasicMaterial({color:c});
-    // Handle —dark wood brown, slightly tapered, 1.56 units long
-    const hG=new THREE.CylinderGeometry(0.072,0.096,1.56,5);
-    g.add(new THREE.Mesh(hG,mFill(0x3d1a00)));
-    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(hG),mEdge(0x8b4513)));
-    // Socket —where handle meets axe head
-    const skG=new THREE.CylinderGeometry(0.12,0.12,0.24,6);
-    const skM=new THREE.Mesh(skG,mFill(0x333333));
-    skM.position.set(0,0.72,0);g.add(skM);
-    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(skG),mEdge(0x888888))).position.copy(skM.position);
-    // Main blade body —wide wedge
-    const bG=new THREE.BoxGeometry(0.96,0.72,0.12);
-    const bM=new THREE.Mesh(bG,mFill(0x1a1a2a));
-    bM.position.set(side*0.72,0.78,0);g.add(bM);
-    const bEdge=new THREE.LineSegments(new THREE.EdgesGeometry(bG),mEdge(0xdd8800));
-    bEdge.position.copy(bM.position);g.add(bEdge);
-    // Blade cutting edge —thin extended piece at front of blade
-    const ceG=new THREE.BoxGeometry(0.18,0.84,0.096);
-    const ceM=new THREE.Mesh(ceG,mFill(0x2a2a3a));
-    ceM.position.set(side*1.26,0.78,0);ceM.rotation.z=side*0.08;g.add(ceM);
-    const ceEdge=new THREE.LineSegments(new THREE.EdgesGeometry(ceG),mEdge(0xffaa00));
-    ceEdge.position.copy(ceM.position);ceEdge.rotation.copy(ceM.rotation);g.add(ceEdge);
-    // Back spike —short pointed nub on opposite side
-    const bsG=new THREE.ConeGeometry(0.144,0.42,4);
-    const bsM=new THREE.Mesh(bsG,mFill(0x1a1a2a));
-    bsM.position.set(-side*0.42,0.78,0);bsM.rotation.z=-side*Math.PI/2;g.add(bsM);
-    const bsEdge=new THREE.LineSegments(new THREE.EdgesGeometry(bsG),mEdge(0xcc6600));
-    bsEdge.position.copy(bsM.position);bsEdge.rotation.copy(bsM.rotation);g.add(bsEdge);
-    // Top spike —small upward-pointing spike
-    const tsG=new THREE.ConeGeometry(0.12,0.30,4);
-    const tsM=new THREE.Mesh(tsG,mFill(0x1a1a2a));
-    tsM.position.set(side*0.24,1.26,0);g.add(tsM);
-    const tsEdge=new THREE.LineSegments(new THREE.EdgesGeometry(tsG),mEdge(0xdd8800));
-    tsEdge.position.copy(tsM.position);g.add(tsEdge);
-    g.rotation.z=side>0?0.25:-0.25; // slight outward tilt
+    // --- Metal shaft (blue-grey, slightly tapered) ---
+    const hG=new THREE.CylinderGeometry(0.07,0.085,1.7,6);
+    g.add(new THREE.Mesh(hG,mFill(0x44525f)));
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(hG),mEdge(0x8fb4d6)));
+    // Pommel cap at the bottom
+    const pmG=new THREE.CylinderGeometry(0.11,0.07,0.16,6);
+    const pmM=new THREE.Mesh(pmG,mFill(0x2a2f36));pmM.position.set(0,-0.9,0);g.add(pmM);
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(pmG),mEdge(0x8fb4d6))).position.copy(pmM.position);
+    // --- Socket / clamp where shaft meets the head ---
+    const skG=new THREE.CylinderGeometry(0.13,0.13,0.22,6);
+    const skM=new THREE.Mesh(skG,mFill(0x2a2f36));skM.position.set(0,0.8,0);g.add(skM);
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(skG),mEdge(0xaab8c4))).position.copy(skM.position);
+    // --- Crescent blade (sweeps outward on `side`) ---
+    // partial torus, flattened into a curved blade
+    const hubX=side*0.18, hubY=0.95;
+    const bladeMat=mFill(0x556677);
+    const crG=new THREE.TorusGeometry(0.5,0.075,5,16,Math.PI*1.1);
+    const crM=new THREE.Mesh(crG,bladeMat);
+    crM.position.set(hubX,hubY,0);
+    crM.rotation.z=side>0?(-Math.PI*0.05):(Math.PI*1.05);// open toward `side`
+    crM.scale.set(1,1,0.45);g.add(crM);
+    const crE=new THREE.LineSegments(new THREE.EdgesGeometry(crG),mEdge(0xcfe6ff));
+    crE.position.copy(crM.position);crE.rotation.copy(crM.rotation);crE.scale.copy(crM.scale);g.add(crE);
+    // bright outer cutting-edge highlight (slightly larger arc, edges only)
+    const crG2=new THREE.TorusGeometry(0.58,0.025,4,16,Math.PI*1.05);
+    const crE2=new THREE.LineSegments(new THREE.EdgesGeometry(crG2),mEdge(0xffffff));
+    crE2.position.copy(crM.position);crE2.rotation.copy(crM.rotation);crE2.scale.set(1,1,0.45);g.add(crE2);
+    // radial spokes from hub to blade arc → solid look
+    [0.35,0.9,1.45].forEach(a=>{
+      const ang=(side>0?a:Math.PI-a);
+      const spG=new THREE.CylinderGeometry(0.022,0.022,0.5,4);
+      const spM=new THREE.Mesh(spG,mFill(0x6a7d8f));
+      spM.position.set(hubX+Math.cos(ang)*0.26,hubY+Math.sin(ang)*0.26,0);
+      spM.rotation.z=ang-Math.PI/2;g.add(spM);
+    });
+    // hub disc
+    const hbG=new THREE.CylinderGeometry(0.14,0.14,0.1,8);
+    const hbM=new THREE.Mesh(hbG,mFill(0x3b4753));hbM.position.set(hubX,hubY,0);hbM.rotation.x=Math.PI/2;g.add(hbM);
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(hbG),mEdge(0xaab8c4))).position.copy(hbM.position);
+    // --- Hammer head (blocky maul at the top of the shaft) ---
+    const hmG=new THREE.BoxGeometry(0.28,0.32,0.32);
+    const hmM=new THREE.Mesh(hmG,mFill(0x3b4753));hmM.position.set(0,1.28,0);g.add(hmM);
+    const hmE=new THREE.LineSegments(new THREE.EdgesGeometry(hmG),mEdge(0x9fc2e2));
+    hmE.position.copy(hmM.position);g.add(hmE);
+    // striking-face plate
+    const hfG=new THREE.BoxGeometry(0.08,0.34,0.34);
+    const hfM=new THREE.Mesh(hfG,mFill(0x2a2f36));hfM.position.set(0,1.28,0);g.add(hfM);
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(hfG),mEdge(0xcfe6ff))).position.copy(hfM.position);
+    // --- Brackets: socket → crescent blade tips (metal arms) ---
+    [0.05,Math.PI*1.05].forEach(ang=>{
+      const tipX=hubX+Math.cos(side>0?ang:Math.PI-ang)*0.5;
+      const tipY=hubY+Math.sin(side>0?ang:Math.PI-ang)*0.5;
+      const dx=tipX-0, dy=tipY-0.85;const len=Math.hypot(dx,dy)||0.1;
+      const brG=new THREE.CylinderGeometry(0.028,0.028,len,4);
+      const brM=new THREE.Mesh(brG,mFill(0x6a7d8f));
+      brM.position.set(dx/2,0.85+dy/2,0);
+      brM.rotation.z=Math.atan2(dy,dx)-Math.PI/2;g.add(brM);
+    });
+    g.rotation.z=side>0?0.25:-0.25; // slight outward tilt (preserved)
     g.scale.setScalar(1.3);
     return g;
   }
@@ -33740,6 +33773,25 @@ function startColosseumChallenge(){
   S._colosseumChallengeMode=true;
   try{startColosseum();}catch(e){console.error('colosseumChallenge:',e);}
 }
+// v7.287: STANDALONE POD RACE — launch the Boonta Eve Classic directly from title
+function startPodRaceChallenge(){
+  try{const ts=document.getElementById('title-screen');if(ts)ts.style.display='none';}catch(_){}
+  S._prChallengeMode=true;
+  try{startPodRace();}catch(e){console.error('podRaceChallenge:',e);}
+}
+// v7.287: shared return-to-title for the standalone pod race (finish or wipeout)
+function _podRaceReturnToTitle(){
+  try{cleanupBossResidue();}catch(_){}
+  try{scene.fog=null;scene.background=null;}catch(_){}
+  try{if(typeof starField!=='undefined'&&starField)starField.visible=true;
+      if(typeof speedLines!=='undefined'&&speedLines)speedLines.visible=true;}catch(_){}
+  try{camera.position.set(0,0,C.CAM_Z);camera.rotation.set(0,0,0);camera.lookAt(0,0,-100);}catch(_){}
+  try{const ph=document.getElementById('pr-hud');if(ph)ph.style.display='none';}catch(_){}
+  S._prChallengeMode=false;
+  S.phase='TITLE';
+  try{const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';}catch(_){}
+  try{updateTitleUnlocks();}catch(_){}
+}
 // ────────────────────────────────────────────────────────────────────
 function endColosseum(won){
   const cs=colosseumState;if(!cs)return;
@@ -34248,6 +34300,15 @@ function _finishPodRace(){
   const secs=(S._prTime%60).toFixed(1);
   announce('RACE COMPLETE! '+mins+'m'+secs+'s');
   try{playComm('hq','INCREDIBLE! You finished the Boonta Eve Classic!!')}catch(_){}
+  // v7.287: standalone challenge mode returns to title instead of the campaign return flight
+  if(S._prChallengeMode){
+    try{wfCineSubtitle('★ BOONTA EVE CHAMPION!! ★','#ffaa00')}catch(_){}
+    setTimeout(()=>{
+      if(!S._testFromOptions){try{markStageCleared('podrace')}catch(_){}}
+      try{_podRaceReturnToTitle()}catch(_){}
+    },4200);
+    return;
+  }
   setTimeout(()=>{
     if(!S._testFromOptions){try{markStageCleared('podrace')}catch(_){}}
     try{startReturn()}catch(_){}
@@ -34258,6 +34319,11 @@ function _prPlayerEliminated(){
   S._prFinished=true;
   try{wfCineSubtitle('POD DESTROYED','#ff2200')}catch(_){}
   try{screenFlash(1.0)}catch(_){}
+  // v7.287: standalone challenge mode returns to title instead of game-over
+  if(S._prChallengeMode){
+    setTimeout(()=>{try{_podRaceReturnToTitle()}catch(_){}},2500);
+    return;
+  }
   setTimeout(()=>{try{triggerGameOver()}catch(_){}},2500);
 }
 
