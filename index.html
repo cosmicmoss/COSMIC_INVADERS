@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.291</title>
+<title>COSMIC INVADERS v7.292</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -770,7 +770,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.291 - LOADED
+  COSMIC INVADERS v7.292 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1511,7 +1511,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.291 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.292 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -2207,6 +2207,31 @@ class SFX{
       o.frequency.linearRampToValueAtTime(140,now+0.4);
       const g=ctx.createGain();g.gain.setValueAtTime(0.10,now);g.gain.linearRampToValueAtTime(0.001,now+0.42);
       o.connect(g);g.connect(this.g);o.start(now);o.stop(now+0.42);
+    }catch(_){}
+  }
+  // v7.292: Pod collision thud — deep "DON" body impact sound
+  _prCollisionThud(big){
+    try{
+      if(!this.ctx)return;const ctx=this.ctx,t=ctx.currentTime;
+      // Sub-bass body punch (the "don" thud)
+      const o1=ctx.createOscillator();o1.type='sine';
+      o1.frequency.setValueAtTime(big?55:80,t);
+      o1.frequency.exponentialRampToValueAtTime(big?18:28,t+0.35);
+      const g1=ctx.createGain();g1.gain.setValueAtTime(big?0.55:0.38,t);
+      g1.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      o1.connect(g1);g1.connect(this.g);o1.start(t);o1.stop(t+0.42);
+      o1.onended=()=>{try{g1.disconnect();o1.disconnect()}catch(_){}};
+      // Mid crunch (metal on metal)
+      const o2=ctx.createOscillator();o2.type='sawtooth';
+      o2.frequency.setValueAtTime(big?180:260,t);
+      o2.frequency.exponentialRampToValueAtTime(big?60:90,t+0.18);
+      const g2=ctx.createGain();g2.gain.setValueAtTime(0.22,t);
+      g2.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      const f2=ctx.createBiquadFilter();f2.type='lowpass';f2.frequency.value=800;
+      o2.connect(f2);f2.connect(g2);g2.connect(this.g);o2.start(t);o2.stop(t+0.24);
+      o2.onended=()=>{try{f2.disconnect();g2.disconnect();o2.disconnect()}catch(_){}};
+      // Short noise crack at impact
+      this._n(t,0.08,0.18,3500,400);
     }catch(_){}
   }
   // v7.291: Per-racer continuous engine drone with stereo panning.
@@ -34341,34 +34366,23 @@ function updatePodRace(dt){
   if((keys['ShiftLeft']||keys['ShiftRight'])&&(S._prWrenchCD||0)<=0){try{_fireWrench()}catch(_){}}
   const leftKey=keys['KeyA']||keys['ArrowLeft'];
   const rightKey=keys['KeyD']||keys['ArrowRight'];
-  // v7.291: inertial steering — lateral velocity instead of direct swerve
-  // Input applies acceleration; air-drag + ground-friction damps it naturally
-  const steerAcc=28;      // lateral acceleration (units/s²)
-  const drag=Math.pow(0.82,dt*60); // per-frame drag (heavier at high speed)
-  if(leftKey) S._prLateralV-=steerAcc*dt;
-  else if(rightKey) S._prLateralV+=steerAcc*dt;
-  S._prLateralV*=drag;
-  S._prLateralV=Math.max(-32,Math.min(32,S._prLateralV));
-  // Also nudge the old swerve for bank angle read-out only
-  S._prSwerve=S._prLateralV/32;
+  // v7.292: reverted to original swerve-based steering (v7.288 style)
+  if(leftKey)S._prSwerve=Math.max(-1,S._prSwerve-2.5*dt);
+  else if(rightKey)S._prSwerve=Math.min(1,S._prSwerve+2.5*dt);
+  else S._prSwerve*=0.85;
   S._prVertical*=0.9;
   const pod=S._prPlayerPod;
-  const trackLimit=(S._prLap===1?1.5:1)*(16+S._prSpeed/22);// same as trackHalfW scaling
-  pod.position.x+=S._prLateralV*dt;
+  const targetX=S._prSwerve*18;
+  const targetY=1.5+S._prVertical*3;
+  pod.position.x+=(targetX-pod.position.x)*4*dt;
   pod.position.x+=(S._prBounceVX||0)*dt;// v7.289: ramming knockback
   S._prBounceVX=(S._prBounceVX||0)*0.82;
-  // soft boundary: push back if near track edge
-  const curveOff=S._prCurveX||0;
-  const edge=trackLimit-2;
-  if(pod.position.x-curveOff>edge){S._prLateralV=Math.min(S._prLateralV,-8);}
-  if(pod.position.x-curveOff<-edge){S._prLateralV=Math.max(S._prLateralV,8);}
-  const targetY=1.5+S._prVertical*3;
   pod.position.y+=(targetY-pod.position.y)*3*dt;
   pod.position.z=camera.position.z-8;
   // v7.291: collision wobble shudder (decays over ~0.5s)
   S._prWobbleT=Math.max(0,(S._prWobbleT||0)-dt);
   const wobble=S._prWobbleT>0?(Math.sin(S._prWobbleT*28)*0.22*S._prWobbleT*(S._prWobbleSign||1)):0;
-  pod.rotation.z=-S._prSwerve*0.32-S._prCurveV*0.005+wobble;
+  pod.rotation.z=-S._prSwerve*0.25-S._prCurveV*0.004+wobble;
   pod.rotation.x=S._prVertical*0.1+Math.abs(wobble)*0.1;
   S._prEngineT+=dt;
   const scrollSpd=S._prSpeed;
@@ -34504,11 +34518,27 @@ function _updatePodRaceItems(dt){
       }
       if(hit){
         const ai=w.target;
-        ai._slowT=Math.max(ai._slowT||0,1.6);
-        if(typeof ai.hp==='number'){ai.hp=Math.max(0,ai.hp-1);if(ai.hp<=0){ai.eliminated=true;try{ai.pod.visible=false}catch(_){}}}
-        ai.pod.rotation.y=(ai.pod.rotation.y||0)+1.2;// spin-out kick
-        try{spawnP(w.mesh.position.clone(),0xffdd66,12,1.0,0.7,0.6)}catch(_){}
+        const hitPos=w.mesh.position.clone();
+        // v7.292: WRENCH HIT — blow rival away with smoke trail + explosion
+        // 1) massive lateral + forward impulse (blown off track)
+        const blastDir=(ai.x>0)?1:-1;
+        ai.vx=(ai.vx||0)+blastDir*45;
+        ai._slowT=3.5;// long slow
+        // 2) damage — one wrench hit destroys (hp → 0)
+        ai.hp=0;ai.eliminated=true;
+        // 3) spinning tumble: rapid yaw + roll
+        ai._wrenchSpin={t:1.8,ay:blastDir*6,ax:2.2};
+        // 4) smoke trail for 1.5 s
+        ai._smokeTrail=1.5;
+        // 5) explosion burst at hit point
+        try{spawnP(hitPos,0xff8800,20,1.4,0.6,0.8)}catch(_){}
+        try{spawnP(hitPos,0xffff44,12,1.1,0.45,0.5)}catch(_){}
+        try{spawnP(hitPos,0x999999,16,0.9,1.2,1.0)}catch(_){}// smoke puff
+        try{if(typeof spawnMegaExplosion==='function')spawnMegaExplosion(hitPos,1.4)}catch(_){}
+        // 6) sfx: clang + thud
         try{sfx._prClang&&sfx._prClang()}catch(_){}
+        try{sfx._prCollisionThud&&sfx._prCollisionThud(true)}catch(_){}
+        try{wfCineSubtitle((ai.def&&ai.def.name||'RIVAL')+' WRECKED! 🔧','#ffdd44')}catch(_){}
         try{scene.remove(w.mesh)}catch(_){}
         S._prWrenches.splice(i,1);continue;
       }
@@ -34582,6 +34612,26 @@ function _spawnPodRaceSegment(startZ, curveX){
 function _updatePodRaceAI(dt){
   const curveCenter=S._prCurveX||0;
   S._prAI.forEach((ai,idx)=>{
+    // v7.292: post-wrench spin + smoke trail (even after eliminated)
+    if(ai._wrenchSpin){
+      ai._wrenchSpin.t-=dt;
+      if(ai.pod){
+        ai.pod.rotation.y+=(ai._wrenchSpin.ay||4)*dt;
+        ai.pod.rotation.x+=(ai._wrenchSpin.ax||2)*dt;
+        ai.pod.position.y+=2.5*dt;// arc upward
+        ai.pod.position.x+=(ai.vx||0)*dt*0.6;
+      }
+      if(ai._wrenchSpin.t<=0){
+        ai._wrenchSpin=null;
+        try{if(ai.pod)ai.pod.visible=false;}catch(_){}
+      }
+    }
+    if((ai._smokeTrail||0)>0){
+      ai._smokeTrail-=dt;
+      if(ai.pod&&ai.pod.visible)try{
+        spawnP(new THREE.Vector3(ai.pod.position.x+(Math.random()-0.5)*2,ai.pod.position.y+Math.random()*1,ai.pod.position.z+(Math.random()-0.5)*2),0x888888,4,0.6,1.4,1.2);
+      }catch(_){}
+    }
     if(ai.eliminated)return;
     // v7.284: rubber band — lagging AI catches up, leading AI slows slightly
     const distDiff=S._prDistance-(ai.raceDist||0);
@@ -34676,12 +34726,12 @@ function _checkPodRaceCollisions(){
       ai.x-=sign*overlap*0.6;ai.pod.position.x=ai.x;
       // speed penalty on player
       S._prSpeed*=nitroRam?0.94:0.78;
-      // v7.291: wobble the player pod (pitch + roll shudder)
-      S._prBounceVX=(S._prBounceVX||0);
-      S._prWobbleT=0.55;S._prWobbleSign=sign;// wobble state for updatePodRace
+      S._prWobbleT=0.55;S._prWobbleSign=sign;
       S._prHitCooldown=0.3;
+      // v7.292: DON impact sound + vibration
+      try{sfx._prCollisionThud&&sfx._prCollisionThud(nitroRam)}catch(_){}
       try{screenFlash(nitroRam?0.4:0.25)}catch(_){}
-      S.shakeT=nitroRam?0.6:0.4;S.shakeI=nitroRam?2.0:1.4;
+      S.shakeT=nitroRam?0.6:0.4;S.shakeI=nitroRam?2.2:1.6;
       try{spawnP(new THREE.Vector3((px+ai.pod.position.x)*0.5,py,pod.position.z-2),nitroRam?0x66ccff:0xff8800,nitroRam?18:10,0.9,0.4)}catch(_){}
       // nitro body-slam knocks a rival out of the race
       if(nitroRam){
