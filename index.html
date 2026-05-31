@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.289</title>
+<title>COSMIC INVADERS v7.290</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -770,7 +770,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.289 - LOADED
+  COSMIC INVADERS v7.290 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1113,7 +1113,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.289</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.290</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1475,7 +1475,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.289 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.290 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1510,7 +1510,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.289 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.290 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -33975,7 +33975,7 @@ function startPodRace(){
   S.phase='PLAYING';
   cleanupBossResidue();
   S._prLap=1;S._prPos=1;S._prFinished=false;S._prTime=0;
-  S._prBoost=0;S._prBoostCD=0;S._prHP=6;S._prMaxHP=6;
+  S._prBoost=0;S._prBoostCD=0;S._prHP=18;S._prMaxHP=18;// v7.290: tripled HP (was 6)
   // v7.288: nitro / smoke / wrench item state
   S._prNitroT=0;S._prNitroCD=0;S._prSmokeCD=0;S._prWrenchCD=0;
   S._prSmokeZone=null;S._prWrenches=[];
@@ -37859,92 +37859,86 @@ function buildBikeScene(){
 // v6.96 redesign: layered chassis (upper hull + lower belly) + side fairings + front cowl + cone steering
 // vanes + side handlebar grips + tail repulsor stack + exhaust glow + 6-side body cylinders so the bike
 // reads as an actual vehicle, not just a box on hover-disks.
+// v7.290: makeSpeederBike rebuilt with solid polygon (Mesh fill + edge highlight) bodies.
+// Jets, nozzle-glow and repulsor-glow remain as Line/Mesh glow elements for the luminous feel.
 function makeSpeederBike(withRider,options){
   options=options||{};
   const g=new THREE.Group();g.name='speederBike';
-  const mBody=new THREE.LineBasicMaterial({color:0x999999});
-  const mBodyDk=new THREE.LineBasicMaterial({color:0x555566});
-  const mAcc=new THREE.LineBasicMaterial({color:0xff8844});
-  const mGlow=new THREE.LineBasicMaterial({color:0x44eeff,transparent:true,opacity:.85});
+  // --- material palette ---
+  const fBody   =new THREE.MeshBasicMaterial({color:0x3a4a58,side:THREE.DoubleSide});       // main hull fill — dark slate
+  const fBodyDk =new THREE.MeshBasicMaterial({color:0x1e2a34,side:THREE.DoubleSide});       // engine/belly fill — darker
+  const fAcc    =new THREE.MeshBasicMaterial({color:0xc84a10,side:THREE.DoubleSide});       // accent orange-red fill
+  const fSeat   =new THREE.MeshBasicMaterial({color:0x1a1020,side:THREE.DoubleSide});       // seat fill — near-black
+  const eBody   =new THREE.LineBasicMaterial({color:0x99bbcc});                             // hull edge highlight
+  const eBodyDk =new THREE.LineBasicMaterial({color:0x4a6677});                             // dark edge
+  const eAcc    =new THREE.LineBasicMaterial({color:0xff8844});                             // accent edge
+  const mGlow   =new THREE.LineBasicMaterial({color:0x44eeff,transparent:true,opacity:.85});
   const mGlowHot=new THREE.LineBasicMaterial({color:0xffeebb,transparent:true,opacity:.95});
-  // === MAIN CHASSIS - upper hull (where rider sits) ===
-  const chassis=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.7,.32,3.0)),mBody);
-  chassis.position.y=.45;g.add(chassis);
-  // Lower belly (engine block) - longer, narrower, fits under the chassis
-  const belly=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.32,.28,3.4,8)),mBodyDk);
-  belly.rotation.x=Math.PI/2;belly.position.y=.18;g.add(belly);
-  // Side fairings (aerodynamic wings on each side of the chassis)
+  // helper: add solid mesh + edge overlay at same position/rotation
+  function solid(geo,fillMat,edgeMat,posArr,rotArr){
+    const m=new THREE.Mesh(geo,fillMat);
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeMat);
+    if(posArr){m.position.set(...posArr);e.position.set(...posArr);}
+    if(rotArr){m.rotation.set(...rotArr);e.rotation.set(...rotArr);}
+    g.add(m);g.add(e);
+    return m;
+  }
+  // === MAIN CHASSIS — upper hull ===
+  solid(new THREE.BoxGeometry(.7,.32,3.0),fBody,eBody,[0,.45,0]);
+  // Lower belly (engine block)
+  solid(new THREE.CylinderGeometry(.32,.28,3.4,10),fBodyDk,eBodyDk,[0,.18,0],[Math.PI/2,0,0]);
+  // Side fairings
   [-1,1].forEach(side=>{
-    const fairing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.18,.2,2.6)),mBody);
-    fairing.position.set(side*.5,.42,0);
-    g.add(fairing);
-    // Edge stripe / accent line on each fairing
-    const stripe=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.04,.06,2.4)),mAcc);
-    stripe.position.set(side*.6,.5,0);
-    g.add(stripe);
+    solid(new THREE.BoxGeometry(.18,.2,2.6),fBody,eBody,[side*.5,.42,0]);
+    // accent stripe (thin, edges-only is fine)
+    const stripe=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.04,.06,2.4)),eAcc);
+    stripe.position.set(side*.6,.5,0);g.add(stripe);
   });
   // === FRONT NOSE COWL ===
-  const noseCowl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.45,1.4,6)),mBody);
-  noseCowl.position.set(0,.42,1.9);noseCowl.rotation.x=-Math.PI/2;g.add(noseCowl);
-  // Front headlight (orange)
-  const headlight=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(.18)),mGlowHot);
-  headlight.position.set(0,.45,2.55);g.add(headlight);
-  // Front steering vanes (small fins on either side of the nose)
+  solid(new THREE.ConeGeometry(.45,1.4,8),fBody,eBody,[0,.42,1.9],[-Math.PI/2,0,0]);
+  // Front headlight — solid glowing orange gem
+  solid(new THREE.OctahedronGeometry(.18),new THREE.MeshBasicMaterial({color:0xff8800}),new THREE.LineBasicMaterial({color:0xffcc66}),[0,.45,2.55]);
+  // Front steering vanes
   [-1,1].forEach(side=>{
-    const vane=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.2,.7,5)),mAcc);
-    vane.position.set(side*.5,.5,1.7);vane.rotation.z=side*Math.PI*.5;g.add(vane);
+    solid(new THREE.ConeGeometry(.2,.7,6),fAcc,eAcc,[side*.5,.5,1.7],[0,0,side*Math.PI*.5]);
   });
   // === HANDLEBAR ===
-  const bar=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.05,.05,1.0,6)),mBodyDk);
-  bar.rotation.z=Math.PI/2;bar.position.set(0,.78,1.0);g.add(bar);
-  // Handlebar grips (one on each side)
+  solid(new THREE.CylinderGeometry(.05,.05,1.0,7),fBodyDk,eBodyDk,[0,.78,1.0],[0,0,Math.PI/2]);
   [-1,1].forEach(side=>{
-    const grip=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.07,.06,.18,6)),mAcc);
-    grip.rotation.z=Math.PI/2;grip.position.set(side*.5,.78,1.0);g.add(grip);
+    solid(new THREE.CylinderGeometry(.07,.06,.18,7),fAcc,eAcc,[side*.5,.78,1.0],[0,0,Math.PI/2]);
   });
-  // === TWIN JET EXHAUSTS (v7.210: blue ion drive style) ===
-  const mJet=new THREE.LineBasicMaterial({color:0x22aaff,transparent:true,opacity:.9});
+  // === TWIN JET EXHAUSTS — keep as luminous line-based glow ===
+  const mJet    =new THREE.LineBasicMaterial({color:0x22aaff,transparent:true,opacity:.9});
   const mJetCore=new THREE.LineBasicMaterial({color:0xaaeeff,transparent:true,opacity:.95});
   const mJetOuter=new THREE.LineBasicMaterial({color:0x0055cc,transparent:true,opacity:.7});
   [-.28,.28].forEach(xOff=>{
-    // Nozzle ring (the engine housing)
-    const noz=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.20,.16,.42,8)),mBodyDk);
-    noz.rotation.x=Math.PI/2;noz.position.set(xOff,.22,-1.85);g.add(noz);
-    // Inner bright ring at nozzle mouth
+    // solid nozzle housing
+    solid(new THREE.CylinderGeometry(.20,.16,.42,8),fBodyDk,eBodyDk,[xOff,.22,-1.85],[Math.PI/2,0,0]);
     const nozMouth=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.16,.03,5,10)),mJetCore);
     nozMouth.position.set(xOff,.22,-2.0);nozMouth.name='jetNozzle';g.add(nozMouth);
-    // Primary jet cone (long blue/cyan cone extending rearward)
     const jet=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.18,1.6,8)),mJet);
     jet.rotation.x=Math.PI/2;jet.position.set(xOff,.22,-2.75);jet.name='jetFlame';g.add(jet);
-    // Hot white core (inner bright jet)
     const jetCore=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.09,.9,6)),mJetCore);
     jetCore.rotation.x=Math.PI/2;jetCore.position.set(xOff,.22,-2.35);g.add(jetCore);
-    // Outer diffuse glow (larger, more transparent)
     const jetOuter=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.28,2.0,6)),mJetOuter);
     jetOuter.rotation.x=Math.PI/2;jetOuter.position.set(xOff,.22,-3.0);g.add(jetOuter);
-    // Glow disk at nozzle
     const glowDisk=new THREE.Mesh(new THREE.CircleGeometry(.18,10),new THREE.MeshBasicMaterial({color:0x44ccff,transparent:true,opacity:.5,side:THREE.DoubleSide}));
     glowDisk.rotation.x=Math.PI/2;glowDisk.position.set(xOff,.22,-2.02);g.add(glowDisk);
   });
-  // === REPULSOR DISKS (hover plates) - 4 instead of 2, with inner glow ring ===
+  // === REPULSOR DISKS — keep as glow rings ===
   [[-.55,1.2],[.55,1.2],[-.55,-1.2],[.55,-1.2]].forEach(p=>{
     const disk=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.32,.07,5,10)),mGlow);
     disk.position.set(p[0],.05,p[1]);disk.rotation.x=Math.PI/2;g.add(disk);
-    // Inner glow disc
-    const inner=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CircleGeometry(.22,8)),mGlowHot);
+    const inner=new THREE.Mesh(new THREE.CircleGeometry(.22,8),new THREE.MeshBasicMaterial({color:0x44ccff,transparent:true,opacity:.3,side:THREE.DoubleSide}));
     inner.position.set(p[0],.02,p[1]);inner.rotation.x=-Math.PI/2;g.add(inner);
   });
-  // === SIDE FOOTPEGS for the rider ===
+  // === FOOTPEGS ===
   [-1,1].forEach(side=>{
-    const peg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.06,.08,.36)),mBodyDk);
-    peg.position.set(side*.45,.18,.4);g.add(peg);
+    solid(new THREE.BoxGeometry(.06,.08,.36),fBodyDk,eBodyDk,[side*.45,.18,.4]);
   });
-  // === SEAT (visible when no rider, otherwise rider covers it) ===
-  const seat=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.55,.12,.65)),mBodyDk);
-  seat.position.y=.65;g.add(seat);
-  // Rear backrest
-  const backrest=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.5,.5,.1)),mBody);
-  backrest.position.set(0,.85,-.55);g.add(backrest);
+  // === SEAT + BACKREST ===
+  solid(new THREE.BoxGeometry(.55,.12,.65),fSeat,eBodyDk,[0,.65,0]);
+  solid(new THREE.BoxGeometry(.5,.5,.1),fBody,eBody,[0,.85,-.55]);
   if(withRider){
     // v6.98/v7.01: bike pilot uses the FOREST tactical pilot model (with joint groups). v7.01
     // bumps scale up + raises the seat so the pilot is actually visible above the chassis.
