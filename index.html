@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.285</title>
+<title>COSMIC INVADERS v7.286</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -402,6 +402,8 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   outline:none;text-transform:uppercase}
 .callsign-box input::placeholder{color:#040;letter-spacing:2px}
 .callsign-box input:focus{border-color:#0f0;box-shadow:0 0 10px rgba(0,255,0,0.3)}
+#callsign-count{font-size:10px;color:#066;letter-spacing:2px;margin-top:4px}
+#callsign-count.warn{color:#0f0}
 .cs-preset{background:rgba(0,40,0,0.5);border:3px solid #0f0;color:#0f0;font-family:inherit;
   font-size:16px;padding:18px 20px;cursor:pointer;letter-spacing:3px;font-weight:bold;
   min-height:60px;min-width:140px;border-radius:6px;
@@ -768,7 +770,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.285 - LOADED
+  COSMIC INVADERS v7.286 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1111,12 +1113,13 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.284</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.286</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
-      <input type="text" id="callsign-input-main" placeholder="JOHN RAMBO" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      <input type="text" id="callsign-input-main" placeholder="JOHN RAMBO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="_updateCallsignCount()">
       <input type="hidden" id="callsign-input">
+      <div id="callsign-count">0 / 10</div>
       <button type="button" style="display:block;margin:18px auto 0;font-size:18px;color:#ff0;padding:18px 40px;border:3px solid #ff0;cursor:pointer;letter-spacing:3px;background:rgba(60,40,0,0.4);border-radius:6px;font-family:inherit;min-height:64px;min-width:280px;box-shadow:0 0 20px rgba(255,200,0,0.5);-webkit-tap-highlight-color:rgba(255,255,0,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold" id="btn-confirm-name" onclick="confirmCallsign()">&#9654; BEGIN ODYSSEY &#9664;</button>
       <div style="font-size:10px;color:#088;letter-spacing:2px;margin-top:8px">— a long journey into the stars —</div>
     </div>
@@ -1450,7 +1453,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <!-- PRE-CHECK: Prove JS can execute at all, BEFORE loading Three.js -->
 <script>
 try{
-  document.getElementById('version-banner').textContent='v7.284 - JS WORKS, loading Three.js...';
+  document.getElementById('version-banner').textContent='v7.286 - JS WORKS, loading Three.js...';
   document.getElementById('version-banner').style.color='#0ff';
   document.getElementById('version-banner').style.borderBottomColor='#0ff';
 }catch(e){
@@ -1485,7 +1488,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.285 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.286 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -13832,6 +13835,7 @@ function cleanupBossResidue(){
         S._armBgFleet.forEach(f=>{try{if(f&&f.mesh)scene.remove(f.mesh)}catch(_){}});
         S._armBgFleet=[];
       }
+      try{if(typeof _clearArmadaDogfight==='function')_clearArmadaDogfight();}catch(_){}// v7.286
       if(S._armEscort&&S._armEscort.mesh){try{scene.remove(S._armEscort.mesh)}catch(_){}; S._armEscort=null;}
       if(S._armTitan&&S._armTitan.mesh){try{scene.remove(S._armTitan.mesh)}catch(_){}; S._armTitan=null;}
       S._armPhase=0;S._armKills=0;S._armIonDisableT=0;
@@ -16036,10 +16040,18 @@ function _spawnFormationAllies(){
     {ox:-14, oy:-2, lagZ: 22},
     {ox: 14, oy:-2, lagZ: 22},
   ];
+  // v7.286: mix craft types across formation slots (all-out-war variety)
+  const ALLY_FACTORIES=[
+    {fn:makeStarfighterN1, s:1.0},
+    {fn:makeTurboFighter,  s:1.0},
+    {fn:makeStarfighterN1, s:1.0},
+    {fn:makeMaintenanceLaunch, s:0.8},// boxy + bigger → scale down
+  ];
   OFFSETS.forEach((o,idx)=>{
     try{
-      const mesh=makeStarfighterN1();
-      mesh.scale.setScalar(1.0);
+      const fac=ALLY_FACTORIES[idx%ALLY_FACTORIES.length];
+      const mesh=fac.fn();
+      mesh.scale.setScalar(fac.s);
       mesh.rotation.y=Math.PI/2; // v7.270: nose points forward (-Z) on spawn
       const startX=player.x+o.ox, startY=player.y+o.oy;
       const startZ=camera.position.z+o.lagZ+10;
@@ -16139,6 +16151,129 @@ function _updateFormationAllies(dt){
       }
     }
   }
+}
+
+// ============================================================
+// v7.286: ARMADA background dogfight — mixed allied craft chasing
+// enemy pursuit fighters in the mid-background. Purely cosmetic:
+// no collision with player / enemies / pBeams / eBeams. Self-managed
+// via S._armDogfight (duels) + S._armDfTracers (tracer beams).
+// ============================================================
+const _DF_ALLY_FACS=[makeStarfighterN1,makeTurboFighter,makeMaintenanceLaunch];
+function _makeDfAlly(idx){
+  // round-robin so all three allied types always appear
+  const fn=_DF_ALLY_FACS[idx%_DF_ALLY_FACS.length];
+  const m=fn();
+  m.scale.setScalar(fn===makeMaintenanceLaunch?0.7:0.9);
+  m.rotation.y=Math.PI/2;
+  return m;
+}
+function _dfRandEdge(){
+  // pick a spawn point around the screen periphery (each duel enters from a different direction)
+  const ang=Math.random()*Math.PI*2;
+  return {x:Math.cos(ang)*(55+Math.random()*40), y:Math.sin(ang)*(28+Math.random()*22)};
+}
+function _spawnArmadaDogfight(){
+  if(S._armDogfight&&S._armDogfight.length)return;
+  S._armDogfight=[];
+  S._armDfTracers=[];
+  const N=7;
+  for(let i=0;i<N;i++){
+    try{
+      const edge=_dfRandEdge();
+      const baseZ=camera.position.z-(160+Math.random()*260);// mid-background depth
+      const ally=_makeDfAlly(i);
+      const foe=makePursuitFighter();foe.rotation.y=Math.PI/2;
+      const cx=edge.x, cy=edge.y;
+      // enemy leads, ally chases slightly behind
+      foe.position.set(cx,cy,baseZ);
+      ally.position.set(cx-6,cy-2,baseZ+8);
+      scene.add(foe);scene.add(ally);
+      S._armDogfight.push({
+        ally,foe,
+        cx,cy,z:baseZ,
+        radius:6+Math.random()*7,
+        omega:(0.6+Math.random()*0.9)*(Math.random()<0.5?-1:1),
+        phase:Math.random()*Math.PI*2,
+        driftX:(Math.random()<0.5?-1:1)*(3+Math.random()*4),
+        driftY:(Math.random()<0.5?-1:1)*(1.2+Math.random()*1.8),
+        allyFireT:0.4+Math.random()*0.8,
+        foeFireT:0.6+Math.random()*0.9,
+        ttl:8+Math.random()*8,idx:i
+      });
+    }catch(_){}
+  }
+}
+function _dfTracer(from,to,color){
+  try{
+    const g=new THREE.BufferGeometry().setFromPoints([from.clone(),to.clone()]);
+    const m=new THREE.Line(g,new THREE.LineBasicMaterial({color,transparent:true,opacity:0.9}));
+    scene.add(m);
+    if(!S._armDfTracers)S._armDfTracers=[];
+    S._armDfTracers.push({mesh:m,life:0.5});
+  }catch(_){}
+}
+function _updateArmadaDogfight(dt){
+  if(!S._armDogfight||!S._armDogfight.length)return;
+  // Update tracers (fade + expire)
+  if(S._armDfTracers){
+    for(let i=S._armDfTracers.length-1;i>=0;i--){
+      const t=S._armDfTracers[i];t.life-=dt;
+      if(t.life<=0){try{scene.remove(t.mesh)}catch(_){}S._armDfTracers.splice(i,1);}
+      else if(t.mesh&&t.mesh.material){t.mesh.material.opacity=Math.max(0,t.life/0.5)*0.9;}
+    }
+  }
+  for(const d of S._armDogfight){
+    if(!d.ally||!d.foe)continue;
+    d.phase+=d.omega*dt;
+    // drift the dogfight center across the mid-background; bounce at edges
+    d.cx+=d.driftX*dt;d.cy+=d.driftY*dt;
+    if(Math.abs(d.cx)>95)d.driftX=-d.driftX;
+    if(Math.abs(d.cy)>52)d.driftY=-d.driftY;
+    // enemy weaves on a circle around the moving center
+    const fx=d.cx+Math.cos(d.phase)*d.radius;
+    const fy=d.cy+Math.sin(d.phase*1.7)*d.radius*0.5;
+    const prevFx=d.foe.position.x, prevFz=d.foe.position.z;
+    d.foe.position.x+=(fx-d.foe.position.x)*Math.min(1,5*dt);
+    d.foe.position.y+=(fy-d.foe.position.y)*Math.min(1,5*dt);
+    d.foe.position.z+=(d.z-d.foe.position.z)*Math.min(1,3*dt);
+    // enemy nose toward heading
+    d.foe.rotation.z+=(Math.max(-0.7,Math.min(0.7,(d.foe.position.x-prevFx)*-0.06))-d.foe.rotation.z)*Math.min(1,5*dt);
+    // ally chases from behind/below with lag
+    const ax=d.foe.position.x-Math.cos(d.phase)*5;
+    const ay=d.foe.position.y-2.5;
+    const prevAx=d.ally.position.x;
+    d.ally.position.x+=(ax-d.ally.position.x)*Math.min(1,3.2*dt);
+    d.ally.position.y+=(ay-d.ally.position.y)*Math.min(1,3.2*dt);
+    d.ally.position.z+=((d.z+9)-d.ally.position.z)*Math.min(1,2.6*dt);
+    d.ally.rotation.z+=(Math.max(-0.7,Math.min(0.7,(d.ally.position.x-prevAx)*-0.06))-d.ally.rotation.z)*Math.min(1,5*dt);
+    // tracer exchange
+    d.allyFireT-=dt;
+    if(d.allyFireT<=0){d.allyFireT=0.5+Math.random()*0.7;_dfTracer(d.ally.position,d.foe.position,0x44aaff);}
+    d.foeFireT-=dt;
+    if(d.foeFireT<=0){d.foeFireT=0.7+Math.random()*0.9;_dfTracer(d.foe.position,d.ally.position,0xff3322);}
+    // shoot-down lifecycle: enemy explodes, respawns from a new edge
+    d.ttl-=dt;
+    if(d.ttl<=0){
+      try{spawnP(d.foe.position.clone(),0xff7722,14,7,0.8,0.7);}catch(_){}
+      try{spawnMegaExplosion(d.foe.position.clone(),0.35);}catch(_){}
+      const edge=_dfRandEdge();
+      d.cx=edge.x;d.cy=edge.y;
+      d.z=camera.position.z-(160+Math.random()*260);
+      d.radius=6+Math.random()*7;
+      d.omega=(0.6+Math.random()*0.9)*(Math.random()<0.5?-1:1);
+      d.driftX=(Math.random()<0.5?-1:1)*(3+Math.random()*4);
+      d.driftY=(Math.random()<0.5?-1:1)*(1.2+Math.random()*1.8);
+      d.foe.position.set(d.cx,d.cy,d.z);
+      d.ttl=8+Math.random()*8;
+    }
+  }
+}
+function _clearArmadaDogfight(){
+  try{
+    if(S._armDogfight){S._armDogfight.forEach(d=>{try{scene.remove(d.ally);scene.remove(d.foe);}catch(_){}});S._armDogfight.length=0;}
+    if(S._armDfTracers){S._armDfTracers.forEach(t=>{try{scene.remove(t.mesh)}catch(_){}});S._armDfTracers.length=0;}
+  }catch(_){}
 }
 
 // v6.76: Spawn escort wingmen that fly alongside then break off during the trench run
@@ -31185,6 +31320,8 @@ function startArmada(){
   });
   // Formation allies
   try{_spawnFormationAllies()}catch(_){}
+  // v7.286: background dogfight — mixed allied craft vs enemy pursuit fighters
+  try{_spawnArmadaDogfight()}catch(_){}
   // Show fleet HP HUD
   try{
     const af=document.getElementById('arm-fleet-hp');
@@ -31259,6 +31396,8 @@ function updateArmada(dt){
   _updateArmadaBgFleet(dt);
   // Formation allies
   try{_updateFormationAllies(dt)}catch(_){}
+  // v7.286: background dogfight
+  try{_updateArmadaDogfight(dt)}catch(_){}
   // Phase logic
   switch(S._armPhase){
     case 0:// Fighter screen
@@ -40903,6 +41042,7 @@ function showTitle(){S.phase='TITLE';hideAllUI();showCockpit(false);
       }
     }
   }catch(e){}
+  try{_updateCallsignCount()}catch(_){}// v7.286: sync counter with pre-filled value
   stopHangarAmbient();
   // DO NOT auto-focus on mobile - iOS keyboard eats the first CONFIRM tap
   // Focus main input on ALL devices so keyboard opens automatically (user requested)
@@ -43074,6 +43214,18 @@ function restartFromGameOver(){
   setTimeout(()=>{restartingFromGameOver=false},600);
 }
 
+// v7.286: live character counter for callsign input (max 10 — keeps TTS name intact)
+function _updateCallsignCount(){
+  try{
+    const inp=document.getElementById('callsign-input-main');
+    const cnt=document.getElementById('callsign-count');
+    if(!inp||!cnt)return;
+    const n=(inp.value||'').length;
+    cnt.textContent=n+' / 10';
+    if(n>=10)cnt.classList.add('warn');else cnt.classList.remove('warn');
+  }catch(_){}
+}
+
 function confirmCallsign(){
   if(titleStep!==0)return;// GUARD: prevent double-fire from inline onclick + addEventListener
   titleStep=0.5;// transitional lock to block rapid re-entry
@@ -43406,6 +43558,7 @@ function actualStartGame(){
   S._fortAllyShips=null;S._fortAllyRadioT=0;
   // v7.264: armada stage state reset
   S._armPhase=0;S._armPhaseT=0;S._armKills=0;S._armBgFleet=[];S._armFleetHP=100;
+  try{if(typeof _clearArmadaDogfight==='function')_clearArmadaDogfight();}catch(_){}// v7.286
   S._armEscort=null;S._armTitan=null;S._armTitanHP={};S._armIonDisableT=0;
   S._armBeamT=1.5;S._armWaveT=0;S._armPhaseAnnounced=false;
   S._armTitanPhase='APPROACH';S._armTitanRage=false;S._armTitanT=0;S._armEscapeT=0;
