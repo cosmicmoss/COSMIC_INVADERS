@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.290</title>
+<title>COSMIC INVADERS v7.291</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -770,7 +770,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.290 - LOADED
+  COSMIC INVADERS v7.291 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -1407,13 +1407,14 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 
 <!-- v7.283: Pod Race HUD -->
 <div id="pr-hud" style="display:none;position:fixed;top:0;left:0;right:0;z-index:90;pointer-events:none;font-family:monospace;">
+  <!-- v7.291: lap/pos centred top; HP gauge moved to top-centre below lap -->
   <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);text-align:center;">
     <div id="pr-lap" style="font-size:22px;font-weight:bold;color:#ffcc00;letter-spacing:4px;">LAP 1 / 3</div>
     <div id="pr-pos" style="font-size:14px;color:#88ccff;letter-spacing:2px;margin-top:2px;">P1 / 9</div>
+    <div id="pr-hp" style="font-size:13px;color:#44ff88;letter-spacing:1px;margin-top:4px;text-shadow:0 0 6px #00ff66;">HULL: ██████████████████</div>
   </div>
   <div style="position:absolute;top:8px;right:12px;text-align:right;">
     <div id="pr-speed" style="font-size:18px;color:#ff8800;letter-spacing:2px;">55 km/h</div>
-    <div id="pr-hp" style="font-size:12px;color:#44ff88;letter-spacing:1px;margin-top:2px;">HULL: 笆遺毎笆遺毎笆遺毎</div>
   </div>
   <!-- v7.288: course overview minimap + gap to leader (top-right) -->
   <div id="pr-map" style="position:absolute;top:58px;right:12px;width:132px;height:104px;border:1px solid #2a5a7a;border-radius:8px;background:rgba(0,16,28,0.55);box-shadow:0 0 10px rgba(0,120,200,0.25);">
@@ -1510,7 +1511,7 @@ if(typeof THREE==='undefined'){
   throw new Error('Three.js missing');
 }
 // Update version banner to prove JS+Three.js both loaded
-try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.290 - JS+THREE RUNNING';
+try{document.getElementById('version-banner').textContent='COSMIC INVADERS v7.291 - JS+THREE RUNNING';
 document.getElementById('version-banner').style.color='#0f0';
 document.getElementById('version-banner').style.borderBottomColor='#0f0';}catch(e){}
 
@@ -2206,6 +2207,105 @@ class SFX{
       o.frequency.linearRampToValueAtTime(140,now+0.4);
       const g=ctx.createGain();g.gain.setValueAtTime(0.10,now);g.gain.linearRampToValueAtTime(0.001,now+0.42);
       o.connect(g);g.connect(this.g);o.start(now);o.stop(now+0.42);
+    }catch(_){}
+  }
+  // v7.291: Per-racer continuous engine drone with stereo panning.
+  // Call startPodEngines(racers) once at race start; stopPodEngines() on exit.
+  // Each racer gets a unique "Radon-Ulzer" rumble: low sawtooth body + noise turbulence +
+  // a mid-frequency whine — all run through a StereoPannerNode updated each frame.
+  startPodEngines(racers){
+    try{
+      if(!this.ctx)return;
+      this._podEngines=this._podEngines||[];
+      this.stopPodEngines();
+      const ctx=this.ctx;
+      // Player engine (centred, louder)
+      {
+        const pan=ctx.createStereoPanner();pan.pan.value=0;
+        const gMain=ctx.createGain();gMain.gain.value=0.28;
+        // low rumble (sawtooth)
+        const o1=ctx.createOscillator();o1.type='sawtooth';o1.frequency.value=38;
+        const g1=ctx.createGain();g1.gain.value=0.55;
+        // turbulence (noise through bandpass)
+        const noise=ctx.createBufferSource();
+        const buf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+        noise.buffer=buf;noise.loop=true;
+        const nf=ctx.createBiquadFilter();nf.type='bandpass';nf.frequency.value=320;nf.Q.value=0.7;
+        const ng=ctx.createGain();ng.gain.value=0.18;
+        // high whine
+        const o2=ctx.createOscillator();o2.type='sawtooth';o2.frequency.value=210;
+        const g2=ctx.createGain();g2.gain.value=0.08;
+        // LFO for turbulence flutter
+        const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=5.5;
+        const lfoG=ctx.createGain();lfoG.gain.value=12;
+        lfo.connect(lfoG);lfoG.connect(o1.frequency);
+        o1.connect(g1);noise.connect(nf);nf.connect(ng);o2.connect(g2);
+        g1.connect(gMain);ng.connect(gMain);g2.connect(gMain);
+        gMain.connect(pan);pan.connect(this.g);
+        o1.start();o2.start();lfo.start();noise.start();
+        this._podEngines.push({pan,gMain,oscs:[o1,o2,lfo],noise});
+      }
+      // AI engines (panned by position, varied base freq per racer)
+      const BASE_FREQS=[44,36,52,30,40,62,34,48];
+      racers.forEach((ai,idx)=>{
+        if(ai.eliminated)return;
+        const baseFreq=BASE_FREQS[idx%BASE_FREQS.length];
+        const pan=ctx.createStereoPanner();pan.pan.value=0;
+        const gMain=ctx.createGain();gMain.gain.value=0.12;
+        const o1=ctx.createOscillator();o1.type='sawtooth';o1.frequency.value=baseFreq;
+        const g1=ctx.createGain();g1.gain.value=0.5;
+        const noise=ctx.createBufferSource();
+        const buf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+        const dd=buf.getChannelData(0);for(let i=0;i<dd.length;i++)dd[i]=Math.random()*2-1;
+        noise.buffer=buf;noise.loop=true;
+        const nf=ctx.createBiquadFilter();nf.type='bandpass';nf.frequency.value=280+idx*30;nf.Q.value=0.8;
+        const ng=ctx.createGain();ng.gain.value=0.14;
+        const o2=ctx.createOscillator();o2.type='sawtooth';o2.frequency.value=baseFreq*5.5;
+        const g2=ctx.createGain();g2.gain.value=0.06;
+        const lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=4+idx*0.4;
+        const lfoG=ctx.createGain();lfoG.gain.value=8;
+        lfo.connect(lfoG);lfoG.connect(o1.frequency);
+        o1.connect(g1);noise.connect(nf);nf.connect(ng);o2.connect(g2);
+        g1.connect(gMain);ng.connect(gMain);g2.connect(gMain);
+        gMain.connect(pan);pan.connect(this.g);
+        o1.start();o2.start();lfo.start();noise.start();
+        this._podEngines.push({pan,gMain,oscs:[o1,o2,lfo],noise,ai});
+      });
+    }catch(_){}
+  }
+  // Call every frame from updatePodRace to update panning + throttle modulation
+  updatePodEngines(playerX,playerSpeed,maxSpeed){
+    try{
+      if(!this._podEngines||!this._podEngines.length)return;
+      const speedRatio=Math.min(1,playerSpeed/(maxSpeed||155));
+      // player engine (index 0): throttle raises whine pitch, gain with speed
+      const pe=this._podEngines[0];
+      if(pe){
+        pe.gMain.gain.setTargetAtTime(0.24+speedRatio*0.18,this.ctx.currentTime,0.1);
+        if(pe.oscs[1])pe.oscs[1].frequency.setTargetAtTime(180+speedRatio*120,this.ctx.currentTime,0.2);
+      }
+      // AI engines: pan based on lateral position relative to player
+      for(let i=1;i<this._podEngines.length;i++){
+        const eng=this._podEngines[i];if(!eng||!eng.ai||eng.ai.eliminated)continue;
+        const dx=(eng.ai.x-playerX)/18;// -1..+1
+        eng.pan.pan.setTargetAtTime(Math.max(-1,Math.min(1,dx)),this.ctx.currentTime,0.05);
+        // fade distant racers
+        const dist=Math.abs(eng.ai.pod.position.z-this.ctx.currentTime);// proxy: use x distance
+        const vol=Math.max(0.04,0.14-Math.abs(dx)*0.06);
+        eng.gMain.gain.setTargetAtTime(vol,this.ctx.currentTime,0.1);
+      }
+    }catch(_){}
+  }
+  stopPodEngines(){
+    try{
+      if(!this._podEngines)return;
+      this._podEngines.forEach(e=>{
+        try{e.oscs.forEach(o=>{o.stop();o.disconnect()});}catch(_){}
+        try{e.noise.stop();e.noise.disconnect();}catch(_){}
+        try{e.gMain.disconnect();e.pan.disconnect();}catch(_){}
+      });
+      this._podEngines=[];
     }catch(_){}
   }
   // v7.284: Baby alien happy sounds
@@ -33799,6 +33899,7 @@ function startPodRaceChallenge(){
 }
 // v7.287: shared return-to-title for the standalone pod race (finish or wipeout)
 function _podRaceReturnToTitle(){
+  try{sfx.stopPodEngines();}catch(_){}// v7.291: stop engine drones
   try{cleanupBossResidue();}catch(_){}
   try{scene.fog=null;scene.background=null;}catch(_){}
   try{if(typeof starField!=='undefined'&&starField)starField.visible=true;
@@ -33983,6 +34084,8 @@ function startPodRace(){
   S._prMapDots=null;// v7.288: rebuild minimap dots for this race
   S._prSpeed=55;S._prMaxSpeed=155;
   S._prSwerve=0;S._prVertical=0;
+  S._prLateralV=0;// v7.291: lateral velocity for inertial steering
+  S._prWobbleT=0;S._prWobbleSign=1;// v7.291: collision wobble
   S._prDistance=0;S._prLapDist=2200;
   S._prWalls=[];S._prProps=[];S._prAI=[];
   S._prHitCooldown=0;S._prRaceStarted=false;
@@ -34035,6 +34138,8 @@ function startPodRace(){
   // Brief camera tilt back to show the grid during countdown
   try{camera.lookAt(0,1.5,camera.position.z-30);}catch(_){}
   try{playComm('hq','8 racers on the grid!! Boonta Eve Classic \u2014 all engines ready!!')}catch(_){}
+  // v7.291: start per-racer stereo engine drones
+  try{sfx.init();sfx.startPodEngines(S._prAI);}catch(_){}
   // Short delay then F1 lights \u2014 all racers start together on GO!!
   setTimeout(()=>_startF1Lights(),1800);
 }
@@ -34067,47 +34172,83 @@ function makePodRacerPod(type,color,variant){
   const mEdge=c=>new THREE.LineBasicMaterial({color:c});
   const engFill=big?0x2a0a00:(isPlayer?0x1a1a00:0x111111);
   const body=new THREE.Group();
+  // v7.291: engines at 70% width (side*3.5 instead of *5), angled forward like real pod racer
+  // Each engine group is positioned to the side AND forward, then rotated inward so it
+  // points toward the cockpit — mimicking Anakin's Radon-Ulzer 620C layout.
+  const ENG_X=big?4.1:3.5;   // lateral spread (70% of old side*5=3.5)
+  const ENG_Z=-1.8;           // engines pushed forward relative to cockpit
+  const ENG_TOE=big?0.18:0.22;// toe-in angle (rad): front of engine points slightly inward
   [-1,1].forEach(side=>{
     const eng=new THREE.Group();
-    const eG=new THREE.CylinderGeometry(0.8,1.0,4.5,8);
+    // Turbine barrel — longer to look more Star-Wars-y
+    const eG=new THREE.CylinderGeometry(0.75,0.95,5.5,10);
     eng.add(new THREE.Mesh(eG,mFill(engFill)));
     eng.add(new THREE.LineSegments(new THREE.EdgesGeometry(eG),mEdge(col)));
-    const iG=new THREE.TorusGeometry(1.0,0.15,6,12);
+    // Intake ring at front (forward = local -Z after rotation)
+    const iG=new THREE.TorusGeometry(0.96,0.13,7,14);
     const intake=new THREE.LineSegments(new THREE.EdgesGeometry(iG),mEdge(col));
-    intake.position.z=-2.5;intake.rotation.x=Math.PI/2;
+    intake.position.z=-3.0;intake.rotation.x=Math.PI/2;
     eng.add(intake);
-    const exG=new THREE.CylinderGeometry(0.5,0.3,0.8,8);
+    // Second intake band mid-engine
+    const iG2=new THREE.TorusGeometry(0.88,0.09,6,12);
+    const intake2=new THREE.LineSegments(new THREE.EdgesGeometry(iG2),mEdge(col));
+    intake2.position.z=-0.8;intake2.rotation.x=Math.PI/2;
+    eng.add(intake2);
+    // Exhaust cone at rear
+    const exG=new THREE.CylinderGeometry(0.6,0.35,1.0,8);
     const exMesh=new THREE.LineSegments(new THREE.EdgesGeometry(exG),mEdge(big?0xff3300:0xff6600));
-    exMesh.position.z=2.5;exMesh.rotation.x=Math.PI/2;
+    exMesh.position.z=3.2;exMesh.rotation.x=Math.PI/2;
     eng.add(exMesh);
-    const fG=new THREE.BoxGeometry(0.1,1.0,2.0);
+    // Exhaust glow fill
+    eng.add(new THREE.Mesh(exG,mFill(big?0x660000:0x331100)));
+    eng.children[eng.children.length-1].position.copy(exMesh.position);
+    eng.children[eng.children.length-1].rotation.copy(exMesh.rotation);
+    // Top stabiliser fin
+    const fG=new THREE.BoxGeometry(0.1,0.9,2.2);
     const fin=new THREE.LineSegments(new THREE.EdgesGeometry(fG),mEdge(col));
-    fin.position.set(0,0.9,0.5);
+    fin.position.set(0,1.0,0.2);
     eng.add(fin);
-    eng.rotation.x=Math.PI/2;
-    eng.position.set(side*5,0.5,0);
+    // Engine pitched to run along Z, then toe-in around Y
+    eng.rotation.set(Math.PI/2, -side*ENG_TOE, 0);
+    eng.position.set(side*ENG_X, 0.5, ENG_Z);
     body.add(eng);
   });
-  const cpG=new THREE.BoxGeometry(1.4,0.9,2.2);
+  // Cockpit pod — small, between and slightly behind the engines (authentic look)
+  const cpG=new THREE.BoxGeometry(1.2,0.8,2.0);
   body.add(new THREE.Mesh(cpG,mFill(big?0x1a0500:0x0a0a1a)));
   body.add(new THREE.LineSegments(new THREE.EdgesGeometry(cpG),mEdge(col)));
-  const canG=new THREE.SphereGeometry(0.6,6,4);
+  // Canopy dome
+  const canG=new THREE.SphereGeometry(0.55,7,5);
   const can=new THREE.LineSegments(new THREE.EdgesGeometry(canG),mEdge(big?0xffaa44:0x44aaff));
-  can.scale.set(0.9,0.6,1.2);can.position.set(0,0.5,-0.2);
+  can.scale.set(0.85,0.55,1.1);can.position.set(0,0.45,-0.15);
   body.add(can);
-  const antG=new THREE.CylinderGeometry(0.03,0.03,0.8,4);
+  // Antenna/tail fin
+  const antG=new THREE.CylinderGeometry(0.025,0.025,0.7,4);
   const ant=new THREE.LineSegments(new THREE.EdgesGeometry(antG),mEdge(col));
-  ant.rotation.x=Math.PI/2;ant.position.set(0,0.3,-1.3);
+  ant.rotation.x=Math.PI/2;ant.position.set(0,0.28,-1.2);
   body.add(ant);
-  const pts=[new THREE.Vector3(-5,0,0),new THREE.Vector3(-2,-0.3,0),new THREE.Vector3(0,0,0),new THREE.Vector3(2,-0.3,0),new THREE.Vector3(5,0,0)];
-  const cableGeo=new THREE.BufferGeometry().setFromPoints(pts);
-  const cable=new THREE.Line(cableGeo,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.7}));
-  cable.position.y=0.2;
-  body.add(cable);
+  // Energy cables: cockpit → each engine (catenary droop, 5 points)
   [-1,1].forEach(side=>{
-    const sG=new THREE.BoxGeometry(0.08,0.08,1.5);
+    const ex=side*ENG_X, ez=ENG_Z;
+    const pts=[
+      new THREE.Vector3(side*0.55,0.1,0),
+      new THREE.Vector3(side*(ENG_X*0.5),  -0.35, ez*0.3),
+      new THREE.Vector3(side*(ENG_X*0.75), -0.5,  ez*0.6),
+      new THREE.Vector3(side*(ENG_X*0.9),  -0.3,  ez*0.85),
+      new THREE.Vector3(ex, 0.1, ez+1.0)
+    ];
+    const cableGeo=new THREE.BufferGeometry().setFromPoints(pts);
+    body.add(new THREE.Line(cableGeo,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.8})));
+    // Secondary cable slightly above (dual cable per side like the movie)
+    const pts2=pts.map((p,i)=>new THREE.Vector3(p.x,p.y+0.18+Math.sin(i*0.7)*0.1,p.z));
+    const cg2=new THREE.BufferGeometry().setFromPoints(pts2);
+    body.add(new THREE.Line(cg2,new THREE.LineBasicMaterial({color:0xaaaaaa,transparent:true,opacity:0.5})));
+  });
+  // Cockpit-side struts (short arms to cable attachment)
+  [-1,1].forEach(side=>{
+    const sG=new THREE.BoxGeometry(0.07,0.07,1.2);
     const strut=new THREE.LineSegments(new THREE.EdgesGeometry(sG),mEdge(col));
-    strut.position.set(side*2.5,-0.2,0);
+    strut.position.set(side*1.8,-0.18,0.2);
     body.add(strut);
   });
   if(big)body.scale.setScalar(1.18);
@@ -34117,15 +34258,15 @@ function makePodRacerPod(type,color,variant){
     const rider=_makeSlagPilot();
     rider.position.set(0,0.05,-0.05);
     g.add(rider);
-    g.userData.halfW=6;
+    g.userData.halfW=4.5;// v7.291: reduced with engine width
   }else{
     const pilot=makePilotFigure();
     pilot.scale.setScalar(0.42);
     pilot.position.set(0,-0.1,0.0);
-    pilot.rotation.y=Math.PI;       // seat facing forward (-Z); we view the pilot's back
+    pilot.rotation.y=Math.PI;
     pilot.traverse(o=>{o.userData.preserveColor=true;});
     g.add(pilot);
-    g.userData.halfW=5;
+    g.userData.halfW=3.5;// v7.291: 70% of old 5
   }
   g.userData.variant=variant;
   return g;
@@ -34200,20 +34341,35 @@ function updatePodRace(dt){
   if((keys['ShiftLeft']||keys['ShiftRight'])&&(S._prWrenchCD||0)<=0){try{_fireWrench()}catch(_){}}
   const leftKey=keys['KeyA']||keys['ArrowLeft'];
   const rightKey=keys['KeyD']||keys['ArrowRight'];
-  if(leftKey)S._prSwerve=Math.max(-1,S._prSwerve-2.5*dt);
-  else if(rightKey)S._prSwerve=Math.min(1,S._prSwerve+2.5*dt);
-  else S._prSwerve*=0.85;
-  S._prVertical*=0.9;// v7.288: vertical control removed (ground race) — settle to 0
+  // v7.291: inertial steering — lateral velocity instead of direct swerve
+  // Input applies acceleration; air-drag + ground-friction damps it naturally
+  const steerAcc=28;      // lateral acceleration (units/s²)
+  const drag=Math.pow(0.82,dt*60); // per-frame drag (heavier at high speed)
+  if(leftKey) S._prLateralV-=steerAcc*dt;
+  else if(rightKey) S._prLateralV+=steerAcc*dt;
+  S._prLateralV*=drag;
+  S._prLateralV=Math.max(-32,Math.min(32,S._prLateralV));
+  // Also nudge the old swerve for bank angle read-out only
+  S._prSwerve=S._prLateralV/32;
+  S._prVertical*=0.9;
   const pod=S._prPlayerPod;
-  const targetX=S._prSwerve*18;
-  const targetY=1.5+S._prVertical*3;
-  pod.position.x+=(targetX-pod.position.x)*4*dt;
+  const trackLimit=(S._prLap===1?1.5:1)*(16+S._prSpeed/22);// same as trackHalfW scaling
+  pod.position.x+=S._prLateralV*dt;
   pod.position.x+=(S._prBounceVX||0)*dt;// v7.289: ramming knockback
-  S._prBounceVX=(S._prBounceVX||0)*0.86;
+  S._prBounceVX=(S._prBounceVX||0)*0.82;
+  // soft boundary: push back if near track edge
+  const curveOff=S._prCurveX||0;
+  const edge=trackLimit-2;
+  if(pod.position.x-curveOff>edge){S._prLateralV=Math.min(S._prLateralV,-8);}
+  if(pod.position.x-curveOff<-edge){S._prLateralV=Math.max(S._prLateralV,8);}
+  const targetY=1.5+S._prVertical*3;
   pod.position.y+=(targetY-pod.position.y)*3*dt;
   pod.position.z=camera.position.z-8;
-  pod.rotation.z=-S._prSwerve*0.25-S._prCurveV*0.004;
-  pod.rotation.x=S._prVertical*0.1;
+  // v7.291: collision wobble shudder (decays over ~0.5s)
+  S._prWobbleT=Math.max(0,(S._prWobbleT||0)-dt);
+  const wobble=S._prWobbleT>0?(Math.sin(S._prWobbleT*28)*0.22*S._prWobbleT*(S._prWobbleSign||1)):0;
+  pod.rotation.z=-S._prSwerve*0.32-S._prCurveV*0.005+wobble;
+  pod.rotation.x=S._prVertical*0.1+Math.abs(wobble)*0.1;
   S._prEngineT+=dt;
   const scrollSpd=S._prSpeed;
   S._prWalls.forEach(w=>{w.position.z+=scrollSpd*dt;});
@@ -34261,6 +34417,8 @@ function updatePodRace(dt){
     camera.position.x+=(Math.random()-0.5)*0.03;
   }
   camera.lookAt(pod.position.x,pod.position.y,pod.position.z-22);
+  // v7.291: update stereo engine panning every frame
+  try{sfx.updatePodEngines(pod.position.x,S._prSpeed,S._prMaxSpeed);}catch(_){}
 }
 
 // ============================================================
@@ -34365,8 +34523,10 @@ function _spawnPodRaceSegment(startZ, curveX){
   const wallCol=0xcc4400;
   const edgeMat=new THREE.LineBasicMaterial({color:wallCol});
   const segLen=120;
+  // v7.291: Lap 1 is 1.5× wider so players can find their line before traffic thickens
+  const widthScale=(S&&S._prLap===1)?1.5:1.0;
   const widths=[28,20,24,32];
-  const w=widths[type];
+  const w=widths[type]*widthScale;
   // v7.284: all X positions offset by curveX for curved track
   const lwG=new THREE.BoxGeometry(4,14,segLen);
   const lw=new THREE.LineSegments(new THREE.EdgesGeometry(lwG),edgeMat);
@@ -34483,7 +34643,7 @@ function _checkPodRaceCollisions(){
   if(S._prHitCooldown>0)return;
   const pod=S._prPlayerPod;
   const px=pod.position.x,py=pod.position.y;
-  const trackHalfW=16+S._prSpeed/22;
+  const trackHalfW=(S._prLap===1?1.5:1.0)*(16+S._prSpeed/22);// v7.291: wider on lap 1
   if(Math.abs(px-(S._prCurveX||0))>trackHalfW-1){
     S._prSpeed*=0.6;
     S._prHitCooldown=1.5;
@@ -34495,33 +34655,40 @@ function _checkPodRaceCollisions(){
     if(S._prHP<=0){_prPlayerEliminated();return;}
     pod.position.x=(S._prCurveX||0)+Math.sign(px-(S._prCurveX||0))*(trackHalfW-2);
   }
-  // v7.289: pod-to-pod ramming — bounce both apart, nitro ram damages the rival
+  // v7.289/v7.291: pod-to-pod ramming — powerful shove, nitro ram damages rival
   const nitroRam=(S._prNitroT||0)>0;
-  const myHalf=(pod.userData&&pod.userData.halfW)||4;
+  const myHalf=(pod.userData&&pod.userData.halfW)||3.5;
   S._prAI.forEach(ai=>{
     if(ai.eliminated||!ai.pod)return;
     const dx=px-ai.pod.position.x;
     const dz=pod.position.z-ai.pod.position.z;
-    const aiHalf=(ai.pod.userData&&ai.pod.userData.halfW)||5;
-    const lat=(myHalf+aiHalf)*0.5;
-    if(Math.abs(dz)<6&&Math.abs(dx)<lat){
-      const sign=dx>=0?1:-1;// +1 = player on the right of the AI
-      const imp=nitroRam?22:13;
-      S._prBounceVX=(S._prBounceVX||0)+sign*imp*0.5;// player recoils
-      ai.vx=(ai.vx||0)-sign*imp;                    // rival flung the opposite way (lighter)
-      // immediate de-overlap so they don't stick
-      ai.x-=sign*(lat-Math.abs(dx))*0.6;ai.pod.position.x=ai.x;
-      S._prSpeed*=nitroRam?0.92:0.8;
-      S._prHitCooldown=0.35;
-      try{screenFlash(nitroRam?0.35:0.2)}catch(_){}
-      S.shakeT=0.3;S.shakeI=nitroRam?1.4:1.0;
-      try{spawnP(new THREE.Vector3(px,py,pod.position.z-3),nitroRam?0x66ccff:0xff8800,nitroRam?14:8,0.7,0.35)}catch(_){}
+    const aiHalf=(ai.pod.userData&&ai.pod.userData.halfW)||3.5;
+    const lat=(myHalf+aiHalf)*0.55;
+    if(Math.abs(dz)<5&&Math.abs(dx)<lat){
+      const sign=dx>=0?1:-1;// +1 = player to the RIGHT of AI
+      // v7.291: bigger impulse — really feels like being shoved
+      const imp=nitroRam?36:22;
+      S._prBounceVX=(S._prBounceVX||0)+sign*imp*0.55;// player recoils laterally
+      ai.vx=(ai.vx||0)-sign*imp*1.2;// rival flung hard the other way
+      // immediate de-overlap
+      const overlap=lat-Math.abs(dx);
+      pod.position.x+=sign*overlap*0.4;
+      ai.x-=sign*overlap*0.6;ai.pod.position.x=ai.x;
+      // speed penalty on player
+      S._prSpeed*=nitroRam?0.94:0.78;
+      // v7.291: wobble the player pod (pitch + roll shudder)
+      S._prBounceVX=(S._prBounceVX||0);
+      S._prWobbleT=0.55;S._prWobbleSign=sign;// wobble state for updatePodRace
+      S._prHitCooldown=0.3;
+      try{screenFlash(nitroRam?0.4:0.25)}catch(_){}
+      S.shakeT=nitroRam?0.6:0.4;S.shakeI=nitroRam?2.0:1.4;
+      try{spawnP(new THREE.Vector3((px+ai.pod.position.x)*0.5,py,pod.position.z-2),nitroRam?0x66ccff:0xff8800,nitroRam?18:10,0.9,0.4)}catch(_){}
       // nitro body-slam knocks a rival out of the race
       if(nitroRam){
         ai.hp=(ai.hp!=null?ai.hp:3)-1;
         if(ai.hp<=0){
           ai.eliminated=true;
-          try{spawnP(ai.pod.position.clone(),0xff5522,22,1.2,0.7)}catch(_){}
+          try{spawnP(ai.pod.position.clone(),0xff5522,26,1.4,0.8)}catch(_){}
           try{ai.pod.visible=false}catch(_){}
           try{wfCineSubtitle((ai.def&&ai.def.name||'RIVAL')+' WRECKED!','#ff7733')}catch(_){}
         }
