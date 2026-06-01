@@ -33924,8 +33924,11 @@ function startPodRaceChallenge(){
 }
 // v7.287: shared return-to-title for the standalone pod race (finish or wipeout)
 function _podRaceReturnToTitle(){
-  try{sfx.stopPodEngines();}catch(_){}// v7.291: stop engine drones
+  try{sfx.stopPodEngines();}catch(_){}
+  try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
+  try{const f=document.getElementById('pr-flag-flash');if(f)f.remove();}catch(_){}
   try{cleanupBossResidue();}catch(_){}
+  camera.up.set(0,1,0);// v7.294: reset camera roll
   try{scene.fog=null;scene.background=null;}catch(_){}
   try{if(typeof starField!=='undefined'&&starField)starField.visible=true;
       if(typeof speedLines!=='undefined'&&speedLines)speedLines.visible=true;}catch(_){}
@@ -34101,6 +34104,8 @@ function startPodRace(){
   S.phase='PLAYING';
   cleanupBossResidue();
   S._prLap=1;S._prPos=1;S._prFinished=false;S._prTime=0;
+  S._prPostRace=false;S._prPostRaceTimer=0;S._prResultsShown=false;
+  S._prPlayerFinishTime=0;S._prFinishTimes=[];// v7.294 post-race results
   S._prBoost=0;S._prBoostCD=0;S._prHP=18;S._prMaxHP=18;// v7.290: tripled HP (was 6)
   // v7.288: nitro / smoke / wrench item state
   S._prNitroT=0;S._prNitroCD=0;S._prSmokeCD=0;S._prWrenchCD=0;
@@ -34149,10 +34154,11 @@ function startPodRace(){
     const gridRow=Math.floor(i/2); // 0-3
     const startZ=camera.position.z-18-gridRow*9;
     pod.position.set(gridCol,1.5,startZ);
+    pod.visible=false;// v7.294: hidden until GO!
     scene.add(pod);
     S._prAI.push({def,pod,x:gridCol,y:1.5,z:startZ,
       speed:def.speed,lap:1,raceDist:-16-gridRow*9,targetX:gridCol,
-      swerveT:Math.random()*Math.PI*2,eliminated:false,hp:3,pos:i+2});
+      swerveT:Math.random()*Math.PI*2,eliminated:false,finished:false,hp:3,pos:i+2});
   });
   // v7.285: No intro parade \u2014 go straight to F1 start lights
   S._prIntroActive=false;
@@ -34335,7 +34341,7 @@ function updatePodRace(dt){
   // v7.284: intro phase — AI parade, no player control yet
   if(S._prIntroActive){_updatePodRaceIntroAnim(dt);return;}
   if(!S._prRaceStarted)return;
-  if(S._prFinished)return;
+  if(S._prFinished){if(S._prPostRace)_updatePodRacePostRace(dt);return;}
   S._prTime+=dt;
   S._prHitCooldown=Math.max(0,S._prHitCooldown-dt);
   // v7.284: curve system — track drifts left/right like Mario Kart
@@ -34421,19 +34427,19 @@ function updatePodRace(dt){
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
   const camBob=Math.sin(S._prTime*8)*0.05*Math.min(1,S._prSpeed/80);
-  // v7.284: curve lean — camera tilts opposite to curve direction (F-ZERO feel)
-  const curveLean=S._prCurveV*0.014;
-  camera.position.x+=(pod.position.x*0.35+curveLean-camera.position.x)*3*dt;
+  // v7.294: player always centered — camera tracks pod X directly, banking via camera.up
+  const bank=S._prCurveV*-0.016;
+  camera.position.x+=(pod.position.x-camera.position.x)*8*dt;
   camera.position.y+=(pod.position.y+2+camBob-camera.position.y)*4*dt;
-  // v7.284: FOV widens at high speed (F-ZERO sensation)
+  // v7.284: FOV widens at high speed
   const speedRatio=Math.min(1,S._prSpeed/S._prMaxSpeed);
   camera.fov=Math.max(60,75+speedRatio*12);
   camera.updateProjectionMatrix();
-  // v7.284: high-speed micro-vibration
   if(S._prSpeed>110){
     camera.position.y+=(Math.random()-0.5)*0.05;
-    camera.position.x+=(Math.random()-0.5)*0.03;
+    camera.position.x+=(Math.random()-0.5)*0.02;
   }
+  camera.up.set(Math.sin(bank),Math.cos(bank),0);
   camera.lookAt(pod.position.x,pod.position.y,pod.position.z-22);
   // v7.291: update stereo engine panning every frame
   try{sfx.updatePodEngines(pod.position.x,S._prSpeed,S._prMaxSpeed);}catch(_){}
@@ -34554,21 +34560,44 @@ function _updatePodRaceItems(dt){
 function _spawnPodRaceSegment(startZ, curveX){
   curveX=curveX||0;
   const type=Math.floor(Math.random()*4);
-  const wallCol=0xcc4400;
-  const edgeMat=new THREE.LineBasicMaterial({color:wallCol});
+  // v7.294: brighter walls — solid fill + bright edge line
+  const wallFillCol=0x3a1800;
+  const wallEdgeCol=0xff7700;
+  const wallEdgeMat=new THREE.LineBasicMaterial({color:wallEdgeCol});
+  const wallFillMat=new THREE.MeshBasicMaterial({color:wallFillCol});
+  const edgeMat=wallEdgeMat;
   const segLen=120;
-  // v7.291: Lap 1 is 1.5× wider so players can find their line before traffic thickens
   const widthScale=(S&&S._prLap===1)?1.5:1.0;
   const widths=[28,20,24,32];
   const w=widths[type]*widthScale;
-  // v7.284: all X positions offset by curveX for curved track
-  const lwG=new THREE.BoxGeometry(4,14,segLen);
-  const lw=new THREE.LineSegments(new THREE.EdgesGeometry(lwG),edgeMat);
-  lw.position.set(curveX-w/2-2,3,startZ-segLen/2);
-  scene.add(lw);S._prWalls.push(lw);
-  const rw=lw.clone();
-  rw.position.set(curveX+w/2+2,3,startZ-segLen/2);
-  scene.add(rw);S._prWalls.push(rw);
+  // solid+wire walls for maximum visibility
+  const makeWall=(x,y,z)=>{
+    const wG=new THREE.BoxGeometry(4,18,segLen);
+    const fill=new THREE.Mesh(wG,wallFillMat);fill.position.set(x,y,z);scene.add(fill);S._prWalls.push(fill);
+    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(wG),wallEdgeMat);edge.position.set(x,y,z);scene.add(edge);S._prWalls.push(edge);
+    // bright top-cap strip
+    const capG=new THREE.BoxGeometry(4.5,0.5,segLen);
+    const cap=new THREE.Mesh(capG,new THREE.MeshBasicMaterial({color:0xff9900}));cap.position.set(x,y+9,z);scene.add(cap);S._prWalls.push(cap);
+  };
+  makeWall(curveX-w/2-2,0,startZ-segLen/2);
+  makeWall(curveX+w/2+2,0,startZ-segLen/2);
+  // v7.294: floor lane stripes (centre line + edge lines)
+  [-1,0,1].forEach(s=>{
+    const stripeX=curveX+s*(w/2*0.7);
+    const stripeCol=s===0?0xffffff:0xff6600;
+    const sg=new THREE.BoxGeometry(0.35,0.05,segLen*0.9);
+    const sm=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:stripeCol,transparent:true,opacity:s===0?0.45:0.55}));
+    sm.position.set(stripeX,-2.95,startZ-segLen/2);scene.add(sm);S._prProps.push(sm);
+  });
+  // distance poles every 30 units
+  for(let pi=0;pi<4;pi++){
+    const pz=startZ-15-pi*30;
+    [-1,1].forEach(side=>{
+      const pG=new THREE.CylinderGeometry(0.18,0.18,8,5);
+      const pm=new THREE.Mesh(pG,new THREE.MeshBasicMaterial({color:0xff8800}));
+      pm.position.set(curveX+side*(w/2+0.5),1,pz);scene.add(pm);S._prProps.push(pm);
+    });
+  }
   [-1,1].forEach(side=>{
     for(let ci=0;ci<3;ci++){
       const cG=new THREE.BoxGeometry(3+Math.random()*4,8+Math.random()*12,8+Math.random()*15);
@@ -34644,6 +34673,11 @@ function _updatePodRaceAI(dt){
     const aiSpd=(S._prSpeed||55)*ai.speed*rbFactor*(0.91+Math.random()*0.07)*slowF;
     ai.raceDist=(ai.raceDist||0)+aiSpd*dt;
     ai.pod.position.z+=aiSpd*dt;
+    // v7.294: AI finish detection
+    if(!ai.finished&&ai.raceDist>=S._prLapDist*3){
+      ai.finished=true;ai.finishTime=S._prTime;
+      try{_onAIFinish(ai);}catch(_){}
+    }
     // Recycle pod if too far behind
     const camZ=camera.position.z;
     if(ai.pod.position.z>camZ+80){
@@ -34751,33 +34785,80 @@ function _checkPodRaceCollisions(){
   });
 }
 
+// v7.294: player crosses finish — enter post-race top-down + results phase
 function _finishPodRace(){
-  try{wfCineSubtitle('\u2605 FINISH!! \u2605','#ffff00')}catch(_){}
+  S._prPlayerFinishTime=S._prTime;
+  if(!S._testFromOptions){try{markStageCleared('podrace')}catch(_){}}
+  // checkered flag overlay
+  const flag=document.createElement('div');flag.id='pr-flag-flash';
+  flag.style.cssText='position:fixed;inset:0;z-index:250;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center';
+  flag.innerHTML='<div style="font-size:64px;line-height:1">🏁</div>'
+    +'<div style="font-size:28px;color:#ffff00;letter-spacing:6px;text-shadow:0 0 20px #ffff00;margin-top:8px">FINISH!!</div>';
+  document.body.appendChild(flag);
+  setTimeout(()=>{try{flag.remove()}catch(_){}},2200);
   try{screenFlash(0.8)}catch(_){}
-  const mins=Math.floor(S._prTime/60);
-  const secs=(S._prTime%60).toFixed(1);
-  announce('RACE COMPLETE! '+mins+'m'+secs+'s');
-  try{playComm('hq','INCREDIBLE! You finished the Boonta Eve Classic!!')}catch(_){}
-  // v7.287: standalone challenge mode returns to title instead of the campaign return flight
-  if(S._prChallengeMode){
-    try{wfCineSubtitle('★ BOONTA EVE CHAMPION!! ★','#ffaa00')}catch(_){}
-    setTimeout(()=>{
-      if(!S._testFromOptions){try{markStageCleared('podrace')}catch(_){}}
-      try{_podRaceReturnToTitle()}catch(_){}
-    },4200);
-    return;
-  }
-  setTimeout(()=>{
-    if(!S._testFromOptions){try{markStageCleared('podrace')}catch(_){}}
-    try{startReturn()}catch(_){}
-  },4000);
+  try{playComm('hq','INCREDIBLE!! You finished the Boonta Eve Classic!!')}catch(_){}
+  S._prPostRace=true;
+  S._prPostRaceSpeed=Math.max(60,S._prSpeed*0.55);
+  try{const ph=document.getElementById('pr-hud');if(ph)ph.style.opacity='0.45';}catch(_){}
 }
-
+function _onAIFinish(ai){
+  if(!S._prPostRace)return;
+  const remaining=S._prAI?S._prAI.filter(a=>!a.finished&&!a.eliminated).length:0;
+  if(remaining===0&&!S._prResultsShown){S._prResultsShown=true;setTimeout(_showPodRaceResults,800);}
+}
+function _updatePodRacePostRace(dt){
+  S._prTime+=dt;
+  S._prPostRaceTimer=(S._prPostRaceTimer||0)+dt;
+  const spd=S._prPostRaceSpeed||70;
+  if(S._prWalls)S._prWalls.forEach(w=>{w.position.z+=spd*dt;});
+  if(S._prProps)S._prProps.forEach(p=>{p.position.z+=spd*dt;});
+  if(S._prWalls)S._prWalls=S._prWalls.filter(w=>{if(w.position.z>camera.position.z+50){scene.remove(w);return false;}return true;});
+  if(S._prProps)S._prProps=S._prProps.filter(p=>{if(p.position.z>camera.position.z+50){scene.remove(p);return false;}return true;});
+  if((S._prWalls||[]).length<15)_spawnPodRaceSegment(camera.position.z-200,S._prCurveX||0);
+  S._prCurveT=(S._prCurveT||0)-dt;
+  if(S._prCurveT<=0){S._prCurveV=(Math.random()-0.5)*28;S._prCurveT=4+Math.random()*4;}
+  S._prCurveX=(S._prCurveX||0)+S._prCurveV*dt;
+  if(Math.abs(S._prCurveX||0)>42)S._prCurveV*=-1;
+  _updatePodRaceAI(dt);
+  const tgtY=65,tgtX=S._prCurveX||0;
+  camera.position.y+=(tgtY-camera.position.y)*1.8*dt;
+  camera.position.x+=(tgtX-camera.position.x)*1.5*dt;
+  camera.fov=Math.max(58,camera.fov+((72-camera.fov)*2*dt));
+  camera.updateProjectionMatrix();
+  camera.up.set(0,0,-1);
+  camera.lookAt(tgtX,0,camera.position.z-100);
+  if(S._prPostRaceTimer>30&&!S._prResultsShown){S._prResultsShown=true;_showPodRaceResults();}
+}
+function _showPodRaceResults(){
+  if(document.getElementById('pr-results-panel'))return;
+  const fmt=t=>{if(t==null)return 'DNF';const m=Math.floor(t/60);return m+"'"+(String((t%60).toFixed(1)).padStart(4,'0'));};
+  const all=[];
+  all.push({name:(S.callsign||'PILOT'),time:S._prPlayerFinishTime||S._prTime,col:'#ffdd00',isPlayer:true});
+  if(S._prAI)S._prAI.forEach(ai=>{
+    const col='#'+((ai.def&&ai.def.col)||0x888888).toString(16).padStart(6,'0');
+    all.push({name:ai.def?ai.def.name:'?',time:ai.finished?ai.finishTime:null,col,eliminated:!!ai.eliminated});
+  });
+  all.sort((a,b)=>{if(a.time==null&&b.time==null)return 0;if(a.time==null)return 1;if(b.time==null)return -1;return a.time-b.time;});
+  const rows=all.map((r,i)=>'<tr style="border-top:1px solid #2a2a2a'+(r.isPlayer?';background:rgba(255,220,0,0.08)':'')+'"><td style="padding:5px 10px;color:#666;text-align:center">'+(i+1)+'</td><td style="padding:5px 14px;text-align:left;color:'+r.col+(r.isPlayer?';font-weight:bold':'')+'">'+r.name+(r.isPlayer?' ★':'')+'</td><td style="padding:5px 10px;text-align:right;color:'+(r.time!=null?'#7ff':'#555')+'">'+fmt(r.time)+'</td></tr>').join('');
+  const panel=document.createElement('div');panel.id='pr-results-panel';
+  panel.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;background:rgba(0,0,0,0.94);border:2px solid #ff8800;padding:28px 36px;min-width:330px;font-family:monospace;color:#fff;text-align:center;box-shadow:0 0 40px rgba(255,136,0,0.3)';
+  panel.innerHTML='🏁<br><br><div style="font-size:16px;color:#ff8800;letter-spacing:4px;margin-bottom:2px">BOONTA EVE CLASSIC</div><div style="font-size:11px;color:#888;letter-spacing:3px;margin-bottom:16px">FINAL RESULTS</div><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px"><tr style="font-size:10px;color:#666;letter-spacing:2px"><th>POS</th><th style="text-align:left">RACER</th><th style="text-align:right">TIME</th></tr>'+rows+'</table><button id="pr-results-btn" style="background:#ff8800;border:none;color:#000;font-family:monospace;font-size:13px;letter-spacing:3px;padding:10px 28px;cursor:pointer;border-radius:2px">CONTINUE →</button>';
+  document.body.appendChild(panel);
+  document.getElementById('pr-results-btn').addEventListener('click',_prResultsContinue);
+}
+function _prResultsContinue(){
+  try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
+  try{const ph=document.getElementById('pr-hud');if(ph){ph.style.opacity='1';ph.style.display='none';}}catch(_){}
+  camera.up.set(0,1,0);
+  S._prPostRace=false;S._prFinished=true;
+  if(S._prChallengeMode){try{_podRaceReturnToTitle()}catch(_){};}
+  else{try{startReturn()}catch(_){};}
+}
 function _prPlayerEliminated(){
-  S._prFinished=true;
+  S._prFinished=true;S._prPostRace=false;
   try{wfCineSubtitle('POD DESTROYED','#ff2200')}catch(_){}
   try{screenFlash(1.0)}catch(_){}
-  // v7.287: standalone challenge mode returns to title instead of game-over
   if(S._prChallengeMode){
     setTimeout(()=>{try{_podRaceReturnToTitle()}catch(_){}},2500);
     return;
@@ -34939,6 +35020,8 @@ function _startF1Lights(){
     try{wfCineSubtitle('GO!!','#00ff44')}catch(_){}
     try{sfx._prGoBeep&&sfx._prGoBeep()}catch(_){}
     S._prRaceStarted=true;
+    // v7.294: reveal AI pods on GO
+    if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod)ai.pod.visible=true;});
     announce('LAP 1 / 3');
     // v7.288: control hint for the new sabotage items
     setTimeout(()=>{try{announce('SPACE=NITRO  ENTER=SMOKE  SHIFT=WRENCH')}catch(_){}},1400);
