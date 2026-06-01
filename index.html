@@ -34602,13 +34602,14 @@ function _spawnPodRaceSegment(startZ, curveX){
     const sm=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:stripeCol,transparent:true,opacity:s===0?0.45:0.55}));
     sm.position.set(stripeX,-2.95,startZ-segLen/2);scene.add(sm);S._prProps.push(sm);
   });
-  // distance poles every 30 units
-  for(let pi=0;pi<4;pi++){
-    const pz=startZ-15-pi*30;
+  // v7.295fix: flat kerb markers only (no tall poles that look like racers)
+  for(let pi=0;pi<3;pi++){
+    const pz=startZ-20-pi*38;
     [-1,1].forEach(side=>{
-      const pG=new THREE.CylinderGeometry(0.18,0.18,8,5);
-      const pm=new THREE.Mesh(pG,new THREE.MeshBasicMaterial({color:0xff8800}));
-      pm.position.set(curveX+side*(w/2+0.5),1,pz);scene.add(pm);S._prProps.push(pm);
+      // low flat box chevron on ground — clearly a marker, not a racer
+      const kG=new THREE.BoxGeometry(1.2,0.3,3.5);
+      const km=new THREE.Mesh(kG,new THREE.MeshBasicMaterial({color:side>0?0xff2200:0xffffff,transparent:true,opacity:0.85}));
+      km.position.set(curveX+side*(w/2-0.5),-2.85,pz);scene.add(km);S._prProps.push(km);
     });
   }
   [-1,1].forEach(side=>{
