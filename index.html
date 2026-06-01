@@ -34204,6 +34204,12 @@ function startPodRace(){
   // v7.284: intro state
   S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
+  // v7.296fix2: hide title-screen meshes that bleed into pod race
+  try{if(typeof titlePlanet!=='undefined'&&titlePlanet)titlePlanet.visible=false;}catch(_){}
+  try{if(typeof gridGroup!=='undefined'&&gridGroup)gridGroup.visible=false;}catch(_){}
+  // also purge any fortress core / reactor mesh still lingering in scene
+  try{if(typeof coreMesh!=='undefined'&&coreMesh){scene.remove(coreMesh);coreMesh=null;}}catch(_){}
+  try{scene.traverse(function(o){if(o.name==='coreSpin'||o.name==='reactor')try{o.parent&&o.parent!==scene?o.parent.visible=false:o.visible=false;}catch(_){}});}catch(_){}
   // v7.296: per-course theming (default = lava/Boonta for the standalone race)
   const _crs=_currentPRCourse();
   scene.background=new THREE.Color(_crs.bg);
