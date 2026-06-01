@@ -33938,8 +33938,11 @@ function startColosseumChallenge(){
 // v7.287: STANDALONE POD RACE — launch the Boonta Eve Classic directly from title
 function startPodRaceChallenge(){
   try{const ts=document.getElementById('title-screen');if(ts)ts.style.display='none';}catch(_){}
+  // v7.296fix: game loop gates updatePodRace on selectedStage.id==='podrace'
+  try{selectedStage=STAGES.find(s=>s.id==='podrace')||STAGES[0];}catch(_){}
+  if(!S.callsign){try{const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}catch(_){}}
   S._prChallengeMode=true;
-  S._prChampionship=null;// v7.296: standalone single race — not a championship
+  S._prChampionship=null;// standalone single race — not a championship
   try{startPodRace();}catch(e){console.error('podRaceChallenge:',e);}
 }
 // v7.287: shared return-to-title for the standalone pod race (finish or wipeout)
@@ -34150,6 +34153,8 @@ function _currentPRCourse(){
 // v7.296: launch the full 4-course championship from the title
 function startPodRaceGrandPrix(){
   try{const ts=document.getElementById('title-screen');if(ts)ts.style.display='none';}catch(_){}
+  try{selectedStage=STAGES.find(s=>s.id==='podrace')||STAGES[0];}catch(_){}
+  if(!S.callsign){try{const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}catch(_){}}
   S._prChallengeMode=true;
   S._prChampionship={active:true,courseIdx:0,points:{},names:{}};
   try{startPodRace();}catch(e){console.error('podRaceGrandPrix:',e);}
