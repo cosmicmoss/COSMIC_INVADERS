@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.292</title>
+<title>COSMIC INVADERS v7.296</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1113,7 +1113,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.290</span></h1>
+    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.296</span></h1>
     <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
@@ -1143,7 +1143,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <button type="button" id="btn-show-tutorial" onclick="showOnboarding()" style="margin-top:8px;font-size:11px;color:#0ff;background:transparent;border:1px solid #044;padding:5px 14px;cursor:pointer;letter-spacing:2px;font-family:inherit">❓ HOW TO PLAY</button>
     <!-- v7.261: COLOSSEUM CHALLENGE — unlocked after all 5 main stages cleared -->
     <div id="colosseum-unlock-section" style="display:none;margin-top:14px;text-align:center">
-      <div style="font-size:10px;color:#ffaa00;letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 8px rgba(255,170,0,0.7)">★ ALL STAGES CLEARED — NEW MODE UNLOCKED ★</div>
+      <div id="arcade-modes-label" style="font-size:10px;color:#ffaa00;letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 8px rgba(255,170,0,0.7)">★ ARCADE MODES — PLAY ANY MODE DIRECTLY ★</div>
       <button type="button" id="btn-colosseum-challenge" onclick="startColosseumChallenge()"
         style="font-size:16px;color:#ffaa00;padding:16px 42px;border:2px solid #ffaa00;cursor:pointer;letter-spacing:3px;background:rgba(40,18,0,0.75);border-radius:6px;font-family:inherit;min-height:60px;min-width:280px;box-shadow:0 0 22px rgba(255,170,0,0.5),inset 0 0 12px rgba(255,170,0,0.08);-webkit-tap-highlight-color:rgba(255,170,0,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold;animation:coloUnlockPulse 2.2s ease-in-out infinite">
         🤼 COLOSSEUM CHALLENGE
@@ -1155,6 +1155,12 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
         🏁 BOONTA EVE POD RACE
       </button>
       <div style="font-size:9px;color:#885500;letter-spacing:2px;margin-top:5px">8-RACER GRID — WIN THE BOONTA EVE CLASSIC</div>
+      <!-- v7.296: 4-course Grand Prix championship -->
+      <button type="button" id="btn-podrace-gp" onclick="startPodRaceGrandPrix()"
+        style="margin-top:14px;font-size:16px;color:#66ddff;padding:16px 42px;border:2px solid #66ddff;cursor:pointer;letter-spacing:3px;background:rgba(0,24,40,0.75);border-radius:6px;font-family:inherit;min-height:60px;min-width:280px;box-shadow:0 0 22px rgba(102,221,255,0.5),inset 0 0 12px rgba(102,221,255,0.08);-webkit-tap-highlight-color:rgba(102,221,255,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold;animation:coloUnlockPulse 2.2s ease-in-out infinite">
+        🏆 POD GRAND PRIX
+      </button>
+      <div style="font-size:9px;color:#3399bb;letter-spacing:2px;margin-top:5px">4-COURSE CHAMPIONSHIP — ICE / DESERT / LAVA / CITY</div>
     </div>
     <div class="controls">
       ARROWS/WASD - MANEUVER&ensp;|&ensp;SPACE - FIRE&ensp;|&ensp;[E] - NAPALM<br>
@@ -33915,8 +33921,11 @@ function _allMainStagesCleared(){
 }
 function updateTitleUnlocks(){
   try{
+    // v7.296: arcade modes (Colosseum / Pod Race / Grand Prix) are always playable from the title
     const sec=document.getElementById('colosseum-unlock-section');
-    if(sec)sec.style.display=_allMainStagesCleared()?'block':'none';
+    if(sec)sec.style.display='block';
+    const lbl=document.getElementById('arcade-modes-label');
+    if(lbl)lbl.textContent=_allMainStagesCleared()?'★ ALL STAGES CLEARED — ARCADE MODES ★':'★ ARCADE MODES — PLAY ANY MODE DIRECTLY ★';
   }catch(_){}
 }
 function startColosseumChallenge(){
@@ -33930,6 +33939,7 @@ function startColosseumChallenge(){
 function startPodRaceChallenge(){
   try{const ts=document.getElementById('title-screen');if(ts)ts.style.display='none';}catch(_){}
   S._prChallengeMode=true;
+  S._prChampionship=null;// v7.296: standalone single race — not a championship
   try{startPodRace();}catch(e){console.error('podRaceChallenge:',e);}
 }
 // v7.287: shared return-to-title for the standalone pod race (finish or wipeout)
@@ -33945,6 +33955,7 @@ function _podRaceReturnToTitle(){
   try{camera.position.set(0,0,C.CAM_Z);camera.rotation.set(0,0,0);camera.lookAt(0,0,-100);}catch(_){}
   try{const ph=document.getElementById('pr-hud');if(ph)ph.style.display='none';}catch(_){}
   S._prChallengeMode=false;
+  S._prChampionship=null;// v7.296: never let a championship leak into the next standalone race
   S.phase='TITLE';
   try{const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';}catch(_){}
   try{updateTitleUnlocks();}catch(_){}
@@ -34110,6 +34121,59 @@ function updateColosseumHUD(){
   }
 }
 // ─── Direct colosseum test (Options → STORY TEST MODE) ───────// ============ v7.283: BOONTA EVE CLASSIC — POD RACE STAGE ============
+// ============ v7.296: POD GRAND PRIX — 4-course championship ============
+// Each course themes the background / fog / ground / walls / props.
+// The lava course (index 2) reproduces the original Boonta Eve look exactly,
+// so the standalone single race (no championship) is visually unchanged.
+const PR_COURSES=[
+  {id:'ice',   name:'GLACIER CANYON',  nameJp:'氷の峡谷', icon:'❄️',
+   bg:0x0a1a2e, fogCol:0x0a1a2e, fogD:0.011, groundCol:0x4a6f8c,
+   wallFill:0x16384f, wallEdge:0x88ddff, capCol:0xbbeeff, stripeCol:0xcfefff, rockCol:0x6fa8c8},
+  {id:'desert',name:'DUNE SPRINT',     nameJp:'砂漠', icon:'🏜️',
+   bg:0x2a2412, fogCol:0x2a2412, fogD:0.0075, groundCol:0xc9a35c,
+   wallFill:0x5a4420, wallEdge:0xe0b85a, capCol:0xffd980, stripeCol:0xfff0c0, rockCol:0xb08a4a},
+  {id:'lava',  name:'BOONTA CANYON',   nameJp:'溶岩', icon:'🌋',
+   bg:0x220a00, fogCol:0x220a00, fogD:0.008, groundCol:0x8b3a00,
+   wallFill:0x3a1800, wallEdge:0xff7700, capCol:0xff9900, stripeCol:0xff6600, rockCol:0x884422},
+  {id:'city',  name:'NEON CIRCUIT',    nameJp:'ネオン都市', icon:'🌃',
+   bg:0x05050f, fogCol:0x080814, fogD:0.0095, groundCol:0x1c1c2c,
+   wallFill:0x0e1430, wallEdge:0x33ddff, capCol:0xff44cc, stripeCol:0x66ffee, rockCol:0x303048},
+];
+// F1-lite points awarded by finishing position (index 0 = 1st), for 9 racers
+const PR_POINTS=[25,18,15,12,10,8,6,4,2];
+// current course theme — championship picks by courseIdx, otherwise default to lava (Boonta)
+function _currentPRCourse(){
+  const ch=S._prChampionship;
+  if(ch&&ch.active)return PR_COURSES[ch.courseIdx]||PR_COURSES[2];
+  return PR_COURSES[2];
+}
+// v7.296: launch the full 4-course championship from the title
+function startPodRaceGrandPrix(){
+  try{const ts=document.getElementById('title-screen');if(ts)ts.style.display='none';}catch(_){}
+  S._prChallengeMode=true;
+  S._prChampionship={active:true,courseIdx:0,points:{},names:{}};
+  try{startPodRace();}catch(e){console.error('podRaceGrandPrix:',e);}
+}
+// advance to the next championship course (called from the results CONTINUE button)
+function _prNextCourse(){
+  const ch=S._prChampionship;if(!ch)return;
+  ch.courseIdx++;
+  try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
+  try{const ph=document.getElementById('pr-hud');if(ph){ph.style.opacity='1';ph.style.display='none';}}catch(_){}
+  camera.up.set(0,1,0);
+  S._prPostRace=false;S._prFinished=true;
+  try{startPodRace();}catch(e){console.error('prNextCourse:',e);}
+}
+// award championship points from the finishing order produced in _showPodRaceResults
+function _prAwardPoints(sorted){
+  const ch=S._prChampionship;if(!ch)return;
+  sorted.forEach((r,i)=>{
+    if(r.time==null)return;// DNF scores nothing
+    const id=r.isPlayer?'__player':(r.id||r.name);
+    ch.points[id]=(ch.points[id]||0)+(PR_POINTS[i]||0);
+    ch.names[id]=r.name;ch._col=ch._col||{};ch._col[id]=r.col;
+  });
+}
 function startPodRace(){
   S.phase='PLAYING';
   cleanupBossResidue();
@@ -34135,9 +34199,11 @@ function startPodRace(){
   // v7.284: intro state
   S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
-  scene.background=new THREE.Color(0x220a00);
-  scene.fog=new THREE.FogExp2(0x220a00,0.008);
-  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(800,800),new THREE.MeshBasicMaterial({color:0x8b3a00}));
+  // v7.296: per-course theming (default = lava/Boonta for the standalone race)
+  const _crs=_currentPRCourse();
+  scene.background=new THREE.Color(_crs.bg);
+  scene.fog=new THREE.FogExp2(_crs.fogCol,_crs.fogD);
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(800,800),new THREE.MeshBasicMaterial({color:_crs.groundCol}));
   gnd.rotation.x=-Math.PI/2;gnd.position.y=-3;scene.add(gnd);
   S._prGround=gnd;
   camera.position.set(0,4,C.CAM_Z+5);camera.rotation.set(0,0,0);
@@ -34175,10 +34241,17 @@ function startPodRace(){
   // Spawn initial track segments
   for(let i=0;i<25;i++) _spawnPodRaceSegment(camera.position.z-20-i*120, 0);
   _showPodRaceHUD();
-  try{wfCineSubtitle('\u2605 BOONTA EVE CLASSIC \u2605','#ff8800')}catch(_){}
+  // v7.296: championship shows the round + course name, single race keeps the classic banner
+  const _ch=S._prChampionship;
+  if(_ch&&_ch.active){
+    try{wfCineSubtitle(_crs.icon+' ROUND '+(_ch.courseIdx+1)+'/4 \u2014 '+_crs.name+' '+_crs.icon,'#'+(_crs.wallEdge).toString(16).padStart(6,'0'))}catch(_){}
+    try{playComm('hq','Round '+(_ch.courseIdx+1)+' of 4! '+_crs.name+' \u2014 engines ready!!')}catch(_){}
+  } else {
+    try{wfCineSubtitle('\u2605 BOONTA EVE CLASSIC \u2605','#ff8800')}catch(_){}
+    try{playComm('hq','8 racers on the grid!! Boonta Eve Classic \u2014 all engines ready!!')}catch(_){}
+  }
   // Brief camera tilt back to show the grid during countdown
   try{camera.lookAt(0,1.5,camera.position.z-30);}catch(_){}
-  try{playComm('hq','8 racers on the grid!! Boonta Eve Classic \u2014 all engines ready!!')}catch(_){}
   // v7.291: start per-racer stereo engine drones
   try{sfx.init();sfx.startPodEngines(S._prAI);}catch(_){}
   // Short delay then F1 lights \u2014 all racers start together on GO!!
@@ -34573,9 +34646,10 @@ function _updatePodRaceItems(dt){
 function _spawnPodRaceSegment(startZ, curveX){
   curveX=curveX||0;
   const type=Math.floor(Math.random()*4);
-  // v7.294: brighter walls — solid fill + bright edge line
-  const wallFillCol=0x3a1800;
-  const wallEdgeCol=0xff7700;
+  // v7.294: brighter walls — solid fill + bright edge line. v7.296: per-course theming.
+  const _crs=_currentPRCourse();
+  const wallFillCol=_crs.wallFill;
+  const wallEdgeCol=_crs.wallEdge;
   const wallEdgeMat=new THREE.LineBasicMaterial({color:wallEdgeCol});
   const wallFillMat=new THREE.MeshBasicMaterial({color:wallFillCol});
   const edgeMat=wallEdgeMat;
@@ -34590,14 +34664,14 @@ function _spawnPodRaceSegment(startZ, curveX){
     const edge=new THREE.LineSegments(new THREE.EdgesGeometry(wG),wallEdgeMat);edge.position.set(x,y,z);scene.add(edge);S._prWalls.push(edge);
     // bright top-cap strip
     const capG=new THREE.BoxGeometry(4.5,0.5,segLen);
-    const cap=new THREE.Mesh(capG,new THREE.MeshBasicMaterial({color:0xff9900}));cap.position.set(x,y+9,z);scene.add(cap);S._prWalls.push(cap);
+    const cap=new THREE.Mesh(capG,new THREE.MeshBasicMaterial({color:_crs.capCol}));cap.position.set(x,y+9,z);scene.add(cap);S._prWalls.push(cap);
   };
   makeWall(curveX-w/2-2,0,startZ-segLen/2);
   makeWall(curveX+w/2+2,0,startZ-segLen/2);
   // v7.294: floor lane stripes (centre line + edge lines)
   [-1,0,1].forEach(s=>{
     const stripeX=curveX+s*(w/2*0.7);
-    const stripeCol=s===0?0xffffff:0xff6600;
+    const stripeCol=s===0?0xffffff:_crs.stripeCol;
     const sg=new THREE.BoxGeometry(0.35,0.05,segLen*0.9);
     const sm=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:stripeCol,transparent:true,opacity:s===0?0.45:0.55}));
     sm.position.set(stripeX,-2.95,startZ-segLen/2);scene.add(sm);S._prProps.push(sm);
@@ -34650,7 +34724,7 @@ function _spawnPodRaceSegment(startZ, curveX){
     const rx=curveX+(Math.random()-0.5)*120;
     if(Math.abs(rx-curveX)<w/2+3)continue;
     const rG=new THREE.BoxGeometry(3+Math.random()*8,2+Math.random()*6,3+Math.random()*8);
-    const rock=new THREE.LineSegments(new THREE.EdgesGeometry(rG),new THREE.LineBasicMaterial({color:0x884422}));
+    const rock=new THREE.LineSegments(new THREE.EdgesGeometry(rG),new THREE.LineBasicMaterial({color:_crs.rockCol}));
     rock.position.set(rx,-1+Math.random()*2,startZ-Math.random()*segLen);
     scene.add(rock);S._prProps.push(rock);
   }
@@ -34851,23 +34925,77 @@ function _showPodRaceResults(){
   all.push({name:(S.callsign||'PILOT'),time:S._prPlayerFinishTime||S._prTime,col:'#ffdd00',isPlayer:true});
   if(S._prAI)S._prAI.forEach(ai=>{
     const col='#'+((ai.def&&ai.def.col)||0x888888).toString(16).padStart(6,'0');
-    all.push({name:ai.def?ai.def.name:'?',time:ai.finished?ai.finishTime:null,col,eliminated:!!ai.eliminated});
+    all.push({id:ai.def&&ai.def.id,name:ai.def?ai.def.name:'?',time:ai.finished?ai.finishTime:null,col,eliminated:!!ai.eliminated});
   });
   all.sort((a,b)=>{if(a.time==null&&b.time==null)return 0;if(a.time==null)return 1;if(b.time==null)return -1;return a.time-b.time;});
   const rows=all.map((r,i)=>'<tr style="border-top:1px solid #2a2a2a'+(r.isPlayer?';background:rgba(255,220,0,0.08)':'')+'"><td style="padding:5px 10px;color:#666;text-align:center">'+(i+1)+'</td><td style="padding:5px 14px;text-align:left;color:'+r.col+(r.isPlayer?';font-weight:bold':'')+'">'+r.name+(r.isPlayer?' ★':'')+'</td><td style="padding:5px 10px;text-align:right;color:'+(r.time!=null?'#7ff':'#555')+'">'+fmt(r.time)+'</td></tr>').join('');
+  // v7.296: championship — award points, theme the panel to the course, append standings
+  const ch=S._prChampionship;
+  const inGP=!!(ch&&ch.active);
+  let title='BOONTA EVE CLASSIC',subtitle='FINAL RESULTS',accent='#ff8800',btnLabel='CONTINUE →',standingsHTML='';
+  if(inGP){
+    _prAwardPoints(all);
+    const crs=PR_COURSES[ch.courseIdx]||PR_COURSES[2];
+    accent='#'+(crs.wallEdge).toString(16).padStart(6,'0');
+    title=crs.icon+' '+crs.name;
+    subtitle='ROUND '+(ch.courseIdx+1)+' / 4 — RESULTS';
+    btnLabel=(ch.courseIdx>=3)?'FINAL STANDINGS →':'NEXT ROUND →';
+    // cumulative standings table
+    const st=Object.keys(ch.points).map(id=>({id,name:ch.names[id]||id,pts:ch.points[id],col:(ch._col&&ch._col[id])||'#aaa',isPlayer:id==='__player'}));
+    st.sort((a,b)=>b.pts-a.pts);
+    const stRows=st.map((r,i)=>'<tr style="border-top:1px solid #1a2a33'+(r.isPlayer?';background:rgba(102,221,255,0.08)':'')+'"><td style="padding:4px 10px;color:#567;text-align:center">'+(i+1)+'</td><td style="padding:4px 14px;text-align:left;color:'+r.col+(r.isPlayer?';font-weight:bold':'')+'">'+r.name+(r.isPlayer?' ★':'')+'</td><td style="padding:4px 10px;text-align:right;color:#9ef;font-weight:bold">'+r.pts+'</td></tr>').join('');
+    standingsHTML='<div style="font-size:11px;color:'+accent+';letter-spacing:3px;margin:6px 0 6px">★ CHAMPIONSHIP STANDINGS ★</div><table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px"><tr style="font-size:10px;color:#567;letter-spacing:2px"><th>#</th><th style="text-align:left">RACER</th><th style="text-align:right">PTS</th></tr>'+stRows+'</table>';
+  }
   const panel=document.createElement('div');panel.id='pr-results-panel';
-  panel.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;background:rgba(0,0,0,0.94);border:2px solid #ff8800;padding:28px 36px;min-width:330px;font-family:monospace;color:#fff;text-align:center;box-shadow:0 0 40px rgba(255,136,0,0.3)';
-  panel.innerHTML='🏁<br><br><div style="font-size:16px;color:#ff8800;letter-spacing:4px;margin-bottom:2px">BOONTA EVE CLASSIC</div><div style="font-size:11px;color:#888;letter-spacing:3px;margin-bottom:16px">FINAL RESULTS</div><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px"><tr style="font-size:10px;color:#666;letter-spacing:2px"><th>POS</th><th style="text-align:left">RACER</th><th style="text-align:right">TIME</th></tr>'+rows+'</table><button id="pr-results-btn" style="background:#ff8800;border:none;color:#000;font-family:monospace;font-size:13px;letter-spacing:3px;padding:10px 28px;cursor:pointer;border-radius:2px">CONTINUE →</button>';
+  panel.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;background:rgba(0,0,0,0.94);border:2px solid '+accent+';padding:24px 32px;min-width:330px;max-height:90vh;overflow-y:auto;font-family:monospace;color:#fff;text-align:center;box-shadow:0 0 40px '+accent+'55';
+  panel.innerHTML='🏁<br><br><div style="font-size:16px;color:'+accent+';letter-spacing:4px;margin-bottom:2px">'+title+'</div><div style="font-size:11px;color:#888;letter-spacing:3px;margin-bottom:14px">'+subtitle+'</div><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px"><tr style="font-size:10px;color:#666;letter-spacing:2px"><th>POS</th><th style="text-align:left">RACER</th><th style="text-align:right">TIME</th></tr>'+rows+'</table>'+standingsHTML+'<button id="pr-results-btn" style="background:'+accent+';border:none;color:#000;font-family:monospace;font-size:13px;letter-spacing:3px;padding:10px 28px;cursor:pointer;border-radius:2px">'+btnLabel+'</button>';
   document.body.appendChild(panel);
   document.getElementById('pr-results-btn').addEventListener('click',_prResultsContinue);
 }
 function _prResultsContinue(){
+  // v7.296: championship — advance to next course, or show final standings after round 4
+  const ch=S._prChampionship;
+  if(ch&&ch.active){
+    if(ch.courseIdx>=3){try{_showChampionshipFinal()}catch(_){}return;}
+    try{_prNextCourse()}catch(_){}
+    return;
+  }
   try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
   try{const ph=document.getElementById('pr-hud');if(ph){ph.style.opacity='1';ph.style.display='none';}}catch(_){}
   camera.up.set(0,1,0);
   S._prPostRace=false;S._prFinished=true;
   if(S._prChallengeMode){try{_podRaceReturnToTitle()}catch(_){};}
   else{try{startReturn()}catch(_){};}
+}
+// v7.296: crown the champion after all 4 rounds, then return to the title
+function _showChampionshipFinal(){
+  const ch=S._prChampionship;if(!ch)return;
+  try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
+  const st=Object.keys(ch.points).map(id=>({id,name:ch.names[id]||id,pts:ch.points[id],col:(ch._col&&ch._col[id])||'#aaa',isPlayer:id==='__player'}));
+  st.sort((a,b)=>b.pts-a.pts);
+  const champ=st[0]||{name:'?',pts:0,isPlayer:false};
+  const playerWon=champ.isPlayer;
+  const medals=['🥇','🥈','🥉'];
+  const rowsHTML=st.map((r,i)=>'<tr style="border-top:1px solid #2a2a33'+(r.isPlayer?';background:rgba(255,215,0,0.10)':'')+'"><td style="padding:5px 10px;color:#778;text-align:center">'+(medals[i]||(i+1))+'</td><td style="padding:5px 14px;text-align:left;color:'+r.col+(r.isPlayer?';font-weight:bold':'')+'">'+r.name+(r.isPlayer?' ★':'')+'</td><td style="padding:5px 10px;text-align:right;color:#ffd700;font-weight:bold">'+r.pts+'</td></tr>').join('');
+  const panel=document.createElement('div');panel.id='pr-results-panel';
+  panel.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;background:rgba(0,0,0,0.96);border:3px solid #ffd700;padding:26px 34px;min-width:340px;max-height:90vh;overflow-y:auto;font-family:monospace;color:#fff;text-align:center;box-shadow:0 0 50px rgba(255,215,0,0.45)';
+  panel.innerHTML='<div style="font-size:46px;line-height:1">🏆</div>'
+    +'<div style="font-size:18px;color:#ffd700;letter-spacing:4px;margin:8px 0 2px;text-shadow:0 0 16px #ffaa00">GRAND PRIX CHAMPION</div>'
+    +'<div style="font-size:22px;color:'+(champ.col||'#fff')+';font-weight:bold;letter-spacing:3px;margin-bottom:4px">'+champ.name+'</div>'
+    +'<div style="font-size:11px;color:'+(playerWon?'#ffd700':'#f88')+';letter-spacing:3px;margin-bottom:16px">'+(playerWon?'★ YOU ARE THE CHAMPION! ★':'BETTER LUCK NEXT SEASON')+'</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px"><tr style="font-size:10px;color:#778;letter-spacing:2px"><th>#</th><th style="text-align:left">RACER</th><th style="text-align:right">PTS</th></tr>'+rowsHTML+'</table>'
+    +'<button id="pr-results-btn" style="background:#ffd700;border:none;color:#000;font-family:monospace;font-size:13px;letter-spacing:3px;padding:10px 28px;cursor:pointer;border-radius:2px">RETURN TO TITLE →</button>';
+  document.body.appendChild(panel);
+  try{screenFlash(0.8)}catch(_){}
+  try{if(playerWon)playComm('hq','GRAND PRIX CHAMPION!! The galaxy salutes you!!');else playComm('hq','Season over — '+champ.name+' takes the crown.');}catch(_){}
+  document.getElementById('pr-results-btn').addEventListener('click',function(){
+    try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
+    try{const ph=document.getElementById('pr-hud');if(ph){ph.style.opacity='1';ph.style.display='none';}}catch(_){}
+    camera.up.set(0,1,0);
+    S._prPostRace=false;S._prFinished=true;
+    S._prChampionship=null;
+    try{_podRaceReturnToTitle()}catch(_){}
+  });
 }
 function _prPlayerEliminated(){
   S._prFinished=true;S._prPostRace=false;
@@ -35073,6 +35201,7 @@ function _startF1Lights(){
 function launchTestPodRace(){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
   selectedStage=STAGES.find(s=>s.id==='podrace')||STAGES[0];
+  S._prChampionship=null;// v7.296: test mode is a single race
   if(!S.callsign){const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}
   if(!selectedShip&&typeof SHIP_ROSTER!=='undefined')selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
   ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
@@ -35089,6 +35218,7 @@ function launchTestPodRace(){
 function launchTestPodRace(){
   const ov=document.getElementById('test-stage');if(ov)ov.remove();
   selectedStage=STAGES.find(s=>s.id==='podrace')||STAGES[0];
+  S._prChampionship=null;// v7.296: test mode is a single race
   if(!S.callsign){const pool=(typeof CALLSIGN_POOL!=='undefined')?CALLSIGN_POOL:['PILOT'];S.callsign=pool[Math.floor(Math.random()*pool.length)];}
   if(!selectedShip&&typeof SHIP_ROSTER!=='undefined')selectedShip=SHIP_ROSTER[1]||SHIP_ROSTER[0];
   ['title-screen','continue-overlay','stage-select','bridge-overlay','options-panel','options-backdrop'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
