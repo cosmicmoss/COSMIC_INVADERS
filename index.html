@@ -33948,6 +33948,7 @@ function startPodRaceChallenge(){
 // v7.287: shared return-to-title for the standalone pod race (finish or wipeout)
 function _podRaceReturnToTitle(){
   try{sfx.stopPodEngines();}catch(_){}
+  try{sfx.stopCrowdAmbient&&sfx.stopCrowdAmbient();}catch(_){}// v7.297
   try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
   try{const f=document.getElementById('pr-flag-flash');if(f)f.remove();}catch(_){}
   try{cleanupBossResidue();}catch(_){}
@@ -34195,7 +34196,7 @@ function startPodRace(){
   S._prSwerve=0;S._prVertical=0;
   S._prLateralV=0;// v7.291: lateral velocity for inertial steering
   S._prWobbleT=0;S._prWobbleSign=1;// v7.291: collision wobble
-  S._prDistance=0;S._prLapDist=2200;
+  S._prDistance=0;S._prLapDist=4400;// v7.297: 2x course length (scroll speed also 2x)
   S._prWalls=[];S._prProps=[];S._prAI=[];
   S._prHitCooldown=0;S._prRaceStarted=false;
   S._prEngineT=0;
@@ -34266,6 +34267,8 @@ function startPodRace(){
   try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
   // v7.291: start per-racer stereo engine drones
   try{sfx.init();sfx.startPodEngines(S._prAI);}catch(_){}
+  // v7.297: ambient crowd cheer throughout the race
+  try{sfx.startCrowdAmbient&&sfx.startCrowdAmbient();}catch(_){}
   // Short delay then F1 lights \u2014 all racers start together on GO!!
   setTimeout(()=>_startF1Lights(),1800);
 }
@@ -34493,7 +34496,8 @@ function updatePodRace(dt){
   pod.rotation.z=S._prPodRz+wobble;
   pod.rotation.x=S._prVertical*0.1+Math.abs(wobble)*0.1;
   S._prEngineT+=dt;
-  const scrollSpd=S._prSpeed;
+  // v7.297: visual scroll x2 for speed feel — player control speed unchanged
+  const scrollSpd=S._prSpeed*2;
   S._prWalls.forEach(w=>{w.position.z+=scrollSpd*dt;});
   S._prProps.forEach(p=>{p.position.z+=scrollSpd*dt;});
   S._prWalls=S._prWalls.filter(w=>{
@@ -34502,7 +34506,7 @@ function updatePodRace(dt){
   S._prProps=S._prProps.filter(p=>{
     if(p.position.z>camera.position.z+50){scene.remove(p);return false;}return true;
   });
-  if(S._prWalls.length<15)_spawnPodRaceSegment(camera.position.z-180, S._prCurveX);
+  if(S._prWalls.length<15)_spawnPodRaceSegment(camera.position.z-180, S._prCurveX, S._prCurveV);
   S._prDistance+=scrollSpd*dt;
   if(S._prDistance>=S._prLapDist){
     S._prDistance-=S._prLapDist;
@@ -34518,6 +34522,7 @@ function updatePodRace(dt){
       try{screenFlash(0.4)}catch(_){}
       S.shakeT=0.4;S.shakeI=1.2;
       try{sfx._prLapFanfare&&sfx._prLapFanfare()}catch(_){}
+      try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2.5)}catch(_){}// v7.297: lap cheer
     }
   }
   try{_updatePodRaceItems(dt)}catch(_){}// v7.288: nitro/smoke/wrench cooldowns + projectiles
@@ -34538,9 +34543,56 @@ function updatePodRace(dt){
     camera.position.x+=(Math.random()-0.5)*0.015;
   }
   camera.up.set(Math.sin(S._prBankSmooth),Math.cos(S._prBankSmooth),0);
-  camera.lookAt(pod.position.x,pod.position.y,pod.position.z-22);
+  // v7.297: camera follows curve direction — makes track ahead look curved
+  const lookCurveX=pod.position.x+(S._prCurveX||0)*0.28+(S._prCurveV||0)*0.7;
+  camera.lookAt(lookCurveX, pod.position.y, pod.position.z-22);
   // v7.291: update stereo engine panning every frame
   try{sfx.updatePodEngines(pod.position.x,S._prSpeed,S._prMaxSpeed);}catch(_){}
+  // v7.297: periodic engine misfire ボボボボ
+  S._prMisfireT=Math.max(0,(S._prMisfireT||0)-dt);
+  if(S._prMisfireT<=0&&S._prRaceStarted&&Math.random()<0.35){
+    S._prMisfireT=5+Math.random()*8;
+    try{
+      const ctx=sfx._ctx||sfx.ctx;if(ctx){
+        const cnt=1+Math.floor(Math.random()*3);// 1-3 misfires
+        for(let mi=0;mi<cnt;mi++){
+          const t=ctx.currentTime+mi*0.14;
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          const d=ctx.createDistortion?ctx.createDistortion():null;
+          o.type='sawtooth';o.frequency.setValueAtTime(55+Math.random()*25,t);
+          g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.35,t+0.02);
+          g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+          if(d){d.curve=new Float32Array([...Array(256)].map((_,i)=>Math.tanh((i/128-1)*8)));o.connect(d);d.connect(g);}else{o.connect(g);}
+          g.connect(ctx.destination);o.start(t);o.stop(t+0.2);
+        }
+      }
+    }catch(_){}
+  }
+  // v7.297: Doppler effect — pitch drop when player passes an AI pod
+  if(S._prAI&&S._prRaceStarted){
+    const playerZ=pod.position.z;
+    S._prAI.forEach(ai=>{
+      if(ai.eliminated||!ai.pod)return;
+      const aiZ=ai.pod.position.z;
+      const wasAhead=(ai._dopplerAhead===undefined)?false:ai._dopplerAhead;
+      const isAhead=aiZ<playerZ-3;// AI is ahead = lower z
+      if(wasAhead&&!isAhead&&Math.abs(aiZ-playerZ)<30){// just got passed by player
+        try{
+          const ctx=sfx._ctx||sfx.ctx;if(ctx){
+            const o=ctx.createOscillator(),g=ctx.createGain(),pan=ctx.createStereoPanner?ctx.createStereoPanner():null;
+            o.type='sine';
+            o.frequency.setValueAtTime(620,ctx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(260,ctx.currentTime+0.5);
+            g.gain.setValueAtTime(0.22,ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.55);
+            if(pan){pan.pan.value=(ai.pod.position.x>0)?0.6:-0.6;o.connect(pan);pan.connect(g);}else{o.connect(g);}
+            g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.6);
+          }
+        }catch(_){}
+      }
+      ai._dopplerAhead=isAhead;
+    });
+  }
 }
 
 // ============================================================
@@ -34646,6 +34698,7 @@ function _updatePodRaceItems(dt){
         // 6) sfx: clang + thud
         try{sfx._prClang&&sfx._prClang()}catch(_){}
         try{sfx._prCollisionThud&&sfx._prCollisionThud(true)}catch(_){}
+        try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2);}catch(_){}// v7.297: crowd cheer on explosion
         try{wfCineSubtitle((ai.def&&ai.def.name||'RIVAL')+' WRECKED! 🔧','#ffdd44')}catch(_){}
         try{scene.remove(w.mesh)}catch(_){}
         S._prWrenches.splice(i,1);continue;
@@ -34655,8 +34708,8 @@ function _updatePodRaceItems(dt){
   }
 }
 
-function _spawnPodRaceSegment(startZ, curveX){
-  curveX=curveX||0;
+function _spawnPodRaceSegment(startZ, curveX, curveV){
+  curveX=curveX||0;curveV=curveV||0;
   const type=Math.floor(Math.random()*4);
   // v7.294: brighter walls — solid fill + bright edge line. v7.296: per-course theming.
   const _crs=_currentPRCourse();
@@ -34669,14 +34722,16 @@ function _spawnPodRaceSegment(startZ, curveX){
   const widthScale=(S&&S._prLap===1)?1.2:1.0;
   const widths=[70,50,60,80];// v7.295: 2.5× wider track
   const w=widths[type]*widthScale;
+  // v7.297: curve angle applied to wall rotation — makes track look curved ahead
+  const cAngle=Math.atan2(curveV, Math.max(55,(S&&S._prSpeed)||55))*0.55;
   // solid+wire walls for maximum visibility
   const makeWall=(x,y,z)=>{
     const wG=new THREE.BoxGeometry(4,18,segLen);
-    const fill=new THREE.Mesh(wG,wallFillMat);fill.position.set(x,y,z);scene.add(fill);S._prWalls.push(fill);
-    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(wG),wallEdgeMat);edge.position.set(x,y,z);scene.add(edge);S._prWalls.push(edge);
+    const fill=new THREE.Mesh(wG,wallFillMat);fill.position.set(x,y,z);fill.rotation.y=cAngle;scene.add(fill);S._prWalls.push(fill);
+    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(wG),wallEdgeMat);edge.position.set(x,y,z);edge.rotation.y=cAngle;scene.add(edge);S._prWalls.push(edge);
     // bright top-cap strip
     const capG=new THREE.BoxGeometry(4.5,0.5,segLen);
-    const cap=new THREE.Mesh(capG,new THREE.MeshBasicMaterial({color:_crs.capCol}));cap.position.set(x,y+9,z);scene.add(cap);S._prWalls.push(cap);
+    const cap=new THREE.Mesh(capG,new THREE.MeshBasicMaterial({color:_crs.capCol}));cap.position.set(x,y+9,z);cap.rotation.y=cAngle;scene.add(cap);S._prWalls.push(cap);
   };
   makeWall(curveX-w/2-2,0,startZ-segLen/2);
   makeWall(curveX+w/2+2,0,startZ-segLen/2);
@@ -34772,20 +34827,24 @@ function _updatePodRaceAI(dt){
     const distDiff=S._prDistance-(ai.raceDist||0);
     const rbFactor=distDiff>350?1.16:(distDiff<-250?0.87:1.0);
     const slowF=((ai._slowT||0)>0)?0.45:1;// v7.288: smoke/wrench sabotage slow
-    const aiSpd=(S._prSpeed||55)*ai.speed*rbFactor*(0.91+Math.random()*0.07)*slowF;
+    // v7.297: AI speed uses doubled scroll speed (matches x2 visual scroll)
+    const aiSpd=(S._prSpeed||55)*2*ai.speed*rbFactor*(0.91+Math.random()*0.07)*slowF;
     ai.raceDist=(ai.raceDist||0)+aiSpd*dt;
     ai.pod.position.z+=aiSpd*dt;
-    // v7.294: AI finish detection
-    if(!ai.finished&&ai.raceDist>=S._prLapDist*3){
+    // v7.297: AI finish detection — use S._prLapDist (now 4400, 3 laps = 13200)
+    if(!ai.finished&&ai.raceDist>=(S._prLapDist||4400)*3){
       ai.finished=true;ai.finishTime=S._prTime;
+      try{sfx.playCrowdCheer&&sfx.playCrowdCheer(1.5)}catch(_){}// crowd cheer when AI finishes
       try{_onAIFinish(ai);}catch(_){}
     }
     // Recycle pod if too far behind
     const camZ=camera.position.z;
     // v7.296fix3: recycle with brief invisibility — prevents ghost pods appearing from nowhere
+    // v7.297fix: use TOTAL player distance (not per-lap) so AI can reach finish
     if(ai.pod.position.z>camZ+100){
       ai.pod.position.z=camZ-200-Math.random()*60;
-      ai.raceDist=Math.min(ai.raceDist, S._prDistance+800);
+      const playerTotalDist=((S._prLap||1)-1)*(S._prLapDist||4400)+(S._prDistance||0);
+      ai.raceDist=Math.min(ai.raceDist, playerTotalDist+1600);
       ai.pod.visible=false;// hide during teleport
       ai._reappearT=2.0;  // reappear naturally 2s later
     }
@@ -34884,6 +34943,7 @@ function _checkPodRaceCollisions(){
           try{spawnP(ai.pod.position.clone(),0xff5522,26,1.4,0.8)}catch(_){}
           try{ai.pod.visible=false}catch(_){}
           try{wfCineSubtitle((ai.def&&ai.def.name||'RIVAL')+' WRECKED!','#ff7733')}catch(_){}
+          try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2);}catch(_){}// v7.297
         }
       }
     }
@@ -34903,6 +34963,7 @@ function _finishPodRace(){
   setTimeout(()=>{try{flag.remove()}catch(_){}},2200);
   try{screenFlash(0.8)}catch(_){}
   try{playComm('hq','INCREDIBLE!! You finished the Boonta Eve Classic!!')}catch(_){}
+  try{sfx.playCrowdCheer&&sfx.playCrowdCheer(5);}catch(_){}// v7.297: big finish cheer
   S._prPostRace=true;
   S._prPostRaceSpeed=Math.max(60,S._prSpeed*0.55);
   try{const ph=document.getElementById('pr-hud');if(ph)ph.style.opacity='0.45';}catch(_){}
@@ -34920,7 +34981,7 @@ function _updatePodRacePostRace(dt){
   if(S._prProps)S._prProps.forEach(p=>{p.position.z+=spd*dt;});
   if(S._prWalls)S._prWalls=S._prWalls.filter(w=>{if(w.position.z>camera.position.z+50){scene.remove(w);return false;}return true;});
   if(S._prProps)S._prProps=S._prProps.filter(p=>{if(p.position.z>camera.position.z+50){scene.remove(p);return false;}return true;});
-  if((S._prWalls||[]).length<15)_spawnPodRaceSegment(camera.position.z-200,S._prCurveX||0);
+  if((S._prWalls||[]).length<15)_spawnPodRaceSegment(camera.position.z-200,S._prCurveX||0,S._prCurveV||0);
   S._prCurveT=(S._prCurveT||0)-dt;
   if(S._prCurveT<=0){S._prCurveV=(Math.random()-0.5)*28;S._prCurveT=4+Math.random()*4;}
   S._prCurveX=(S._prCurveX||0)+S._prCurveV*dt;
@@ -35058,7 +35119,7 @@ function _updatePodRaceHUD(){
     setTimeout(()=>{try{posEl.classList.remove('pr-pos-overtake');}catch(_){}},700);
   }
   S._prPrevPos=newPos;
-  if(speedEl)speedEl.textContent=Math.floor(S._prSpeed||55)+' km/h';
+  if(speedEl)speedEl.textContent=Math.floor((S._prSpeed||55)*2)+' km/h';// v7.297: x2 display
   if(hpEl)hpEl.textContent='HULL: '+'\u2588'.repeat(Math.max(0,S._prHP||0))+'\u2591'.repeat(Math.max(0,(S._prMaxHP||6)-(S._prHP||0)));
   // v7.288: item readiness \u2014 bright when READY, dim + countdown when on cooldown/active
   const _item=(id,active,cd,label,onCol)=>{
