@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.303</title>
+<title>COSMIC INVADERS v7.304</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1450,6 +1450,31 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
   <!-- v7.298: camera view toggle button (mobile / mouse) — v7.299: larger tap target -->
   <div id="pr-cam-btn" onclick="try{togglePodCamMode()}catch(_){}" style="position:absolute;bottom:10px;right:12px;pointer-events:auto;cursor:pointer;font-size:14px;letter-spacing:1px;color:#7fd0ff;padding:10px 14px;min-width:80px;text-align:center;border:1px solid #2a5a7a;border-radius:8px;background:rgba(0,16,28,0.72);box-shadow:0 0 8px rgba(0,120,200,0.25)">🎥 PILOT [C]</div>
+  <!-- v7.304: gyro steer button — shown only on touch devices -->
+  <div id="pr-gyro-btn" onclick="try{_togglePodGyro()}catch(_){}" style="display:none;position:absolute;bottom:10px;right:108px;pointer-events:auto;cursor:pointer;font-size:13px;letter-spacing:1px;color:#44ffcc;padding:10px 12px;min-width:72px;text-align:center;border:1px solid #336655;border-radius:8px;background:rgba(0,20,16,0.75);box-shadow:0 0 8px rgba(0,200,150,0.2)">📱 GYRO</div>
+  <!-- v7.304: tilt indicator bar (visible in gyro mode) -->
+  <div id="pr-gyro-bar" style="display:none;position:absolute;bottom:54px;left:50%;transform:translateX(-50%);pointer-events:none;text-align:center;">
+    <div style="font-size:9px;color:#33ccaa;letter-spacing:3px;margin-bottom:5px;">TILT STEER</div>
+    <div style="position:relative;width:190px;height:8px;background:rgba(0,0,0,0.55);border-radius:4px;border:1px solid #336655;">
+      <div style="position:absolute;top:-4px;left:50%;width:1px;height:16px;background:rgba(50,200,140,0.4);transform:translateX(-50%);"></div>
+      <div id="pr-gyro-dot" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;background:#44ffcc;border-radius:50%;box-shadow:0 0 10px #44ffcc,0 0 20px rgba(0,255,180,0.4);transition:left 0.07s linear;"></div>
+    </div>
+  </div>
+</div>
+<!-- v7.304: touch zones (active in gyro mode) — transparent overlays -->
+<div id="pr-touch-zones" style="display:none;position:fixed;inset:0;z-index:93;pointer-events:none;">
+  <div id="pr-touch-brake" style="position:absolute;left:0;top:0;width:36%;height:82%;pointer-events:auto;"
+       ontouchstart="S._prTouchBrake=true;this.style.background='rgba(255,80,0,0.07)'"
+       ontouchend="S._prTouchBrake=false;this.style.background='none'"
+       ontouchcancel="S._prTouchBrake=false;this.style.background='none'">
+    <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,120,0,0.6);font-size:11px;letter-spacing:2px;pointer-events:none;text-align:center;">⬛<br>BRAKE</div>
+  </div>
+  <div id="pr-touch-nitro" style="position:absolute;right:0;top:0;width:36%;height:82%;pointer-events:auto;"
+       ontouchstart="S._prTouchNitro=true;this.style.background='rgba(0,150,255,0.07)'"
+       ontouchend="S._prTouchNitro=false;this.style.background='none'"
+       ontouchcancel="S._prTouchNitro=false;this.style.background='none'">
+    <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(80,180,255,0.6);font-size:11px;letter-spacing:2px;pointer-events:none;text-align:center;">⚡<br>NITRO</div>
+  </div>
 </div>
 <!-- v7.299: smoke fog overlay — fades in when player enters an AI smoke cloud -->
 <div id="pr-smoke-fog" style="display:none;position:fixed;inset:0;z-index:89;pointer-events:none;background:rgba(100,105,100,0.0);transition:background 0.35s,backdrop-filter 0.35s;"></div>
@@ -2405,6 +2430,35 @@ class SFX{
         try{e.gMain.disconnect();e.pan.disconnect();}catch(_){}
       });
       this._podEngines=[];
+    }catch(_){}
+  }
+  // v7.304: wind rushing sound — grows louder and brighter with speed + curves
+  startWindSound(){
+    try{
+      this.stopWindSound();if(!this.ctx)return;
+      const ctx=this.ctx;
+      const buf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()-0.5)*2;
+      const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+      const lpf=ctx.createBiquadFilter();lpf.type='lowpass';lpf.frequency.value=600;
+      const hpf=ctx.createBiquadFilter();hpf.type='highpass';hpf.frequency.value=120;
+      const gain=ctx.createGain();gain.gain.value=0;
+      src.connect(hpf);hpf.connect(lpf);lpf.connect(gain);gain.connect(this.g||ctx.destination);
+      src.start();
+      this._windSrc=src;this._windGain=gain;this._windLPF=lpf;
+    }catch(_){}
+  }
+  stopWindSound(){
+    try{if(this._windSrc){this._windSrc.stop();this._windSrc.disconnect();}this._windSrc=null;this._windGain=null;this._windLPF=null;}catch(_){}
+  }
+  updateWindSound(speed,curveV){
+    try{
+      if(!this._windGain||!this.ctx)return;
+      const t=this.ctx.currentTime;
+      const sf=Math.min(1,Math.max(0,speed/155));
+      const cf=Math.abs(curveV||0)/28;
+      this._windGain.gain.setTargetAtTime(sf*0.13+cf*0.04,t,0.25);
+      this._windLPF.frequency.setTargetAtTime(500+sf*2800,t,0.4);
     }catch(_){}
   }
   // v7.284: Baby alien happy sounds
@@ -34021,6 +34075,8 @@ function _podRaceReturnToTitle(){
   try{const sf=document.getElementById('pr-smoke-fog');if(sf)sf.style.display='none';}catch(_){}
   try{const sl=document.getElementById('pr-speed-streak');if(sl)sl.style.display='none';}catch(_){}
   try{const hc=document.getElementById('pr-horiz-cursor');if(hc)hc.style.display='none';}catch(_){}
+  try{if(S._prGyroActive)_stopGyroSteering();}catch(_){}
+  try{const gb=document.getElementById('pr-gyro-btn');if(gb)gb.style.display='none';}catch(_){}
   try{camera.fov=75;camera.updateProjectionMatrix();}catch(_){}
   // v7.299: crash cleanup
   if(S._prCrashPilot){try{scene.remove(S._prCrashPilot);}catch(_){}S._prCrashPilot=null;}
@@ -34277,6 +34333,10 @@ function startPodRace(){
   S._prWalls=[];S._prProps=[];S._prAI=[];
   S._prHitCooldown=0;S._prRaceStarted=false;
   S._prEngineT=0;
+  // v7.304: gyro steering state
+  S._prGyroActive=false;S._prGyroSteer=0;S._prGyroRaw=0;S._prGyroNeutral=null;
+  S._prGyroHandler=null;S._prGyroCalibrateAt=null;
+  S._prTouchBrake=false;S._prTouchNitro=false;
   // v7.284: curve system
   S._prCurveX=0;S._prCurveV=0;S._prCurveT=4;
   // v7.284: intro state
@@ -34304,6 +34364,11 @@ function startPodRace(){
   S._prCamMode='chase';// v7.298: default chase view
   try{const _ck=document.getElementById('pr-cockpit');if(_ck)_ck.style.display='none';}catch(_){}
   try{const _cb=document.getElementById('pr-cam-btn');if(_cb)_cb.textContent='🎥 PILOT [C]';}catch(_){}
+  // v7.304: show gyro button only on touch-capable devices
+  try{
+    const _gb=document.getElementById('pr-gyro-btn');
+    if(_gb)_gb.style.display=('ontouchstart' in window||navigator.maxTouchPoints>0)?'block':'none';
+  }catch(_){}
   // v7.284: 8 racers \u2014 all colosseum monsters. v7.289: JABBA slot \u2192 SLAG REBORN (slag-only war-pod).
   const AI_DEFS=[
     {id:'tengu',    name:'TENGU',    title:'WIND SPIRIT',  col:0x44aaff, speed:1.18, agg:0.90, gridX:-28, variant:'pod'},
@@ -34547,10 +34612,12 @@ function updatePodRace(dt){
   if(S._prCurveX<-42){S._prCurveX=-42;S._prCurveV=Math.abs(S._prCurveV);}
   const accel=keys['KeyW']||keys['ArrowUp'];
   const brake=keys['KeyS']||keys['ArrowDown'];
-  // v7.288: NITRO (Space) — tap for a 3-second burst, then cooldown
+  // v7.288: NITRO — keyboard Space OR gyro-mode touch-nitro
   S._prNitroCD=Math.max(0,(S._prNitroCD||0)-dt);
-  if(keys['Space']&&(S._prNitroT||0)<=0&&S._prNitroCD<=0){
+  const nitroBtn=keys['Space']||(S._prGyroActive&&(S._prTouchNitro||false));
+  if(nitroBtn&&(S._prNitroT||0)<=0&&S._prNitroCD<=0){
     S._prNitroT=3;S._prNitroCD=8;
+    S._prTouchNitro=false;// consume the touch
     try{wfCineSubtitle('★ NITRO! ★','#66ccff')}catch(_){}
     try{sfx._prNitro&&sfx._prNitro()}catch(_){}
   }
@@ -34560,6 +34627,11 @@ function updatePodRace(dt){
     S._prSpeed=Math.min(S._prMaxSpeed*1.5,S._prSpeed+90*dt);
     if(S._prPlayerPod)try{spawnP(new THREE.Vector3(S._prPlayerPod.position.x,S._prPlayerPod.position.y,S._prPlayerPod.position.z+2),0x99e0ff,2,1.2,0.4,0.5)}catch(_){}
   }
+  else if(S._prGyroActive){
+    // v7.304: gyro mode — auto-accel unless touch-braking
+    if(S._prTouchBrake){S._prSpeed=Math.max(20,S._prSpeed-60*dt);}
+    else{S._prSpeed=Math.min(S._prMaxSpeed,S._prSpeed+32*dt);}// gentle constant acceleration
+  }
   else if(accel){S._prSpeed=Math.min(S._prMaxSpeed,S._prSpeed+40*dt);}
   else if(brake){S._prSpeed=Math.max(20,S._prSpeed-60*dt);}
   else{S._prSpeed=Math.max(S._prSpeed-10*dt,55+(S._prLap-1)*15);}
@@ -34568,15 +34640,25 @@ function updatePodRace(dt){
   if((keys['ShiftLeft']||keys['ShiftRight'])&&(S._prWrenchCD||0)<=0){try{_fireWrench()}catch(_){}}
   const leftKey=keys['KeyA']||keys['ArrowLeft'];
   const rightKey=keys['KeyD']||keys['ArrowRight'];
-  // v7.293: key-hold steering — pod moves only while key is held, stops on release
   const pod=S._prPlayerPod;
   const lateralSpd=22+S._prSpeed*0.06;
-  if(leftKey) pod.position.x-=lateralSpd*dt;
-  else if(rightKey) pod.position.x+=lateralSpd*dt;
+  if(S._prGyroActive){
+    // v7.304: GYRO STEERING — tilt phone to steer, dead-zone ±0.06
+    const gSteer=S._prGyroSteer||0;
+    if(Math.abs(gSteer)>0.06) pod.position.x+=gSteer*lateralSpd*dt;
+    // Gyro directly drives visual swerve/lean
+    S._prSwerve=gSteer;
+    // Update tilt indicator dot position
+    try{const dot=document.getElementById('pr-gyro-dot');if(dot)dot.style.left=(50+gSteer*43)+'%';}catch(_){}
+  } else {
+    // v7.293: keyboard steering
+    if(leftKey) pod.position.x-=lateralSpd*dt;
+    else if(rightKey) pod.position.x+=lateralSpd*dt;
+    // v7.295: smooth swerve — gentler decay for silky steering
+    S._prSwerve=leftKey?Math.max(-1,S._prSwerve-3.5*dt):rightKey?Math.min(1,S._prSwerve+3.5*dt):S._prSwerve*Math.pow(0.15,dt);
+  }
   pod.position.x+=(S._prBounceVX||0)*dt;
   S._prBounceVX=(S._prBounceVX||0)*0.82;
-  // v7.295: smooth swerve — gentler decay for silky steering
-  S._prSwerve=leftKey?Math.max(-1,S._prSwerve-3.5*dt):rightKey?Math.min(1,S._prSwerve+3.5*dt):S._prSwerve*Math.pow(0.15,dt);
   S._prVertical*=0.9;
   const targetY=1.5+S._prVertical*3;
   pod.position.y+=(targetY-pod.position.y)*3*dt;
@@ -34947,6 +35029,55 @@ function _updatePodRaceItems(dt){
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.304: GYRO STEERING — landscape tilt control for mobile
+// ─────────────────────────────────────────────────────────────────────────────
+function _requestGyroPermission(cb){
+  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(r=>{cb(r==='granted');}).catch(()=>cb(false));
+  }else{cb(true);}// Android / desktop — no explicit permission needed
+}
+function _initGyroSteering(){
+  S._prGyroActive=true;S._prGyroSteer=0;S._prGyroRaw=0;S._prGyroNeutral=null;
+  // Auto-calibrate: capture neutral angle 700ms after activation (gives user time to hold steady)
+  S._prGyroCalibrateAt=Date.now()+700;
+  const handler=e=>{
+    if(!S._prGyroActive)return;
+    const raw=e.gamma??0;S._prGyroRaw=raw;
+    if(S._prGyroCalibrateAt&&Date.now()>=S._prGyroCalibrateAt){
+      S._prGyroNeutral=raw;S._prGyroCalibrateAt=null;
+      try{wfCineSubtitle('✅ GYRO CALIBRATED — TILT TO STEER!','#44ffcc');}catch(_){}
+    }
+    if(S._prGyroNeutral===null)return;
+    // Correct for landscape orientation sign (landscape-left vs landscape-right)
+    const ang=screen?.orientation?.angle??window.orientation??0;
+    const sign=(ang===90||(ang>45&&ang<135))?-1:1;
+    const delta=(raw-S._prGyroNeutral)*sign;
+    S._prGyroSteer=Math.max(-1,Math.min(1,delta/24));// ±24° = full steer
+  };
+  window.addEventListener('deviceorientation',handler,{passive:true});
+  S._prGyroHandler=handler;
+  // Show UI
+  try{document.getElementById('pr-gyro-bar').style.display='block';}catch(_){}
+  try{const tz=document.getElementById('pr-touch-zones');tz.style.display='block';tz.style.pointerEvents='auto';}catch(_){}
+  try{document.getElementById('pr-gyro-btn').textContent='📱 GYRO ON';}catch(_){}
+  try{wfCineSubtitle('📱 GYRO ACTIVE — HOLD PHONE LEVEL...','#44ffcc');}catch(_){}
+}
+function _stopGyroSteering(){
+  if(S._prGyroHandler){window.removeEventListener('deviceorientation',S._prGyroHandler);S._prGyroHandler=null;}
+  S._prGyroActive=false;S._prGyroSteer=0;S._prTouchBrake=false;S._prTouchNitro=false;
+  try{document.getElementById('pr-gyro-bar').style.display='none';}catch(_){}
+  try{const tz=document.getElementById('pr-touch-zones');tz.style.display='none';tz.style.pointerEvents='none';}catch(_){}
+  try{document.getElementById('pr-gyro-btn').textContent='📱 GYRO';}catch(_){}
+}
+function _togglePodGyro(){
+  if(S._prGyroActive){_stopGyroSteering();return;}
+  _requestGyroPermission(ok=>{
+    if(!ok){try{wfCineSubtitle('⚠️ GYRO PERMISSION DENIED','#ff4444');}catch(_){}return;}
+    _initGyroSteering();
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
 function _spawnPodRaceSegment(startZ, curveX, curveV){
   curveX=curveX||0;curveV=curveV||0;
   const type=Math.floor(Math.random()*4);
