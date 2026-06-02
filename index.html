@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.296</title>
+<title>COSMIC INVADERS v7.299</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1448,6 +1448,56 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <div id="pr-smoke" style="color:#aaaaaa;padding:3px 8px;border:1px solid #444;border-radius:5px;background:rgba(20,20,20,0.5)">💨 SMOKE</div>
     <div id="pr-wrench" style="color:#cfe6ff;padding:3px 8px;border:1px solid #445566;border-radius:5px;background:rgba(20,30,40,0.5)">🔧 WRENCH</div>
   </div>
+  <!-- v7.298: camera view toggle button (mobile / mouse) — v7.299: larger tap target -->
+  <div id="pr-cam-btn" onclick="try{togglePodCamMode()}catch(_){}" style="position:absolute;bottom:10px;right:12px;pointer-events:auto;cursor:pointer;font-size:14px;letter-spacing:1px;color:#7fd0ff;padding:10px 14px;min-width:80px;text-align:center;border:1px solid #2a5a7a;border-radius:8px;background:rgba(0,16,28,0.72);box-shadow:0 0 8px rgba(0,120,200,0.25)">🎥 PILOT [C]</div>
+</div>
+<!-- v7.299: smoke fog overlay — fades in when player enters an AI smoke cloud -->
+<div id="pr-smoke-fog" style="display:none;position:fixed;inset:0;z-index:89;pointer-events:none;background:rgba(100,105,100,0.0);transition:background 0.35s,backdrop-filter 0.35s;"></div>
+
+<!-- v7.298: PILOT / COCKPIT first-person view overlay with live instruments -->
+<div id="pr-cockpit" style="display:none;position:fixed;inset:0;z-index:88;pointer-events:none;font-family:monospace;">
+  <!-- canopy vignette -->
+  <div style="position:absolute;inset:0;box-shadow:inset 0 0 240px 70px rgba(0,0,0,0.82);"></div>
+  <!-- canopy frame: top brow + A-pillars -->
+  <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" preserveAspectRatio="none" viewBox="0 0 100 100">
+    <polygon points="0,0 100,0 100,9 50,16 0,9" fill="rgba(9,13,22,0.94)"/>
+    <polygon points="0,0 0,100 8,100 15,28 5,7" fill="rgba(9,13,22,0.94)"/>
+    <polygon points="100,0 100,100 92,100 85,28 95,7" fill="rgba(9,13,22,0.94)"/>
+    <line x1="50" y1="16" x2="50" y2="60" stroke="rgba(90,150,210,0.22)" stroke-width="0.35"/>
+  </svg>
+  <!-- bottom dashboard -->
+  <div style="position:absolute;left:0;right:0;bottom:0;height:30%;background:linear-gradient(180deg,rgba(8,14,26,0) 0%,rgba(8,14,26,0.9) 32%,rgba(4,8,16,0.97) 100%);border-top:1px solid rgba(80,160,220,0.32);display:flex;align-items:flex-end;justify-content:space-between;padding:0 4% 1.6%;">
+    <!-- LEFT: analog speed gauge -->
+    <div style="text-align:center;">
+      <svg width="150" height="116" viewBox="0 0 100 80">
+        <path d="M11,70 A41,41 0 1,1 89,70" fill="none" stroke="#11293d" stroke-width="7"/>
+        <path id="pr-ck-arc" d="M11,70 A41,41 0 1,1 89,70" fill="none" stroke="#ff8a33" stroke-width="3.2" stroke-dasharray="0 999" stroke-linecap="round"/>
+        <g id="pr-ck-needle" transform="rotate(-120 50 60)">
+          <line x1="50" y1="60" x2="50" y2="19" stroke="#ff4444" stroke-width="2.6"/>
+        </g>
+        <circle cx="50" cy="60" r="4.6" fill="#ff8844" stroke="#1a0a00" stroke-width="1"/>
+      </svg>
+      <div id="pr-ck-speed" style="font-size:23px;font-weight:900;color:#ffb066;letter-spacing:1px;margin-top:-8px;text-shadow:0 0 10px rgba(255,140,40,0.5)">0</div>
+      <div style="font-size:9px;color:#5d7fa0;letter-spacing:4px;">KM/H</div>
+    </div>
+    <!-- CENTER: lap + steering + rpm -->
+    <div style="text-align:center;flex:1;padding:0 14px;max-width:240px;">
+      <div id="pr-ck-lap" style="font-size:16px;font-weight:bold;color:#ffd24a;letter-spacing:3px;">LAP 1 / 3</div>
+      <div style="margin:7px auto 0;width:130px;height:7px;border:1px solid #2a4a66;border-radius:4px;background:rgba(0,20,40,0.6);position:relative;overflow:hidden;">
+        <div id="pr-ck-steer" style="position:absolute;top:0;bottom:0;left:50%;width:9px;margin-left:-4.5px;background:#56c8ff;border-radius:2px;box-shadow:0 0 6px #56c8ff;transition:left .06s;"></div>
+      </div>
+      <div style="font-size:8px;color:#4a6a86;letter-spacing:3px;margin-top:3px;">STEERING</div>
+      <div id="pr-ck-rpm" style="display:flex;gap:2px;justify-content:center;margin-top:9px;"></div>
+    </div>
+    <!-- RIGHT: position -->
+    <div style="text-align:center;">
+      <div style="font-size:9px;color:#446688;letter-spacing:3px;">POS</div>
+      <div id="pr-ck-pos" style="font-size:42px;font-weight:900;color:#88ddff;line-height:1;text-shadow:0 0 14px #33aaff;">1</div>
+      <div id="pr-ck-pos-of" style="font-size:12px;color:#335566;">/ 9</div>
+    </div>
+  </div>
+  <!-- view label -->
+  <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:3px;color:#6fb0e0;opacity:0.62;">🎥 PILOT VIEW ・ [C] CHANGE</div>
 </div>
 
 <!-- v7.284: Pod race F1 start lights -->
@@ -33958,6 +34008,14 @@ function _podRaceReturnToTitle(){
       if(typeof speedLines!=='undefined'&&speedLines)speedLines.visible=true;}catch(_){}
   try{camera.position.set(0,0,C.CAM_Z);camera.rotation.set(0,0,0);camera.lookAt(0,0,-100);}catch(_){}
   try{const ph=document.getElementById('pr-hud');if(ph)ph.style.display='none';}catch(_){}
+  // v7.298: hide cockpit overlay + reset camera fov/view on return to title
+  try{const ck=document.getElementById('pr-cockpit');if(ck)ck.style.display='none';}catch(_){}
+  try{const sf=document.getElementById('pr-smoke-fog');if(sf)sf.style.display='none';}catch(_){}
+  try{camera.fov=75;camera.updateProjectionMatrix();}catch(_){}
+  // v7.299: crash cleanup
+  if(S._prCrashPilot){try{scene.remove(S._prCrashPilot);}catch(_){}S._prCrashPilot=null;}
+  S._prCrashPhase=null;S._prCrashT=0;S._prAISmokeZones=[];S._prSmokeFogT=0;
+  S._prRaceStarted=false;S._prCamMode='chase';
   S._prChallengeMode=false;
   S._prChampionship=null;// v7.296: never let a championship leak into the next standalone race
   S.phase='TITLE';
@@ -34190,6 +34248,9 @@ function startPodRace(){
   // v7.288: nitro / smoke / wrench item state
   S._prNitroT=0;S._prNitroCD=0;S._prSmokeCD=0;S._prWrenchCD=0;
   S._prSmokeZone=null;S._prWrenches=[];
+  // v7.299: AI smoke zones + player fog timer + crash state
+  S._prAISmokeZones=[];S._prSmokeFogT=0;
+  S._prCrashPhase=null;S._prCrashT=0;S._prCrashPilot=null;S._prCrashPilotVY=0;S._prCrashPilotVZ=0;
   S._prBounceVX=0;// v7.289: lateral knockback velocity from pod-to-pod ramming
   S._prMapDots=null;// v7.288: rebuild minimap dots for this race
   S._prSpeed=55;S._prMaxSpeed=155;
@@ -34223,6 +34284,10 @@ function startPodRace(){
   S._prPlayerPod=makePodRacerPod('player',null,'speeder');// v7.289: player rides the forest speeder bike
   S._prPlayerPod.position.set(0,1.5,camera.position.z-8);
   scene.add(S._prPlayerPod);
+  S._prCamZ=camera.position.z;// v7.298: fixed camera-z anchor for chase/cockpit view toggle
+  S._prCamMode='chase';// v7.298: default chase view
+  try{const _ck=document.getElementById('pr-cockpit');if(_ck)_ck.style.display='none';}catch(_){}
+  try{const _cb=document.getElementById('pr-cam-btn');if(_cb)_cb.textContent='🎥 PILOT [C]';}catch(_){}
   // v7.284: 8 racers \u2014 all colosseum monsters. v7.289: JABBA slot \u2192 SLAG REBORN (slag-only war-pod).
   const AI_DEFS=[
     {id:'tengu',    name:'TENGU',    title:'WIND SPIRIT',  col:0x44aaff, speed:1.18, agg:0.90, gridX:-28, variant:'pod'},
@@ -34247,7 +34312,8 @@ function startPodRace(){
     scene.add(pod);
     S._prAI.push({def,pod,x:gridCol,y:1.5,z:startZ,
       speed:def.speed,lap:1,raceDist:-20-gridRow*20,targetX:gridCol,
-      swerveT:Math.random()*Math.PI*2,eliminated:false,finished:false,hp:3,pos:i+2,_reappearT:0});
+      swerveT:Math.random()*Math.PI*2,eliminated:false,finished:false,hp:3,pos:i+2,_reappearT:0,
+      _aiSmokeCD:8+Math.random()*12});// v7.299: staggered initial smoke cooldown
   });
   // v7.285: No intro parade \u2014 go straight to F1 start lights
   S._prIntroActive=false;
@@ -34440,6 +34506,13 @@ function updatePodRace(dt){
   if(S._prIntroActive){_updatePodRaceIntroAnim(dt);return;}
   if(!S._prRaceStarted)return;
   if(S._prFinished){if(S._prPostRace)_updatePodRacePostRace(dt);return;}
+  // v7.299: crash state machine — player input locked during ejection/crawl/reboard
+  if(S._prCrashPhase){
+    try{_updateCrashState(dt);}catch(_){}
+    try{_updatePodRaceAI(dt);}catch(_){}
+    try{_updateSmokeFog();}catch(_){}
+    return;
+  }
   S._prTime+=dt;
   S._prHitCooldown=Math.max(0,S._prHitCooldown-dt);
   // v7.284: curve system — track drifts left/right like Mario Kart
@@ -34486,7 +34559,7 @@ function updatePodRace(dt){
   S._prVertical*=0.9;
   const targetY=1.5+S._prVertical*3;
   pod.position.y+=(targetY-pod.position.y)*3*dt;
-  pod.position.z=camera.position.z-8;
+  pod.position.z=(S._prCamZ!=null?S._prCamZ:camera.position.z)-8;// v7.298: anchored z so collisions are view-independent
   // v7.291: collision wobble shudder
   S._prWobbleT=Math.max(0,(S._prWobbleT||0)-dt);
   const wobble=S._prWobbleT>0?(Math.sin(S._prWobbleT*28)*0.22*S._prWobbleT*(S._prWobbleSign||1)):0;
@@ -34529,23 +34602,40 @@ function updatePodRace(dt){
   _updatePodRaceAI(dt);
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
+  if(S._prCamMode==='cockpit')try{_updatePodCockpit()}catch(_){}// v7.298: live cockpit instruments
+  try{_updateSmokeFog();}catch(_){}// v7.299: smoke fog overlay
   const camBob=Math.sin(S._prTime*8)*0.05*Math.min(1,S._prSpeed/80);
   // v7.295: smooth bank — lerp to avoid jitter on curve change
   const targetBank=(S._prCurveV||0)*-0.014;
   S._prBankSmooth=(S._prBankSmooth||0)+(targetBank-(S._prBankSmooth||0))*Math.min(1,2.2*dt);
-  camera.position.x+=(pod.position.x-camera.position.x)*8*dt;
-  camera.position.y+=(pod.position.y+2+camBob-camera.position.y)*4*dt;
   const speedRatio=Math.min(1,S._prSpeed/S._prMaxSpeed);
-  camera.fov=Math.max(60,75+speedRatio*12);
-  camera.updateProjectionMatrix();
-  if(S._prSpeed>110){
-    camera.position.y+=(Math.random()-0.5)*0.04;
-    camera.position.x+=(Math.random()-0.5)*0.015;
+  const _anchorZ=(S._prCamZ!=null?S._prCamZ:camera.position.z);
+  if(S._prCamMode==='cockpit'){
+    // v7.298: PILOT / COCKPIT first-person view — eye at the pod, looking far down the track
+    camera.position.x+=(pod.position.x-camera.position.x)*12*dt;
+    camera.position.y+=((pod.position.y+0.9+camBob)-camera.position.y)*8*dt;
+    camera.position.z=pod.position.z+1.0;
+    camera.fov=Math.max(80,92+speedRatio*14);
+    camera.updateProjectionMatrix();
+    if(S._prSpeed>110){camera.position.y+=(Math.random()-0.5)*0.06;camera.position.x+=(Math.random()-0.5)*0.025;}
+    camera.up.set(Math.sin(S._prBankSmooth),Math.cos(S._prBankSmooth),0);
+    const lookCurveX=pod.position.x+(S._prCurveX||0)*0.4+(S._prCurveV||0)*0.9;
+    camera.lookAt(lookCurveX, pod.position.y+0.4, pod.position.z-40);
+  } else {
+    camera.position.x+=(pod.position.x-camera.position.x)*8*dt;
+    camera.position.y+=(pod.position.y+2+camBob-camera.position.y)*4*dt;
+    camera.position.z=_anchorZ;
+    camera.fov=Math.max(60,75+speedRatio*12);
+    camera.updateProjectionMatrix();
+    if(S._prSpeed>110){
+      camera.position.y+=(Math.random()-0.5)*0.04;
+      camera.position.x+=(Math.random()-0.5)*0.015;
+    }
+    camera.up.set(Math.sin(S._prBankSmooth),Math.cos(S._prBankSmooth),0);
+    // v7.297: camera follows curve direction — makes track ahead look curved
+    const lookCurveX=pod.position.x+(S._prCurveX||0)*0.28+(S._prCurveV||0)*0.7;
+    camera.lookAt(lookCurveX, pod.position.y, pod.position.z-22);
   }
-  camera.up.set(Math.sin(S._prBankSmooth),Math.cos(S._prBankSmooth),0);
-  // v7.297: camera follows curve direction — makes track ahead look curved
-  const lookCurveX=pod.position.x+(S._prCurveX||0)*0.28+(S._prCurveV||0)*0.7;
-  camera.lookAt(lookCurveX, pod.position.y, pod.position.z-22);
   // v7.291: update stereo engine panning every frame
   try{sfx.updatePodEngines(pod.position.x,S._prSpeed,S._prMaxSpeed);}catch(_){}
   // v7.297: periodic engine misfire ボボボボ
@@ -34659,6 +34749,26 @@ function _updatePodRaceItems(dt){
     }
     if(S._prSmokeZone.t<=0)S._prSmokeZone=null;
   }
+  // v7.299: AI smoke zones — update + check player overlap → fog timer
+  if(S._prAISmokeZones&&S._prAISmokeZones.length){
+    const pod=S._prPlayerPod;
+    const px=pod?pod.position.x:0, pz=pod?pod.position.z:0;
+    S._prAISmokeZones=S._prAISmokeZones.filter(sz=>{
+      sz.t-=dt;
+      if(sz.t>0&&Math.random()<0.55){
+        try{spawnP(new THREE.Vector3(sz.x+(Math.random()-0.5)*sz.r*0.8,1.2+Math.random()*2.5,sz.z+(Math.random()-0.5)*sz.r*0.9),0x8a8e8a,4,0.55,2.2,1.8)}catch(_){}
+      }
+      // player inside the cloud?
+      if(pod&&pz>sz.z-sz.r*0.5&&pz<sz.z+sz.r&&Math.abs(px-sz.x)<sz.r){
+        S._prSmokeFogT=Math.max(S._prSmokeFogT||0,2.5);
+      }
+      return sz.t>0;
+    });
+  }
+  // fog timer decay
+  if((S._prSmokeFogT||0)>0) S._prSmokeFogT=Math.max(0,S._prSmokeFogT-dt);
+  // AI smoke CD decay
+  if(S._prAI)for(const ai of S._prAI){if((ai._aiSmokeCD||0)>0)ai._aiSmokeCD=Math.max(0,ai._aiSmokeCD-dt);}
   // advance wrenches toward their target
   if(S._prWrenches&&S._prWrenches.length){
     for(let i=S._prWrenches.length-1;i>=0;i--){
@@ -34877,6 +34987,30 @@ function _updatePodRaceAI(dt){
     ai.pod.position.x=ai.x;
     ai.pod.position.y=1.5+Math.sin(ai.swerveT*3)*0.2;
     ai.pod.rotation.z=(targetX-ai.x)*0.05-S._prCurveV*0.004;
+    // v7.299: AI smoke attack — leading AIs fire smoke when player is right behind them
+    if(!ai.eliminated&&!ai.finished&&ai.pos<=3){
+      if((ai._aiSmokeCD||0)<=0){
+        const pp=S._prPlayerPod;
+        if(pp){
+          const pz=pp.position.z, az=ai.pod.position.z;
+          const lateralOk=Math.abs(pp.position.x-ai.x)<25;
+          const behindOk=pz>az-8&&pz<az+45;// player is 0-45 units behind AI
+          if(lateralOk&&behindOk){
+            // fire smoke!
+            ai._aiSmokeCD=13+Math.random()*9;
+            if(!S._prAISmokeZones)S._prAISmokeZones=[];
+            S._prAISmokeZones.push({x:ai.x,z:az,r:30,t:4.0});
+            for(let _i=0;_i<6;_i++){
+              try{spawnP(new THREE.Vector3(ai.x+(Math.random()-0.5)*8,1+Math.random()*3,az+(Math.random()-0.5)*12),0x777a77,6,0.7,2.4,2.0)}catch(_){}
+            }
+            try{wfCineSubtitle('💨 SMOKE! WATCH OUT!','#aaaaaa');}catch(_){}
+          } else {
+            // conditions not met — short re-check CD
+            ai._aiSmokeCD=3+Math.random()*4;
+          }
+        }
+      }
+    }
   });
   // v7.284: realtime position calculation (1=leader)
   // v7.288: use cumulative total (lap*lapDist + distance) so ranking is correct across laps
@@ -34897,6 +35031,13 @@ function _checkPodRaceCollisions(){
   const px=pod.position.x,py=pod.position.y;
   const trackHalfW=(S._prLap===1?1.2:1.0)*(40+S._prSpeed/22);// v7.295: scaled for 2.5× wider track
   if(Math.abs(px-(S._prCurveX||0))>trackHalfW-1){
+    pod.position.x=(S._prCurveX||0)+Math.sign(px-(S._prCurveX||0))*(trackHalfW-2);
+    if(S._prSpeed>65&&!S._prCrashPhase){
+      // v7.299: HIGH-SPEED CRASH — pilot ejection + reboard time penalty
+      try{_triggerPilotEjection();}catch(_){}
+      return;
+    }
+    // normal low-speed bounce
     S._prSpeed*=0.6;
     S._prHitCooldown=1.5;
     S._prHP=Math.max(0,S._prHP-1);
@@ -34905,7 +35046,6 @@ function _checkPodRaceCollisions(){
     try{playComm('nav','Hull impact! Shields down!')}catch(_){}
     try{spawnP(new THREE.Vector3(px,py,pod.position.z-5),0xff6600,12,0.8,0.4)}catch(_){}
     if(S._prHP<=0){_prPlayerEliminated();return;}
-    pod.position.x=(S._prCurveX||0)+Math.sign(px-(S._prCurveX||0))*(trackHalfW-2);
   }
   // v7.289/v7.291: pod-to-pod ramming — powerful shove, nitro ram damages rival
   const nitroRam=(S._prNitroT||0)>0;
@@ -34967,6 +35107,11 @@ function _finishPodRace(){
   S._prPostRace=true;
   S._prPostRaceSpeed=Math.max(60,S._prSpeed*0.55);
   try{const ph=document.getElementById('pr-hud');if(ph)ph.style.opacity='0.45';}catch(_){}
+  // v7.298/v7.299: leave cockpit view for overhead post-race camera, clear fog + crash state
+  try{S._prCamMode='chase';const ck=document.getElementById('pr-cockpit');if(ck)ck.style.display='none';if(S._prPlayerPod)S._prPlayerPod.visible=true;}catch(_){}
+  try{const sf=document.getElementById('pr-smoke-fog');if(sf)sf.style.display='none';}catch(_){}
+  if(S._prCrashPilot){try{scene.remove(S._prCrashPilot);}catch(_){}S._prCrashPilot=null;}
+  S._prCrashPhase=null;S._prCrashT=0;S._prAISmokeZones=[];S._prSmokeFogT=0;
 }
 function _onAIFinish(ai){
   if(!S._prPostRace)return;
@@ -35075,6 +35220,128 @@ function _showChampionshipFinal(){
     try{_podRaceReturnToTitle()}catch(_){}
   });
 }
+// v7.299: smoke fog overlay update — called every frame (in race + during crash)
+function _updateSmokeFog(){
+  const f=document.getElementById('pr-smoke-fog');if(!f)return;
+  const t=S._prSmokeFogT||0;
+  if(t>0){
+    const a=Math.min(0.72,t*0.32);
+    f.style.display='block';
+    f.style.background='rgba(100,105,100,'+a.toFixed(2)+')';
+    if(S._prCamMode==='cockpit'){f.style.backdropFilter='blur('+Math.min(6,a*9).toFixed(1)+'px)';}
+    else{f.style.backdropFilter='';}
+  } else {
+    f.style.display='none';f.style.backdropFilter='';
+  }
+}
+// v7.299: trigger high-speed pilot ejection — pod hits wall at speed > 65
+function _triggerPilotEjection(){
+  const pod=S._prPlayerPod;if(!pod)return;
+  S._prSpeed=8;
+  S._prHP=Math.max(0,(S._prHP||18)-2);
+  S._prCrashPhase='ejecting';S._prCrashT=0;
+  try{S.shakeT=0.9;S.shakeI=2.8;}catch(_){}
+  try{screenFlash(0.75);}catch(_){}
+  try{sfx._prCollisionThud&&sfx._prCollisionThud(true);}catch(_){}
+  try{spawnP(pod.position.clone().add(new THREE.Vector3(0,1,0)),0xff6600,20,1.4,0.6,0.8);}catch(_){}
+  try{spawnP(pod.position.clone().add(new THREE.Vector3(0,1,0)),0xffaa33,12,1.0,0.5,0.6);}catch(_){}
+  // v7.299fix: detach the ACTUAL rider sitting on the speeder bike and throw them off
+  S._prCrashPilot=null;S._prCrashPilotOrigParent=null;S._prCrashPilotOrigLocalMatrix=null;
+  try{
+    // The player pod is makeSpeederBike(true) — rider is forestPilotFigure inside the bike group
+    const riderMesh=pod.getObjectByName('forestPilotFigure');
+    if(riderMesh&&riderMesh.parent){
+      // Save original parent + local matrix so we can re-attach on reboard
+      S._prCrashPilotOrigParent=riderMesh.parent;
+      S._prCrashPilotOrigLocalMatrix=riderMesh.matrix.clone();
+      // Get world transform before detaching
+      const wPos=new THREE.Vector3();
+      const wQuat=new THREE.Quaternion();
+      const wScale=new THREE.Vector3();
+      riderMesh.matrixWorld.decompose(wPos,wQuat,wScale);
+      riderMesh.parent.remove(riderMesh);
+      // Re-apply as world-space transform so the mesh appears at the same spot
+      riderMesh.position.copy(wPos);
+      riderMesh.quaternion.copy(wQuat);
+      riderMesh.scale.copy(wScale);
+      scene.add(riderMesh);
+      S._prCrashPilot=riderMesh;
+    }
+  }catch(_){}
+  // fallback: spawn a fresh pilot if detach failed
+  if(!S._prCrashPilot){
+    try{
+      const pilot=makeForestTacticalPilot();
+      pilot.scale.setScalar(0.95);// world-scale roughly matching bike rider
+      pilot.position.copy(pod.position);pilot.position.y+=1.6;
+      scene.add(pilot);S._prCrashPilot=pilot;
+    }catch(_){}
+  }
+  S._prCrashPilotVY=9;
+  S._prCrashPilotVZ=-20;
+  try{wfCineSubtitle('💥 PILOT EJECTED! REBOARDING...','#ff7700');}catch(_){}
+  if(S._prCamMode==='cockpit'){try{_setPodCamMode('chase');}catch(_){}}
+}
+// v7.299: update crash state machine — called from updatePodRace when _prCrashPhase is set
+function _updateCrashState(dt){
+  if(!S._prCrashPhase)return;
+  S._prCrashT+=dt;
+  const pilot=S._prCrashPilot;
+  const pod=S._prPlayerPod;if(!pod)return;
+  if(S._prCrashPhase==='ejecting'){
+    if(pilot){
+      S._prCrashPilotVY-=24*dt;
+      pilot.position.z+=S._prCrashPilotVZ*dt;
+      pilot.position.y+=S._prCrashPilotVY*dt;
+      pilot.rotation.x+=6*dt;// tumble
+      pilot.rotation.z+=3*dt;
+      if(pilot.position.y<0.3){pilot.position.y=0.3;S._prCrashPilotVY=0;}
+    }
+    if(S._prCrashT>0.65){S._prCrashPhase='crawling';S._prCrashT=0;}
+  } else if(S._prCrashPhase==='crawling'){
+    if(pilot){
+      const dx=pod.position.x-pilot.position.x;
+      const dz=pod.position.z-pilot.position.z;
+      const dist=Math.hypot(dx,dz);
+      if(dist>0.6){
+        const spd=13;
+        pilot.position.x+=(dx/dist)*spd*dt;
+        pilot.position.z+=(dz/dist)*spd*dt;
+        pilot.position.y=0.32+Math.abs(Math.sin(S._prCrashT*9))*0.2;
+        pilot.rotation.x=Math.sin(S._prCrashT*9)*0.28;
+        pilot.rotation.z=Math.sin(S._prCrashT*4.5)*0.12;
+        pilot.rotation.y=Math.atan2(dx,dz);
+      } else {
+        S._prCrashPhase='reboarding';S._prCrashT=0;
+      }
+    } else {
+      S._prCrashPhase='reboarding';S._prCrashT=0;
+    }
+  } else if(S._prCrashPhase==='reboarding'){
+    if(pilot){
+      const tp=pod.position.clone();tp.y+=1.0;
+      pilot.position.lerp(tp,Math.min(1,9*dt));
+    }
+    if(S._prCrashT>0.38){
+      if(pilot){
+        try{scene.remove(pilot);}catch(_){}
+        // v7.299fix: re-attach rider back to the original parent (speeder bike) with original pose
+        if(S._prCrashPilotOrigParent&&S._prCrashPilotOrigLocalMatrix){
+          try{
+            pilot.matrix.copy(S._prCrashPilotOrigLocalMatrix);
+            pilot.matrix.decompose(pilot.position,pilot.quaternion,pilot.scale);
+            S._prCrashPilotOrigParent.add(pilot);
+          }catch(_){}
+        }
+      }
+      S._prCrashPilot=null;S._prCrashPilotOrigParent=null;S._prCrashPilotOrigLocalMatrix=null;
+      S._prCrashPhase=null;S._prCrashT=0;
+      S._prSpeed=28;S._prHitCooldown=0.4;
+      try{screenFlash(0.25);}catch(_){}
+      try{wfCineSubtitle('✅ REBOARDED — GO!','#44ff88');}catch(_){}
+    }
+  }
+}
 function _prPlayerEliminated(){
   S._prFinished=true;S._prPostRace=false;
   try{wfCineSubtitle('POD DESTROYED','#ff2200')}catch(_){}
@@ -35086,6 +35353,62 @@ function _prPlayerEliminated(){
   setTimeout(()=>{try{triggerGameOver()}catch(_){}},2500);
 }
 
+// v7.298: pod race camera view toggle (chase <-> pilot/cockpit) + live instruments
+function togglePodCamMode(){ _setPodCamMode((S._prCamMode==='cockpit')?'chase':'cockpit'); }
+function _setPodCamMode(mode){
+  S._prCamMode=mode;
+  const cockpit=(mode==='cockpit');
+  const ck=document.getElementById('pr-cockpit');
+  if(ck)ck.style.display=cockpit?'block':'none';
+  // hide own pod in cockpit so it does not block the view
+  try{if(S._prPlayerPod)S._prPlayerPod.visible=!cockpit;}catch(_){}
+  // build the 12 RPM segments once
+  if(cockpit){
+    const rpm=document.getElementById('pr-ck-rpm');
+    if(rpm&&!rpm.childElementCount){
+      for(let i=0;i<12;i++){const d=document.createElement('div');d.style.cssText='width:6px;height:13px;border-radius:1px;background:#11293d;';rpm.appendChild(d);}
+    }
+  }
+  const btn=document.getElementById('pr-cam-btn');
+  if(btn)btn.textContent=cockpit?'🎥 CHASE [C]':'🎥 PILOT [C]';
+  try{wfCineSubtitle(cockpit?'🎥 PILOT VIEW':'🎥 CHASE VIEW', cockpit?'#7fd0ff':'#ffaa66');}catch(_){}
+  // small switch blip
+  try{
+    const ctx=sfx&&(sfx._ctx||sfx.ctx);
+    if(ctx){const o=ctx.createOscillator(),g=ctx.createGain();o.type='square';
+      o.frequency.setValueAtTime(cockpit?880:560,ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(cockpit?1320:420,ctx.currentTime+0.08);
+      g.gain.setValueAtTime(0.12,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
+      o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.13);}
+  }catch(_){}
+}
+function _updatePodCockpit(){
+  if(S._prCamMode!=='cockpit')return;
+  const kmh=Math.floor((S._prSpeed||55)*2);
+  const maxKmh=Math.max(160,Math.floor((S._prMaxSpeed||155)*2*1.5));
+  const frac=Math.max(0,Math.min(1,kmh/maxKmh));
+  const needle=document.getElementById('pr-ck-needle');
+  if(needle)needle.setAttribute('transform','rotate('+(-120+frac*240).toFixed(1)+' 50 60)');
+  const arc=document.getElementById('pr-ck-arc');
+  if(arc)arc.setAttribute('stroke-dasharray',(frac*171).toFixed(1)+' 999');
+  const sp=document.getElementById('pr-ck-speed');if(sp)sp.textContent=kmh;
+  const lap=document.getElementById('pr-ck-lap');if(lap)lap.textContent='LAP '+(S._prLap||1)+' / 3';
+  const pos=document.getElementById('pr-ck-pos');
+  if(pos){const p=S._prPos||1;pos.textContent=p;pos.style.color=p===1?'#ffd700':p<=3?'#ccddff':'#88ddff';}
+  const posof=document.getElementById('pr-ck-pos-of');
+  if(posof){const t=S._prAI?S._prAI.filter(a=>!a.eliminated).length+1:9;posof.textContent='/ '+t;}
+  // steering indicator from swerve (-1..1)
+  const st=document.getElementById('pr-ck-steer');if(st)st.style.left=(50+(S._prSwerve||0)*42)+'%';
+  // RPM segments scale with speed; top segments flash red/amber
+  const rpm=document.getElementById('pr-ck-rpm');
+  if(rpm&&rpm.childElementCount){
+    const lit=Math.round(frac*rpm.childElementCount);
+    for(let i=0;i<rpm.childElementCount;i++){
+      const on=i<lit;
+      rpm.children[i].style.background=on?(i>=9?'#ff4040':i>=7?'#ffcc33':'#33dd66'):'#11293d';
+    }
+  }
+}
 function _showPodRaceHUD(){
   const e=document.getElementById('pr-hud');if(e)e.style.display='block';
 }
@@ -44538,6 +44861,10 @@ window.addEventListener('keydown',e=>{
   // Napalm
   if(e.code==='KeyE'&&(S.phase==='PLAYING'||S.phase==='FORTRESS'||S.phase==='RETURN'||S.phase==='BONUS')){
     if(S.power>=C.MAX_POWER)fireNapalm()}
+  // v7.298: C toggles pod race pilot/chase camera (only during an active race)
+  if(e.code==='KeyC'&&!e.ctrlKey&&!e.metaKey&&S._prRaceStarted&&!S._prFinished&&S._prPlayerPod){
+    e.preventDefault();try{togglePodCamMode()}catch(_){}
+  }
   // v6.70: F key toggles fullscreen
   if(e.code==='KeyF'&&!e.ctrlKey&&!e.metaKey){
     e.preventDefault();
