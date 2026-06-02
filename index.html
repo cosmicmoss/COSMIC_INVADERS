@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.304</title>
+<title>COSMIC INVADERS v7.305</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1463,6 +1463,10 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 </div>
 <!-- v7.304: touch zones (active in gyro mode) — transparent overlays -->
 <div id="pr-touch-zones" style="display:none;position:fixed;inset:0;z-index:93;pointer-events:none;">
+  <!-- Centre tap = recalibrate gyro -->
+  <div style="position:absolute;left:32%;right:32%;top:0;height:82%;pointer-events:auto;"
+       ontouchstart="if(S._prGyroActive){S._prGyroNeutral=S._prGyroRaw;try{wfCineSubtitle('🎯 RECALIBRATED','#44ffcc');}catch(_){}}">
+  </div>
   <div id="pr-touch-brake" style="position:absolute;left:0;top:0;width:36%;height:82%;pointer-events:auto;"
        ontouchstart="S._prTouchBrake=true;this.style.background='rgba(255,80,0,0.07)'"
        ontouchend="S._prTouchBrake=false;this.style.background='none'"
@@ -34076,6 +34080,7 @@ function _podRaceReturnToTitle(){
   try{const sl=document.getElementById('pr-speed-streak');if(sl)sl.style.display='none';}catch(_){}
   try{const hc=document.getElementById('pr-horiz-cursor');if(hc)hc.style.display='none';}catch(_){}
   try{if(S._prGyroActive)_stopGyroSteering();}catch(_){}
+  try{sfx.stopWindSound&&sfx.stopWindSound();}catch(_){}
   try{const gb=document.getElementById('pr-gyro-btn');if(gb)gb.style.display='none';}catch(_){}
   try{camera.fov=75;camera.updateProjectionMatrix();}catch(_){}
   // v7.299: crash cleanup
@@ -34414,6 +34419,8 @@ function startPodRace(){
   try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
   // v7.291: start per-racer stereo engine drones
   try{sfx.init();sfx.startPodEngines(S._prAI);}catch(_){}
+  // v7.304: wind rush sound (volume grows with speed)
+  try{sfx.startWindSound&&sfx.startWindSound();}catch(_){}
   // v7.297: ambient crowd cheer throughout the race
   try{sfx.startCrowdAmbient&&sfx.startCrowdAmbient();}catch(_){}
   // v7.300: maintenance cinematic starts immediately (replaces old 1.8s timeout)
@@ -34667,10 +34674,14 @@ function updatePodRace(dt){
   S._prWobbleT=Math.max(0,(S._prWobbleT||0)-dt);
   const wobble=S._prWobbleT>0?(Math.sin(S._prWobbleT*28)*0.22*S._prWobbleT*(S._prWobbleSign||1)):0;
   // v7.295: smooth pod roll — lerp toward target (no snap on curve direction change)
-  const targetRz=-S._prSwerve*0.22-(S._prCurveV||0)*0.003;
+  const targetRz=-S._prSwerve*0.26-(S._prCurveV||0)*0.003;// v7.305: stronger lean (0.22→0.26)
   S._prPodRz=(S._prPodRz||0)+(targetRz-(S._prPodRz||0))*Math.min(1,5*dt);
   pod.rotation.z=S._prPodRz+wobble;
   pod.rotation.x=S._prVertical*0.1+Math.abs(wobble)*0.1;
+  // v7.305: pod yaws slightly into the steering direction (nose points into curve)
+  const _podYawTarget=S._prSwerve*0.055+(S._prCurveV||0)*0.001;
+  S._prPodYaw=(S._prPodYaw||0)+(_podYawTarget-(S._prPodYaw||0))*Math.min(1,4*dt);
+  pod.rotation.y=S._prPodYaw;
   S._prEngineT+=dt;
   // v7.301: twin engine horse-wobble — each engine bobs independently like a skittish horse
   try{
@@ -34849,6 +34860,8 @@ function updatePodRace(dt){
   }catch(_){}
   // v7.291: update stereo engine panning every frame
   try{sfx.updatePodEngines(pod.position.x,S._prSpeed,S._prMaxSpeed);}catch(_){}
+  // v7.304: wind rush volume follows speed + curve intensity
+  try{sfx.updateWindSound&&sfx.updateWindSound(S._prSpeed,S._prCurveV);}catch(_){}
   // v7.297: periodic engine misfire ボボボボ
   S._prMisfireT=Math.max(0,(S._prMisfireT||0)-dt);
   if(S._prMisfireT<=0&&S._prRaceStarted&&Math.random()<0.35){
@@ -35266,6 +35279,9 @@ function _updatePodRaceAI(dt){
     ai.pod.position.x=ai.x;
     ai.pod.position.y=1.5+Math.sin(ai.swerveT*3)*0.2;
     ai.pod.rotation.z=(targetX-ai.x)*0.05-S._prCurveV*0.004;
+    // v7.305: AI pods yaw toward their movement direction — look like they're steering
+    const _aiYawTarget=(targetX-ai.x)*0.018+(S._prCurveV||0)*0.002;
+    ai.pod.rotation.y=(ai.pod.rotation.y||0)+(_aiYawTarget-(ai.pod.rotation.y||0))*Math.min(1,3*dt);
     // v7.299: AI smoke attack — leading AIs fire smoke when player is right behind them
     if(!ai.eliminated&&!ai.finished&&ai.pos<=3){
       if((ai._aiSmokeCD||0)<=0){
