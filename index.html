@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.300</title>
+<title>COSMIC INVADERS v7.301</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34580,6 +34580,37 @@ function updatePodRace(dt){
   pod.rotation.z=S._prPodRz+wobble;
   pod.rotation.x=S._prVertical*0.1+Math.abs(wobble)*0.1;
   S._prEngineT+=dt;
+  // v7.301: twin engine horse-wobble — each engine bobs independently like a skittish horse
+  try{
+    const eg=pod.getObjectByName('podEngineGroup');
+    if(eg&&eg.visible){
+      const t=S._prEngineT;
+      const cV=S._prCurveV||0;
+      const speedAmp=Math.min(1,S._prSpeed/80)*0.28+0.08;// grows with speed
+      ['podEngineL','podEngineR'].forEach((nm,idx)=>{
+        const eng=eg.getObjectByName(nm);if(!eng)return;
+        const ph=eng.userData.phase||0;
+        // two overlapping sine waves at slightly different frequencies for organic instability
+        const baseWobble=Math.sin(t*3.7+ph)*speedAmp+Math.sin(t*7.3+ph*1.6)*speedAmp*0.38;
+        // curve pull: inner engine (toward curve direction) gets tugged down harder
+        // curveV>0 = drifting right → left engine (idx=0) is outer, right (idx=1) is inner
+        const innerSign=(idx===0)?-1:1;// L=idx0 is inner when curveV<0
+        const curvePull=cV*innerSign*-0.010;
+        // small random jolt for horse skittishness (low prob each frame)
+        if(!eng.userData._joltT)eng.userData._joltT=0;
+        eng.userData._joltT=Math.max(0,eng.userData._joltT-dt);
+        if(eng.userData._joltT<=0&&Math.random()<0.008){
+          eng.userData._joltT=0.18+Math.random()*0.25;
+          eng.userData._joltAmp=(Math.random()-0.5)*0.5;
+        }
+        const jolt=eng.userData._joltT>0?eng.userData._joltAmp*Math.sin(eng.userData._joltT*28):0;
+        const totalY=baseWobble+curvePull+jolt;
+        eng.position.y=totalY;// offset from group base position (ey=1.2 is in sg.position)
+        eng.rotation.z=totalY*0.09*(idx===0?-1:1);// slight roll outward on up-swing
+        eng.rotation.x=totalY*0.04;// nose dips slightly when pulled down
+      });
+    }
+  }catch(_){}
   // v7.297: visual scroll x2 for speed feel — player control speed unchanged
   const scrollSpd=S._prSpeed*2;
   S._prWalls.forEach(w=>{w.position.z+=scrollSpd*dt;});
@@ -35264,45 +35295,43 @@ function _buildPodRaceEngines(podGroup){
   const eg=new THREE.Group();eg.name='podEngineGroup';eg.visible=false;// hidden until maint scene
   const mFill=c=>new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide});
   const mEdge=c=>new THREE.LineBasicMaterial({color:c});
-  const wf=(geo,fill,edge,pos,rot)=>{
-    const m=new THREE.Mesh(geo,typeof fill==='number'?mFill(fill):fill);
-    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),typeof edge==='number'?mEdge(edge):edge);
-    [m,e].forEach(o=>{if(pos)o.position.set(...pos);if(rot)o.rotation.set(...rot);eg.add(o);});
-    return m;
-  };
-  [-1,1].forEach(side=>{
+  // v7.301: each engine in its own sub-group so wobble animation can move them independently
+  [[-1,'podEngineL',0.4],[1,'podEngineR',2.1]].forEach(([side,gName,phase])=>{
     const ex=side*5.5,ey=1.2,ez=-14;
-    // main engine cylinder
+    const sg=new THREE.Group();sg.name=gName;sg.position.set(ex,ey,ez);
+    sg.userData.phase=phase;// distinct phases → independent oscillation (two separate horses)
+    const wf=(geo,fill,edge,pos,rot)=>{
+      const m=new THREE.Mesh(geo,typeof fill==='number'?mFill(fill):fill);
+      const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),typeof edge==='number'?mEdge(edge):edge);
+      [m,e].forEach(o=>{if(pos)o.position.set(...pos);if(rot)o.rotation.set(...rot);sg.add(o);});
+      return m;
+    };
+    // engine parts in local coords (engine center = origin of sg)
     const cyl=new THREE.CylinderGeometry(1.4,1.0,8,14);cyl.rotateX(Math.PI/2);
-    wf(cyl,0x2a3c4a,0x448899,[ex,ey,ez]);
-    // intake ring glow (front)
+    wf(cyl,0x2a3c4a,0x448899);
     const tor=new THREE.TorusGeometry(1.6,0.14,8,18);
-    wf(tor,0x44aacc,0x88eeff,[ex,ey,ez-4.2],[Math.PI/2,0,0]);
-    // inner intake honeycomb face
+    wf(tor,0x44aacc,0x88eeff,[0,0,-4.2],[Math.PI/2,0,0]);
     const face=new THREE.CircleGeometry(1.35,14);
-    wf(face,0x0a1820,0x336688,[ex,ey,ez-4.3],[Math.PI/2,0,0]);
-    // exhaust nozzle (rear)
+    wf(face,0x0a1820,0x336688,[0,0,-4.3],[Math.PI/2,0,0]);
     const cone=new THREE.ConeGeometry(1.05,2.2,10);cone.rotateX(-Math.PI/2);
-    wf(cone,0x3a2010,0xff6600,[ex,ey,ez+5.1]);
-    // exhaust glow disc
+    wf(cone,0x3a2010,0xff6600,[0,0,5.1]);
     const glow=new THREE.Mesh(new THREE.CircleGeometry(1.0,12),new THREE.MeshBasicMaterial({color:0xff8833,transparent:true,opacity:0.8,side:THREE.DoubleSide}));
-    glow.rotation.x=Math.PI/2;glow.position.set(ex,ey,ez+6.2);eg.add(glow);
-    // engine cowling strips
+    glow.rotation.x=Math.PI/2;glow.position.set(0,0,6.2);sg.add(glow);
     [-0.9,0.9].forEach(ox=>{
       const strip=new THREE.BoxGeometry(0.3,0.25,8.5);
-      wf(strip,0x1a2a36,0x448899,[ex+ox,ey+1.45,ez]);
+      wf(strip,0x1a2a36,0x448899,[ox,1.45,0]);
     });
-    // support strut from bike area to engine
-    const strutPts=[new THREE.Vector3(side*2.0,1.0,-2),new THREE.Vector3(ex,ey,ez+3.5)];
-    const strut=new THREE.Line(new THREE.BufferGeometry().setFromPoints(strutPts),mEdge(0x6699aa));
+    eg.add(sg);
+    // strut and cable stay in parent group (static — they flex visually with engine Y offset)
+    const strutPts=[new THREE.Vector3(side*2.0,1.0-ey,-2-ez),new THREE.Vector3(0,0,3.5)];
+    const strut=new THREE.Line(new THREE.BufferGeometry().setFromPoints(strutPts.map(p=>p.clone().add(sg.position))),mEdge(0x6699aa));
     eg.add(strut);
-    // energy cable (glowing cyan)
     const cablePts=[];
     for(let ci=0;ci<=12;ci++){
       const t2=ci/12;
       cablePts.push(new THREE.Vector3(
         side*1.0+(ex-side*1.0)*t2,
-        1.8+(0.4-1.8)*t2+Math.sin(t2*Math.PI)*1.0,// catenary sag
+        1.8+(ey-1.8)*t2+Math.sin(t2*Math.PI)*1.0,
         -2.0+(ez+2.5-(-2.0))*t2
       ));
     }
