@@ -35307,24 +35307,45 @@ function _updateCrashState(dt){
       }
     } else if(S._prCrashT>=0.42){S._prCrashPhase='rolling';S._prCrashT=0;}
   } else if(S._prCrashPhase==='rolling'){
-    // v7.299b: ground roll — 受け身・ごろごろ前転
+    // 受け身・ごろごろ前転 + 腕バタバタ・頭ガクガク（痛そう）
     if(pilot){
-      pilot.position.y=0.3;// stay on ground
-      // forward slide decelerating with friction
-      S._prCrashPilotVZ*=Math.pow(0.04,dt);// rapid friction decel
+      pilot.position.y=0.3;
+      S._prCrashPilotVZ*=Math.pow(0.04,dt);
       pilot.position.z+=S._prCrashPilotVZ*dt;
-      // continuous forward somersault (rotation.x accumulates = rolling)
-      pilot.rotation.x+=9*dt;
-      // slight lateral sway — looks like ukemi roll
+      pilot.rotation.x+=9*dt;// 前転
       pilot.rotation.z=Math.sin(S._prCrashT*14)*0.38;
-      // small yaw wobble as they tumble sideways
       pilot.rotation.y=Math.PI+Math.sin(S._prCrashT*7)*0.25;
+      // v7.299c: 腕・頭を個別にバタバタ（パニック・痛み）
+      try{
+        const lA=pilot.getObjectByName('lArm'),rA=pilot.getObjectByName('rArm');
+        const lF=pilot.getObjectByName('lArmFore'),rF=pilot.getObjectByName('rArmFore');
+        const hd=pilot.getObjectByName('head');
+        if(lA)lA.rotation.z=Math.sin(S._prCrashT*18)*1.3;
+        if(rA)rA.rotation.z=Math.sin(S._prCrashT*18+2.2)*1.3;
+        if(lF)lF.rotation.x=Math.sin(S._prCrashT*24)*1.0;
+        if(rF)rF.rotation.x=Math.sin(S._prCrashT*24+1.6)*1.0;
+        if(hd)hd.rotation.x=Math.sin(S._prCrashT*15)*0.8;// 頭ガクガク
+      }catch(_){}
     }
-    // transition to crawling once almost stopped or after 1.4s
     if(S._prCrashT>=1.4||Math.abs(S._prCrashPilotVZ||0)<1.2){
       S._prCrashPhase='crawling';S._prCrashT=0;
-      // snap to upright standing pose to start walk
-      if(pilot){try{pilot.rotation.set(0,Math.PI,0);}catch(_){}}
+      // 直立に戻してから「痛そうな」ベースポーズをセット
+      if(pilot){
+        try{
+          pilot.rotation.set(0,Math.PI,0);
+          // 腰を曲げ、片腕で腹部をかばう初期ポーズ
+          const body=pilot.getObjectByName('body');
+          const head=pilot.getObjectByName('head');
+          const lA=pilot.getObjectByName('lArm'),rA=pilot.getObjectByName('rArm');
+          const lF=pilot.getObjectByName('lArmFore'),rF=pilot.getObjectByName('rArmFore');
+          if(body)body.rotation.set(0.55,0,0);// 前かがみ
+          if(head)head.rotation.set(-0.3,0,0);// うなだれ
+          if(lA){lA.rotation.set(0.4,0,0.8);}// 左腕で腹をかばう
+          if(lF){lF.rotation.set(0.6,0,0);}
+          if(rA){rA.rotation.set(0.1,0,-0.2);}// 右腕はバランス用
+          if(rF){rF.rotation.set(0.3,0,0);}
+        }catch(_){}
+      }
     }
   } else if(S._prCrashPhase==='crawling'){
     if(pilot){
@@ -35332,13 +35353,37 @@ function _updateCrashState(dt){
       const dz=pod.position.z-pilot.position.z;
       const dist=Math.hypot(dx,dz);
       if(dist>0.6){
-        const spd=13;
+        const spd=7;// v7.299c: 痛くてゆっくり（13→7）
         pilot.position.x+=(dx/dist)*spd*dt;
         pilot.position.z+=(dz/dist)*spd*dt;
-        pilot.position.y=0.32+Math.abs(Math.sin(S._prCrashT*9))*0.2;
-        pilot.rotation.x=Math.sin(S._prCrashT*9)*0.28;
-        pilot.rotation.z=Math.sin(S._prCrashT*4.5)*0.12;
+        // よろめきながら歩く
+        const wt=S._prCrashT;
+        pilot.position.y=0.32+Math.abs(Math.sin(wt*6))*0.18;
         pilot.rotation.y=Math.atan2(dx,dz);
+        // 体全体のよろめき（左右揺れ）
+        pilot.rotation.z=Math.sin(wt*3.5)*0.11+Math.sin(wt*4.8)*0.08;
+        // v7.299c: 痛そうなボーンアニメ（毎フレーム）
+        try{
+          const body=pilot.getObjectByName('body');
+          const head=pilot.getObjectByName('head');
+          const lA=pilot.getObjectByName('lArm'),rA=pilot.getObjectByName('rArm');
+          const lL=pilot.getObjectByName('lLeg'),rL=pilot.getObjectByName('rLeg');
+          const lLL=pilot.getObjectByName('lLegLower'),rLL=pilot.getObjectByName('rLegLower');
+          // 腰を前かがみ（痛くて伸ばせない）
+          if(body)body.rotation.x=0.50+Math.sin(wt*4.5)*0.07;
+          // 頭：うなだれつつ時々上を向いて痛みをこらえる
+          if(head)head.rotation.x=-0.18+Math.sin(wt*5.5)*0.28;
+          // 左腕：腹部をかばい続ける（ほぼ固定）
+          if(lA){lA.rotation.z=0.82;lA.rotation.x=0.38+Math.sin(wt*2)*0.08;}
+          // 右腕：バランス用にふらふら振る
+          if(rA)rA.rotation.z=-0.25+Math.sin(wt*4.5)*0.42;
+          // 足：右足が負傷——ほとんど引きずる（小さなストローク）
+          if(rL)rL.rotation.x=Math.sin(wt*5)*0.14;// 負傷側：小さい
+          if(rLL)rLL.rotation.x=Math.abs(Math.sin(wt*5))*0.2;
+          // 左足：健側が大きく補う
+          if(lL)lL.rotation.x=Math.sin(wt*5+Math.PI)*0.55;
+          if(lLL)lLL.rotation.x=Math.abs(Math.sin(wt*5+Math.PI))*0.5;
+        }catch(_){}
       } else {
         S._prCrashPhase='reboarding';S._prCrashT=0;
       }
