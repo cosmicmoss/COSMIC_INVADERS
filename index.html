@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.299</title>
+<title>COSMIC INVADERS v7.300</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34015,6 +34015,9 @@ function _podRaceReturnToTitle(){
   // v7.299: crash cleanup
   if(S._prCrashPilot){try{scene.remove(S._prCrashPilot);}catch(_){}S._prCrashPilot=null;}
   S._prCrashPhase=null;S._prCrashT=0;S._prAISmokeZones=[];S._prSmokeFogT=0;
+  // v7.300: maint + weather cleanup
+  if(S._prMaintMechanic){try{scene.remove(S._prMaintMechanic);}catch(_){}S._prMaintMechanic=null;}
+  S._prMaintActive=false;S._prMaintT=0;S._prMaintFlags={};S._prWeatherT=0;S._prFogColor='smoke';
   S._prRaceStarted=false;S._prCamMode='chase';
   S._prChallengeMode=false;
   S._prChampionship=null;// v7.296: never let a championship leak into the next standalone race
@@ -34249,8 +34252,11 @@ function startPodRace(){
   S._prNitroT=0;S._prNitroCD=0;S._prSmokeCD=0;S._prWrenchCD=0;
   S._prSmokeZone=null;S._prWrenches=[];
   // v7.299: AI smoke zones + player fog timer + crash state
-  S._prAISmokeZones=[];S._prSmokeFogT=0;
+  S._prAISmokeZones=[];S._prSmokeFogT=0;S._prFogColor='smoke';
   S._prCrashPhase=null;S._prCrashT=0;S._prCrashPilot=null;S._prCrashPilotVY=0;S._prCrashPilotVZ=0;
+  // v7.300: maintenance cinematic + weather
+  S._prMaintActive=true;S._prMaintT=0;S._prMaintMechanic=null;S._prMaintFlags={};
+  S._prWeatherT=18+Math.random()*20;
   S._prBounceVX=0;// v7.289: lateral knockback velocity from pod-to-pod ramming
   S._prMapDots=null;// v7.288: rebuild minimap dots for this race
   S._prSpeed=55;S._prMaxSpeed=155;
@@ -34335,8 +34341,8 @@ function startPodRace(){
   try{sfx.init();sfx.startPodEngines(S._prAI);}catch(_){}
   // v7.297: ambient crowd cheer throughout the race
   try{sfx.startCrowdAmbient&&sfx.startCrowdAmbient();}catch(_){}
-  // Short delay then F1 lights \u2014 all racers start together on GO!!
-  setTimeout(()=>_startF1Lights(),1800);
+  // v7.300: maintenance cinematic starts immediately (replaces old 1.8s timeout)
+  // _startF1Lights is called by _updateMaintenanceCinematic when complete
 }
 
 // v7.289: pod racers now come in THREE variants:
@@ -34361,7 +34367,10 @@ function makePodRacerPod(type,color,variant){
     try{bike=makeSpeederBike(true);}catch(_){bike=new THREE.Group();}
     try{const doc=bike.getObjectByName('bikeDoctor');if(doc&&doc.parent)doc.parent.remove(doc);}catch(_){}
     bike.scale.setScalar(2.4);bike.rotation.y=Math.PI;bike.position.y=-0.5;
-    g.add(bike);g.userData.halfW=3.5;g.userData.variant='speeder';return g;
+    g.add(bike);g.userData.halfW=3.5;g.userData.variant='speeder';
+    // v7.300: add pod-racer style twin engines (initially hidden, revealed in maintenance cinematic)
+    try{_buildPodRaceEngines(g);}catch(_){}
+    return g;
   }
   // --- per-monster unique pod bodies ---
   switch(type){
@@ -34502,6 +34511,8 @@ function makePodRacerPod(type,color,variant){
 }
 
 function updatePodRace(dt){
+  // v7.300: maintenance cinematic before the race
+  if(S._prMaintActive){try{_updateMaintenanceCinematic(dt);}catch(_){}return;}
   // v7.284: intro phase — AI parade, no player control yet
   if(S._prIntroActive){_updatePodRaceIntroAnim(dt);return;}
   if(!S._prRaceStarted)return;
@@ -34599,6 +34610,11 @@ function updatePodRace(dt){
     }
   }
   try{_updatePodRaceItems(dt)}catch(_){}// v7.288: nitro/smoke/wrench cooldowns + projectiles
+  // v7.300: weather timer
+  S._prWeatherT=(S._prWeatherT||30)-dt;
+  if(S._prWeatherT<=0){S._prWeatherT=20+Math.random()*25;try{_triggerSandStorm();}catch(_){}}
+  // v7.300: jump ramp check
+  try{_checkJumpRamps();}catch(_){}
   _updatePodRaceAI(dt);
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
@@ -34606,7 +34622,7 @@ function updatePodRace(dt){
   try{_updateSmokeFog();}catch(_){}// v7.299: smoke fog overlay
   const camBob=Math.sin(S._prTime*8)*0.05*Math.min(1,S._prSpeed/80);
   // v7.295: smooth bank — lerp to avoid jitter on curve change
-  const targetBank=(S._prCurveV||0)*-0.014;
+  const targetBank=(S._prCurveV||0)*-0.022;// v7.300: stronger bank (0.014→0.022)
   S._prBankSmooth=(S._prBankSmooth||0)+(targetBank-(S._prBankSmooth||0))*Math.min(1,2.2*dt);
   const speedRatio=Math.min(1,S._prSpeed/S._prMaxSpeed);
   const _anchorZ=(S._prCamZ!=null?S._prCamZ:camera.position.z);
@@ -34905,6 +34921,25 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
     rock.position.set(rx,-1+Math.random()*2,startZ-Math.random()*segLen);
     scene.add(rock);S._prProps.push(rock);
   }
+  // v7.300: jump ramp (15% chance per segment)
+  if(Math.random()<0.15){
+    const rampX=curveX+(Math.random()-0.5)*w*0.5;
+    const rampZ=startZ-30-Math.random()*60;
+    const rampW=10+Math.random()*6;
+    const rG=new THREE.BoxGeometry(rampW,1.2,6);
+    const rampFill=new THREE.Mesh(rG,new THREE.MeshBasicMaterial({color:_crs.capCol}));
+    rampFill.rotation.x=-0.30;rampFill.position.set(rampX,-2.3,rampZ);
+    scene.add(rampFill);S._prProps.push(rampFill);
+    const rampEdge=new THREE.LineSegments(new THREE.EdgesGeometry(rG),new THREE.LineBasicMaterial({color:0xffffff}));
+    rampEdge.rotation.x=-0.30;rampEdge.position.set(rampX,-2.3,rampZ);
+    scene.add(rampEdge);S._prProps.push(rampEdge);
+    rampFill.userData.isJumpRamp=true;rampFill.userData.rampW=rampW;
+  }
+  // v7.300: banked walls during high-curvature sections
+  if(Math.abs(curveV)>12){
+    const bankAngle=Math.atan2(curveV,60)*0.55;
+    S._prWalls.slice(-6).forEach(w=>{if(w.rotation)w.rotation.z=bankAngle*(w.position.x<curveX?-1:1)*0.4;});
+  }
 }
 
 function _updatePodRaceAI(dt){
@@ -35112,6 +35147,8 @@ function _finishPodRace(){
   try{const sf=document.getElementById('pr-smoke-fog');if(sf)sf.style.display='none';}catch(_){}
   if(S._prCrashPilot){try{scene.remove(S._prCrashPilot);}catch(_){}S._prCrashPilot=null;}
   S._prCrashPhase=null;S._prCrashT=0;S._prAISmokeZones=[];S._prSmokeFogT=0;
+  if(S._prMaintMechanic){try{scene.remove(S._prMaintMechanic);}catch(_){}S._prMaintMechanic=null;}
+  S._prMaintActive=false;S._prMaintT=0;S._prMaintFlags={};S._prWeatherT=0;S._prFogColor='smoke';
 }
 function _onAIFinish(ai){
   if(!S._prPostRace)return;
@@ -35220,6 +35257,222 @@ function _showChampionshipFinal(){
     try{_podRaceReturnToTitle()}catch(_){}
   });
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.300: POD RACE ENGINES — twin plasma turbines attached to the speeder bike
+// ─────────────────────────────────────────────────────────────────────────────
+function _buildPodRaceEngines(podGroup){
+  const eg=new THREE.Group();eg.name='podEngineGroup';eg.visible=false;// hidden until maint scene
+  const mFill=c=>new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide});
+  const mEdge=c=>new THREE.LineBasicMaterial({color:c});
+  const wf=(geo,fill,edge,pos,rot)=>{
+    const m=new THREE.Mesh(geo,typeof fill==='number'?mFill(fill):fill);
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),typeof edge==='number'?mEdge(edge):edge);
+    [m,e].forEach(o=>{if(pos)o.position.set(...pos);if(rot)o.rotation.set(...rot);eg.add(o);});
+    return m;
+  };
+  [-1,1].forEach(side=>{
+    const ex=side*5.5,ey=1.2,ez=-14;
+    // main engine cylinder
+    const cyl=new THREE.CylinderGeometry(1.4,1.0,8,14);cyl.rotateX(Math.PI/2);
+    wf(cyl,0x2a3c4a,0x448899,[ex,ey,ez]);
+    // intake ring glow (front)
+    const tor=new THREE.TorusGeometry(1.6,0.14,8,18);
+    wf(tor,0x44aacc,0x88eeff,[ex,ey,ez-4.2],[Math.PI/2,0,0]);
+    // inner intake honeycomb face
+    const face=new THREE.CircleGeometry(1.35,14);
+    wf(face,0x0a1820,0x336688,[ex,ey,ez-4.3],[Math.PI/2,0,0]);
+    // exhaust nozzle (rear)
+    const cone=new THREE.ConeGeometry(1.05,2.2,10);cone.rotateX(-Math.PI/2);
+    wf(cone,0x3a2010,0xff6600,[ex,ey,ez+5.1]);
+    // exhaust glow disc
+    const glow=new THREE.Mesh(new THREE.CircleGeometry(1.0,12),new THREE.MeshBasicMaterial({color:0xff8833,transparent:true,opacity:0.8,side:THREE.DoubleSide}));
+    glow.rotation.x=Math.PI/2;glow.position.set(ex,ey,ez+6.2);eg.add(glow);
+    // engine cowling strips
+    [-0.9,0.9].forEach(ox=>{
+      const strip=new THREE.BoxGeometry(0.3,0.25,8.5);
+      wf(strip,0x1a2a36,0x448899,[ex+ox,ey+1.45,ez]);
+    });
+    // support strut from bike area to engine
+    const strutPts=[new THREE.Vector3(side*2.0,1.0,-2),new THREE.Vector3(ex,ey,ez+3.5)];
+    const strut=new THREE.Line(new THREE.BufferGeometry().setFromPoints(strutPts),mEdge(0x6699aa));
+    eg.add(strut);
+    // energy cable (glowing cyan)
+    const cablePts=[];
+    for(let ci=0;ci<=12;ci++){
+      const t2=ci/12;
+      cablePts.push(new THREE.Vector3(
+        side*1.0+(ex-side*1.0)*t2,
+        1.8+(0.4-1.8)*t2+Math.sin(t2*Math.PI)*1.0,// catenary sag
+        -2.0+(ez+2.5-(-2.0))*t2
+      ));
+    }
+    const cable=new THREE.Line(new THREE.BufferGeometry().setFromPoints(cablePts),new THREE.LineBasicMaterial({color:0x44ffcc,transparent:true,opacity:0.85}));
+    eg.add(cable);
+  });
+  podGroup.add(eg);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.300: MAINTENANCE CINEMATIC — 10-second pre-race modification scene
+// ─────────────────────────────────────────────────────────────────────────────
+function _updateMaintenanceCinematic(dt){
+  S._prMaintT=(S._prMaintT||0)+dt;
+  const t=S._prMaintT;
+  const pod=S._prPlayerPod;
+  const flag=(n,fn)=>{if(!S._prMaintFlags[n]){S._prMaintFlags[n]=true;try{fn();}catch(_){}}};
+  // 0.0s: camera side view + title
+  flag(0,()=>{
+    try{camera.position.set(18,5,pod?pod.position.z+2:(window.camera&&camera.position.z)||5);
+        camera.lookAt(0,1.5,pod?pod.position.z:(camera.position.z));}catch(_){}
+    try{wfCineSubtitle('🔧 PRE-RACE MODIFICATION — PLASMA ENGINE INSTALL','#66ccff');}catch(_){}
+  });
+  // 0.5s: spawn mechanic doctor
+  flag(1,()=>{
+    if(t<0.5)return;
+    S._prMaintFlags[1]=false;// retry until t>=0.5
+  });
+  if(t>=0.5&&!S._prMaintFlags['mech_spawned']){
+    S._prMaintFlags['mech_spawned']=true;
+    try{
+      const mech=makeForestDoctor({includeBlaster:false});
+      mech.scale.setScalar(0.85);
+      mech.position.set(-4,0,pod?pod.position.z-2:0);
+      mech.rotation.y=0.5;
+      scene.add(mech);S._prMaintMechanic=mech;
+    }catch(_){}
+  }
+  // 1.5s: installation sparks
+  flag(10,()=>{
+    if(t<1.5)return;S._prMaintFlags[10]=false;
+  });
+  if(t>=1.5&&!S._prMaintFlags['sparks1']){
+    S._prMaintFlags['sparks1']=true;
+    try{wfCineSubtitle('⚙️ INSTALLING PLASMA ENGINES...','#ffcc44');}catch(_){}
+    if(pod){for(let i=0;i<8;i++){
+      try{spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*8,1.5+Math.random()*2,(Math.random()-0.5)*6)),0xffaa22,3,1.2,0.4,0.3);}catch(_){}
+    }}
+  }
+  // 3.0s: engines appear with flash
+  if(t>=3.0&&!S._prMaintFlags['engines_on']){
+    S._prMaintFlags['engines_on']=true;
+    try{
+      const eg=pod&&pod.getObjectByName('podEngineGroup');
+      if(eg)eg.visible=true;
+    }catch(_){}
+    try{screenFlash(0.5);}catch(_){}
+    try{wfCineSubtitle('✅ PLASMA ENGINES LOCKED IN!','#44ff88');}catch(_){}
+    if(pod){for(let i=0;i<12;i++){
+      try{spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*12,1+Math.random()*3,(Math.random()-0.5)*10)),0xff8833,5,1.4,0.5,0.4);}catch(_){}
+    }}
+  }
+  // 4.0s: cable connection
+  if(t>=4.0&&!S._prMaintFlags['cables']){
+    S._prMaintFlags['cables']=true;
+    try{wfCineSubtitle('⚡ ENERGY BINDERS CONNECTED','#44ffcc');}catch(_){}
+  }
+  // 5.5s: mechanic bolt-tightening animation
+  if(t>=5.5&&t<7.0&&S._prMaintMechanic){
+    try{
+      const lA=S._prMaintMechanic.getObjectByName('lArm');
+      const rA=S._prMaintMechanic.getObjectByName('rArm');
+      const wt=t-5.5;
+      if(lA){lA.rotation.x=-0.6+Math.sin(wt*8)*0.5;lA.rotation.z=0.4;}
+      if(rA){rA.rotation.x=-0.4+Math.sin(wt*8+1.2)*0.5;rA.rotation.z=-0.3;}
+    }catch(_){}
+  }
+  // 7.0s: ignition test
+  if(t>=7.0&&!S._prMaintFlags['ignition']){
+    S._prMaintFlags['ignition']=true;
+    try{wfCineSubtitle('🔥 IGNITION TEST — NOMINAL!','#ff8833');}catch(_){}
+    try{S.shakeT=0.5;S.shakeI=0.8;}catch(_){}
+    // engine pulse effect using existing sfx
+    try{
+      const ctx=sfx._ctx||sfx.ctx;
+      if(ctx){
+        [0,0.15,0.32].forEach(delay=>{
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.type='sawtooth';o.frequency.setValueAtTime(80,ctx.currentTime+delay);
+          o.frequency.exponentialRampToValueAtTime(220,ctx.currentTime+delay+0.18);
+          g.gain.setValueAtTime(0.22,ctx.currentTime+delay);
+          g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+0.4);
+          o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+0.42);
+          o.onended=()=>{try{g.disconnect();o.disconnect();}catch(_){}};
+        });
+      }
+    }catch(_){}
+    if(pod){for(let i=0;i<6;i++){
+      try{spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*14,0.8+Math.random()*2,-(8+Math.random()*6))),0xff6600,4,1.0,0.6,0.5);}catch(_){}
+    }}
+  }
+  // 8.5s: mechanic exits, complete message
+  if(t>=8.5&&!S._prMaintFlags['complete']){
+    S._prMaintFlags['complete']=true;
+    try{wfCineSubtitle('✅ MODIFICATION COMPLETE! TO THE GRID!','#ffffff');}catch(_){}
+    if(S._prMaintMechanic){
+      const mech=S._prMaintMechanic;
+      // walk mechanic away
+      const walkAway=setInterval(()=>{
+        try{mech.position.x-=0.18;mech.position.z+=0.1;}catch(_){}
+      },30);
+      setTimeout(()=>{
+        clearInterval(walkAway);
+        try{scene.remove(mech);}catch(_){}
+        S._prMaintMechanic=null;
+      },1200);
+    }
+  }
+  // 9.5s: camera back to grid position
+  if(t>=9.5&&!S._prMaintFlags['cam_back']){
+    S._prMaintFlags['cam_back']=true;
+    try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
+  }
+  // 10.0s: cinematic ends → F1 lights
+  if(t>=10.0&&!S._prMaintFlags['done']){
+    S._prMaintFlags['done']=true;
+    S._prMaintActive=false;
+    setTimeout(()=>{try{_startF1Lights();}catch(_){}},1800);
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.300: JUMP RAMP — check if player pod is on a ramp and bounce them up
+// ─────────────────────────────────────────────────────────────────────────────
+function _checkJumpRamps(){
+  const pod=S._prPlayerPod;if(!pod)return;
+  if(!S._prProps)return;
+  S._prProps.forEach(p=>{
+    if(!p.userData.isJumpRamp)return;
+    const dx=Math.abs(pod.position.x-p.position.x);
+    const dz=Math.abs(pod.position.z-p.position.z);
+    const hw=(p.userData.rampW||10)*0.5+1;
+    if(dx<hw&&dz<5&&(S._prVertical||0)<0.3){
+      S._prVertical=Math.max(S._prVertical||0,0.85);
+      try{S.shakeT=0.2;S.shakeI=0.5;}catch(_){}
+      try{wfCineSubtitle('🚀 JUMP!','#ffff44');}catch(_){}
+      try{
+        const ctx=sfx._ctx||sfx.ctx;if(ctx){
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.type='sine';o.frequency.setValueAtTime(300,ctx.currentTime);
+          o.frequency.exponentialRampToValueAtTime(600,ctx.currentTime+0.12);
+          g.gain.setValueAtTime(0.18,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.25);
+          o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.28);
+          o.onended=()=>{try{g.disconnect();o.disconnect();}catch(_){}};
+        }
+      }catch(_){}
+    }
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.300: SAND STORM — environmental hazard using fog overlay
+// ─────────────────────────────────────────────────────────────────────────────
+function _triggerSandStorm(){
+  S._prSmokeFogT=Math.max(S._prSmokeFogT||0,5.0);
+  S._prFogColor='sandy';
+  try{wfCineSubtitle('🌪️ DUST STORM!','#cc9933');}catch(_){}
+  // sand particle burst
+  const pod=S._prPlayerPod;
+  if(pod){for(let i=0;i<10;i++){
+    try{spawnP(new THREE.Vector3(pod.position.x+(Math.random()-0.5)*60,Math.random()*6,pod.position.z-(Math.random()*100)),0xcc8844,3,0.6,2.0,1.5);}catch(_){}
+  }}
+}
 // v7.299: smoke fog overlay update — called every frame (in race + during crash)
 function _updateSmokeFog(){
   const f=document.getElementById('pr-smoke-fog');if(!f)return;
@@ -35227,11 +35480,14 @@ function _updateSmokeFog(){
   if(t>0){
     const a=Math.min(0.72,t*0.32);
     f.style.display='block';
-    f.style.background='rgba(100,105,100,'+a.toFixed(2)+')';
+    // v7.300: sandy color for dust storms, grey for smoke
+    const isSand=(S._prFogColor==='sandy');
+    f.style.background=isSand?'rgba(180,120,50,'+a.toFixed(2)+')':'rgba(100,105,100,'+a.toFixed(2)+')';
     if(S._prCamMode==='cockpit'){f.style.backdropFilter='blur('+Math.min(6,a*9).toFixed(1)+'px)';}
     else{f.style.backdropFilter='';}
   } else {
     f.style.display='none';f.style.backdropFilter='';
+    S._prFogColor='smoke';// reset to default
   }
 }
 // v7.299: trigger high-speed pilot ejection — pod hits wall at speed > 65
