@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.301</title>
+<title>COSMIC INVADERS v7.302</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1453,6 +1453,14 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 </div>
 <!-- v7.299: smoke fog overlay — fades in when player enters an AI smoke cloud -->
 <div id="pr-smoke-fog" style="display:none;position:fixed;inset:0;z-index:89;pointer-events:none;background:rgba(100,105,100,0.0);transition:background 0.35s,backdrop-filter 0.35s;"></div>
+<!-- v7.302: speed streak overlay — conic radial lines appear at 90km/h+ -->
+<div id="pr-speed-streak" style="display:none;position:fixed;inset:0;z-index:87;pointer-events:none;background:repeating-conic-gradient(from 0deg at 50% 44%,rgba(255,245,210,0.07) 0deg 4deg,transparent 4deg 15deg);opacity:0;transition:opacity 0.35s;"></div>
+<!-- v7.302: horizon vanishing cursor — screen-projected dot showing where the road leads -->
+<div id="pr-horiz-cursor" style="display:none;position:fixed;z-index:92;pointer-events:none;transform:translate(-50%,-50%);transition:left 0.12s,top 0.12s,opacity 0.4s;opacity:0;">
+  <div style="width:18px;height:18px;border:2px solid rgba(255,220,80,0.9);border-radius:50%;box-shadow:0 0 10px rgba(255,200,0,0.7),0 0 22px rgba(255,150,0,0.3);position:relative;">
+    <div style="position:absolute;inset:3px;background:rgba(255,200,60,0.5);border-radius:50%;"></div>
+  </div>
+</div>
 
 <!-- v7.298: PILOT / COCKPIT first-person view overlay with live instruments -->
 <div id="pr-cockpit" style="display:none;position:fixed;inset:0;z-index:88;pointer-events:none;font-family:monospace;">
@@ -34011,6 +34019,8 @@ function _podRaceReturnToTitle(){
   // v7.298: hide cockpit overlay + reset camera fov/view on return to title
   try{const ck=document.getElementById('pr-cockpit');if(ck)ck.style.display='none';}catch(_){}
   try{const sf=document.getElementById('pr-smoke-fog');if(sf)sf.style.display='none';}catch(_){}
+  try{const sl=document.getElementById('pr-speed-streak');if(sl)sl.style.display='none';}catch(_){}
+  try{const hc=document.getElementById('pr-horiz-cursor');if(hc)hc.style.display='none';}catch(_){}
   try{camera.fov=75;camera.updateProjectionMatrix();}catch(_){}
   // v7.299: crash cleanup
   if(S._prCrashPilot){try{scene.remove(S._prCrashPilot);}catch(_){}S._prCrashPilot=null;}
@@ -34621,7 +34631,12 @@ function updatePodRace(dt){
   S._prProps=S._prProps.filter(p=>{
     if(p.position.z>camera.position.z+50){scene.remove(p);return false;}return true;
   });
-  if(S._prWalls.length<15)_spawnPodRaceSegment(camera.position.z-180, S._prCurveX, S._prCurveV);
+  if(S._prWalls.length<15){
+    // v7.302: project future curveX so far-ahead walls land at the right position when they arrive
+    const _spawnD=180, _scrollNow=S._prSpeed*2;
+    const _futureX=S._prCurveX+(S._prCurveV||0)*(_spawnD/Math.max(80,_scrollNow))*0.62;
+    _spawnPodRaceSegment(camera.position.z-_spawnD, _futureX, S._prCurveV);
+  }
   S._prDistance+=scrollSpd*dt;
   if(S._prDistance>=S._prLapDist){
     S._prDistance-=S._prLapDist;
@@ -34653,7 +34668,7 @@ function updatePodRace(dt){
   try{_updateSmokeFog();}catch(_){}// v7.299: smoke fog overlay
   const camBob=Math.sin(S._prTime*8)*0.05*Math.min(1,S._prSpeed/80);
   // v7.295: smooth bank — lerp to avoid jitter on curve change
-  const targetBank=(S._prCurveV||0)*-0.022;// v7.300: stronger bank (0.014→0.022)
+  const targetBank=(S._prCurveV||0)*-0.032;// v7.302: stronger bank feel (0.022→0.032)
   S._prBankSmooth=(S._prBankSmooth||0)+(targetBank-(S._prBankSmooth||0))*Math.min(1,2.2*dt);
   const speedRatio=Math.min(1,S._prSpeed/S._prMaxSpeed);
   const _anchorZ=(S._prCamZ!=null?S._prCamZ:camera.position.z);
@@ -34662,27 +34677,60 @@ function updatePodRace(dt){
     camera.position.x+=(pod.position.x-camera.position.x)*12*dt;
     camera.position.y+=((pod.position.y+0.9+camBob)-camera.position.y)*8*dt;
     camera.position.z=pod.position.z+1.0;
-    camera.fov=Math.max(80,92+speedRatio*14);
+    camera.fov=Math.max(82,94+speedRatio*14);
     camera.updateProjectionMatrix();
     if(S._prSpeed>110){camera.position.y+=(Math.random()-0.5)*0.06;camera.position.x+=(Math.random()-0.5)*0.025;}
     camera.up.set(Math.sin(S._prBankSmooth),Math.cos(S._prBankSmooth),0);
-    const lookCurveX=pod.position.x+(S._prCurveX||0)*0.4+(S._prCurveV||0)*0.9;
-    camera.lookAt(lookCurveX, pod.position.y+0.4, pod.position.z-40);
+    // v7.302: cockpit looks 70 units ahead (was 40) with strong curve lead → horizon shows road curve
+    const lookCurveX=pod.position.x+(S._prCurveX||0)*0.6+(S._prCurveV||0)*2.2;
+    camera.lookAt(lookCurveX, pod.position.y+0.1, pod.position.z-70);
   } else {
-    camera.position.x+=(pod.position.x-camera.position.x)*8*dt;
-    camera.position.y+=(pod.position.y+2+camBob-camera.position.y)*4*dt;
+    // v7.302: camera X slightly leads curve so horizon appears to swing — not just lookAt twist
+    const _curveLead=(S._prCurveV||0)*0.018;
+    camera.position.x+=(pod.position.x+_curveLead-camera.position.x)*8*dt;
+    // v7.302: camera rises on strong curves — see over the bank like a real cockpit
+    const _curveRise=Math.abs(S._prCurveV||0)*0.048;
+    camera.position.y+=(pod.position.y+2.2+camBob+_curveRise-camera.position.y)*4*dt;
     camera.position.z=_anchorZ;
-    camera.fov=Math.max(60,75+speedRatio*12);
+    // v7.302: wider FOV at high speed for horizon depth
+    camera.fov=Math.max(64,80+speedRatio*16);
     camera.updateProjectionMatrix();
     if(S._prSpeed>110){
       camera.position.y+=(Math.random()-0.5)*0.04;
       camera.position.x+=(Math.random()-0.5)*0.015;
     }
     camera.up.set(Math.sin(S._prBankSmooth),Math.cos(S._prBankSmooth),0);
-    // v7.297: camera follows curve direction — makes track ahead look curved
-    const lookCurveX=pod.position.x+(S._prCurveX||0)*0.28+(S._prCurveV||0)*0.7;
-    camera.lookAt(lookCurveX, pod.position.y, pod.position.z-22);
+    // v7.302: lookAt 55 units ahead (was 22) + strong curve lead → road visibly curves at horizon
+    const lookAheadX=pod.position.x+(S._prCurveX||0)*0.52+(S._prCurveV||0)*1.85;
+    camera.lookAt(lookAheadX, pod.position.y-0.4, pod.position.z-55);
   }
+  // v7.302: speed streak overlay — conic radial lines pulse at 90km/h+
+  try{
+    const _sl=document.getElementById('pr-speed-streak');
+    if(_sl){
+      const _sf=Math.max(0,(S._prSpeed-88)/62);// 0 at 88km/h, 1 at 150
+      if(_sf>0.02){_sl.style.display='block';_sl.style.opacity=(_sf*0.82).toString();}
+      else{_sl.style.opacity='0';}
+    }
+  }catch(_){}
+  // v7.302: horizon cursor — screen-projected dot at projected curve vanishing point
+  try{
+    const _hc=document.getElementById('pr-horiz-cursor');
+    if(_hc&&S._prCamZ!=null){
+      const _hv=new THREE.Vector3(
+        S._prCurveX+(S._prCurveV||0)*1.4,
+        pod.position.y,
+        S._prCamZ-230
+      );
+      _hv.project(camera);
+      const _sx=((_hv.x*0.5+0.5)*window.innerWidth);
+      const _sy=((-_hv.y*0.5+0.5)*window.innerHeight);
+      const _inView=_hv.z>-1&&_hv.z<1&&_sx>0&&_sx<window.innerWidth&&_sy>50&&_sy<window.innerHeight*0.78;
+      _hc.style.left=_sx+'px';_hc.style.top=_sy+'px';
+      _hc.style.display=_inView?'block':'none';
+      _hc.style.opacity=_inView?(Math.min(1,Math.abs(S._prCurveV||0)/14)*0.9).toString():'0';
+    }
+  }catch(_){}
   // v7.291: update stereo engine panning every frame
   try{sfx.updatePodEngines(pod.position.x,S._prSpeed,S._prMaxSpeed);}catch(_){}
   // v7.297: periodic engine misfire ボボボボ
@@ -35194,7 +35242,7 @@ function _updatePodRacePostRace(dt){
   if(S._prProps)S._prProps.forEach(p=>{p.position.z+=spd*dt;});
   if(S._prWalls)S._prWalls=S._prWalls.filter(w=>{if(w.position.z>camera.position.z+50){scene.remove(w);return false;}return true;});
   if(S._prProps)S._prProps=S._prProps.filter(p=>{if(p.position.z>camera.position.z+50){scene.remove(p);return false;}return true;});
-  if((S._prWalls||[]).length<15)_spawnPodRaceSegment(camera.position.z-200,S._prCurveX||0,S._prCurveV||0);
+  if((S._prWalls||[]).length<15){const _pD=200,_pS=(S._prSpeed||55)*2;_spawnPodRaceSegment(camera.position.z-_pD,(S._prCurveX||0)+(S._prCurveV||0)*(_pD/Math.max(80,_pS))*0.62,S._prCurveV||0);}
   S._prCurveT=(S._prCurveT||0)-dt;
   if(S._prCurveT<=0){S._prCurveV=(Math.random()-0.5)*28;S._prCurveT=4+Math.random()*4;}
   S._prCurveX=(S._prCurveX||0)+S._prCurveV*dt;
