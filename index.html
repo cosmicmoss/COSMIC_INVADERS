@@ -34239,13 +34239,14 @@ function startPodRace(){
     // 2-column grid: odd index=left(-5), even index=right(+5)
     const gridCol=(i%2===0)?-5:5;
     const gridRow=Math.floor(i/2); // 0-3
-    const startZ=camera.position.z-18-gridRow*9;
+    // v7.296fix3: wider grid spacing (20u/row, start -28) so player at -8 is clearly at the back
+    const startZ=camera.position.z-28-gridRow*20;
     pod.position.set(gridCol,1.5,startZ);
     pod.visible=false;// v7.294: hidden until GO!
     scene.add(pod);
     S._prAI.push({def,pod,x:gridCol,y:1.5,z:startZ,
-      speed:def.speed,lap:1,raceDist:-16-gridRow*9,targetX:gridCol,
-      swerveT:Math.random()*Math.PI*2,eliminated:false,finished:false,hp:3,pos:i+2});
+      speed:def.speed,lap:1,raceDist:-20-gridRow*20,targetX:gridCol,
+      swerveT:Math.random()*Math.PI*2,eliminated:false,finished:false,hp:3,pos:i+2,_reappearT:0});
   });
   // v7.285: No intro parade \u2014 go straight to F1 start lights
   S._prIntroActive=false;
@@ -34261,8 +34262,8 @@ function startPodRace(){
     try{wfCineSubtitle('\u2605 BOONTA EVE CLASSIC \u2605','#ff8800')}catch(_){}
     try{playComm('hq','8 racers on the grid!! Boonta Eve Classic \u2014 all engines ready!!')}catch(_){}
   }
-  // Brief camera tilt back to show the grid during countdown
-  try{camera.lookAt(0,1.5,camera.position.z-30);}catch(_){}
+  // v7.296fix3: look further ahead to show full 4-row starting grid (row 3 at camera.z-88)
+  try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
   // v7.291: start per-racer stereo engine drones
   try{sfx.init();sfx.startPodEngines(S._prAI);}catch(_){}
   // Short delay then F1 lights \u2014 all racers start together on GO!!
@@ -34765,6 +34766,8 @@ function _updatePodRaceAI(dt){
       }catch(_){}
     }
     if(ai.eliminated)return;
+    // v7.296fix3: reappear timer — pod fades back in after recycle teleport
+    if((ai._reappearT||0)>0){ai._reappearT-=dt;if(ai._reappearT<=0)ai.pod.visible=true;}
     // v7.284: rubber band — lagging AI catches up, leading AI slows slightly
     const distDiff=S._prDistance-(ai.raceDist||0);
     const rbFactor=distDiff>350?1.16:(distDiff<-250?0.87:1.0);
@@ -34779,9 +34782,12 @@ function _updatePodRaceAI(dt){
     }
     // Recycle pod if too far behind
     const camZ=camera.position.z;
-    if(ai.pod.position.z>camZ+80){
-      ai.pod.position.z=camZ-200-Math.random()*100;
+    // v7.296fix3: recycle with brief invisibility — prevents ghost pods appearing from nowhere
+    if(ai.pod.position.z>camZ+100){
+      ai.pod.position.z=camZ-200-Math.random()*60;
       ai.raceDist=Math.min(ai.raceDist, S._prDistance+800);
+      ai.pod.visible=false;// hide during teleport
+      ai._reappearT=2.0;  // reappear naturally 2s later
     }
     // v7.284: follow curve + swerving
     ai.swerveT+=dt*(0.45+Math.random()*0.3);
