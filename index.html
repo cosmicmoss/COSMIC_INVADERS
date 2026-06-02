@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.302</title>
+<title>COSMIC INVADERS v7.303</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34621,6 +34621,40 @@ function updatePodRace(dt){
       });
     }
   }catch(_){}
+  // v7.303: ground X tracks curveX — whole floor shifts with the curve for coherence
+  try{if(S._prGround){S._prGround.position.x+=(S._prCurveX-S._prGround.position.x)*Math.min(1,2.5*dt);}}catch(_){}
+  // v7.303: dynamic fog density — denser at high speed and on sharp curves (horizon haziness)
+  try{
+    if(scene.fog&&scene.fog.density!==undefined){
+      const _fc=_currentPRCourse();
+      const _sfog=Math.max(0,(S._prSpeed-75)/180)*0.008;
+      const _cfog=Math.abs(S._prCurveV||0)/28*0.004;
+      scene.fog.density=_fc.fogD+_sfog+_cfog;
+    }
+  }catch(_){}
+  // v7.303: high-speed engine exhaust particles (both engines at speed>90)
+  try{
+    const _et=S._prEngineT;
+    if(S._prSpeed>90&&S._prRaceStarted){
+      const _exInterval=0.055-Math.min(0.035,(S._prSpeed-90)/1800);// faster at higher speed
+      if(!S._prExhLastT)S._prExhLastT=0;
+      S._prExhLastT+=dt;
+      if(S._prExhLastT>=_exInterval){
+        S._prExhLastT=0;
+        const _eg=pod.getObjectByName('podEngineGroup');
+        if(_eg&&_eg.visible){
+          ['podEngineL','podEngineR'].forEach(nm=>{
+            const _eng=_eg.getObjectByName(nm);if(!_eng)return;
+            const _wp=new THREE.Vector3();_eng.getWorldPosition(_wp);
+            _wp.z+=5.5;// behind exhaust nozzle
+            const _col=(S._prNitroT||0)>0?0x66ccff:0xff7722;// blue nitro vs orange normal
+            const _sz=0.28+Math.random()*0.18;
+            spawnP(_wp,_col,2.5+Math.random()*1.5,_sz,1.1,0.7);
+          });
+        }
+      }
+    }
+  }catch(_){}
   // v7.297: visual scroll x2 for speed feel — player control speed unchanged
   const scrollSpd=S._prSpeed*2;
   S._prWalls.forEach(w=>{w.position.z+=scrollSpd*dt;});
@@ -34928,7 +34962,7 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
   const widths=[70,50,60,80];// v7.295: 2.5× wider track
   const w=widths[type]*widthScale;
   // v7.297: curve angle applied to wall rotation — makes track look curved ahead
-  const cAngle=Math.atan2(curveV, Math.max(55,(S&&S._prSpeed)||55))*0.55;
+  const cAngle=Math.atan2(curveV, Math.max(55,(S&&S._prSpeed)||55))*0.80;// v7.303: stronger wall rotation for curve feel
   // solid+wire walls for maximum visibility
   const makeWall=(x,y,z)=>{
     const wG=new THREE.BoxGeometry(4,18,segLen);
