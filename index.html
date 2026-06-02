@@ -35277,27 +35277,55 @@ function _triggerPilotEjection(){
       scene.add(pilot);S._prCrashPilot=pilot;
     }catch(_){}
   }
-  S._prCrashPilotVY=9;
-  S._prCrashPilotVZ=-20;
+  // v7.299b: lower arc so pilot hits ground sooner and starts rolling
+  S._prCrashPilotVY=5;   // lower launch (hits ground in ~0.3s)
+  S._prCrashPilotVZ=-22; // forward speed
+  // reset rotation to neutral upright so roll animation is clean
+  if(S._prCrashPilot){
+    try{S._prCrashPilot.rotation.set(0,Math.PI,0);}catch(_){}
+  }
   try{wfCineSubtitle('💥 PILOT EJECTED! REBOARDING...','#ff7700');}catch(_){}
   if(S._prCamMode==='cockpit'){try{_setPodCamMode('chase');}catch(_){}}
 }
 // v7.299: update crash state machine — called from updatePodRace when _prCrashPhase is set
+// Phases: ejecting(short arc) → rolling(ground somersault) → crawling(walk back) → reboarding
 function _updateCrashState(dt){
   if(!S._prCrashPhase)return;
   S._prCrashT+=dt;
   const pilot=S._prCrashPilot;
   const pod=S._prPlayerPod;if(!pod)return;
   if(S._prCrashPhase==='ejecting'){
+    // brief air arc — hit the ground fast
     if(pilot){
-      S._prCrashPilotVY-=24*dt;
+      S._prCrashPilotVY-=30*dt;// strong gravity → quick landing
       pilot.position.z+=S._prCrashPilotVZ*dt;
       pilot.position.y+=S._prCrashPilotVY*dt;
-      pilot.rotation.x+=6*dt;// tumble
-      pilot.rotation.z+=3*dt;
-      if(pilot.position.y<0.3){pilot.position.y=0.3;S._prCrashPilotVY=0;}
+      pilot.rotation.x+=5*dt;// spin in air
+      if(pilot.position.y<=0.3||S._prCrashT>=0.42){
+        pilot.position.y=0.3;S._prCrashPilotVY=0;
+        S._prCrashPhase='rolling';S._prCrashT=0;
+      }
+    } else if(S._prCrashT>=0.42){S._prCrashPhase='rolling';S._prCrashT=0;}
+  } else if(S._prCrashPhase==='rolling'){
+    // v7.299b: ground roll — 受け身・ごろごろ前転
+    if(pilot){
+      pilot.position.y=0.3;// stay on ground
+      // forward slide decelerating with friction
+      S._prCrashPilotVZ*=Math.pow(0.04,dt);// rapid friction decel
+      pilot.position.z+=S._prCrashPilotVZ*dt;
+      // continuous forward somersault (rotation.x accumulates = rolling)
+      pilot.rotation.x+=9*dt;
+      // slight lateral sway — looks like ukemi roll
+      pilot.rotation.z=Math.sin(S._prCrashT*14)*0.38;
+      // small yaw wobble as they tumble sideways
+      pilot.rotation.y=Math.PI+Math.sin(S._prCrashT*7)*0.25;
     }
-    if(S._prCrashT>0.65){S._prCrashPhase='crawling';S._prCrashT=0;}
+    // transition to crawling once almost stopped or after 1.4s
+    if(S._prCrashT>=1.4||Math.abs(S._prCrashPilotVZ||0)<1.2){
+      S._prCrashPhase='crawling';S._prCrashT=0;
+      // snap to upright standing pose to start walk
+      if(pilot){try{pilot.rotation.set(0,Math.PI,0);}catch(_){}}
+    }
   } else if(S._prCrashPhase==='crawling'){
     if(pilot){
       const dx=pod.position.x-pilot.position.x;
