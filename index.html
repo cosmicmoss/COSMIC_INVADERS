@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.305</title>
+<title>COSMIC INVADERS v7.306</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34450,6 +34450,38 @@ function makePodRacerPod(type,color,variant){
     try{const doc=bike.getObjectByName('bikeDoctor');if(doc&&doc.parent)doc.parent.remove(doc);}catch(_){}
     bike.scale.setScalar(2.4);bike.rotation.y=Math.PI;bike.position.y=-0.5;
     g.add(bike);g.userData.halfW=3.5;g.userData.variant='speeder';
+    // v7.306: fix pilot seated position + steering arm pose
+    // Root cause: bike.rotation.y=π + pilot.rotation.y=π = net 0° in world.
+    // straddleBikeRider uses -armReach which was correct for pilot facing -Z, but
+    // with net rotation=0 the arms get sent toward the camera instead of the track.
+    // Fix: positive arm.rotation.x sends arms toward -Z (track) with net rotation=0.
+    try{
+      const _pr=bike.getObjectByName('forestPilotFigure');
+      if(_pr){
+        // Y: seat top at bike-local 0.71. Pilot scale 0.50 → hips at 0.575 above feet.
+        // Target hip at seat: feet at 0.71-0.575=0.135. Use 0.16 for slight cushion.
+        _pr.position.set(0, 0.16, 0.40);
+        // Arms: +rotation.x sends hand toward -Z (track direction) ✓
+        const _fa=(nm,rx,rz,frx)=>{
+          const a=_pr.getObjectByName(nm);if(!a)return;
+          a.rotation.x=rx;a.rotation.z=rz;a.rotation.y=0;
+          const f=_pr.getObjectByName(nm+'Fore');
+          if(f&&frx!==undefined)f.rotation.x=frx;
+        };
+        _fa('lArm', 0.80, +0.16, -0.40);// forward-reach + outward spread + elbow-grip bend
+        _fa('rArm', 0.80, -0.16, -0.40);
+        // Legs: straddle (thigh forward-horizontal, shin drops to footpeg)
+        const _fl=(nm,rz)=>{
+          const l=_pr.getObjectByName(nm);if(!l)return;
+          l.rotation.x=-1.45;l.rotation.z=rz;// thigh nearly horizontal forward
+          const lo=_pr.getObjectByName(nm+'Lower');if(lo)lo.rotation.x=1.35;// shin drops down
+        };
+        _fl('lLeg',-0.42);_fl('rLeg',+0.42);
+        // Body: lean forward (racing posture into the wind)
+        const _b=_pr.getObjectByName('body');if(_b){_b.rotation.x=0.30;_b.rotation.y=0;}
+        const _h=_pr.getObjectByName('head');if(_h){_h.rotation.x=0.14;_h.rotation.y=0;}
+      }
+    }catch(_){}
     // v7.300: add pod-racer style twin engines (initially hidden, revealed in maintenance cinematic)
     try{_buildPodRaceEngines(g);}catch(_){}
     return g;
