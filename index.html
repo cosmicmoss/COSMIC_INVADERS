@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.307</title>
+<title>COSMIC INVADERS v7.308</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34085,6 +34085,7 @@ function _podRaceReturnToTitle(){
   try{if(S._prStadiumObjs){S._prStadiumObjs.forEach(o=>{try{scene.remove(o);}catch(_){}});S._prStadiumObjs=[];}}catch(_){}
   S._prVIPSlag=null;S._prVIPFlag=null;S._prSlagFlagWave=false;
   S._prWinLapActive=false;S._prWinYaw=0;S._prWinPitch=0.22;
+  S._prCoursePreviewActive=false;S._prCoursePreviewT=0;
   try{const gb=document.getElementById('pr-gyro-btn');if(gb)gb.style.display='none';}catch(_){}
   try{camera.fov=75;camera.updateProjectionMatrix();}catch(_){}
   // v7.299: crash cleanup
@@ -34329,8 +34330,9 @@ function startPodRace(){
   // v7.299: AI smoke zones + player fog timer + crash state
   S._prAISmokeZones=[];S._prSmokeFogT=0;S._prFogColor='smoke';
   S._prCrashPhase=null;S._prCrashT=0;S._prCrashPilot=null;S._prCrashPilotVY=0;S._prCrashPilotVZ=0;
-  // v7.300: maintenance cinematic + weather
-  S._prMaintActive=true;S._prMaintT=0;S._prMaintMechanic=null;S._prMaintFlags={};
+  // v7.308: course preview precedes maintenance cinematic (Mario Kart style)
+  S._prCoursePreviewActive=true;S._prCoursePreviewT=0;
+  S._prMaintActive=false;S._prMaintT=0;S._prMaintMechanic=null;S._prMaintFlags={};
   S._prWeatherT=18+Math.random()*20;
   S._prBounceVX=0;// v7.289: lateral knockback velocity from pod-to-pod ramming
   S._prMapDots=null;// v7.288: rebuild minimap dots for this race
@@ -34635,6 +34637,8 @@ function makePodRacerPod(type,color,variant){
 }
 
 function updatePodRace(dt){
+  // v7.308: course preview (Mario Kart style) — runs before maintenance cinematic
+  if(S._prCoursePreviewActive){try{_updateCoursePreview(dt);}catch(_){}return;}
   // v7.300: maintenance cinematic before the race
   if(S._prMaintActive){try{_updateMaintenanceCinematic(dt);}catch(_){}return;}
   // v7.284: intro phase — AI parade, no player control yet
@@ -35770,6 +35774,76 @@ function _buildPodRaceEngines(podGroup){
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // v7.300: MAINTENANCE CINEMATIC — 10-second pre-race modification scene
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.308: COURSE PREVIEW — Mario Kart-style pre-race cinematic lap
+// 5 phases total ~9.2s: aerial → VIP box → grandstand flyby → grid reveal → transition
+// ─────────────────────────────────────────────────────────────────────────────
+function _updateCoursePreview(dt){
+  S._prCoursePreviewT=(S._prCoursePreviewT||0)+dt;
+  const t=S._prCoursePreviewT;
+  const cZ=S._prCamZ||C.CAM_Z;
+  // SLAG waves enthusiastically during preview
+  try{
+    if(S._prVIPSlag){
+      const lA=S._prVIPSlag.getObjectByName('vipLArm');
+      const rA=S._prVIPSlag.getObjectByName('vipRArm');
+      if(lA)lA.rotation.z=1.0+Math.sin(t*3.8)*0.9;
+      if(rA)rA.rotation.z=-1.0-Math.sin(t*3.8+1.2)*0.9;
+    }
+  }catch(_){}
+  // Show AI pods on grid from phase 4 onward
+  if(t>=6.1&&t<6.25&&S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod)ai.pod.visible=true;});
+  let tx,ty,tz,lx,ly,lz,fov=72,upV=[0,1,0];
+  if(t<2.2){
+    // === Phase 1: Aerial overview (bird's eye) ===
+    const p=Math.min(1,t/1.5);
+    tx=0; ty=55+p*18; tz=cZ-28;
+    lx=0; ly=0; lz=cZ-60; upV=[0,0,-1]; fov=78;
+    if(t<0.15)try{wfCineSubtitle('⭐  BOONTA EVE CLASSIC  ⭐','#ff8800');}catch(_){}
+  } else if(t<4.6){
+    // === Phase 2: Orbit around SLAG VIP box ===
+    const p=(t-2.2)/2.4;
+    const ang=p*Math.PI*.95-.25;
+    tx=-76+Math.cos(ang)*38; ty=24+Math.sin(p*Math.PI)*7; tz=cZ-32+Math.sin(ang)*26;
+    lx=-76; ly=16; lz=cZ-32; fov=62;
+    if(t<2.35)try{wfCineSubtitle('💰 SLAG THE TYRANT PRESIDES','#ffcc44');}catch(_){}
+  } else if(t<6.1){
+    // === Phase 3: Grandstand low flyby ===
+    const p=(t-4.6)/1.5;
+    tx=-88+p*16; ty=9-p*4; tz=cZ-15-p*100;
+    lx=0; ly=3; lz=cZ-50-p*120; fov=82;
+    if(t<4.75)try{wfCineSubtitle('🔥 THE CROWD IS ROARING!','#ff4444');}catch(_){}
+  } else if(t<8.0){
+    // === Phase 4: Grid reveal — looking down the starting straight ===
+    const p=(t-6.1)/1.9;
+    tx=0; ty=18-p*10; tz=cZ+22-p*14;
+    lx=0; ly=1; lz=cZ-65; fov=80;
+    if(t<6.25)try{wfCineSubtitle('🏎️ 9 RACERS — 3 LAPS — ONE WINNER','#ffffff');}catch(_){}
+  } else if(t<9.3){
+    // === Phase 5: Transition toward maintenance cinematic start position ===
+    const p=(t-8.0)/1.3;
+    tx=p*18; ty=4+p; tz=cZ+p*(-5);// lerp toward (18,5,podZ) for smooth maint-cam handoff
+    lx=0; ly=1.5; lz=cZ-20; fov=72;
+    if(t<8.15)try{wfCineSubtitle('⚡ ENGINES READY — DRIVERS PREPARE!','#66ccff');}catch(_){}
+  } else {
+    // === End preview → start maintenance cinematic ===
+    S._prCoursePreviewActive=false;
+    // Re-hide AI pods (will show again at GO!)
+    try{if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod)ai.pod.visible=false;});}catch(_){}
+    S._prMaintActive=true;S._prMaintT=0;S._prMaintFlags={};
+    try{camera.fov=75;camera.updateProjectionMatrix();camera.up.set(0,1,0);}catch(_){}
+    return;
+  }
+  // Smooth camera position lerp
+  const lSpeed=Math.min(1,3.8*dt);
+  camera.position.x+=(tx-camera.position.x)*lSpeed;
+  camera.position.y+=(ty-camera.position.y)*lSpeed;
+  camera.position.z+=(tz-camera.position.z)*lSpeed;
+  camera.fov+=(fov-camera.fov)*Math.min(1,3*dt);
+  camera.updateProjectionMatrix();
+  camera.up.set(...upV);
+  camera.lookAt(lx,ly,lz);
+}
 // ─────────────────────────────────────────────────────────────────────────────
 function _updateMaintenanceCinematic(dt){
   S._prMaintT=(S._prMaintT||0)+dt;
