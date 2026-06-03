@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.306</title>
+<title>COSMIC INVADERS v7.307</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34081,6 +34081,10 @@ function _podRaceReturnToTitle(){
   try{const hc=document.getElementById('pr-horiz-cursor');if(hc)hc.style.display='none';}catch(_){}
   try{if(S._prGyroActive)_stopGyroSteering();}catch(_){}
   try{sfx.stopWindSound&&sfx.stopWindSound();}catch(_){}
+  // v7.307: remove stadium objects + reset win lap
+  try{if(S._prStadiumObjs){S._prStadiumObjs.forEach(o=>{try{scene.remove(o);}catch(_){}});S._prStadiumObjs=[];}}catch(_){}
+  S._prVIPSlag=null;S._prVIPFlag=null;S._prSlagFlagWave=false;
+  S._prWinLapActive=false;S._prWinYaw=0;S._prWinPitch=0.22;
   try{const gb=document.getElementById('pr-gyro-btn');if(gb)gb.style.display='none';}catch(_){}
   try{camera.fov=75;camera.updateProjectionMatrix();}catch(_){}
   // v7.299: crash cleanup
@@ -34342,6 +34346,10 @@ function startPodRace(){
   S._prGyroActive=false;S._prGyroSteer=0;S._prGyroRaw=0;S._prGyroNeutral=null;
   S._prGyroHandler=null;S._prGyroCalibrateAt=null;
   S._prTouchBrake=false;S._prTouchNitro=false;
+  // v7.307: stadium
+  S._prStadiumObjs=[];S._prVIPSlag=null;S._prVIPFlag=null;
+  S._prRaceStartedFirstFrame=false;// flag for GO! money burst
+  S._prWinLapActive=false;// victory lap state
   // v7.284: curve system
   S._prCurveX=0;S._prCurveV=0;S._prCurveT=4;
   // v7.284: intro state
@@ -34405,6 +34413,8 @@ function startPodRace(){
   S._prIntroActive=false;
   // Spawn initial track segments
   for(let i=0;i<25;i++) _spawnPodRaceSegment(camera.position.z-20-i*120, 0);
+  // v7.307: build stadium grandstands + SLAG VIP box
+  try{_buildRaceStadium();}catch(_){}
   _showPodRaceHUD();
   // v7.296: championship shows the round + course name, single race keeps the classic banner
   const _ch=S._prChampionship;
@@ -34746,6 +34756,28 @@ function updatePodRace(dt){
       });
     }
   }catch(_){}
+  // v7.307: SLAG VIP arm wave animation
+  try{
+    if(S._prVIPSlag&&S._prRaceStarted){
+      const t=S._prEngineT;
+      const lA=S._prVIPSlag.getObjectByName('vipLArm');
+      const rA=S._prVIPSlag.getObjectByName('vipRArm');
+      if(lA)lA.rotation.z=1.2+Math.sin(t*4.2)*0.8;// enthusiastic waving
+      if(rA)rA.rotation.z=-1.2-Math.sin(t*4.2+1.1)*0.8;
+    }
+  }catch(_){}
+  // v7.307: GO! money burst on first frame of race
+  try{
+    if(S._prRaceStarted&&!S._prRaceStartedFirstFrame){
+      S._prRaceStartedFirstFrame=true;
+      const cZ=S._prCamZ||C.CAM_Z;
+      for(let i=0;i<60;i++){// confetti/money burst
+        const mx=(Math.random()-.5)*80,mz=cZ-5-Math.random()*50;
+        spawnP(new THREE.Vector3(mx,2+Math.random()*8,mz),[0xffcc00,0xff4444,0x44ff88,0xffffff,0xff88ff][i%5],8,0.5+Math.random()*.6,2.0+Math.random()*2,1.5);
+      }
+      try{sfx.playCrowdCheer&&sfx.playCrowdCheer(3.5);}catch(_){}
+    }
+  }catch(_){}
   // v7.303: ground X tracks curveX — whole floor shifts with the curve for coherence
   try{if(S._prGround){S._prGround.position.x+=(S._prCurveX-S._prGround.position.x)*Math.min(1,2.5*dt);}}catch(_){}
   // v7.303: dynamic fog density — denser at high speed and on sharp curves (horizon haziness)
@@ -35074,6 +35106,87 @@ function _updatePodRaceItems(dt){
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.307: RACE STADIUM — Mos-Espa-style grandstands + SLAG VIP box + arch
+// ─────────────────────────────────────────────────────────────────────────────
+function _buildRaceStadium(){
+  if(!S._prStadiumObjs)S._prStadiumObjs=[];
+  const cZ=S._prCamZ||C.CAM_Z;
+  const add=o=>{scene.add(o);S._prStadiumObjs.push(o);};
+  const mk=(geo,col,alpha)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col,transparent:alpha<1,opacity:alpha??1}));
+  const ml=(geo,col)=>new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.7}));
+  const wf=(geo,fc,ec,px,py,pz)=>{const m=mk(geo,fc,1);const e=ml(geo,ec);[m,e].forEach(o=>{o.position.set(px||0,py||0,pz||0);add(o);});return m;};
+  // == GRANDSTANDS: two banks flanking the start/finish straight ==
+  const TIERS=6,TH=3.6,TSTEP=5.5,SLEN=210,BX=102;
+  const SPEC_COLS=[0xff3333,0x33cc33,0x3388ff,0xffcc00,0xff66cc,0x00ccff,0xff7700,0xaa00ff,0x44ff88,0xffaa44,0xeeff00,0x00ffaa];
+  [-1,1].forEach(side=>{
+    for(let t=0;t<TIERS;t++){
+      const x=side*(BX+t*TSTEP), y=-3+t*TH, z=cZ-65;
+      wf(new THREE.BoxGeometry(11,0.9,SLEN),0xc8a870,0xddc890,x,y,z);// tier slab
+      for(let i=0;i<11;i++){// spectator blobs
+        const sz=z-SLEN/2+10+i*(SLEN-20)/10;
+        const col=SPEC_COLS[(t*3+i)%SPEC_COLS.length];
+        const s=mk(new THREE.SphereGeometry(1.0+Math.random()*.3,4,3),col,1);
+        s.position.set(x+(Math.random()-.5)*5,y+1.9,sz);add(s);
+      }
+      // wave flag strips (alternating red/yellow)
+      if(t%2===0){
+        const fg=new THREE.BoxGeometry(.4,1.8,SLEN*.9);
+        const f=mk(fg,t%4===0?0xff2200:0xffaa00,1);f.position.set(x+side*5.2,y+1.2,z);add(f);
+      }
+    }
+    // Back wall
+    wf(new THREE.BoxGeometry((TIERS-1)*TSTEP+14,TIERS*TH+5,2.5),0x9a7850,0xccaa66,
+       side*(BX+(TIERS-1)*TSTEP+7),-3+(TIERS-1)*TH/2,cZ-65);
+  });
+  // == START/FINISH ARCH ==
+  const ARCHW=78;
+  wf(new THREE.BoxGeometry(ARCHW,3,4),0xddcc88,0xffee99,0,20,cZ-12);// cross beam
+  [-1,1].forEach(s=>{wf(new THREE.BoxGeometry(3.5,24,4),0xccaa66,0xeedd88,s*ARCHW/2,8,cZ-12);});// pillars
+  // Orange sign banner
+  const sign=mk(new THREE.BoxGeometry(44,4,.5),0xff6600,.85);sign.position.set(0,19.5,cZ-10);add(sign);
+  const signE=ml(new THREE.BoxGeometry(44,4,.5),0xffcc44);signE.position.copy(sign.position);add(signE);
+  // == VIP BOX (left side, elevated) — SLAG's throne ==
+  try{
+    const vip=new THREE.Group();
+    // Platform
+    wf(new THREE.BoxGeometry(20,4,16),0x8a5820,0xddaa44,0,2,0);
+    wf(new THREE.BoxGeometry(22,1.5,18),0xcc8822,0xffcc44,0,13,0);// canopy
+    // Drape strips (red)
+    [-1,0,1].forEach(fx=>{const d=mk(new THREE.BoxGeometry(.5,9,.4),0xaa2200,1);d.position.set(fx*7.5,7.5,8.5);vip.add(d);});
+    // SLAG body
+    const sGrp=new THREE.Group();sGrp.name='vipSlagBody';
+    const torso=mk(new THREE.SphereGeometry(2.6,8,6),0x2e1e08,1);torso.scale.set(1.35,.75,1);sGrp.add(torso);
+    const torsoE=ml(new THREE.SphereGeometry(2.6,8,6),0x6a4820);torsoE.scale.copy(torso.scale);sGrp.add(torsoE);
+    const headG=new THREE.SphereGeometry(1.6,8,6);
+    const head=mk(headG,0x2e1e08,1);head.scale.set(1,.9,1.1);head.position.y=3.0;sGrp.add(head);
+    ml(headG,0x6a4820).position.copy(head.position);sGrp.add(ml(headG,0x6a4820));
+    [-0.58,0.58].forEach(ex=>{const eye=mk(new THREE.SphereGeometry(.28,5,4),0xff1100,1);eye.position.set(ex,3.35,1.5);sGrp.add(eye);});
+    // Left arm (waving)
+    const lAG=new THREE.Group();lAG.name='vipLArm';
+    const lAGeo=new THREE.CylinderGeometry(.5,.6,3.4,6);
+    lAG.add(mk(lAGeo,0x2e1e08,1));lAG.add(ml(lAGeo,0x6a4820));
+    lAG.position.set(-3.2,1.0,0);lAG.rotation.z=1.2;sGrp.add(lAG);
+    // Right arm (holds flag, also waves)
+    const rAG=new THREE.Group();rAG.name='vipRArm';
+    const rAGeo=new THREE.CylinderGeometry(.5,.6,3.4,6);
+    rAG.add(mk(rAGeo,0x2e1e08,1));rAG.add(ml(rAGeo,0x6a4820));
+    rAG.position.set(3.2,1.0,0);rAG.rotation.z=-1.2;
+    // Checkered flag on right arm (hidden until finish)
+    const flagGrp=new THREE.Group();flagGrp.name='vipFlag';flagGrp.visible=false;
+    const FS=.75;for(let fr=0;fr<4;fr++){for(let fc=0;fc<6;fc++){
+      const sq=mk(new THREE.BoxGeometry(FS,FS,.08),(fr+fc)%2===0?0xffffff:0x111111,1);
+      sq.position.set(fc*FS-6*FS/2+FS/2,2.2+fr*FS,.1);flagGrp.add(sq);
+    }}
+    rAG.add(flagGrp);sGrp.add(rAG);
+    sGrp.position.set(0,4.5,.5);vip.add(sGrp);
+    vip.position.set(-76,14,cZ-32);
+    scene.add(vip);S._prStadiumObjs.push(vip);
+    S._prVIPSlag=sGrp;S._prVIPFlag=flagGrp;
+  }catch(_){}
+  // == FINISH LINE STRIPE ==
+  const fl=mk(new THREE.BoxGeometry(80,.12,3),0xffffff,.85);fl.position.set(0,-2.9,cZ-10);add(fl);
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // v7.304: GYRO STEERING — landscape tilt control for mobile
 // ─────────────────────────────────────────────────────────────────────────────
@@ -35431,6 +35544,22 @@ function _finishPodRace(){
   try{screenFlash(0.8)}catch(_){}
   try{playComm('hq','INCREDIBLE!! You finished the Boonta Eve Classic!!')}catch(_){}
   try{sfx.playCrowdCheer&&sfx.playCrowdCheer(5);}catch(_){}// v7.297: big finish cheer
+  // v7.307: SLAG waves checkered flag + money shower at finish
+  try{
+    if(S._prVIPFlag)S._prVIPFlag.visible=true;// reveal flag on SLAG's arm
+    const cZ=S._prCamZ||C.CAM_Z;
+    for(let i=0;i<80;i++){// money/confetti burst
+      const mx=(Math.random()-.5)*100,mz=cZ-10-Math.random()*60;
+      spawnP(new THREE.Vector3(mx,3+Math.random()*12,mz),[0xffcc00,0xff4444,0x44ff88,0xffffff,0xff88ff,0x66ccff][i%6],10,0.4+Math.random()*.7,2.5+Math.random()*2.5,2.0);
+    }
+    // SLAG does faster flag waving (handled by vipRArm animation + flag visible)
+    S._prSlagFlagWave=true;
+  }catch(_){}
+  // v7.307: trigger victory lap if player is in 1st place
+  try{
+    const playerPos=S._prPos||1;
+    if(playerPos===1)S._prWinLapActive=true;
+  }catch(_){}
   S._prPostRace=true;
   S._prPostRaceSpeed=Math.max(60,S._prSpeed*0.55);
   try{const ph=document.getElementById('pr-hud');if(ph)ph.style.opacity='0.45';}catch(_){}
@@ -35461,6 +35590,44 @@ function _updatePodRacePostRace(dt){
   S._prCurveX=(S._prCurveX||0)+S._prCurveV*dt;
   if(Math.abs(S._prCurveX||0)>42)S._prCurveV*=-1;
   _updatePodRaceAI(dt);
+  // v7.307: SLAG flag-wave faster at finish
+  try{
+    if(S._prVIPSlag&&S._prSlagFlagWave){
+      const t=S._prPostRaceTimer;
+      const rA=S._prVIPSlag.getObjectByName('vipRArm');
+      const lA=S._prVIPSlag.getObjectByName('vipLArm');
+      if(rA)rA.rotation.z=-0.6-Math.sin(t*7)*1.1;// vigorous flag wave
+      if(lA)lA.rotation.z=1.0+Math.sin(t*6.5+0.5)*.9;
+    }
+  }catch(_){}
+  // v7.307: WINNING LAP — cinematic hero camera + free-look with drag
+  if(S._prWinLapActive){
+    const pod=S._prPlayerPod;
+    if(pod){
+      // Free-look camera: orbits around pod, user can drag to adjust yaw/pitch
+      const orbitR=28, orbitH=10;
+      S._prWinYaw=(S._prWinYaw||Math.PI*0.35)+(_prWinDragDY||0)*0;// init angle to side
+      const yaw=S._prWinYaw+(S._prWinYawDrag||0);
+      const pitch=Math.max(-0.15,Math.min(0.55,(S._prWinPitch||0.22)+(S._prWinPitchDrag||0)));
+      camera.position.x=pod.position.x+Math.cos(yaw)*orbitR;
+      camera.position.y=pod.position.y+Math.sin(pitch)*orbitH+orbitH*0.4;
+      camera.position.z=pod.position.z+Math.sin(yaw)*orbitR*0.6;
+      camera.fov=Math.max(55,65+Math.sin(S._prPostRaceTimer*0.3)*5);
+      camera.updateProjectionMatrix();
+      camera.up.set(0,1,0);
+      camera.lookAt(pod.position.x,pod.position.y+1,pod.position.z);
+      // Yaw slowly rotates automatically for cinematic sweep
+      S._prWinYaw=(S._prWinYaw||Math.PI*.35)+dt*0.28;
+    }
+    if(S._prPostRaceTimer>14&&!S._prResultsShown){
+      S._prResultsShown=true;
+      _showPodRaceResults();
+      // Show "DRAG TO LOOK" hint briefly
+      try{wfCineSubtitle('🏆 VICTORY LAP COMPLETE!','#ffcc00');}catch(_){}
+    }
+    return;
+  }
+  // Standard post-race top-down camera
   const tgtY=65,tgtX=S._prCurveX||0;
   camera.position.y+=(tgtY-camera.position.y)*1.8*dt;
   camera.position.x+=(tgtX-camera.position.x)*1.5*dt;
@@ -35974,6 +36141,18 @@ function _prPlayerEliminated(){
 
 // v7.298: pod race camera view toggle (chase <-> pilot/cockpit) + live instruments
 function togglePodCamMode(){ _setPodCamMode((S._prCamMode==='cockpit')?'chase':'cockpit'); }
+// v7.307: victory lap free-look — mouse/touch drag rotates orbit camera
+(()=>{
+  let _vd=false,_vlx=0,_vly=0;
+  const _vm=(e)=>{if(!S._prWinLapActive)return;const dx=e.clientX-_vlx,dy=e.clientY-_vly;_vlx=e.clientX;_vly=e.clientY;S._prWinYaw=(S._prWinYaw||0)-dx*.008;S._prWinPitch=Math.max(-.15,Math.min(.55,(S._prWinPitch||.22)+dy*.006));};
+  const _vt=(e)=>{if(!S._prWinLapActive)return;const t=e.touches[0];_vlx=t.clientX;_vly=t.clientY;};
+  const _vtm=(e)=>{if(!S._prWinLapActive)return;const t=e.touches[0];const dx=t.clientX-_vlx,dy=t.clientY-_vly;_vlx=t.clientX;_vly=t.clientY;S._prWinYaw=(S._prWinYaw||0)-dx*.008;S._prWinPitch=Math.max(-.15,Math.min(.55,(S._prWinPitch||.22)+dy*.006));};
+  document.addEventListener('mousedown',(e)=>{if(S._prWinLapActive){_vd=true;_vlx=e.clientX;_vly=e.clientY;}});
+  document.addEventListener('mouseup',()=>{_vd=false;});
+  document.addEventListener('mousemove',(e)=>{if(_vd)_vm(e);});
+  document.addEventListener('touchstart',(e)=>{if(S._prWinLapActive&&e.touches[0])_vt(e);},{passive:true});
+  document.addEventListener('touchmove',(e)=>{if(S._prWinLapActive&&e.touches[0])_vtm(e);},{passive:true});
+})();
 function _setPodCamMode(mode){
   S._prCamMode=mode;
   const cockpit=(mode==='cockpit');
