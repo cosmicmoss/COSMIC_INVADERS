@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.308</title>
+<title>COSMIC INVADERS v7.309</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34476,9 +34476,10 @@ function makePodRacerPod(type,color,variant){
     try{
       const _pr=bike.getObjectByName('forestPilotFigure');
       if(_pr){
-        // Y: seat top at bike-local 0.71. Pilot scale 0.50 → hips at 0.575 above feet.
-        // Target hip at seat: feet at 0.71-0.575=0.135. Use 0.16 for slight cushion.
-        _pr.position.set(0, 0.16, 0.40);
+        // v7.309: Y=0.18 places pilot feet exactly at bike floor/footpeg level (world Y≈1.43).
+        // At 0.16 (v7.306), feet were 0.05 below the bike floor — clip through chassis.
+        // Hips remain ≈0.81 above seat top, keeping seated posture intact.
+        _pr.position.set(0, 0.18, 0.40);
         // Arms: +rotation.x sends hand toward -Z (track direction) ✓
         const _fa=(nm,rx,rz,frx)=>{
           const a=_pr.getObjectByName(nm);if(!a)return;
@@ -35915,7 +35916,8 @@ function _updateMaintenanceCinematic(dt){
     try{
       const mech=makeForestDoctor({includeBlaster:false});
       mech.scale.setScalar(0.85);
-      mech.position.set(-4,0,pod?pod.position.z-2:0);
+      // v7.309: Y=1.5 so doctor stands at pod hover height (not sunken at Y=0)
+      mech.position.set(-4,1.5,pod?pod.position.z-2:0);
       mech.rotation.y=0.5;
       scene.add(mech);S._prMaintMechanic=mech;
     }catch(_){}
