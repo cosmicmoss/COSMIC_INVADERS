@@ -1415,8 +1415,12 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <style>
 @keyframes prPosFlash{0%{transform:scale(1)}20%{transform:scale(1.7);color:#00ff99}50%{transform:scale(1.45);color:#00ffcc}80%{transform:scale(1.6);color:#00ff88}100%{transform:scale(1)}}
 .pr-pos-overtake{animation:prPosFlash 0.65s ease!important;}
+@keyframes prSlipPulse{0%,100%{opacity:1;text-shadow:0 0 16px #00ffcc}50%{opacity:0.7;text-shadow:0 0 32px #00ffff}}
+.pr-slip-active{animation:prSlipPulse 0.6s ease infinite!important;}
 </style>
 <div id="pr-hud" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:90;pointer-events:none;font-family:monospace;">
+  <!-- v7.308: slipstream indicator -->
+  <div id="pr-slip" style="display:none;position:absolute;top:38%;left:50%;transform:translateX(-50%);font-size:21px;font-weight:900;color:#00ffcc;letter-spacing:3px;pointer-events:none;">⚡ SLIPSTREAM</div>
   <!-- v7.295: big position display LEFT, lap/HP centre top -->
   <!-- LEFT: BIG position panel -->
   <div id="pr-pos-wrap" style="position:absolute;top:50%;left:14px;transform:translateY(-50%);text-align:center;background:rgba(0,4,18,0.78);border:1px solid #224466;border-radius:8px;padding:8px 12px;min-width:72px;box-shadow:0 0 16px rgba(30,100,200,0.25);">
@@ -34398,16 +34402,18 @@ function startPodRace(){
   // v7.285: F1-style 2-column grid \u2014 all 8 racers line up simultaneously
   AI_DEFS.forEach((def,i)=>{
     const pod=makePodRacerPod(def.id,def.col,def.variant);
-    // 2-column grid: odd index=left(-5), even index=right(+5)
-    const gridCol=(i%2===0)?-5:5;
-    const gridRow=Math.floor(i/2); // 0-3
-    // v7.296fix3: wider grid spacing (20u/row, start -28) so player at -8 is clearly at the back
-    const startZ=camera.position.z-28-gridRow*20;
+    // v7.308: 4-column grid [-12,-4,+4,+12] — 8 cars fill the track width
+    const GRID_X=[-12,-4,4,12];
+    const gridCol=GRID_X[i%4];
+    const gridRow=Math.floor(i/4); // row 0 = front 4, row 1 = back 4
+    // staggered Z so cars in same column don't start bumper-to-bumper
+    const startZ=camera.position.z-28-gridRow*28-(i%4)*5;
     pod.position.set(gridCol,1.5,startZ);
     pod.visible=false;// v7.294: hidden until GO!
     scene.add(pod);
     S._prAI.push({def,pod,x:gridCol,y:1.5,z:startZ,
-      speed:def.speed,lap:1,raceDist:-20-gridRow*20,targetX:gridCol,
+      speed:def.speed,lap:1,raceDist:-20-gridRow*28-(i%4)*5,targetX:gridCol,
+      homeLane:gridCol,// v7.308: persistent home lane X — keeps cars spread across track
       swerveT:Math.random()*Math.PI*2,eliminated:false,finished:false,hp:3,pos:i+2,_reappearT:0,
       _aiSmokeCD:8+Math.random()*12});// v7.299: staggered initial smoke cooldown
   });
@@ -34857,6 +34863,29 @@ function updatePodRace(dt){
   // v7.300: jump ramp check
   try{_checkJumpRamps();}catch(_){}
   _updatePodRaceAI(dt);
+  // v7.308: slipstream — player drafts directly behind AI gets speed boost + HUD flash
+  {
+    const _slipEl=document.getElementById('pr-slip');
+    let _slipOn=false;
+    const pp=S._prPlayerPod;
+    if(pp&&S._prAI){
+      for(const ai of S._prAI){
+        if(ai.eliminated||!ai.pod||!ai.pod.visible)continue;
+        const dx=Math.abs(pp.position.x-ai.pod.position.x);
+        const dz=ai.pod.position.z-pp.position.z;// positive = AI ahead
+        if(dz>5&&dz<30&&dx<8){
+          _slipOn=true;
+          S._prSpeed=Math.min((S._prMaxSpeed||120)*1.15, S._prSpeed*(1+0.10*dt));
+          break;
+        }
+      }
+    }
+    if(_slipEl){
+      _slipEl.style.display=_slipOn?'block':'none';
+      if(_slipOn)_slipEl.classList.add('pr-slip-active');
+      else _slipEl.classList.remove('pr-slip-active');
+    }
+  }
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
   if(S._prCamMode==='cockpit')try{_updatePodCockpit()}catch(_){}// v7.298: live cockpit instruments
@@ -35378,8 +35407,13 @@ function _updatePodRaceAI(dt){
     const distDiff=S._prDistance-(ai.raceDist||0);
     const rbFactor=distDiff>350?1.16:(distDiff<-250?0.87:1.0);
     const slowF=((ai._slowT||0)>0)?0.45:1;// v7.288: smoke/wrench sabotage slow
-    // v7.297: AI speed uses doubled scroll speed (matches x2 visual scroll)
-    const aiSpd=(S._prSpeed||55)*2*ai.speed*rbFactor*(0.91+Math.random()*0.07)*slowF;
+    // v7.308: per-AI speed rhythm (~8s sine wave) — natural overtaking without bunching
+    if(ai._spdPhase==null){ai._spdPhase=idx*1.31+Math.random()*Math.PI*2;}
+    ai._spdPhase+=dt*(0.11+ai.def.agg*0.07);
+    const spdWave=0.92+Math.sin(ai._spdPhase)*0.09;
+    // v7.308: fight-back boost when player just overtook this AI
+    const fightBoost=((ai._boostT||0)>0)?1.12:1;
+    const aiSpd=(S._prSpeed||55)*2*ai.speed*rbFactor*spdWave*slowF*fightBoost;
     ai.raceDist=(ai.raceDist||0)+aiSpd*dt;
     ai.pod.position.z+=aiSpd*dt;
     // v7.297: AI finish detection — use S._prLapDist (now 4400, 3 laps = 13200)
@@ -35393,7 +35427,12 @@ function _updatePodRaceAI(dt){
     // v7.296fix3: recycle with brief invisibility — prevents ghost pods appearing from nowhere
     // v7.297fix: use TOTAL player distance (not per-lap) so AI can reach finish
     if(ai.pod.position.z>camZ+100){
-      ai.pod.position.z=camZ-200-Math.random()*60;
+      // v7.308: stagger Z by idx so recycled AIs don't form an instant wall
+      ai.pod.position.z=camZ-165-idx*18-Math.random()*15;
+      // v7.308: return to homeLane X so cars stay spread across track
+      const homeX=ai.homeLane||ai.def.gridX*0.43;
+      ai.pod.position.x=homeX+(Math.random()-0.5)*4;
+      ai.x=ai.pod.position.x;
       const playerTotalDist=((S._prLap||1)-1)*(S._prLapDist||4400)+(S._prDistance||0);
       ai.raceDist=Math.min(ai.raceDist, playerTotalDist+1600);
       ai.pod.visible=false;// hide during teleport
@@ -35401,7 +35440,9 @@ function _updatePodRaceAI(dt){
     }
     // v7.284: follow curve + swerving
     ai.swerveT+=dt*(0.45+Math.random()*0.3);
-    let targetX=curveCenter+Math.sin(ai.swerveT*ai.def.agg)*11+(ai.def.gridX*0.15);
+    // v7.308: use homeLane as base (±12 spread) + swerve ±9 around it → cars fill track width
+    const homeLane=curveCenter+(ai.homeLane||ai.def.gridX*0.43);
+    let targetX=homeLane+Math.sin(ai.swerveT*ai.def.agg)*9;
     // Avoid other pods (overtaking) + v7.289: physical bounce when they actually collide
     S._prAI.forEach((other,oi)=>{
       if(oi===idx||other.eliminated)return;
@@ -35467,6 +35508,14 @@ function _updatePodRaceAI(dt){
   S._prLeaderTotal=allDists.length?allDists[0].d:playerTotal;
   S._prSecondTotal=allDists.length>1?allDists[1].d:playerTotal;// for lead-margin display
   S._prRacerCount=allDists.length;
+  // v7.308: fight-back — AI just overtaken by player gets 3s speed boost
+  S._prAI.forEach(ai=>{
+    if(ai.eliminated||ai.finished)return;
+    const nowAhead=(ai.raceDist||0)>playerTotal;
+    if((ai._wasAhead)&&!nowAhead&&!(ai._boostT>0)){ai._boostT=3.0;}
+    ai._wasAhead=nowAhead;
+    if((ai._boostT||0)>0)ai._boostT-=dt;
+  });
 }
 
 function _checkPodRaceCollisions(){
@@ -35495,7 +35544,7 @@ function _checkPodRaceCollisions(){
   const nitroRam=(S._prNitroT||0)>0;
   const myHalf=(pod.userData&&pod.userData.halfW)||3.5;
   S._prAI.forEach(ai=>{
-    if(ai.eliminated||!ai.pod)return;
+    if(ai.eliminated||!ai.pod||!ai.pod.visible)return;// v7.308: skip invisible (recycling) pods
     const dx=px-ai.pod.position.x;
     const dz=pod.position.z-ai.pod.position.z;
     const aiHalf=(ai.pod.userData&&ai.pod.userData.halfW)||3.5;
