@@ -36263,15 +36263,15 @@ function _updateCrashState(dt){
       pilot.position.z+=S._prCrashPilotVZ*dt;
       pilot.position.y+=S._prCrashPilotVY*dt;
       pilot.rotation.x+=5*dt;// spin in air
-      if(pilot.position.y<=0.3||S._prCrashT>=0.42){
-        pilot.position.y=0.3;S._prCrashPilotVY=0;
+      if(pilot.position.y<=0.65||S._prCrashT>=0.42){
+        pilot.position.y=0.65;S._prCrashPilotVY=0;
         S._prCrashPhase='rolling';S._prCrashT=0;
       }
     } else if(S._prCrashT>=0.42){S._prCrashPhase='rolling';S._prCrashT=0;}
   } else if(S._prCrashPhase==='rolling'){
     // 受け身・ごろごろ前転 + 腕バタバタ・頭ガクガク（痛そう）
     if(pilot){
-      pilot.position.y=0.3;
+      pilot.position.y=0.65;
       S._prCrashPilotVZ*=Math.pow(0.04,dt);
       pilot.position.z+=S._prCrashPilotVZ*dt;
       pilot.rotation.x+=9*dt;// 前転
@@ -36320,31 +36320,35 @@ function _updateCrashState(dt){
         pilot.position.z+=(dz/dist)*spd*dt;
         // よろめきながら歩く
         const wt=S._prCrashT;
-        pilot.position.y=0.32+Math.abs(Math.sin(wt*6))*0.18;
+        // v7.311: raised floor clearance — keep pilot visibly above track surface
+        pilot.position.y=0.65+Math.abs(Math.sin(wt*4.5))*0.22;
         pilot.rotation.y=Math.atan2(dx,dz);
         // 体全体のよろめき（左右揺れ）
-        pilot.rotation.z=Math.sin(wt*3.5)*0.11+Math.sin(wt*4.8)*0.08;
-        // v7.299c: 痛そうなボーンアニメ（毎フレーム）
+        pilot.rotation.z=Math.sin(wt*3.5)*0.09+Math.sin(wt*4.8)*0.06;
+        // v7.311: 走行ボーンアニメ — 腕X軸スイング(前後)＋足と逆位相で連動
         try{
           const body=pilot.getObjectByName('body');
           const head=pilot.getObjectByName('head');
           const lA=pilot.getObjectByName('lArm'),rA=pilot.getObjectByName('rArm');
+          const lF=pilot.getObjectByName('lArmFore'),rF=pilot.getObjectByName('rArmFore');
           const lL=pilot.getObjectByName('lLeg'),rL=pilot.getObjectByName('rLeg');
           const lLL=pilot.getObjectByName('lLegLower'),rLL=pilot.getObjectByName('rLegLower');
-          // 腰を前かがみ（痛くて伸ばせない）
-          if(body)body.rotation.x=0.50+Math.sin(wt*4.5)*0.07;
-          // 頭：うなだれつつ時々上を向いて痛みをこらえる
-          if(head)head.rotation.x=-0.18+Math.sin(wt*5.5)*0.28;
-          // 左腕：腹部をかばい続ける（ほぼ固定）
-          if(lA){lA.rotation.z=0.82;lA.rotation.x=0.38+Math.sin(wt*2)*0.08;}
-          // 右腕：バランス用にふらふら振る
-          if(rA)rA.rotation.z=-0.25+Math.sin(wt*4.5)*0.42;
-          // 足：右足が負傷——ほとんど引きずる（小さなストローク）
-          if(rL)rL.rotation.x=Math.sin(wt*5)*0.14;// 負傷側：小さい
-          if(rLL)rLL.rotation.x=Math.abs(Math.sin(wt*5))*0.2;
-          // 左足：健側が大きく補う
-          if(lL)lL.rotation.x=Math.sin(wt*5+Math.PI)*0.55;
-          if(lLL)lLL.rotation.x=Math.abs(Math.sin(wt*5+Math.PI))*0.5;
+          // 腰を前かがみ＋走行バウンス
+          if(body)body.rotation.x=0.48+Math.sin(wt*4.5)*0.06;
+          // 頭：ポッド方向を向きつつ上下バウンス
+          if(head)head.rotation.x=-0.20+Math.sin(wt*4.5)*0.18;
+          // 左腕：負傷してお腹をかばう固定ポーズ
+          if(lA){lA.rotation.x=0.32;lA.rotation.z=0.75;lA.rotation.y=0;}
+          if(lF){lF.rotation.x=0.55;}
+          // 右腕：X軸前後スイング（右足と逆位相＝走行の自然な腕振り）
+          if(rA){rA.rotation.x=Math.sin(wt*4.5+Math.PI)*0.52;rA.rotation.z=-0.12;rA.rotation.y=0;}
+          if(rF){rF.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI+0.6))*0.45+0.18;}
+          // 右足（負傷側）：小さいストローク
+          if(rL)rL.rotation.x=Math.sin(wt*4.5)*0.18;
+          if(rLL)rLL.rotation.x=Math.max(0,Math.sin(wt*4.5+0.6))*0.16;
+          // 左足（健側）：右足と逆位相で大きく補う
+          if(lL)lL.rotation.x=Math.sin(wt*4.5+Math.PI)*0.58;
+          if(lLL)lLL.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI+0.6))*0.54;
         }catch(_){}
       } else {
         S._prCrashPhase='reboarding';S._prCrashT=0;
