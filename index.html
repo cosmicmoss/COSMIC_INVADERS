@@ -1548,10 +1548,17 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div class="pr-sl" id="pr-sl-3" style="width:32px;height:32px;border-radius:50%;border:2px solid #550000;background:#1a0000;transition:background .1s,box-shadow .1s"></div>
   <div class="pr-sl" id="pr-sl-4" style="width:32px;height:32px;border-radius:50%;border:2px solid #550000;background:#1a0000;transition:background .1s,box-shadow .1s"></div>
 </div>
-<!-- v7.284: Pod race racer intro name card -->
-<div id="pr-intro-card" style="display:none;position:fixed;top:28%;left:50%;transform:translateX(-50%);z-index:96;pointer-events:none;text-align:center;font-family:monospace;">
-  <div id="pr-intro-name" style="font-size:28px;font-weight:bold;letter-spacing:4px;text-shadow:0 0 20px currentColor;"></div>
-  <div id="pr-intro-title" style="font-size:13px;letter-spacing:4px;opacity:0.7;margin-top:4px;"></div>
+<!-- v7.313: Pod race racer intro card — rich pilot presentation -->
+<div id="pr-intro-card" style="display:none;position:fixed;top:22%;left:50%;transform:translateX(-50%);z-index:96;pointer-events:none;text-align:center;font-family:monospace;min-width:320px;">
+  <div id="pr-intro-num" style="font-size:11px;letter-spacing:5px;opacity:0.6;margin-bottom:6px;color:#aaccff;">RACER #1</div>
+  <div id="pr-intro-bar" style="height:3px;width:200px;margin:0 auto 10px;border-radius:2px;background:#444;"></div>
+  <div id="pr-intro-name" style="font-size:32px;font-weight:bold;letter-spacing:5px;text-shadow:0 0 24px currentColor,0 0 8px currentColor;"></div>
+  <div id="pr-intro-title" style="font-size:12px;letter-spacing:5px;opacity:0.75;margin-top:5px;color:#aaddff;"></div>
+  <div id="pr-intro-bio" style="font-size:11px;letter-spacing:2px;opacity:0.55;margin-top:8px;color:#ccddee;max-width:280px;margin-left:auto;margin-right:auto;line-height:1.5;"></div>
+  <div id="pr-intro-stats" style="margin-top:10px;font-size:10px;letter-spacing:2px;opacity:0.7;color:#88bbdd;">
+    <span id="pr-intro-spd-label">SPD </span><span id="pr-intro-spd-bar" style="color:#ffdd44;"></span>
+    <span style="margin-left:12px;" id="pr-intro-agg-label">AGG </span><span id="pr-intro-agg-bar" style="color:#ff8844;"></span>
+  </div>
 </div>
 
 <!-- v7.272: SF-style colosseum character intro namecard -->
@@ -34104,8 +34111,8 @@ function _podRaceReturnToTitle(){
   clearTimeout(S._prEventLabelTimer);
   try{const el=document.getElementById('pr-event-label');if(el)el.style.opacity='0';}catch(_){}
   try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
-  // v7.312
-  S._prCheerT=35;S._prLastPos=9;S._prTrackLog=[];
+  // v7.312/313
+  S._prCheerT=35;S._prLastPos=9;S._prTrackLog=[];S._prMaintDone=false;
   S._prRaceStarted=false;S._prCamMode='chase';
   S._prChallengeMode=false;
   S._prChampionship=null;// v7.296: never let a championship leak into the next standalone race
@@ -34413,14 +34420,22 @@ function startPodRace(){
   }catch(_){}
   // v7.284: 8 racers \u2014 all colosseum monsters. v7.289: JABBA slot \u2192 SLAG REBORN (slag-only war-pod).
   const AI_DEFS=[
-    {id:'tengu',    name:'TENGU',    title:'WIND SPIRIT',  col:0x44aaff, speed:1.18, agg:0.90, gridX:-28, variant:'pod'},
-    {id:'mantis',   name:'MANTIS',  title:'BLADE WING',   col:0x44ff44, speed:1.10, agg:0.80, gridX:-20, variant:'pod'},
-    {id:'centipede',name:'CENTIPEDE',title:'ARMORED LORD', col:0xff8800, speed:1.05, agg:0.65, gridX:-12, variant:'pod'},
-    {id:'eel',      name:'EEL',     title:'THUNDER EEL',  col:0x00ffcc, speed:0.98, agg:0.55, gridX:-4, variant:'pod'},
-    {id:'predator', name:'PREDATOR',title:'THE HUNTER',   col:0xffaa00, speed:1.02, agg:0.85, gridX:4, variant:'pod'},
-    {id:'slag',     name:'SLAG REBORN',title:'THE TYRANT',col:0xcc3300, speed:1.12, agg:0.95, gridX:12, variant:'slag'},
-    {id:'queen',    name:'QUEEN',   title:'HER MAJESTY',  col:0xff44aa, speed:0.95, agg:0.75, gridX:20, variant:'pod'},
-    {id:'kaiju',    name:'GORGON',  title:'KAIJU GOD',    col:0xdd2244, speed:0.92, agg:1.00, gridX:28, variant:'pod'},
+    {id:'tengu',    name:'TENGU',    title:'WIND SPIRIT',  col:0x44aaff, speed:1.18, agg:0.90, gridX:-28, variant:'pod',
+     bio:'Fastest machine on the circuit. Wind-propulsion specialist. Has never finished below 2nd.'},
+    {id:'mantis',   name:'MANTIS',  title:'BLADE WING',   col:0x44ff44, speed:1.10, agg:0.80, gridX:-20, variant:'pod',
+     bio:'Surgical precision through every corner. Slices through the pack without mercy.'},
+    {id:'centipede',name:'CENTIPEDE',title:'ARMORED LORD', col:0xff8800, speed:1.05, agg:0.65, gridX:-12, variant:'pod',
+     bio:'Armored hull takes hits that would destroy rivals. Endurance is the weapon.'},
+    {id:'eel',      name:'EEL',     title:'THUNDER EEL',  col:0x00ffcc, speed:0.98, agg:0.55, gridX:-4, variant:'pod',
+     bio:'Electric discharge scrambles nearby pods. Keep your distance or pay the price.'},
+    {id:'predator', name:'PREDATOR',title:'THE HUNTER',   col:0xffaa00, speed:1.02, agg:0.85, gridX:4, variant:'pod',
+     bio:'Locks onto a target and hunts it down lap after lap. No prey escapes.'},
+    {id:'slag',     name:'SLAG REBORN',title:'THE TYRANT',col:0xcc3300, speed:1.12, agg:0.95, gridX:12, variant:'slag',
+     bio:'Disqualified 14 times. Still racing. Rules are for lesser beings.'},
+    {id:'queen',    name:'QUEEN',   title:'HER MAJESTY',  col:0xff44aa, speed:0.95, agg:0.75, gridX:20, variant:'pod',
+     bio:'Demands absolute victory. Elegant on the outside, ruthless within.'},
+    {id:'kaiju',    name:'GORGON',  title:'KAIJU GOD',    col:0xdd2244, speed:0.92, agg:1.00, gridX:28, variant:'pod',
+     bio:'Ancient destroyer. Aggression at 100%. Has never been passed without retaliation.'},
   ];
   // v7.285: F1-style 2-column grid \u2014 all 8 racers line up simultaneously
   AI_DEFS.forEach((def,i)=>{
@@ -34440,8 +34455,9 @@ function startPodRace(){
       swerveT:Math.random()*Math.PI*2,eliminated:false,finished:false,hp:3,pos:i+2,_reappearT:0,
       _aiSmokeCD:8+Math.random()*12});// v7.299: staggered initial smoke cooldown
   });
-  // v7.285: No intro parade \u2014 go straight to F1 start lights
-  S._prIntroActive=false;
+  // v7.313: intro enabled \u2014 runs in parallel with maintenance cinematic
+  S._prIntroActive=false;// will be set true by _startPodRaceIntro
+  S._prMaintDone=false;// coordination flag: F1 lights fire when BOTH done
   // Spawn initial track segments
   for(let i=0;i<25;i++) _spawnPodRaceSegment(camera.position.z-20-i*120, 0);
   // v7.307: build stadium grandstands + SLAG VIP box
@@ -36069,11 +36085,13 @@ function _updateMaintenanceCinematic(dt){
     S._prMaintFlags['cam_back']=true;
     try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
   }
-  // 10.0s: cinematic ends → F1 lights
+  // 10.0s: cinematic ends → start pilot intro (intro calls F1 lights when done)
   if(t>=10.0&&!S._prMaintFlags['done']){
     S._prMaintFlags['done']=true;
     S._prMaintActive=false;
-    setTimeout(()=>{try{_startF1Lights();}catch(_){}},1800);
+    S._prMaintDone=true;
+    // v7.313: start pilot intro; if intro already finished, go straight to F1 lights
+    if(!S._prIntroActive){try{_startPodRaceIntro();}catch(_){}}
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36647,45 +36665,100 @@ function _updatePodRaceMinimap(){
 function _startPodRaceIntro(){
   S._prIntroActive=true;
   S._prIntroIdx=0;
-  const card=document.getElementById('pr-intro-card');
-  const nameEl=document.getElementById('pr-intro-name');
-  const titleEl=document.getElementById('pr-intro-title');
-  if(card){card.style.display='block';card.style.opacity='0';}
-  try{playComm('hq','Grid inspection! 8 racers ready for the Boonta Eve Classic!!')}catch(_){}
-  _showNextPodRacer(0);
+  try{wfCineSubtitle('★ MEET THE RACERS ★','#ffdd00');}catch(_){}
+  try{playComm('hq','8 pilots on the grid!! Let\'s meet the competition!!')}catch(_){}
+  // Short delay then show racer cards
+  setTimeout(()=>{if(S._prIntroActive)_showNextPodRacer(0);},800);
 }
 function _showNextPodRacer(idx){
   if(!S._prIntroActive)return;
+  // After all 8 AIs, show player card then end
+  if(idx>=S._prAI.length){_showPlayerIntroCard();return;}
   const ai=S._prAI[idx];
   if(!ai){_endPodRaceIntro();return;}
-  const card=document.getElementById('pr-intro-card');
-  const nameEl=document.getElementById('pr-intro-name');
-  const titleEl=document.getElementById('pr-intro-title');
-  if(nameEl){nameEl.textContent=ai.def.name;nameEl.style.color=ai.def.colCss||('#'+ai.def.col.toString(16).padStart(6,'0'));}
-  if(titleEl){titleEl.textContent=ai.def.title||'';}
-  if(card){card.style.transition='opacity 0.3s';card.style.opacity='1';}
-  // Move pod to intro position — sweeps past camera
-  ai.pod.position.set(40,1.5,camera.position.z+5);
+  const colHex='#'+ai.def.col.toString(16).padStart(6,'0');
+  // Update card elements
+  try{
+    const card=document.getElementById('pr-intro-card');
+    const numEl=document.getElementById('pr-intro-num');
+    const barEl=document.getElementById('pr-intro-bar');
+    const nameEl=document.getElementById('pr-intro-name');
+    const titleEl=document.getElementById('pr-intro-title');
+    const bioEl=document.getElementById('pr-intro-bio');
+    const spdBar=document.getElementById('pr-intro-spd-bar');
+    const aggBar=document.getElementById('pr-intro-agg-bar');
+    if(numEl)numEl.textContent='RACER #'+(idx+1)+' / 8';
+    if(barEl){barEl.style.background=colHex;barEl.style.boxShadow='0 0 12px '+colHex;}
+    if(nameEl){nameEl.textContent=ai.def.name;nameEl.style.color=colHex;}
+    if(titleEl)titleEl.textContent=ai.def.title||'';
+    if(bioEl)bioEl.textContent=ai.def.bio||'';
+    // Speed/aggression bars (filled squares, 10 max)
+    const spdFill=Math.round(ai.def.speed*8.5);
+    const aggFill=Math.round(ai.def.agg*10);
+    if(spdBar)spdBar.textContent='█'.repeat(Math.min(10,spdFill))+'░'.repeat(Math.max(0,10-spdFill));
+    if(aggBar)aggBar.textContent='█'.repeat(Math.min(10,aggFill))+'░'.repeat(Math.max(0,10-aggFill));
+    if(card){card.style.display='block';card.style.transition='opacity 0.25s';card.style.opacity='0';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{try{card.style.opacity='1';}catch(_){}}));
+    }
+  }catch(_){}
+  // Pod sweeps past camera from right to left
+  ai.pod.visible=true;
+  ai.pod.position.set(50,1.5,camera.position.z+4);
+  ai.pod.rotation.y=-Math.PI*0.4;// angle toward camera
   const sweepInterval=setInterval(()=>{
     if(!S._prIntroActive){clearInterval(sweepInterval);return;}
-    ai.pod.position.x-=1.8;
+    ai.pod.position.x-=1.6;
+    ai.pod.rotation.y+=(0-(ai.pod.rotation.y))*0.04;
   },16);
-  // Engine rev SFX per racer
-  try{sfx._prRacerRev&&sfx._prRacerRev(ai.def.col)}catch(_){}
+  try{sfx._prRacerRev&&sfx._prRacerRev(ai.def.col);}catch(_){}
   setTimeout(()=>{
     clearInterval(sweepInterval);
-    // Return pod to grid slot
+    ai.pod.visible=false;// hide until GO!
     ai.pod.position.set(ai.def.gridX,1.5,camera.position.z-30-idx*5);
-    if(card)card.style.opacity='0';
-    setTimeout(()=>_showNextPodRacer(idx+1),280);
-  },1400);
+    ai.pod.rotation.y=0;
+    try{const card=document.getElementById('pr-intro-card');if(card)card.style.opacity='0';}catch(_){}
+    setTimeout(()=>_showNextPodRacer(idx+1),220);
+  },1350);
+}
+function _showPlayerIntroCard(){
+  if(!S._prIntroActive)return;
+  const callsign=S.callsign||'PILOT';
+  try{
+    const card=document.getElementById('pr-intro-card');
+    const numEl=document.getElementById('pr-intro-num');
+    const barEl=document.getElementById('pr-intro-bar');
+    const nameEl=document.getElementById('pr-intro-name');
+    const titleEl=document.getElementById('pr-intro-title');
+    const bioEl=document.getElementById('pr-intro-bio');
+    const spdBar=document.getElementById('pr-intro-spd-bar');
+    const aggBar=document.getElementById('pr-intro-agg-bar');
+    if(numEl)numEl.textContent='RACER #9 — YOU';
+    if(barEl){barEl.style.background='#ffdd00';barEl.style.boxShadow='0 0 18px #ffdd00';}
+    if(nameEl){nameEl.textContent=callsign;nameEl.style.color='#ffdd00';}
+    if(titleEl)titleEl.textContent='THE CHALLENGER';
+    if(bioEl)bioEl.textContent='Unknown pilot. Unexpected threat. The galaxy is watching.';
+    if(spdBar)spdBar.textContent='?????????░';
+    if(aggBar)aggBar.textContent='??????????';
+    if(card){card.style.opacity='0';card.style.display='block';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{try{card.style.opacity='1';}catch(_){}}));
+    }
+  }catch(_){}
+  try{sfx._prGoBeep&&sfx._prGoBeep();}catch(_){}
+  setTimeout(()=>{
+    try{const card=document.getElementById('pr-intro-card');if(card)card.style.opacity='0';}catch(_){}
+    setTimeout(()=>_endPodRaceIntro(),300);
+  },1600);
 }
 function _endPodRaceIntro(){
   S._prIntroActive=false;
   const card=document.getElementById('pr-intro-card');
-  if(card)card.style.display='none';
-  try{playComm('hq','All racers on the grid!! F1 sequence — STAND BY!!')}catch(_){}
-  setTimeout(()=>_startF1Lights(),600);
+  if(card){card.style.opacity='0';setTimeout(()=>{try{card.style.display='none';}catch(_){}},350);}
+  // v7.313: fire F1 lights only when maintenance is also done
+  if(S._prMaintDone){
+    try{playComm('hq','All racers on the grid!! F1 sequence — STAND BY!!')}catch(_){}
+    setTimeout(()=>{try{_startF1Lights();}catch(_){}},600);
+  }
+  // else: maintenance will trigger F1 lights when it finishes
 }
 function _updatePodRaceIntroAnim(dt){
   // During intro: gently rotate pods on grid
