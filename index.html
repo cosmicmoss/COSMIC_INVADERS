@@ -1486,6 +1486,10 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 </div>
 <!-- v7.299: smoke fog overlay — fades in when player enters an AI smoke cloud -->
 <div id="pr-smoke-fog" style="display:none;position:fixed;inset:0;z-index:89;pointer-events:none;background:rgba(100,105,100,0.0);transition:background 0.35s,backdrop-filter 0.35s;"></div>
+<!-- v7.310: course event label — S-CURVE! / HAIRPIN! / HILL! / TUNNEL! -->
+<div id="pr-event-label" style="display:block;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:195;pointer-events:none;font-family:monospace;font-size:52px;font-weight:900;letter-spacing:6px;text-shadow:0 0 30px currentColor,0 0 8px currentColor;opacity:0;transition:opacity 0.3s ease;"></div>
+<!-- v7.310: tunnel darkness overlay -->
+<div id="pr-tunnel-fog" style="display:block;position:fixed;inset:0;z-index:86;pointer-events:none;background:rgba(0,0,6,0.45);opacity:0;transition:opacity 1.2s ease;"></div>
 <!-- v7.302: speed streak overlay — conic radial lines appear at 90km/h+ -->
 <div id="pr-speed-streak" style="display:none;position:fixed;inset:0;z-index:87;pointer-events:none;background:repeating-conic-gradient(from 0deg at 50% 44%,rgba(255,245,210,0.07) 0deg 4deg,transparent 4deg 15deg);opacity:0;transition:opacity 0.35s;"></div>
 <!-- v7.302: horizon vanishing cursor — screen-projected dot showing where the road leads -->
@@ -34098,6 +34102,13 @@ function _podRaceReturnToTitle(){
   // v7.300: maint + weather cleanup
   if(S._prMaintMechanic){try{scene.remove(S._prMaintMechanic);}catch(_){}S._prMaintMechanic=null;}
   S._prMaintActive=false;S._prMaintT=0;S._prMaintFlags={};S._prWeatherT=0;S._prFogColor='smoke';
+  // v7.310: course event cleanup
+  S._prEventActive=false;S._prEventType=null;S._prEventT=0;S._prEventDur=0;
+  S._prEventPhase=0;S._prEventNextT=10;S._prEventParams=null;
+  S._prTunnelActive=false;S._prTunnelFogSaved=null;
+  clearTimeout(S._prEventLabelTimer);
+  try{const el=document.getElementById('pr-event-label');if(el)el.style.opacity='0';}catch(_){}
+  try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
   S._prRaceStarted=false;S._prCamMode='chase';
   S._prChallengeMode=false;
   S._prChampionship=null;// v7.296: never let a championship leak into the next standalone race
@@ -34284,6 +34295,13 @@ const PR_COURSES=[
    bg:0x05050f, fogCol:0x080814, fogD:0.0095, groundCol:0x1c1c2c,
    wallFill:0x0e1430, wallEdge:0x33ddff, capCol:0xff44cc, stripeCol:0x66ffee, rockCol:0x303048},
 ];
+// v7.310: course diversity events — triggered every 15-25s after race start+10s
+const PR_EVENTS=[
+  {type:'scurve', label:'S-CURVE!',  color:'#ffee44', weight:3, duration:9,  params:{phases:[22,-22,0],phaseDur:3}},
+  {type:'hairpin',label:'HAIRPIN!',  color:'#ff6644', weight:2, duration:6,  params:{durMin:5,durMax:7,strength:26}},
+  {type:'updown', label:'HILL!',     color:'#66ff88', weight:3, duration:8,  params:{peakVertical:0.5,riseDur:4,fallDur:4}},
+  {type:'tunnel', label:'TUNNEL!',   color:'#88ccff', weight:2, duration:7,  params:{fogDark:0.022,ceilY:14,ceilH:2}},
+];
 // F1-lite points awarded by finishing position (index 0 = 1st), for 9 racers
 const PR_POINTS=[25,18,15,12,10,8,6,4,2];
 // current course theme — championship picks by courseIdx, otherwise default to lava (Boonta)
@@ -34358,6 +34376,10 @@ function startPodRace(){
   S._prWinLapActive=false;// victory lap state
   // v7.284: curve system
   S._prCurveX=0;S._prCurveV=0;S._prCurveT=4;
+  // v7.310: course diversity events
+  S._prEventActive=false;S._prEventType=null;S._prEventT=0;S._prEventDur=0;
+  S._prEventPhase=0;S._prEventNextT=10;S._prEventParams=null;
+  S._prTunnelActive=false;S._prTunnelFogSaved=null;
   // v7.284: intro state
   S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
@@ -34662,10 +34684,13 @@ function updatePodRace(dt){
   S._prTime+=dt;
   S._prHitCooldown=Math.max(0,S._prHitCooldown-dt);
   // v7.284: curve system — track drifts left/right like Mario Kart
-  S._prCurveT-=dt;
-  if(S._prCurveT<=0){
-    S._prCurveV=(Math.random()-0.5)*56; // -28 to +28 units/s
-    S._prCurveT=3+Math.random()*5;
+  // v7.310: scurve/hairpin events override _prCurveV; updown/tunnel let normal curve run
+  if(!S._prEventActive||S._prEventType==='updown'||S._prEventType==='tunnel'){
+    S._prCurveT-=dt;
+    if(S._prCurveT<=0){
+      S._prCurveV=(Math.random()-0.5)*56; // -28 to +28 units/s
+      S._prCurveT=3+Math.random()*5;
+    }
   }
   S._prCurveX+=S._prCurveV*dt;
   if(S._prCurveX>42){S._prCurveX=42;S._prCurveV=-Math.abs(S._prCurveV);}
@@ -34792,14 +34817,15 @@ function updatePodRace(dt){
   // v7.303: ground X tracks curveX — whole floor shifts with the curve for coherence
   try{if(S._prGround){S._prGround.position.x+=(S._prCurveX-S._prGround.position.x)*Math.min(1,2.5*dt);}}catch(_){}
   // v7.303: dynamic fog density — denser at high speed and on sharp curves (horizon haziness)
-  try{
+  // v7.310: skip during tunnel event (tunnel holds fog at fixed dark density)
+  if(!S._prTunnelActive){try{
     if(scene.fog&&scene.fog.density!==undefined){
       const _fc=_currentPRCourse();
       const _sfog=Math.max(0,(S._prSpeed-75)/180)*0.008;
       const _cfog=Math.abs(S._prCurveV||0)/28*0.004;
       scene.fog.density=_fc.fogD+_sfog+_cfog;
     }
-  }catch(_){}
+  }catch(_){}}
   // v7.303: high-speed engine exhaust particles (both engines at speed>90)
   try{
     const _et=S._prEngineT;
@@ -34860,7 +34886,12 @@ function updatePodRace(dt){
   try{_updatePodRaceItems(dt)}catch(_){}// v7.288: nitro/smoke/wrench cooldowns + projectiles
   // v7.300: weather timer
   S._prWeatherT=(S._prWeatherT||30)-dt;
-  if(S._prWeatherT<=0){S._prWeatherT=20+Math.random()*25;try{_triggerSandStorm();}catch(_){}}
+  if(S._prWeatherT<=0){S._prWeatherT=20+Math.random()*25;try{_triggerSandStorm();}catch(_){}};
+  // v7.310: course diversity event timer (starts 10s after race begins)
+  if(S._prTime>10){
+    if(!S._prEventActive){S._prEventNextT=(S._prEventNextT||10)-dt;if(S._prEventNextT<=0)try{_triggerCourseEvent();}catch(_){}}
+    else try{_updateCourseEvent(dt);}catch(_){}
+  }
   // v7.300: jump ramp check
   try{_checkJumpRamps();}catch(_){}
   _updatePodRaceAI(dt);
@@ -35376,6 +35407,26 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
     const bankAngle=Math.atan2(curveV,60)*0.55;
     S._prWalls.slice(-6).forEach(w=>{if(w.rotation)w.rotation.z=bankAngle*(w.position.x<curveX?-1:1)*0.4;});
   }
+  // v7.310: tunnel ceiling — only when tunnel event is active
+  if(S._prTunnelActive){
+    const ceilY=14,ceilH=2,ceilW=w+20;
+    const _tcrs=_currentPRCourse();
+    const cG=new THREE.BoxGeometry(ceilW,ceilH,segLen);
+    const cFill=new THREE.Mesh(cG,new THREE.MeshBasicMaterial({color:_tcrs.wallFill}));
+    cFill.position.set(curveX,ceilY,startZ-segLen/2);cFill.rotation.y=cAngle;
+    scene.add(cFill);S._prProps.push(cFill);
+    const cEdge=new THREE.LineSegments(new THREE.EdgesGeometry(cG),new THREE.LineBasicMaterial({color:_tcrs.wallEdge}));
+    cEdge.position.set(curveX,ceilY,startZ-segLen/2);cEdge.rotation.y=cAngle;
+    scene.add(cEdge);S._prProps.push(cEdge);
+    // inner glow ribs (3 per segment)
+    for(let ri=0;ri<3;ri++){
+      const ribZ=startZ-20-ri*35;
+      const rG2=new THREE.BoxGeometry(ceilW,0.4,1.2);
+      const rib=new THREE.Mesh(rG2,new THREE.MeshBasicMaterial({color:_tcrs.capCol}));
+      rib.position.set(curveX,ceilY-ceilH/2-0.2,ribZ);
+      scene.add(rib);S._prProps.push(rib);
+    }
+  }
 }
 
 function _updatePodRaceAI(dt){
@@ -35624,6 +35675,11 @@ function _finishPodRace(){
   S._prCrashPhase=null;S._prCrashT=0;S._prAISmokeZones=[];S._prSmokeFogT=0;
   if(S._prMaintMechanic){try{scene.remove(S._prMaintMechanic);}catch(_){}S._prMaintMechanic=null;}
   S._prMaintActive=false;S._prMaintT=0;S._prMaintFlags={};S._prWeatherT=0;S._prFogColor='smoke';
+  // v7.310: course event cleanup
+  S._prEventActive=false;S._prEventType=null;S._prTunnelActive=false;S._prTunnelFogSaved=null;
+  clearTimeout(S._prEventLabelTimer);
+  try{const el=document.getElementById('pr-event-label');if(el)el.style.opacity='0';}catch(_){}
+  try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
 }
 function _onAIFinish(ai){
   if(!S._prPostRace)return;
@@ -36054,6 +36110,74 @@ function _triggerSandStorm(){
   if(pod){for(let i=0;i<10;i++){
     try{spawnP(new THREE.Vector3(pod.position.x+(Math.random()-0.5)*60,Math.random()*6,pod.position.z-(Math.random()*100)),0xcc8844,3,0.6,2.0,1.5);}catch(_){}
   }}
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// v7.310: COURSE DIVERSITY EVENTS — S字/ヘアピン/アップダウン/トンネル
+// ─────────────────────────────────────────────────────────────────────────────
+function _triggerCourseEvent(){
+  // weighted random pick
+  let total=0;for(const e of PR_EVENTS)total+=e.weight;
+  let r=Math.random()*total,picked=PR_EVENTS[PR_EVENTS.length-1];
+  for(const e of PR_EVENTS){r-=e.weight;if(r<=0){picked=e;break;}}
+  S._prEventActive=true;S._prEventType=picked.type;
+  S._prEventT=0;S._prEventPhase=0;
+  S._prEventParams=Object.assign({},picked.params);
+  if(picked.type==='hairpin'){
+    S._prEventDur=picked.params.durMin+Math.random()*(picked.params.durMax-picked.params.durMin);
+    S._prEventParams.dir=Math.random()<0.5?1:-1;
+  }else{S._prEventDur=picked.duration;}
+  if(picked.type==='tunnel'){
+    S._prTunnelActive=true;
+    if(scene.fog){S._prTunnelFogSaved={density:scene.fog.density,color:scene.fog.color.clone()};scene.fog.density=picked.params.fogDark;scene.fog.color.set(0x050508);}
+    try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='1';}catch(_){}
+  }
+  // announce
+  try{wfCineSubtitle(picked.label,picked.color);}catch(_){}
+  try{
+    const el=document.getElementById('pr-event-label');
+    if(el){el.textContent=picked.label;el.style.color=picked.color;el.style.opacity='1';
+      clearTimeout(S._prEventLabelTimer);
+      S._prEventLabelTimer=setTimeout(()=>{try{el.style.opacity='0';}catch(_){}},2200);
+    }
+  }catch(_){}
+}
+function _updateCourseEvent(dt){
+  if(!S._prEventActive)return;
+  S._prEventT+=dt;
+  if(S._prEventT>=S._prEventDur){_endCourseEvent();return;}
+  const p=S._prEventParams;
+  if(S._prEventType==='scurve'){
+    const newPhase=Math.min(p.phases.length-1,Math.floor(S._prEventT/p.phaseDur));
+    S._prEventPhase=newPhase;
+    const targetV=p.phases[S._prEventPhase];
+    S._prCurveV+=(targetV-S._prCurveV)*Math.min(1,2.5*dt);
+    S._prCurveT=9999;
+  }else if(S._prEventType==='hairpin'){
+    const targetV=p.strength*p.dir;
+    const remaining=S._prEventDur-S._prEventT;
+    if(remaining<1.2){S._prCurveV+=(0-S._prCurveV)*Math.min(1,2.0*dt);}
+    else{S._prCurveV+=(targetV-S._prCurveV)*Math.min(1,3.0*dt);}
+    S._prCurveT=9999;
+  }else if(S._prEventType==='updown'){
+    const t=S._prEventT,peak=p.peakVertical;
+    let tgt=t<p.riseDur?peak*(t/p.riseDur):peak*(1-(t-p.riseDur)/p.fallDur);
+    tgt=Math.max(0,Math.min(peak,tgt));
+    S._prVertical=(S._prVertical||0)+(tgt-(S._prVertical||0))*Math.min(1,3*dt);
+  }else if(S._prEventType==='tunnel'){
+    if(scene.fog)scene.fog.density=p.fogDark;
+  }
+}
+function _endCourseEvent(){
+  const type=S._prEventType;
+  if(type==='scurve'||type==='hairpin'){S._prCurveT=3+Math.random()*5;}
+  if(type==='tunnel'){
+    S._prTunnelActive=false;
+    if(scene.fog&&S._prTunnelFogSaved){scene.fog.density=S._prTunnelFogSaved.density;scene.fog.color.copy(S._prTunnelFogSaved.color);}
+    S._prTunnelFogSaved=null;
+    try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
+  }
+  S._prEventActive=false;S._prEventType=null;S._prEventParams=null;
+  S._prEventNextT=15+Math.random()*10;
 }
 // v7.299: smoke fog overlay update — called every frame (in race + during crash)
 function _updateSmokeFog(){
