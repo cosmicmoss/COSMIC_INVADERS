@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.328</title>
+<title>COSMIC INVADERS v7.329</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34474,6 +34474,7 @@ function _podRaceReturnToTitle(){
   try{const eg=document.getElementById('pr-edge-glow');if(eg){eg.style.opacity='0';eg.style.display='none';}}catch(_){}
   try{const ji=document.getElementById('pr-jump-ind');if(ji)ji.style.display='none';}catch(_){}
   S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
+  S._prStadiumCrowd=[];S._prCrowdT=0;S._prCrowdExcite=0;// v7.329
   // v7.312/313
   S._prCheerT=35;S._prLastPos=9;S._prTrackLog=[];S._prMaintDone=false;
   S._prRaceStarted=false;S._prCamMode='chase';
@@ -34757,6 +34758,8 @@ function startPodRace(){
   S._prJumpY=0;S._prJumpVel=0;S._prJumping=false;S._prJumpTrig=false;
   // v7.326: jump gates + trail
   S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
+  // v7.329: stadium crowd animation state
+  S._prCrowdT=0;S._prCrowdExcite=0;S._prStadiumCrowd=[];
   // v7.284: intro state
   S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
@@ -35585,12 +35588,14 @@ function updatePodRace(dt){
       try{wfCineSubtitle('LAP '+S._prLap+' / 3','#ffff00')}catch(_){}
       announce('LAP '+S._prLap);
       S._prMaxSpeed+=18;
+      S._prCrowdExcite=Math.min(3.0,(S._prCrowdExcite||0)+1.8);// v7.329: lap = crowd surge
       try{screenFlash(0.4)}catch(_){}
       S.shakeT=0.4;S.shakeI=1.2;
       try{sfx._prLapFanfare&&sfx._prLapFanfare()}catch(_){}
       try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2.5)}catch(_){}// v7.297: lap cheer
       // v7.326: FINAL LAP — dramatic entrance
       if(S._prLap===3){
+        S._prCrowdExcite=3.5;// v7.329: FULL STADIUM FRENZY on final lap
         try{screenFlash(0.95)}catch(_){}
         S.shakeT=1.2;S.shakeI=4.0;
         try{wfCineSubtitle('🏁 FINAL LAP — GIVE IT EVERYTHING!!','#ff4400');}catch(_){}
@@ -35606,8 +35611,10 @@ function updatePodRace(dt){
   try{_updatePodRaceItems(dt)}catch(_){}// v7.288: nitro/smoke/wrench cooldowns + projectiles
   // v7.312: crowd cheers — periodic + overtake detection
   S._prCheerT=(S._prCheerT||35)-dt;
-  if(S._prCheerT<=0){S._prCheerT=40+Math.random()*25;try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2.2);}catch(_){}}
-  {const _cp=S._prPos||9;if(S._prLastPos&&S._prLastPos>_cp){try{sfx.playCrowdCheer&&sfx.playCrowdCheer(3.0);}catch(_){}try{wfCineSubtitle('🏆 P'+_cp+' OVERTAKE!','#ffee44');}catch(_){}}S._prLastPos=_cp;}
+  if(S._prCheerT<=0){S._prCheerT=40+Math.random()*25;try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2.2);}catch(_){}
+    S._prCrowdExcite=Math.min(3.0,(S._prCrowdExcite||0)+0.6);// v7.329: crowd pulse with cheer
+  }
+  {const _cp=S._prPos||9;if(S._prLastPos&&S._prLastPos>_cp){try{sfx.playCrowdCheer&&sfx.playCrowdCheer(3.0);}catch(_){}try{wfCineSubtitle('🏆 P'+_cp+' OVERTAKE!','#ffee44');}catch(_){}S._prCrowdExcite=Math.min(3.0,(S._prCrowdExcite||0)+1.2);}S._prLastPos=_cp;}
   // v7.300: weather timer
   S._prWeatherT=(S._prWeatherT||30)-dt;
   if(S._prWeatherT<=0){S._prWeatherT=20+Math.random()*25;try{_triggerSandStorm();}catch(_){}};
@@ -35686,6 +35693,32 @@ function updatePodRace(dt){
   }
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
+  // v7.329: stadium crowd animation (colosseum-style bob/sway/wave)
+  try{
+    if(S._prStadiumCrowd&&S._prStadiumCrowd.length){
+      S._prCrowdT=(S._prCrowdT||0)+dt;
+      if(S._prCrowdExcite>0)S._prCrowdExcite=Math.max(0,S._prCrowdExcite-dt*0.5);
+      const ct=S._prCrowdT;
+      const freqBoost=1.0+Math.min(2.0,(S._prCrowdExcite||0)*0.9);
+      // round-robin: animate 1/4 per frame for perf
+      const fr=Math.floor(ct*60)%4;
+      for(let ci=fr;ci<S._prStadiumCrowd.length;ci+=4){
+        const fd=S._prStadiumCrowd[ci];
+        if(!fd||!fd.userData)continue;
+        const phase=fd.userData._crowdPhase||0;
+        const freq=(fd.userData._crowdFreq||3)*1.8*freqBoost;
+        const jumpAmp=0.22+(S._prCrowdExcite||0)*0.55;
+        const jump=Math.max(0,Math.sin(ct*freq*2.1+phase))*jumpAmp;
+        const sway=Math.sin(ct*freq+phase)*0.06;
+        fd.position.y=(fd.userData._crowdOrigY||0)+jump+sway;
+        fd.rotation.z=Math.sin(ct*freq*1.3+phase+1.2)*0.14;
+        // arms up wave when excited
+        if(S._prCrowdExcite>0.8){
+          fd.rotation.x=Math.sin(ct*freq*2.4+phase+0.5)*0.18*Math.min(1,S._prCrowdExcite);
+        }
+      }
+    }
+  }catch(_){}
   if(S._prCamMode==='cockpit')try{_updatePodCockpit()}catch(_){}// v7.298: live cockpit instruments
   try{_updateSmokeFog();}catch(_){}// v7.299: smoke fog overlay
   const camBob=Math.sin(S._prTime*8)*0.05*Math.min(1,S._prSpeed/80);
@@ -35961,25 +35994,46 @@ function _buildRaceStadium(){
   const ml=(geo,col)=>new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.7}));
   const wf=(geo,fc,ec,px,py,pz)=>{const m=mk(geo,fc,1);const e=ml(geo,ec);[m,e].forEach(o=>{o.position.set(px||0,py||0,pz||0);add(o);});return m;};
   // == GRANDSTANDS: two banks flanking the start/finish straight ==
+  // v7.329: replaced static sphere blobs with animated audience figures (colosseum style)
   const TIERS=6,TH=3.6,TSTEP=5.5,SLEN=210,BX=102;
-  const SPEC_COLS=[0xff3333,0x33cc33,0x3388ff,0xffcc00,0xff66cc,0x00ccff,0xff7700,0xaa00ff,0x44ff88,0xffaa44,0xeeff00,0x00ffaa];
+  const FIGS_PER_TIER=22;// figures per tier row (was 11 blobs)
+  if(!S._prStadiumCrowd)S._prStadiumCrowd=[];
+  S._prStadiumCrowd.length=0;
+  let _figSeed=0;
   [-1,1].forEach(side=>{
     for(let t=0;t<TIERS;t++){
       const x=side*(BX+t*TSTEP), y=-3+t*TH, z=cZ-65;
-      wf(new THREE.BoxGeometry(11,0.9,SLEN),0xc8a870,0xddc890,x,y,z);// tier slab
-      for(let i=0;i<11;i++){// spectator blobs
-        const sz=z-SLEN/2+10+i*(SLEN-20)/10;
-        const col=SPEC_COLS[(t*3+i)%SPEC_COLS.length];
-        const s=mk(new THREE.SphereGeometry(1.0+Math.random()*.3,4,3),col,1);
-        s.position.set(x+(Math.random()-.5)*5,y+1.9,sz);add(s);
+      // tier slab
+      const slab=mk(new THREE.BoxGeometry(11,0.9,SLEN),0xc8a870,1);slab.position.set(x,y,z);add(slab);
+      const slabE=ml(new THREE.BoxGeometry(11,0.9,SLEN),0xddc890);slabE.position.set(x,y,z);add(slabE);
+      // crowd figures — random fill (70-90%) for realistic stadium feel
+      const fillRate=0.72+Math.sin(_figSeed*7.3)*0.12;// per-tier fill rate
+      for(let i=0;i<FIGS_PER_TIER;i++){
+        _figSeed++;
+        if(Math.random()>fillRate)continue;// random empty seats
+        const sz=z-SLEN/2+8+i*(SLEN-16)/(FIGS_PER_TIER-1);
+        const isMonster=(Math.random()<0.08);// 8% monster fans
+        const isVIP=(t===TIERS-1&&Math.random()<0.25);// top tier has some VIPs
+        try{
+          const fig=_makeColoAudienceFig(null,_figSeed,{isMonster,isVIP});
+          fig.scale.setScalar(1.6+Math.random()*0.5);// stadium scale (larger than arena)
+          fig.position.set(x+(Math.random()-.5)*4.5,y+1.8,sz);
+          fig.rotation.y=side>0?-Math.PI*0.5:Math.PI*0.5;// face the track
+          add(fig);
+          // animation metadata (same as colosseum)
+          fig.userData._crowdOrigY=fig.position.y;
+          fig.userData._crowdPhase=((_figSeed*2.71828)%(Math.PI*2));
+          fig.userData._crowdFreq=2.4+((_figSeed*1.618)%1.6);
+          S._prStadiumCrowd.push(fig);
+        }catch(_){}
       }
-      // wave flag strips (alternating red/yellow)
+      // flag/banner strips
       if(t%2===0){
         const fg=new THREE.BoxGeometry(.4,1.8,SLEN*.9);
         const f=mk(fg,t%4===0?0xff2200:0xffaa00,1);f.position.set(x+side*5.2,y+1.2,z);add(f);
       }
     }
-    // Back wall
+    // back wall
     wf(new THREE.BoxGeometry((TIERS-1)*TSTEP+14,TIERS*TH+5,2.5),0x9a7850,0xccaa66,
        side*(BX+(TIERS-1)*TSTEP+7),-3+(TIERS-1)*TH/2,cZ-65);
   });
@@ -36511,10 +36565,16 @@ function _finishPodRace(){
   try{
     if(S._prVIPFlag)S._prVIPFlag.visible=true;// reveal flag on SLAG's arm
     const cZ=S._prCamZ||C.CAM_Z;
-    for(let i=0;i<140;i++){// v7.326: bigger confetti/firework burst
-      const mx=(Math.random()-.5)*120,my=2+Math.random()*18,mz=cZ-10-Math.random()*80;
-      const col=[0xffcc00,0xff4444,0x44ff88,0xffffff,0xff88ff,0x66ccff,0xffaa00,0x00ffcc][i%8];
-      spawnP(new THREE.Vector3(mx,my,mz),col,8+Math.floor(Math.random()*8),0.5+Math.random()*.9,2.5+Math.random()*3.0,0.6+Math.random()*1.4);
+    // v7.329: confetti falls from BOTH grandstands (X≈±102) cascading inward
+    S._prCrowdExcite=4.0;// max crowd excitement at finish
+    for(let i=0;i<200;i++){
+      // originate from grandstand sides, fall toward track
+      const fromLeft=i%2===0;
+      const mx=fromLeft?(-102+Math.random()*30):(102-Math.random()*30);
+      const my=8+Math.random()*14;// height of grandstand tiers
+      const mz=cZ-10-Math.random()*100;
+      const col=[0xffcc00,0xff4444,0x44ff88,0xffffff,0xff88ff,0x66ccff,0xffaa00,0x00ffcc,0xffff44,0xff7700][i%10];
+      spawnP(new THREE.Vector3(mx,my,mz),col,6+Math.floor(Math.random()*6),0.4+Math.random()*.7,3.0+Math.random()*3.0,0.5+Math.random()*1.2);
     }
     // v7.326: winner-only firework rockets
     if(finalPos===1){
@@ -37782,6 +37842,7 @@ function _startF1Lights(){
     try{sfx._prGoBeep&&sfx._prGoBeep()}catch(_){}
     try{sfx.playCrowdCheer&&sfx.playCrowdCheer(4);}catch(_){}// v7.312: big GO! cheer
     S._prRaceStarted=true;
+    S._prCrowdExcite=2.5;// v7.329: crowd goes wild at race start
     // v7.294: reveal AI pods on GO
     if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod)ai.pod.visible=true;});
     if(S._prPlayerPod)S._prPlayerPod.visible=true;// v7.316: ensure player pod visible at GO!
