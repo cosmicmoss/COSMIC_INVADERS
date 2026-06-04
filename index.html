@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.321</title>
+<title>COSMIC INVADERS v7.322</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -37199,25 +37199,36 @@ function _updatePodRaceMinimap(){
   }
 }
 
-// v7.284: Pod race intro — each racer drives past camera one by one
+// v7.322: Pod race intro — cars stay on the grid, the CAMERA glides to each pilot for a hero close-up
 function _startPodRaceIntro(){
   S._prIntroActive=true;
   S._prIntroIdx=0;
-  S._prIntroShowPod=null;// v7.319: pod currently in showcase spot
-  // v7.319: close-up "showcase" framing — each racer comes to a spot right in front of camera
+  S._prIntroShowPod=null;
   try{
-    if(S._prAI)S._prAI.forEach(ai=>{
-      if(ai&&ai.pod){ai.pod.visible=true;ai.pod.rotation.y=0;}
-    });
+    // all cars stay parked on the starting grid, facing forward
+    if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod){ai.pod.visible=true;ai.pod.rotation.y=0;}});
+    if(S._prPlayerPod)S._prPlayerPod.visible=true;
     const cZ=S._prCamZ;
-    camera.position.set(7,5.5,cZ+5);
-    camera.lookAt(0,3.8,cZ-20);
-    camera.fov=58;camera.updateProjectionMatrix();
-    camera.up.set(0,1,0);
+    camera.up.set(0,1,0);camera.fov=52;camera.updateProjectionMatrix();
+    // wide establishing shot of the grid, then the per-pilot targets pull the camera in
+    camera.position.set(0,9,cZ+8);
+    S._prIntroCamTo=new THREE.Vector3(0,9,cZ+8);
+    S._prIntroLookCur=new THREE.Vector3(0,2,cZ-40);
+    S._prIntroLookTo=new THREE.Vector3(0,2,cZ-40);
+    camera.lookAt(S._prIntroLookCur);
   }catch(_){}
   try{wfCineSubtitle('★ MEET THE RACERS ★','#ffdd00');}catch(_){}
   try{playComm('hq','8 pilots on the grid!! Let\'s meet the competition!!')}catch(_){}
   setTimeout(()=>{if(S._prIntroActive)_showNextPodRacer(0);},900);
+}
+// v7.322: aim the intro camera at a parked pod for a cinematic front 3/4 hero shot
+function _aimIntroCamAtPod(pod,idx){
+  try{
+    const p=pod.position;const side=(idx%2===0)?1:-1;
+    // camera sits in FRONT of the pod (more -Z) so the forward-facing pilot looks toward the lens
+    S._prIntroCamTo=new THREE.Vector3(p.x+side*5.0,p.y+1.8,p.z-9.5);
+    S._prIntroLookTo=new THREE.Vector3(p.x,p.y+1.5,p.z+0.5);
+  }catch(_){}
 }
 function _showNextPodRacer(idx){
   if(!S._prIntroActive)return;
@@ -37226,22 +37237,8 @@ function _showNextPodRacer(idx){
   if(!ai){_endPodRaceIntro();return;}
   const colHex='#'+ai.def.col.toString(16).padStart(6,'0');
 
-  // v7.319: restore previous pod to its saved grid position
-  if(idx>0){
-    const prev=S._prAI[idx-1];
-    if(prev&&prev.pod&&prev._homePos){
-      prev.pod.position.set(prev._homePos.x,prev._homePos.y,prev._homePos.z);
-      prev.pod.rotation.y=0;
-    }
-  }
-  // v7.319: bring current pod to the close-up showcase spot (centered in front of camera)
-  if(ai.pod){
-    ai._homePos={x:ai.pod.position.x,y:ai.pod.position.y,z:ai.pod.position.z};
-    const cZ=S._prCamZ;
-    ai.pod.position.set(0,3.8,cZ-20);
-    ai.pod.rotation.y=Math.PI*0.25;
-    S._prIntroShowPod=ai.pod;// turntable target
-  }
+  // v7.322: cars stay parked — glide the camera to this pilot for a hero close-up
+  if(ai.pod){_aimIntroCamAtPod(ai.pod,idx);}
 
   // Update name card
   try{
@@ -37269,18 +37266,14 @@ function _showNextPodRacer(idx){
   try{sfx._prRacerRev&&sfx._prRacerRev(ai.def.col);}catch(_){}
 
   setTimeout(()=>{
-    if(ai.pod&&ai._homePos){ai.pod.position.set(ai._homePos.x,ai._homePos.y,ai._homePos.z);ai.pod.rotation.y=0;}
-    if(S._prIntroShowPod===ai.pod)S._prIntroShowPod=null;
     try{const card=document.getElementById('pr-intro-card');if(card)card.style.opacity='0';}catch(_){}
     setTimeout(()=>_showNextPodRacer(idx+1),200);
   },1400);
 }
 function _showPlayerIntroCard(){
   if(!S._prIntroActive)return;
-  // v7.319: restore last AI pod to its saved grid position
-  try{const last=S._prAI[S._prAI.length-1];if(last&&last.pod&&last._homePos){last.pod.position.set(last._homePos.x,last._homePos.y,last._homePos.z);last.pod.rotation.y=0;}}catch(_){}
-  // v7.319: bring player pod to the showcase spot
-  try{if(S._prPlayerPod){S._prPlayerPod.visible=true;S._prPlayerPod.position.set(0,3.8,S._prCamZ-20);S._prPlayerPod.rotation.y=-Math.PI*0.25;S._prIntroShowPod=S._prPlayerPod;}}catch(_){}
+  // v7.322: cars stay parked — glide the camera to the player's pod (on the grid at cZ-8)
+  try{if(S._prPlayerPod){S._prPlayerPod.visible=true;_aimIntroCamAtPod(S._prPlayerPod,8);}}catch(_){}
   const callsign=S.callsign||'PILOT';
   try{
     const card=document.getElementById('pr-intro-card');
@@ -37312,10 +37305,10 @@ function _endPodRaceIntro(){
   S._prIntroActive=false;
   const card=document.getElementById('pr-intro-card');
   if(card){card.style.opacity='0';setTimeout(()=>{try{card.style.display='none';}catch(_){}},350);}
-  // v7.319: restore AI pods to saved grid pos (hidden until GO!), bring player to start line visible
+  // v7.322: cars never moved during intro — just hide AI (revealed at GO!) and frame the player
   try{
     S._prIntroShowPod=null;
-    if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod){if(ai._homePos)ai.pod.position.set(ai._homePos.x,ai._homePos.y,ai._homePos.z);else ai.pod.position.y=1.5;ai.pod.rotation.y=0;ai.pod.visible=false;}});
+    if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod){ai.pod.rotation.y=0;ai.pod.visible=false;}});
     if(S._prPlayerPod){S._prPlayerPod.position.set(0,1.5,S._prCamZ-8);S._prPlayerPod.rotation.y=0;S._prPlayerPod.visible=true;}
     // v7.316/v7.319: chase camera framing so the player pod is clearly visible during F1 lights
     if(S._prPlayerPod&&S._prCamZ!=null){
@@ -37333,8 +37326,16 @@ function _endPodRaceIntro(){
   }
 }
 function _updatePodRaceIntroAnim(dt){
-  // v7.319: spin only the pod in the showcase spot (turntable); grid pods stay still
-  if(S._prIntroShowPod){S._prIntroShowPod.rotation.y+=dt*0.9;}
+  // v7.322: cars stay parked; the camera glides toward the current pilot's hero framing
+  try{
+    if(S._prIntroCamTo&&S._prIntroLookTo&&S._prIntroLookCur){
+      const k=Math.min(1,2.6*dt);
+      camera.position.lerp(S._prIntroCamTo,k);
+      S._prIntroLookCur.lerp(S._prIntroLookTo,k);
+      camera.up.set(0,1,0);
+      camera.lookAt(S._prIntroLookCur);
+    }
+  }catch(_){}
   // gentle SLAG wave on the gate during intro
   try{
     if(S._prVIPSlag){
