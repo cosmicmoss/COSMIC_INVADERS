@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.330</title>
+<title>COSMIC INVADERS v7.331</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -35693,28 +35693,38 @@ function updatePodRace(dt){
   }
   _checkPodRaceCollisions();
   _updatePodRaceHUD();
-  // v7.329: stadium crowd animation (colosseum-style bob/sway/wave)
+  // v7.331: stadium crowd animation — always alive, ramps up with excitement
   try{
     if(S._prStadiumCrowd&&S._prStadiumCrowd.length){
       S._prCrowdT=(S._prCrowdT||0)+dt;
-      if(S._prCrowdExcite>0)S._prCrowdExcite=Math.max(0,S._prCrowdExcite-dt*0.5);
+      if(S._prCrowdExcite>0)S._prCrowdExcite=Math.max(0,S._prCrowdExcite-dt*0.45);
       const ct=S._prCrowdT;
-      const freqBoost=1.0+Math.min(2.0,(S._prCrowdExcite||0)*0.9);
-      // round-robin: animate 1/4 per frame for perf
-      const fr=Math.floor(ct*60)%4;
-      for(let ci=fr;ci<S._prStadiumCrowd.length;ci+=4){
+      const exc=S._prCrowdExcite||0;
+      const freqBoost=1.0+Math.min(2.2,exc*1.0);
+      // round-robin 1/5 per frame — more figures but same frame cost
+      const fr=Math.floor(ct*60)%5;
+      for(let ci=fr;ci<S._prStadiumCrowd.length;ci+=5){
         const fd=S._prStadiumCrowd[ci];
         if(!fd||!fd.userData)continue;
         const phase=fd.userData._crowdPhase||0;
-        const freq=(fd.userData._crowdFreq||3)*1.8*freqBoost;
-        const jumpAmp=0.22+(S._prCrowdExcite||0)*0.55;
+        const freq=(fd.userData._crowdFreq||3)*freqBoost;
+        const tier=fd.userData._tierIdx||0;
+        // v7.331: front rows (low tier) jump more; always some base movement
+        const baseAmp=0.10+tier*0.02;// back rows jump slightly less (further away)
+        const excAmp=exc*0.50;
+        const jumpAmp=baseAmp+excAmp;
+        // jump: parabolic one-sided impulse (snappy upward pop)
         const jump=Math.max(0,Math.sin(ct*freq*2.1+phase))*jumpAmp;
-        const sway=Math.sin(ct*freq+phase)*0.06;
+        // sway: gentle left-right lean (always on)
+        const sway=Math.sin(ct*freq*0.9+phase+0.8)*0.05;
         fd.position.y=(fd.userData._crowdOrigY||0)+jump+sway;
-        fd.rotation.z=Math.sin(ct*freq*1.3+phase+1.2)*0.14;
-        // arms up wave when excited
-        if(S._prCrowdExcite>0.8){
-          fd.rotation.x=Math.sin(ct*freq*2.4+phase+0.5)*0.18*Math.min(1,S._prCrowdExcite);
+        // lean: Mexican wave pattern (travels along Z axis)
+        fd.rotation.z=Math.sin(ct*freq*1.2+phase+1.2)*(0.12+exc*0.15);
+        // arm wave (rotation.x) — scales with excitement
+        if(exc>0.3){
+          fd.rotation.x=Math.sin(ct*freq*2.2+phase+0.6)*Math.min(0.35,exc*0.22);
+        } else {
+          fd.rotation.x*=0.85;// settle when calm
         }
       }
     }
@@ -35996,7 +36006,7 @@ function _buildRaceStadium(){
   // == GRANDSTANDS: two banks flanking the start/finish straight ==
   // v7.329: replaced static sphere blobs with animated audience figures (colosseum style)
   const TIERS=6,TH=3.6,TSTEP=5.5,SLEN=210,BX=102;
-  const FIGS_PER_TIER=22;// figures per tier row (was 11 blobs)
+  const FIGS_PER_TIER=66;// v7.331: 3× more figures (was 22)
   if(!S._prStadiumCrowd)S._prStadiumCrowd=[];
   S._prStadiumCrowd.length=0;
   let _figSeed=0;
@@ -36006,24 +36016,30 @@ function _buildRaceStadium(){
       // tier slab
       const slab=mk(new THREE.BoxGeometry(11,0.9,SLEN),0xc8a870,1);slab.position.set(x,y,z);add(slab);
       const slabE=ml(new THREE.BoxGeometry(11,0.9,SLEN),0xddc890);slabE.position.set(x,y,z);add(slabE);
-      // crowd figures — random fill (70-90%) for realistic stadium feel
-      const fillRate=0.72+Math.sin(_figSeed*7.3)*0.12;// per-tier fill rate
+      // v7.331: near-full house (88-96% fill) — packed stands
+      const fillRate=0.88+Math.sin(_figSeed*7.3)*0.08;
       for(let i=0;i<FIGS_PER_TIER;i++){
         _figSeed++;
-        if(Math.random()>fillRate)continue;// random empty seats
-        const sz=z-SLEN/2+8+i*(SLEN-16)/(FIGS_PER_TIER-1);
-        const isMonster=(Math.random()<0.08);// 8% monster fans
-        const isVIP=(t===TIERS-1&&Math.random()<0.25);// top tier has some VIPs
+        if(Math.random()>fillRate)continue;
+        const sz=z-SLEN/2+6+i*(SLEN-12)/(FIGS_PER_TIER-1);
+        const isMonster=(Math.random()<0.10);// 10% monster fans
+        const isVIP=(t===TIERS-1&&Math.random()<0.30);// top tier VIPs
         try{
           const fig=_makeColoAudienceFig(null,_figSeed,{isMonster,isVIP});
-          fig.scale.setScalar(1.6+Math.random()*0.5);// stadium scale (larger than arena)
-          fig.position.set(x+(Math.random()-.5)*4.5,y+1.8,sz);
-          fig.rotation.y=side>0?-Math.PI*0.5:Math.PI*0.5;// face the track
+          // v7.331: slight size variation — back rows taller (further away = needs more height)
+          const tierScale=1.45+t*0.12+Math.random()*0.35;
+          fig.scale.setScalar(tierScale);
+          // slight depth offset so rows feel 3D (not all in the same plane)
+          const depthJitter=(Math.random()-.5)*3.5;
+          fig.position.set(x+depthJitter,y+1.8,sz);
+          fig.rotation.y=side>0?-Math.PI*0.5:Math.PI*0.5;
           add(fig);
-          // animation metadata (same as colosseum)
           fig.userData._crowdOrigY=fig.position.y;
           fig.userData._crowdPhase=((_figSeed*2.71828)%(Math.PI*2));
-          fig.userData._crowdFreq=2.4+((_figSeed*1.618)%1.6);
+          // v7.331: wider freq range (1.8-4.8) for more organic look
+          fig.userData._crowdFreq=1.8+((_figSeed*1.618)%3.0);
+          // v7.331: store tier for depth-based amplitude — front rows jump higher
+          fig.userData._tierIdx=t;
           S._prStadiumCrowd.push(fig);
         }catch(_){}
       }
