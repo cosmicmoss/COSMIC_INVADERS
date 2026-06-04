@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.324</title>
+<title>COSMIC INVADERS v7.325</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1710,6 +1710,16 @@ const keys={};
 window.addEventListener('keydown',e=>{keys[e.code]=true});
 window.addEventListener('keyup',e=>{keys[e.code]=false});
 
+// v7.325: pod-race swipe-up → jump trigger (registered once, fires only during active race)
+(function(){let _sy=0;
+  window.addEventListener('touchstart',e=>{if(e.touches[0])_sy=e.touches[0].clientY;},{passive:true});
+  window.addEventListener('touchend',e=>{
+    try{if(typeof S!=='undefined'&&S.phase==='PLAYING'&&S._prRaceStarted&&!S._prPostRace){
+      const dy=_sy-(e.changedTouches[0]||e.touches[0]||{clientY:_sy}).clientY;
+      if(dy>42&&!S._prJumping&&(S._prJumpY||0)<0.1)S._prJumpTrig=true;
+    }}catch(_){}
+  },{passive:true});
+})();
 // ============ SOUND ============
 class SFX{
   constructor(){this.ctx=null;this.g=null;this.bgmOn=false;this.bgmIv=null;this.bgmLayer=1}
@@ -2783,6 +2793,61 @@ class SFX{
     if(this._crowdAmbSrc){try{this._crowdAmbSrc.stop();}catch(_){}this._crowdAmbSrc=null;}
     if(this._crowdAmbG){try{this._crowdAmbG.disconnect();}catch(_){}this._crowdAmbG=null;}
     if(this._crowdYellT){clearTimeout(this._crowdYellT);this._crowdYellT=null;}
+  }
+  // v7.325: Pod Race BGM — Cyber Pod 500 melody ported + arranged (bass + harmony + tempo-sync)
+  startPodRaceBGM(){
+    if(!this.ctx)return;this.stopPodRaceBGM();
+    try{
+      const ctx=this.ctx,dst=this.bgmG||this.g;
+      // core melody (Cyber Pod 500 original, A-minor pentatonic)
+      const MEL=[110,110,165,147,196,165,220,196,130,130,196,175,220,196,262,220];
+      // bass pattern (root notes, half tempo)
+      const BASS=[55,55,55,82,65,65,65,82];
+      // helper: create osc+gain connected to dst
+      const mk=(type)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;g.gain.value=0;o.connect(g);g.connect(dst);o.start();return{o,g};};
+      const mel=mk('sawtooth');    // lead melody (bright sawtooth)
+      const har=mk('square');      // harmony 5th above (square = retro chip-tune feel)
+      const bOsc=ctx.createOscillator();bOsc.type='sawtooth';
+      const bFil=ctx.createBiquadFilter();bFil.type='lowpass';bFil.frequency.value=200;bFil.Q.value=1.2;
+      const bG=ctx.createGain();bG.gain.value=0;
+      bOsc.connect(bFil);bFil.connect(bG);bG.connect(dst);bOsc.start();
+      this._prBgm={mel,har,bOsc,bG,step:0,timer:null};
+      const self=this;
+      const tick=()=>{
+        if(!self._prBgm)return;
+        try{
+          const t=ctx.currentTime;
+          const s=typeof S!=='undefined'?S:null;
+          const nitro=s&&(s._prNitroT||0)>0;
+          const spd=nitro?1.5:1.0;// nitro → pitch ×1.5 (tension!)
+          const step=self._prBgm.step;
+          // melody note
+          const mf=MEL[step%MEL.length]*spd;
+          mel.o.frequency.setValueAtTime(mf,t);
+          mel.g.gain.setValueAtTime(0.11,t);mel.g.gain.exponentialRampToValueAtTime(0.005,t+0.11);
+          // harmony (perfect 5th = ×1.498)
+          har.o.frequency.setValueAtTime(mf*1.498,t);
+          har.g.gain.setValueAtTime(0.038,t);har.g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+          // bass on even steps (half tempo)
+          if(step%2===0){
+            bOsc.frequency.setValueAtTime(BASS[Math.floor(step/2)%BASS.length]*spd,t);
+            bG.gain.setValueAtTime(0.14,t);bG.gain.exponentialRampToValueAtTime(0.005,t+0.22);
+          }
+          self._prBgm.step++;
+          // tempo: 150ms base → ~130ms at high speed (race tension build)
+          const interval=Math.max(130,150-Math.floor(((s&&s._prSpeed)||55)/20));
+          self._prBgm.timer=setTimeout(tick,interval);
+        }catch(_){self._prBgm&&(self._prBgm.timer=setTimeout(tick,150));}
+      };
+      this._prBgm.timer=setTimeout(tick,60);
+    }catch(_){}
+  }
+  stopPodRaceBGM(){
+    const b=this._prBgm;if(!b)return;
+    clearTimeout(b.timer);
+    [b.mel&&b.mel.o,b.har&&b.har.o,b.bOsc].forEach(o=>{if(o){try{o.stop();o.disconnect();}catch(_){}}});
+    [b.mel&&b.mel.g,b.har&&b.har.g,b.bG].forEach(g=>{if(g){try{g.disconnect();}catch(_){}}});
+    this._prBgm=null;
   }
   // Crowd "OOOOOH" reaction — rising filtered noise burst on successful technique
   crowdOoh(){
@@ -34298,6 +34363,7 @@ function startPodRaceChallenge(){
 function _podRaceReturnToTitle(){
   try{sfx.stopPodEngines();}catch(_){}
   try{sfx.stopCrowdAmbient&&sfx.stopCrowdAmbient();}catch(_){}// v7.297
+  try{sfx.stopPodRaceBGM&&sfx.stopPodRaceBGM();}catch(_){}// v7.325
   try{const p=document.getElementById('pr-results-panel');if(p)p.remove();}catch(_){}
   try{const f=document.getElementById('pr-flag-flash');if(f)f.remove();}catch(_){}
   try{cleanupBossResidue();}catch(_){}
@@ -34613,6 +34679,8 @@ function startPodRace(){
   S._prCheerT=35;S._prLastPos=9;
   // v7.312: track log for minimap curve viz
   S._prTrackLog=[];
+  // v7.325: jump state
+  S._prJumpY=0;S._prJumpVel=0;S._prJumping=false;S._prJumpTrig=false;
   // v7.284: intro state
   S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
@@ -34706,6 +34774,8 @@ function startPodRace(){
   try{sfx.startWindSound&&sfx.startWindSound();}catch(_){}
   // v7.297: ambient crowd cheer throughout the race
   try{sfx.startCrowdAmbient&&sfx.startCrowdAmbient();}catch(_){}
+  // v7.325: pod race BGM (Cyber Pod 500 melody + arrangement)
+  try{sfx.startPodRaceBGM&&sfx.startPodRaceBGM();}catch(_){}
   // v7.300: maintenance cinematic starts immediately (replaces old 1.8s timeout)
   // _startF1Lights is called by _updateMaintenanceCinematic when complete
 }
@@ -35273,7 +35343,24 @@ function updatePodRace(dt){
   pod.position.x+=(S._prBounceVX||0)*dt;
   S._prBounceVX=(S._prBounceVX||0)*0.82;
   S._prVertical*=0.9;
-  const targetY=1.5+S._prVertical*3;
+  // v7.325: J key triggers jump (one-shot consume)
+  if(keys['KeyJ']&&!S._prJumping&&(S._prJumpY||0)<0.1){S._prJumpTrig=true;keys['KeyJ']=false;}
+  // v7.325: parabolic jump physics (init vel 12 u/s, gravity 30 u/s²) — peak ≈2.4u, air ≈0.8s
+  if(S._prJumpTrig&&!S._prJumping&&(S._prJumpY||0)<0.1){
+    S._prJumping=true;S._prJumpTrig=false;S._prJumpVel=12;
+    try{S.shakeT=0.12;S.shakeI=0.7;}catch(_){}
+    try{spawnP(pod.position.clone(),0xaaccff,6,.32,.22,.18);}catch(_){}
+    try{wfCineSubtitle('🚀 JUMP!','#aaccff');}catch(_){}
+  }
+  if(S._prJumping){
+    S._prJumpY=(S._prJumpY||0)+S._prJumpVel*dt;
+    S._prJumpVel-=30*dt;
+    if(S._prJumpY<=0){
+      S._prJumpY=0;S._prJumpVel=0;S._prJumping=false;
+      try{spawnP(pod.position.clone().add(new THREE.Vector3(0,-0.5,0)),0xcc8844,8,.42,.28,.22);}catch(_){}
+    }
+  }
+  const targetY=1.5+S._prVertical*3+(S._prJumpY||0);
   pod.position.y+=(targetY-pod.position.y)*3*dt;
   pod.position.z=(S._prCamZ!=null?S._prCamZ:camera.position.z)-8;// v7.298: anchored z so collisions are view-independent
   // v7.291: collision wobble shudder
@@ -35482,7 +35569,9 @@ function updatePodRace(dt){
     camera.position.x+=(pod.position.x+_curveLead-camera.position.x)*8*dt;
     // v7.302: camera rises on strong curves — see over the bank like a real cockpit
     const _curveRise=Math.abs(S._prCurveV||0)*0.048;
-    camera.position.y+=(pod.position.y+2.2+camBob+_curveRise-camera.position.y)*4*dt;
+    // v7.325: faster Y follow when jumping or on hills (Cyber Pod 500 port)
+    const _yLerp=((S._prJumping||(S._prJumpY||0)>0.1)||Math.abs(S._prVertical||0)>0.15)?8:4;
+    camera.position.y+=(pod.position.y+2.2+camBob+_curveRise-camera.position.y)*_yLerp*dt;
     camera.position.z=_anchorZ;
     // v7.302: wider FOV at high speed for horizon depth
     camera.fov=Math.max(64,80+speedRatio*16);
@@ -36197,6 +36286,7 @@ function _checkPodRaceCollisions(){
 // v7.294: player crosses finish — enter post-race top-down + results phase
 function _finishPodRace(){
   S._prPlayerFinishTime=S._prTime;
+  try{sfx.stopPodRaceBGM&&sfx.stopPodRaceBGM();}catch(_){}// v7.325
   if(!S._testFromOptions){try{markStageCleared('podrace')}catch(_){}}
   // checkered flag overlay
   const flag=document.createElement('div');flag.id='pr-flag-flash';
