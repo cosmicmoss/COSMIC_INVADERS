@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.326</title>
+<title>COSMIC INVADERS v7.327</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -626,6 +626,10 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 @keyframes coloUnlockPulse{0%,100%{box-shadow:0 0 22px rgba(255,170,0,0.5),inset 0 0 12px rgba(255,170,0,0.08)}
   50%{box-shadow:0 0 38px rgba(255,200,0,0.9),inset 0 0 20px rgba(255,200,0,0.18);border-color:#ffd040}}
 
+/* v7.327: title screen animations */
+@keyframes titleVerPulse{0%,100%{opacity:1;text-shadow:0 0 10px #0ff,0 0 20px #0ff}50%{opacity:0.6;text-shadow:0 0 20px #0ff,0 0 40px #0ff,0 0 60px rgba(0,255,255,0.4)}}
+@keyframes subtitleDrift{0%{letter-spacing:4px;opacity:0.8}100%{letter-spacing:6px;opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 /* Bonus */
 /* v7.67: Repositioned bonus-overlay to sit ABOVE the target-radar (bottom-left HUD area).
    Used to be a fullscreen yellow flash with "BONUS STAGE" — now a compact radar-style alert
@@ -1113,8 +1117,9 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 6px #0ff">v7.296</span></h1>
-    <div class="subtitle">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
+    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.326</span></h1>
+    <!-- v7.327: tagline with neon effect -->
+    <div class="subtitle" style="text-shadow:0 0 12px rgba(0,200,255,0.8);letter-spacing:5px;animation:subtitleDrift 3s ease-in-out infinite alternate">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
       <div class="cs-label">ENTER YOUR NAME, PILOT</div>
       <input type="text" id="callsign-input-main" placeholder="RAMBO" maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="_updateCallsignCount()">
@@ -32774,6 +32779,8 @@ function _colosseumHitDetect(){
     try{sfx.hit&&sfx.hit()}catch(_){}
     _coloKnockOrDown(f,dx,dz,1.2);
     updateColosseumHUD();
+    // v7.327: crowd roars on player hit
+    cs._coloExcite=Math.min(2.5,(cs._coloExcite||0)+0.7);cs._coloHitFlash=0.3;cs._coloHitFlashCol=0xffdd00;
   });
   if(hitCount>0){try{sfx.crowdOoh&&sfx.crowdOoh();}catch(_){}} // v7.279: crowd reacts
   if(isAoe&&hitCount===0)cs.hitboxActive=false;
@@ -33341,6 +33348,8 @@ function _updateColoFighter(f,dt){
             updateColosseumHUD();
             if(cs.pilotHP<=0){endColosseum(false);return;}
             cs.pilotState='STAGGER';cs.pilotActionT=0;
+            // v7.327: crowd goes wild on player taking damage
+            cs._coloExcite=Math.min(2.5,(cs._coloExcite||0)+0.9);cs._coloHitFlash=0.4;cs._coloHitFlashCol=0xff2200;
             // v7.250: eel uses charge system — actual zap fires via _eelCharging flag in updateColosseum
             if(f.def.id==='eel'&&!cs._eelCharging&&!cs._eelChargeFired){
               cs._eelCharging=true;cs._eelChargeT=3.0;cs._eelChargeFired=true;cs._eelCrackCD=0;// v7.261: 1.0→3.0s charge
@@ -33930,6 +33939,12 @@ function updateColosseum(dt){
   // v7.261: Crowd animation — bob + sway.  v7.288 PERF: only animate 1/3 of the
   // figures each frame (round-robin) — sin calls drop to ~1/3 with no visible change.
   cs._crowdT=(cs._crowdT||0)+dt;
+  // v7.327: crowd excitement level — rises when player is in danger or scores hits
+  const hpRatio=(cs.pilotHP||1)/(cs.pilotMaxHP||18);
+  const excite=cs._coloExcite=(cs._coloExcite||0);
+  if(cs._coloExcite>0)cs._coloExcite=Math.max(0,cs._coloExcite-dt*0.6);
+  if(cs._coloHitFlash>0)cs._coloHitFlash-=dt;
+  const freqBoost=1.0+Math.min(1.8,(1-hpRatio)*1.2+cs._coloExcite*0.8);
   if(cs._crowdFigs&&cs._crowdFigs.length){
     const ct=cs._crowdT;
     cs._crowdFrame=((cs._crowdFrame||0)+1)%3;
@@ -33937,14 +33952,17 @@ function updateColosseum(dt){
     for(let ci=fr;ci<cs._crowdFigs.length;ci+=3){
       const fd=cs._crowdFigs[ci];
       const phase=fd.userData._crowdPhase||0;
-      const freq=(fd.userData._crowdFreq||3)*1.8; // v7.281: faster base cadence
-      // Jump impulse: only the positive half of a fast sine — sharp upward pops
-      const jump=Math.max(0,Math.sin(ct*freq*2.1+phase))*0.28;
-      // Gentle vertical sway on top of the jump
+      const freq=(fd.userData._crowdFreq||3)*1.8*freqBoost;
+      // v7.327: crowd jumps higher at low HP / after hits
+      const jumpAmp=0.28+cs._coloExcite*0.45;
+      const jump=Math.max(0,Math.sin(ct*freq*2.1+phase))*jumpAmp;
       const sway=Math.sin(ct*freq+phase)*0.07;
       fd.position.y=(fd.userData._crowdOrigY||0)+jump+sway;
-      // Side-to-side lean for crowd wave effect
       fd.rotation.z=Math.sin(ct*freq*1.3+phase+1.2)*0.18;
+      // v7.327: crowd changes colour during hit-flash
+      if(cs._coloHitFlash>0&&Math.random()<0.08){
+        try{fd.traverse(c=>{if(c.isMesh&&c.material&&c.material.color)c.material.color.setHex(cs._coloHitFlashCol||0xff4400);});}catch(_){}
+      }
     }
   }
   const pm=cs.pilotMesh;
@@ -34407,6 +34425,10 @@ function _podRaceReturnToTitle(){
   clearTimeout(S._prEventLabelTimer);
   try{const el=document.getElementById('pr-event-label');if(el)el.style.opacity='0';}catch(_){}
   try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
+  // v7.326/v7.327 new overlay cleanup
+  try{const eg=document.getElementById('pr-edge-glow');if(eg){eg.style.opacity='0';eg.style.display='none';}}catch(_){}
+  try{const ji=document.getElementById('pr-jump-ind');if(ji)ji.style.display='none';}catch(_){}
+  S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
   // v7.312/313
   S._prCheerT=35;S._prLastPos=9;S._prTrackLog=[];S._prMaintDone=false;
   S._prRaceStarted=false;S._prCamMode='chase';
