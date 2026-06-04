@@ -32592,12 +32592,13 @@ function _colosseumDoAttack(type){
     try{sfx.chopCrack&&sfx.chopCrack()}catch(_){}
     try{screenFlash(.18)}catch(_){}
   } else if(type==='GIANTSWING'){
-    // v7.261: Find nearest active fighter — range increased 2.8→3.5 for more forgiving grab
+    // v7.315: kaiju(GORGON) tail is easier to grab — larger range
     let best=null,bestD=3.5;
     cs.activeFighters.forEach(f=>{
-      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='INTRO')return;// v7.106: skip INTRO walkin
+      if(f.state==='ELIMINATED'||f.state==='DOWN'||f.state==='WAITING'||f.state==='INTRO')return;
+      const grabR=f.def.id==='kaiju'?7.0:3.5;// v7.315: gorgon tail grab range 3.5→7.0
       const d=Math.hypot(f.pos.x-cs.pilotPos.x,f.pos.z-cs.pilotPos.z);
-      if(d<bestD){bestD=d;best=f;}
+      if(d<grabR&&(best===null||d<bestD)){bestD=d;best=f;}
     });
     if(!best){
       // Whiff — short cooldown
@@ -33390,13 +33391,95 @@ function _updateColoFighter(f,dt){
         f.attackCD=3.5;f.state='IDLE';f.stateT=0;
       }
       break;}
+    // v7.315: SLAG REBORN axe performance — dramatic alternating axe swings
+    case 'AXE_SWING':{
+      const t=f.stateT;
+      // Arms swing in opposite phase — like a conductor gone berserk
+      if(f.lArm){f.lArm.rotation.x=Math.sin(t*9)*1.55;f.lArm.rotation.z=0.3+Math.sin(t*4.5)*0.4;}
+      if(f.rArm){f.rArm.rotation.x=Math.sin(t*9+Math.PI)*1.55;f.rArm.rotation.z=-0.3-Math.sin(t*4.5)*0.4;}
+      // Body sways with the swing
+      f.mesh.rotation.z=Math.sin(t*9)*0.14;f.mesh.rotation.x=0.1+Math.sin(t*4.5)*0.08;
+      // War cry SFX
+      if(t<0.05){try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id);}catch(_){}
+        try{wfCineSubtitle('⚔️ SLAG REBORN RAGE!!','#cc3300');}catch(_){}}
+      if(t>2.8){
+        if(f.lArm){f.lArm.rotation.x=0;f.lArm.rotation.z=0;}
+        if(f.rArm){f.rArm.rotation.x=0;f.rArm.rotation.z=0;}
+        f.mesh.rotation.z=0;f.mesh.rotation.x=0;
+        f.attackCD=1.5;f.state='IDLE';f.stateT=0;
+      }
+      break;}
+
+    // v7.315: SLAG REBORN jump slam — launches toward player with earth-shaking landing
+    case 'SLAG_JUMP':{
+      const t=f.stateT;
+      const WINDUP=0.4,APEX=0.9,LAND=1.3,RECOVER=2.0;
+      if(t<WINDUP){
+        // Crouch windup
+        f.mesh.scale.y=Math.max(0.65,1-t/WINDUP*0.35);
+        f.mesh.rotation.x=-(t/WINDUP)*0.4;
+        if(t<0.05){try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id);}catch(_){}
+          try{announce(_L('SLAG LEAP!!','スラッグ跳躍！！'))}catch(_){}
+        }
+      } else if(t<LAND){
+        // Air phase — arc toward player
+        f.mesh.scale.y=1.0;
+        const airT=(t-WINDUP)/(LAND-WINDUP);
+        const arcY=Math.sin(airT*Math.PI)*5.5;// peak at 5.5 units
+        f.pos.y=arcY;f.mesh.position.y=arcY;
+        // Move toward player mid-air
+        const spd2=f.def.speed*2.8;
+        f.pos.x+=dx/Math.max(dist,.01)*spd2*dt;
+        f.pos.z+=dz/Math.max(dist,.01)*spd2*dt;
+        const rbd3=Math.hypot(f.pos.x,f.pos.z);
+        if(rbd3>cs.ringR-1){const ra3=Math.atan2(f.pos.x,f.pos.z);f.pos.x=Math.sin(ra3)*(cs.ringR-1);f.pos.z=Math.cos(ra3)*(cs.ringR-1);}
+        f.mesh.position.x=f.pos.x;f.mesh.position.z=f.pos.z;
+        f.angle=Math.atan2(dx,dz);f.mesh.rotation.y=f.angle;
+        f.mesh.rotation.x=-0.6;// lean forward
+      } else if(t<RECOVER){
+        // Land + shockwave
+        f.pos.y=0;f.mesh.position.y=0;f.mesh.rotation.x=0;f.mesh.scale.y=1;
+        if(!f._jumpLanded){
+          f._jumpLanded=true;
+          try{sfx.ringCrash&&sfx.ringCrash();}catch(_){}
+          try{screenFlash(.4);}catch(_){}
+          try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(0,.1,0)),30);}catch(_){}
+          try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(1.5,0,1.5)),18);}catch(_){}
+          try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(-1.5,0,-1.5)),18);}catch(_){}
+          // Shockwave damage if close
+          const dLand=Math.hypot(f.pos.x-cs.pilotPos.x,f.pos.z-cs.pilotPos.z);
+          if(dLand<f.def.sz*1.8+1.5&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
+            cs.pilotHP=Math.max(0,cs.pilotHP-2);cs.pilotInvT=1.2;
+            try{screenFlash(.6);}catch(_){}try{sfx.damage&&sfx.damage();}catch(_){}
+            updateColosseumHUD();if(cs.pilotHP<=0){endColosseum(false);return;}
+            cs.pilotState='STAGGER';cs.pilotActionT=0;
+          }
+        }
+        // Victory pose arms raised
+        if(f.lArm){f.lArm.rotation.z=0.9;f.lArm.rotation.x=-0.3;}
+        if(f.rArm){f.rArm.rotation.z=-0.9;f.rArm.rotation.x=-0.3;}
+      } else {
+        f._jumpLanded=false;
+        if(f.lArm){f.lArm.rotation.z=0;f.lArm.rotation.x=0;}
+        if(f.rArm){f.rArm.rotation.z=0;f.rArm.rotation.x=0;}
+        f.attackCD=2.5;f.state='IDLE';f.stateT=0;
+      }
+      break;}
+
     case 'ELIMINATED':break;
     default:break;
   }
-  // slug: trigger ROLLING or normal ATTACK when conditions met
-  if(f.def.style==='slug'&&f.state==='IDLE'&&f.stateT>2.0&&f.attackCD<=0){
-    if(dist<5){f.state='ATTACK';f.stateT=0;}// normal close-range attack
-    else if(dist<9&&Math.random()<0.42){// v7.275: rolling attack from medium range
+  // slug: trigger ROLLING, AXE_SWING, SLAG_JUMP, or normal ATTACK
+  if(f.def.style==='slug'&&f.state==='IDLE'&&f.stateT>1.8&&f.attackCD<=0){
+    if(dist<5){f.state='ATTACK';f.stateT=0;}
+    else if(f.def.id==='jabba_reborn'){
+      // v7.315: SLAG REBORN — richer attack variety
+      const r=Math.random();
+      const angryFactor=(f._slagSwingHits||0);// gets more aggressive after each swing
+      if(r<0.30+angryFactor*0.08){f.state='AXE_SWING';f.stateT=0;}// axe performance
+      else if(r<0.55+angryFactor*0.06&&dist<10){f.state='SLAG_JUMP';f.stateT=0;f._jumpLanded=false;}// jump slam
+      else if(dist<9){f.state='ROLLING';f.stateT=0;f._rollHitCD=0;f._rollDirX=0;f._rollDirZ=0;f._rollWindupPuff=false;f._rollBrakePuff=false;f._rollDustT=0;}
+    } else if(dist<9&&Math.random()<0.42){// original slug behavior
       f.state='ROLLING';f.stateT=0;f._rollHitCD=0;f._rollDirX=0;f._rollDirZ=0;f._rollWindupPuff=false;f._rollBrakePuff=false;f._rollDustT=0;
     }
   }
@@ -33895,7 +33978,25 @@ function updateColosseum(dt){
         const nx=cs.pilotPos.x+Math.sin(launchA)*launchDist;
         const nz=cs.pilotPos.z+Math.cos(launchA)*launchDist;
         const dx=nx-f.pos.x,dz=nz-f.pos.z;
-        f.hp=Math.max(0,f.hp-damage);
+        // v7.315: SLAG REBORN requires 3 GIANT SWINGS — gets up after 1st and 2nd
+        if(f.def.id==='jabba_reborn'){
+          f._slagSwingHits=(f._slagSwingHits||0)+1;
+          if(f._slagSwingHits<3){
+            f.hp=Math.max(1,f.hp-damage);// survive (min 1 HP)
+            // Speed up + announce after each non-final hit
+            f.def.speed=Math.min(9.5,f.def.speed+1.2);
+            setTimeout(()=>{
+              try{wfCineSubtitle('💀 SLAG REBORN RISES!! ['+f._slagSwingHits+'/3]','#ff4400');}catch(_){}
+              try{announce(_L('HE\'S BACK!! SWING HIM AGAIN!! ['+f._slagSwingHits+'/3]','復活！！もう一度！！['+f._slagSwingHits+'/3]'));}catch(_){}
+              try{sfx.monsterRoar&&sfx.monsterRoar('jabba');}catch(_){}
+            },800);
+          } else {
+            f.hp=0;// 3rd swing = final defeat
+            try{wfCineSubtitle('🏆 FINISHED!! SLAG REBORN DEFEATED!!','#ffdd00');}catch(_){}
+          }
+        } else {
+          f.hp=Math.max(0,f.hp-damage);
+        }
         f.state='DOWN';f.stateT=0;
         f.mesh.rotation.x=0;
         f.pos.x=nx;f.pos.z=nz;
