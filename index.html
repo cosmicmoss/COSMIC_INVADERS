@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.312</title>
+<title>COSMIC INVADERS v7.316</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -33198,13 +33198,16 @@ function _updateColoFighter(f,dt){
   const pp=cs.pilotPos;const dx=pp.x-f.pos.x,dz=pp.z-f.pos.z;
   const dist=Math.hypot(dx,dz);const spd=f.def.speed*dt;
   const _walk=(wt)=>{const la=f.lArm,ra=f.rArm,ll=f.lLeg,rl=f.rLeg;
-    if(la)la.rotation.x=Math.sin(wt)*.45;if(ra)ra.rotation.x=-Math.sin(wt)*.45;
-    if(ll)ll.rotation.x=-Math.sin(wt)*.45;if(rl)rl.rotation.x=Math.sin(wt)*.45;
-    // v7.255: forearm + lower-leg joint animation
-    if(f.lArmFore)f.lArmFore.rotation.x=Math.sin(wt)*.2+.15;
-    if(f.rArmFore)f.rArmFore.rotation.x=-Math.sin(wt)*.2+.15;
-    if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,Math.sin(wt+.7)*.3);
-    if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,Math.sin(wt-.7)*.3);
+    if(la)la.rotation.x=Math.sin(wt)*.52;if(ra)ra.rotation.x=-Math.sin(wt)*.52;
+    if(ll)ll.rotation.x=-Math.sin(wt)*.55;if(rl)rl.rotation.x=Math.sin(wt)*.55;
+    // v7.316: deeper elbow/knee bends — elbow bends opposite to upper arm swing
+    if(f.lArmFore)f.lArmFore.rotation.x=Math.max(0,-Math.sin(wt)*.42+.2);
+    if(f.rArmFore)f.rArmFore.rotation.x=Math.max(0,Math.sin(wt)*.42+.2);
+    if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,Math.sin(wt+.65)*.48);
+    if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,Math.sin(wt-.65)*.48);
+    // body bob + lean
+    const bd=f.mesh.getObjectByName('body');
+    if(bd){bd.rotation.z=Math.sin(wt*2)*.04;bd.rotation.x=Math.abs(Math.sin(wt))*.03;}
     // v7.266: kaiju tail accent during walk
     if(f.def.id==='kaiju'){for(let ti=0;ti<5;ti++){const ts=f.mesh.getObjectByName('tail'+(ti+1));if(ts)ts.rotation.y=Math.sin(wt*1.2-ti*.55)*(0.1+ti*.04);}}
   };
@@ -33281,8 +33284,16 @@ function _updateColoFighter(f,dt){
         f.state='IDLE';f.stateT=0;
         if(f.def.id==='eel')cs._eelChargeFired=false; // allow next charge
       }
-      const ra=f.rArm;if(ra)ra.rotation.x=-Math.sin(f.stateT*Math.PI/.9)*.8;break;}
-    case 'STAGGER':{if(f.stateT>.6){f.state='IDLE';f.stateT=0;}const h=f.head;if(h)h.rotation.x=Math.sin(f.stateT*35)*.1;break;}
+      const ra=f.rArm;if(ra)ra.rotation.x=-Math.sin(f.stateT*Math.PI/.9)*.8;
+      const la=f.lArm;if(la)la.rotation.x=Math.sin(f.stateT*Math.PI/.9+Math.PI*.4)*.32;
+      const raf=f.rArmFore;if(raf)raf.rotation.x=Math.max(0,Math.sin(f.stateT*Math.PI/.9+.35)*.65);
+      break;}
+    case 'STAGGER':{
+      if(f.stateT>.6){f.state='IDLE';f.stateT=0;const bd2=f.mesh.getObjectByName('body');if(bd2)bd2.rotation.x=0;if(f.lArm)f.lArm.rotation.x=0;if(f.rArm)f.rArm.rotation.x=0;}
+      const h=f.head;if(h)h.rotation.x=Math.sin(f.stateT*35)*.12;
+      const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=.30*(1-f.stateT/.6);
+      if(f.lArm)f.lArm.rotation.x=.55*(1-f.stateT/.6);if(f.rArm)f.rArm.rotation.x=.55*(1-f.stateT/.6);
+      break;}
     case 'DOWN':{f.mesh.rotation.x=Math.min(f.stateT/1.8*Math.PI*.5,Math.PI*.5);break;}
     case 'GRAPPLED':{
       // Fighter flails arms+legs wildly while being swung
@@ -33466,6 +33477,107 @@ function _updateColoFighter(f,dt){
       }
       break;}
 
+    // v7.316: SLAM — both arms raise then crash down
+    case 'SLAM':{
+      const SL_RAISE=0.4,SL_SMASH=0.9,SL_END=1.5;
+      if(f.stateT<SL_RAISE){
+        const sp=f.stateT/SL_RAISE;
+        if(f.lArm){f.lArm.rotation.x=-Math.PI*sp*.85;f.lArm.rotation.z=.25*sp;}
+        if(f.rArm){f.rArm.rotation.x=-Math.PI*sp*.85;f.rArm.rotation.z=-.25*sp;}
+        if(f.lArmFore)f.lArmFore.rotation.x=-sp*.4;if(f.rArmFore)f.rArmFore.rotation.x=-sp*.4;
+        f.mesh.rotation.x=-sp*.18;
+        if(f.stateT<.05){try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}try{announce('BODY SLAM!!')}catch(_){}}
+      }else if(f.stateT<SL_SMASH){
+        const sp=(f.stateT-SL_RAISE)/(SL_SMASH-SL_RAISE);
+        if(f.lArm){f.lArm.rotation.x=-Math.PI*.85+Math.PI*1.1*sp;f.lArm.rotation.z=.25*(1-sp);}
+        if(f.rArm){f.rArm.rotation.x=-Math.PI*.85+Math.PI*1.1*sp;f.rArm.rotation.z=-.25*(1-sp);}
+        if(f.lArmFore)f.lArmFore.rotation.x=-0.4+sp*.9;if(f.rArmFore)f.rArmFore.rotation.x=-0.4+sp*.9;
+        f.mesh.rotation.x=sp*.35;
+        if(!f._hitThisAttack&&sp>.5&&sp<.78){
+          f._hitThisAttack=true;
+          if(dist<f.def.sz*2.4+1.5&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
+            cs.pilotHP=Math.max(0,cs.pilotHP-3);cs.pilotInvT=1.4;
+            try{screenFlash(.75)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
+            updateColosseumHUD();if(cs.pilotHP<=0){endColosseum(false);return;}
+            cs.pilotState='STAGGER';cs.pilotActionT=0;
+            const kbA=Math.atan2(cs.pilotPos.x-f.pos.x,cs.pilotPos.z-f.pos.z);
+            const kbPx=cs.pilotPos.x+Math.sin(kbA)*4.5,kbPz=cs.pilotPos.z+Math.cos(kbA)*4.5;
+            const kbD=Math.hypot(kbPx,kbPz);
+            cs.pilotPos.x=kbD>cs.ringR-.5?Math.sin(kbA)*(cs.ringR-.5):kbPx;
+            cs.pilotPos.z=kbD>cs.ringR-.5?Math.cos(kbA)*(cs.ringR-.5):kbPz;
+            try{wfCineSubtitle('💥 SLAM!!','#ff4400');}catch(_){}
+          }
+        }
+      }else{
+        if(f.stateT>SL_END){
+          f.mesh.rotation.x=0;
+          if(f.lArm){f.lArm.rotation.x=0;f.lArm.rotation.z=0;}if(f.rArm){f.rArm.rotation.x=0;f.rArm.rotation.z=0;}
+          if(f.lArmFore)f.lArmFore.rotation.x=0;if(f.rArmFore)f.rArmFore.rotation.x=0;
+          f._hitThisAttack=false;f.attackCD=f.def.style==='slug'?2.2:1.4;f.state='IDLE';f.stateT=0;
+        }
+      }
+      break;}
+    // v7.316: DROPKICK — leap + both feet kick forward
+    case 'DROPKICK':{
+      const DK_PREP=0.3,DK_HIT=0.82,DK_END=1.4;
+      if(f.stateT<DK_PREP){
+        const sp=f.stateT/DK_PREP;
+        if(f.lLeg)f.lLeg.rotation.x=-sp*.7;if(f.rLeg)f.rLeg.rotation.x=-sp*.7;
+        if(f.lLegLower)f.lLegLower.rotation.x=sp*.5;if(f.rLegLower)f.rLegLower.rotation.x=sp*.5;
+        if(f.lArm){f.lArm.rotation.x=sp*.4;f.lArm.rotation.z=.22;}if(f.rArm){f.rArm.rotation.x=sp*.4;f.rArm.rotation.z=-.22;}
+        if(f.stateT<.05){
+          try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}
+          try{announce('DROPKICK!!')}catch(_){}try{wfCineSubtitle('🦵 DROPKICK!!','#ff9900');}catch(_){}
+          f._dkDir={x:dx/(dist||1),z:dz/(dist||1)};
+        }
+      }else if(f.stateT<DK_HIT){
+        const sp=(f.stateT-DK_PREP)/(DK_HIT-DK_PREP);
+        if(f._dkDir){f.pos.x+=f._dkDir.x*f.def.speed*dt*3.2;f.pos.z+=f._dkDir.z*f.def.speed*dt*3.2;}
+        f.mesh.position.copy(f.pos);f.mesh.position.y=1.5+Math.sin(sp*Math.PI)*2.0;
+        if(f.lLeg)f.lLeg.rotation.x=-.7+sp*1.3;if(f.rLeg)f.rLeg.rotation.x=-.7+sp*1.3;
+        if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,.5-sp*.5);if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,.5-sp*.5);
+        if(f.lArm){f.lArm.rotation.x=.4+sp*.4;f.lArm.rotation.z=.22;}if(f.rArm){f.rArm.rotation.x=.4+sp*.4;f.rArm.rotation.z=-.22;}
+        f.mesh.rotation.x=-sp*.28;
+        if(!f._hitThisAttack&&sp>.52){
+          f._hitThisAttack=true;
+          const dk_d=Math.hypot(f.pos.x-cs.pilotPos.x,f.pos.z-cs.pilotPos.z);
+          if(dk_d<f.def.sz*2.0+1.8&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'){
+            cs.pilotHP=Math.max(0,cs.pilotHP-2);cs.pilotInvT=1.3;
+            try{screenFlash(.65)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
+            updateColosseumHUD();if(cs.pilotHP<=0){endColosseum(false);return;}
+            cs.pilotState='STAGGER';cs.pilotActionT=0;
+            const kbA=Math.atan2(cs.pilotPos.x-f.pos.x,cs.pilotPos.z-f.pos.z);
+            const kbPx=cs.pilotPos.x+Math.sin(kbA)*3.8,kbPz=cs.pilotPos.z+Math.cos(kbA)*3.8;
+            const kbD=Math.hypot(kbPx,kbPz);
+            cs.pilotPos.x=kbD>cs.ringR-.5?Math.sin(kbA)*(cs.ringR-.5):kbPx;
+            cs.pilotPos.z=kbD>cs.ringR-.5?Math.cos(kbA)*(cs.ringR-.5):kbPz;
+          }
+        }
+      }else{
+        if(f.mesh.position.y>1.5)f.mesh.position.y=Math.max(1.5,f.mesh.position.y-6*dt);
+        const sp=(f.stateT-DK_HIT)/(DK_END-DK_HIT);
+        if(f.lLeg)f.lLeg.rotation.x=Math.max(0,.6-sp*.6);if(f.rLeg)f.rLeg.rotation.x=Math.max(0,.6-sp*.6);
+        if(f.lLegLower)f.lLegLower.rotation.x=0;if(f.rLegLower)f.rLegLower.rotation.x=0;
+        if(f.lArm){f.lArm.rotation.x=0;f.lArm.rotation.z=0;}if(f.rArm){f.rArm.rotation.x=0;f.rArm.rotation.z=0;}
+        if(f.stateT>DK_END){f.mesh.position.y=1.5;f.mesh.rotation.x=0;f._hitThisAttack=false;f.attackCD=f.def.style==='slug'?2.0:1.2;f.state='IDLE';f.stateT=0;}
+      }
+      break;}
+    // v7.316: TAUNT — spread arms wide, jeer at player, then go berserk
+    case 'TAUNT':{
+      if(f.stateT<.05){
+        try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}
+        try{wfCineSubtitle('😤 TAUNTING...','#ff6600');}catch(_){}
+      }
+      if(f.lArm){f.lArm.rotation.x=Math.sin(cs.t*6)*.15;f.lArm.rotation.z=.98+Math.sin(cs.t*3)*.12;}
+      if(f.rArm){f.rArm.rotation.x=-Math.sin(cs.t*6)*.15;f.rArm.rotation.z=-.98-Math.sin(cs.t*3)*.12;}
+      if(f.head)f.head.rotation.x=-.28+Math.sin(cs.t*5)*.1;
+      f.mesh.rotation.z=Math.sin(cs.t*4)*.08;
+      if(f.stateT>2.2){
+        if(f.lArm){f.lArm.rotation.z=0;f.lArm.rotation.x=0;}if(f.rArm){f.rArm.rotation.z=0;f.rArm.rotation.x=0;}
+        if(f.head)f.head.rotation.x=0;f.mesh.rotation.z=0;
+        f.attackCD=0;f.state='APPROACH';f.stateT=0;
+      }
+      break;}
     case 'ELIMINATED':break;
     default:break;
   }
@@ -33483,6 +33595,15 @@ function _updateColoFighter(f,dt){
       f.state='ROLLING';f.stateT=0;f._rollHitCD=0;f._rollDirX=0;f._rollDirZ=0;f._rollWindupPuff=false;f._rollBrakePuff=false;f._rollDustT=0;
     }
   }
+  // v7.316: non-slug fighters — SLAM / DROPKICK / TAUNT chance
+  if(f.def.style!=='slug'&&f.state==='IDLE'&&f.stateT>1.2&&f.attackCD<=0&&dist<14){
+    const r=Math.random();
+    const lowHP=(cs.pilotHP/(cs.pilotMaxHP||18))<0.5;
+    if(lowHP&&r<0.12&&!f._tauntDoneThisHP){f._tauntDoneThisHP=true;f.state='TAUNT';f.stateT=0;}
+    else if(r<0.30&&dist<f.def.sz*3.5+2.5){f.state='SLAM';f.stateT=0;f._hitThisAttack=false;}
+    else if(r<0.52&&dist>f.def.sz*2+1){f.state='DROPKICK';f.stateT=0;f._hitThisAttack=false;f._dkDir=null;}
+  }
+  if(f._tauntDoneThisHP&&cs.pilotHP>(cs.pilotMaxHP||18)*.55)f._tauntDoneThisHP=false;
 }
 function _updateColosseumFighters(dt){const cs=colosseumState;if(!cs)return;cs.activeFighters.forEach(f=>{try{_updateColoFighter(f,dt)}catch(e){}});}
 function _colosseumWaveCheck(dt){
@@ -34402,10 +34523,12 @@ const PR_COURSES=[
 ];
 // v7.310: course diversity events — triggered every 15-25s after race start+10s
 const PR_EVENTS=[
-  {type:'scurve', label:'S-CURVE!',  color:'#ffee44', weight:3, duration:9,  params:{phases:[22,-22,0],phaseDur:3}},
-  {type:'hairpin',label:'HAIRPIN!',  color:'#ff6644', weight:2, duration:6,  params:{durMin:5,durMax:7,strength:26}},
-  {type:'updown', label:'HILL!',     color:'#66ff88', weight:3, duration:8,  params:{peakVertical:0.5,riseDur:4,fallDur:4}},
-  {type:'tunnel', label:'TUNNEL!',   color:'#88ccff', weight:2, duration:7,  params:{fogDark:0.022,ceilY:14,ceilH:2}},
+  {type:'scurve', label:'S-CURVE!',           color:'#ffee44', weight:3, duration:9,  params:{phases:[22,-22,0],phaseDur:3}},
+  {type:'hairpin',label:'HAIRPIN!',           color:'#ff6644', weight:2, duration:6,  params:{durMin:5,durMax:7,strength:26}},
+  {type:'updown', label:'HILL!',              color:'#66ff88', weight:3, duration:8,  params:{peakVertical:0.5,riseDur:4,fallDur:4}},
+  {type:'tunnel', label:'TUNNEL!',            color:'#88ccff', weight:2, duration:7,  params:{fogDark:0.022,ceilY:14,ceilH:2}},
+  {type:'river',  label:'🌊 RIVER CROSSING!', color:'#33ddff', weight:3, duration:7,  params:{speedMul:0.88,splashRate:0.06}},// v7.316
+  {type:'loop',   label:'🔄 LOOP-THE-LOOP!',  color:'#ffdd00', weight:1, duration:5,  params:{}},// v7.316
 ];
 // F1-lite points awarded by finishing position (index 0 = 1st), for 9 racers
 const PR_POINTS=[25,18,15,12,10,8,6,4,2];
@@ -34803,7 +34926,7 @@ function updatePodRace(dt){
   S._prHitCooldown=Math.max(0,S._prHitCooldown-dt);
   // v7.284: curve system — track drifts left/right like Mario Kart
   // v7.310: scurve/hairpin events override _prCurveV; updown/tunnel let normal curve run
-  if(!S._prEventActive||S._prEventType==='updown'||S._prEventType==='tunnel'){
+  if(!S._prEventActive||S._prEventType==='updown'||S._prEventType==='tunnel'||S._prEventType==='river'){
     S._prCurveT-=dt;
     if(S._prCurveT<=0){
       S._prCurveV=(Math.random()-0.5)*56; // -28 to +28 units/s
@@ -36256,6 +36379,19 @@ function _triggerCourseEvent(){
     if(scene.fog){S._prTunnelFogSaved={density:scene.fog.density,color:scene.fog.color.clone()};scene.fog.density=picked.params.fogDark;scene.fog.color.set(0x050508);}
     try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='1';}catch(_){}
   }
+  // v7.316: river — blue fog + ground color
+  if(picked.type==='river'){
+    if(scene.fog)S._prTunnelFogSaved={density:scene.fog.density,color:scene.fog.color.clone()};
+    if(scene.fog)scene.fog.color.set(0x0a2a55);
+    if(S._prGround)try{S._prGround.material.color.set(0x0a3a70);}catch(_){}
+  }
+  // v7.316: loop — dim + screenFlash at start
+  if(picked.type==='loop'){
+    S._prTunnelActive=true;
+    if(scene.fog){S._prTunnelFogSaved={density:scene.fog.density,color:scene.fog.color.clone()};scene.fog.density=0.020;scene.fog.color.set(0x050510);}
+    try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0.5';}catch(_){}
+    try{screenFlash(0.9);}catch(_){}
+  }
   // announce
   try{wfCineSubtitle(picked.label,picked.color);}catch(_){}
   try{
@@ -36290,6 +36426,25 @@ function _updateCourseEvent(dt){
     S._prVertical=(S._prVertical||0)+(tgt-(S._prVertical||0))*Math.min(1,3*dt);
   }else if(S._prEventType==='tunnel'){
     if(scene.fog)scene.fog.density=p.fogDark;
+  }else if(S._prEventType==='river'){
+    // v7.316: water splash particles near pod
+    const pod2=S._prPlayerPod;
+    if(pod2){
+      p._splashT=(p._splashT||0)+dt;
+      if(p._splashT>=p.splashRate){
+        p._splashT=0;
+        try{spawnP(new THREE.Vector3(pod2.position.x+(Math.random()-.5)*10,pod2.position.y-.3,pod2.position.z-(Math.random()*15+5)),0xaaddff,3,.8,.5,.55);}catch(_){}
+        try{spawnP(new THREE.Vector3(pod2.position.x+(Math.random()-.5)*18,0.4,pod2.position.z-(Math.random()*35+10)),0xeeffff,2,.6,.3,.35);}catch(_){}
+      }
+    }
+    // slight speed resistance
+    if(S._prSpeed>(S._prMaxSpeed||155)*p.speedMul)S._prSpeed*=Math.pow(p.speedMul,dt);
+  }else if(S._prEventType==='loop'){
+    // v7.316: full 360° camera.up rotation
+    S._prCurveV+=(0-S._prCurveV)*Math.min(1,3*dt);S._prCurveT=9999;
+    const loopAngle=Math.PI*2*(S._prEventT/S._prEventDur);
+    camera.up.set(Math.sin(loopAngle)*0.4,Math.cos(loopAngle),0);
+    camera.up.normalize();
   }
 }
 function _endCourseEvent(){
@@ -36300,6 +36455,20 @@ function _endCourseEvent(){
     if(scene.fog&&S._prTunnelFogSaved){scene.fog.density=S._prTunnelFogSaved.density;scene.fog.color.copy(S._prTunnelFogSaved.color);}
     S._prTunnelFogSaved=null;
     try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
+  }
+  // v7.316: river cleanup
+  if(type==='river'){
+    if(scene.fog&&S._prTunnelFogSaved)scene.fog.color.copy(S._prTunnelFogSaved.color);
+    S._prTunnelFogSaved=null;
+    const _crs2=_currentPRCourse();if(S._prGround)try{S._prGround.material.color.set(_crs2.groundCol);}catch(_){}
+  }
+  // v7.316: loop cleanup — reset camera.up
+  if(type==='loop'){
+    S._prTunnelActive=false;
+    if(scene.fog&&S._prTunnelFogSaved){scene.fog.density=S._prTunnelFogSaved.density;scene.fog.color.copy(S._prTunnelFogSaved.color);}
+    S._prTunnelFogSaved=null;
+    try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
+    camera.up.set(0,1,0);
   }
   S._prEventActive=false;S._prEventType=null;S._prEventParams=null;
   S._prEventNextT=15+Math.random()*10;
@@ -36875,6 +37044,13 @@ function _endPodRaceIntro(){
     if(S._prPlayerPod){S._prPlayerPod.position.y=1.5;S._prPlayerPod.rotation.y=0;}
     // restore camera to grid view
     try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
+    // v7.316: reset camera to proper chase position so player pod is visible during F1 lights
+    if(S._prPlayerPod&&S._prCamZ!=null){
+      const cZ=S._prCamZ;
+      camera.position.set(0,3.7,cZ);
+      camera.lookAt(0,1.5,cZ-63);
+      camera.up.set(0,1,0);
+    }
   }catch(_){}
   // v7.313: fire F1 lights only when maintenance is also done
   if(S._prMaintDone){
@@ -36913,6 +37089,7 @@ function _startF1Lights(){
     S._prRaceStarted=true;
     // v7.294: reveal AI pods on GO
     if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod)ai.pod.visible=true;});
+    if(S._prPlayerPod)S._prPlayerPod.visible=true;// v7.316: ensure player pod visible at GO!
     // v7.314: scroll stadium (arch+stands) away with the walls — no longer static
     try{
       if(S._prStadiumObjs&&S._prWalls){
