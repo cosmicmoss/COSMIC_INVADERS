@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.325</title>
+<title>COSMIC INVADERS v7.326</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1433,9 +1433,14 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <div id="pr-lap" style="font-size:22px;font-weight:bold;color:#ffcc00;letter-spacing:4px;">LAP 1 / 3</div>
     <div id="pr-hp" style="font-size:13px;color:#44ff88;letter-spacing:1px;margin-top:4px;text-shadow:0 0 6px #00ff66;">HULL: ██████████████████</div>
   </div>
+  <!-- v7.326: speed + gap display -->
   <div style="position:absolute;top:8px;right:12px;text-align:right;">
-    <div id="pr-speed" style="font-size:18px;color:#ff8800;letter-spacing:2px;">55 km/h</div>
+    <div id="pr-speed" style="font-size:18px;color:#ff8800;letter-spacing:2px;text-shadow:0 0 8px #ff6600;">55 km/h</div>
+    <div id="pr-speed-bar" style="margin-top:3px;width:90px;height:5px;background:rgba(80,20,0,0.5);border-radius:3px;overflow:hidden;margin-left:auto;"><div id="pr-speed-bar-fill" style="height:100%;width:30%;background:linear-gradient(90deg,#ff6600,#ff2200);border-radius:3px;transition:width 0.1s;"></div></div>
+    <div id="pr-gap-display" style="font-size:11px;color:#7fd0ff;letter-spacing:1px;margin-top:4px;">GAP: --</div>
   </div>
+  <!-- v7.326: JUMP indicator -->
+  <div id="pr-jump-ind" style="display:none;position:absolute;bottom:70px;left:50%;transform:translateX(-50%);font-size:16px;color:#aaccff;letter-spacing:3px;text-shadow:0 0 12px #aaccff;pointer-events:none;">▲ JUMP [J]</div>
   <!-- v7.312: course overview minimap — canvas with live curve visualization -->
   <div id="pr-map" style="position:absolute;top:58px;right:12px;width:132px;height:104px;border:1px solid #2a5a7a;border-radius:8px;background:rgba(0,16,28,0.55);box-shadow:0 0 10px rgba(0,120,200,0.25);">
     <canvas id="pr-map-canvas" width="132" height="84" style="position:absolute;top:0;left:0;border-radius:8px 8px 0 0;"></canvas>
@@ -1488,6 +1493,8 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 <div id="pr-tunnel-fog" style="display:block;position:fixed;inset:0;z-index:86;pointer-events:none;background:rgba(0,0,6,0.45);opacity:0;transition:opacity 1.2s ease;"></div>
 <!-- v7.302: speed streak overlay — conic radial lines appear at 90km/h+ -->
 <div id="pr-speed-streak" style="display:none;position:fixed;inset:0;z-index:87;pointer-events:none;background:repeating-conic-gradient(from 0deg at 50% 44%,rgba(255,245,210,0.07) 0deg 4deg,transparent 4deg 15deg);opacity:0;transition:opacity 0.35s;"></div>
+<!-- v7.326: edge glow overlay — vignette colour that pulses at high speed / nitro -->
+<div id="pr-edge-glow" style="display:none;position:fixed;inset:0;z-index:86;pointer-events:none;opacity:0;transition:opacity 0.2s;box-shadow:inset 0 0 80px 25px rgba(255,70,0,0.55);"></div>
 <!-- v7.302: horizon vanishing cursor — screen-projected dot showing where the road leads -->
 <div id="pr-horiz-cursor" style="display:none;position:fixed;z-index:92;pointer-events:none;transform:translate(-50%,-50%);transition:left 0.12s,top 0.12s,opacity 0.4s;opacity:0;">
   <div style="width:18px;height:18px;border:2px solid rgba(255,220,80,0.9);border-radius:50%;box-shadow:0 0 10px rgba(255,200,0,0.7),0 0 22px rgba(255,150,0,0.3);position:relative;">
@@ -34681,6 +34688,8 @@ function startPodRace(){
   S._prTrackLog=[];
   // v7.325: jump state
   S._prJumpY=0;S._prJumpVel=0;S._prJumping=false;S._prJumpTrig=false;
+  // v7.326: jump gates + trail
+  S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
   // v7.284: intro state
   S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
@@ -35500,6 +35509,18 @@ function updatePodRace(dt){
       S.shakeT=0.4;S.shakeI=1.2;
       try{sfx._prLapFanfare&&sfx._prLapFanfare()}catch(_){}
       try{sfx.playCrowdCheer&&sfx.playCrowdCheer(2.5)}catch(_){}// v7.297: lap cheer
+      // v7.326: FINAL LAP — dramatic entrance
+      if(S._prLap===3){
+        try{screenFlash(0.95)}catch(_){}
+        S.shakeT=1.2;S.shakeI=4.0;
+        try{wfCineSubtitle('🏁 FINAL LAP — GIVE IT EVERYTHING!!','#ff4400');}catch(_){}
+        try{playComm('hq','FINAL LAP!! Push it to the limit!!')}catch(_){}
+        try{sfx.playCrowdCheer&&sfx.playCrowdCheer(5);}catch(_){}
+        // confetti burst
+        for(let ci=0;ci<40;ci++){
+          try{const pod=S._prPlayerPod;spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*30,Math.random()*8,-(Math.random()*60))),[0xff4400,0xffee00,0x00ff99,0x4499ff,0xff44cc][ci%5],4,0.8,2.5,0.7);}catch(_){}
+        }
+      }
     }
   }
   try{_updatePodRaceItems(dt)}catch(_){}// v7.288: nitro/smoke/wrench cooldowns + projectiles
@@ -35517,6 +35538,48 @@ function updatePodRace(dt){
   }
   // v7.300: jump ramp check
   try{_checkJumpRamps();}catch(_){}
+  // v7.326: laser gate collision check — hit = crash; jump clears it
+  try{
+    if(S._prJumpGates&&S._prJumpGates.length){
+      const pod=S._prPlayerPod;const py=pod.position.y;
+      S._prJumpGates=S._prJumpGates.filter(gate=>{
+        if(!gate.parent)return false;// already scrolled out
+        const dz=Math.abs(pod.position.z-gate.position.z);
+        const dx=Math.abs(pod.position.x-(gate.userData.gateX||gate.position.x));
+        if(dz<3.5&&dx<(gate.userData.gateW||50)*0.5-1){
+          if(py<gate.position.y+0.8){// hit: not cleared
+            S._prSpeed=Math.max(20,S._prSpeed*0.55);S._prHP=Math.max(0,(S._prHP||18)-2);
+            S.shakeT=1.0;S.shakeI=3.0;
+            try{screenFlash(0.85)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
+            try{wfCineSubtitle('⚡ GATE CRASH!','#ff0066');}catch(_){}
+            try{spawnP(pod.position.clone(),0xff0066,20,1.2,0.6,0.8);}catch(_){}
+            updateColosseumHUD&&updateColosseumHUD();
+          } else {// cleared: bonus
+            try{spawnP(pod.position.clone(),0x00ff99,14,1.0,0.5,0.6);}catch(_){}
+            try{wfCineSubtitle('🚀 CLEARED!','#00ff99');}catch(_){}
+            try{sfx.playCrowdCheer&&sfx.playCrowdCheer(1.5);}catch(_){}
+          }
+          return false;// consumed
+        }
+        return true;
+      });
+    }
+  }catch(_){}
+  // v7.326: engine wake trail particles (speed > 90)
+  try{
+    const pod=S._prPlayerPod;
+    if(pod&&S._prSpeed>90){
+      S._prTrailT=(S._prTrailT||0)+dt;
+      const rate=0.018+Math.min(0.04,(S._prSpeed-90)/1500);
+      if(S._prTrailT>=rate){
+        S._prTrailT=0;
+        const nitroOn=(S._prNitroT||0)>0;
+        const tCol=nitroOn?0x44aaff:0xff6622;
+        const offset=new THREE.Vector3((Math.random()-0.5)*3,Math.random()*1.0-0.2,4+Math.random()*3);
+        spawnP(pod.position.clone().add(offset),tCol,2,0.55,0.55,0.45);
+      }
+    }
+  }catch(_){}
   _updatePodRaceAI(dt);
   // v7.308: slipstream — player drafts directly behind AI gets speed boost + HUD flash
   {
@@ -35592,6 +35655,17 @@ function updatePodRace(dt){
       const _sf=Math.max(0,(S._prSpeed-88)/62);// 0 at 88km/h, 1 at 150
       if(_sf>0.02){_sl.style.display='block';_sl.style.opacity=(_sf*0.82).toString();}
       else{_sl.style.opacity='0';}
+    }
+  }catch(_){}
+  // v7.326: edge glow — pulses red at wall-hit speed, blue during nitro
+  try{
+    const _eg=document.getElementById('pr-edge-glow');
+    if(_eg){
+      const nitroOn=(S._prNitroT||0)>0;
+      const wallClose=Math.abs(pod.position.x-(S._prCurveX||0))>((S._prLap===1?1.2:1.0)*(40+S._prSpeed/22)-8);
+      if(nitroOn){_eg.style.display='block';_eg.style.boxShadow='inset 0 0 90px 30px rgba(0,120,255,0.6)';_eg.style.opacity=(0.35+Math.sin(Date.now()*0.02)*0.12).toString();}
+      else if(wallClose){_eg.style.display='block';_eg.style.boxShadow='inset 0 0 80px 25px rgba(255,40,0,0.7)';_eg.style.opacity='0.55';}
+      else{_eg.style.opacity='0';if(parseFloat(_eg.style.opacity||1)<0.05)_eg.style.display='none';}
     }
   }catch(_){}
   // v7.302: horizon cursor — screen-projected dot at projected curve vanishing point
@@ -36031,6 +36105,57 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
     rock.position.set(rx,-1+Math.random()*2,startZ-Math.random()*segLen);
     scene.add(rock);S._prProps.push(rock);
   }
+  // v7.326: trackside atmosphere — glowing light pillars every ~60 units
+  for(let li=0;li<2;li++){
+    const lz=startZ-25-li*55;
+    [-1,1].forEach(side=>{
+      // pillar
+      const pilH=8+Math.random()*5;
+      const pilG=new THREE.BoxGeometry(0.7,pilH,0.7);
+      const pilCol=[0xff2200,0x00ccff,0xffaa00,0x44ff88,0xff44cc][Math.floor(Math.random()*5)];
+      const pil=new THREE.Mesh(pilG,new THREE.MeshBasicMaterial({color:pilCol,transparent:true,opacity:0.55}));
+      pil.position.set(curveX+side*(w/2+4+Math.random()*4),pilH/2-3,lz);scene.add(pil);S._prProps.push(pil);
+      // glow cap sphere
+      const capG=new THREE.SphereGeometry(0.55,5,4);
+      const cap=new THREE.Mesh(capG,new THREE.MeshBasicMaterial({color:pilCol}));
+      cap.position.set(curveX+side*(w/2+4+Math.random()*4),pilH-3,lz);scene.add(cap);S._prProps.push(cap);
+    });
+  }
+  // v7.326: LASER GATE — neon barrier players must jump over (25% chance, spaced ≥300u apart)
+  const _lgDist=S._prJumpGateLastZ!=null?Math.abs(startZ-S._prJumpGateLastZ):9999;
+  if(Math.random()<0.25&&_lgDist>300&&S._prTime>8){
+    const gateZ=startZ-40-Math.random()*50;
+    const gateX=curveX;
+    const gateY=1.2;// hover just above pod-height → must jump to clear
+    const gateW=w*0.7;// 70% of track width — leaves room on edges
+    const gColor=0xff0066;// hot pink neon
+    const gGlow=0xff88cc;
+    // horizontal beam
+    const bG=new THREE.BoxGeometry(gateW,0.35,0.55);
+    const beam=new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:gColor}));
+    beam.position.set(gateX,gateY,gateZ);scene.add(beam);S._prProps.push(beam);
+    const beamE=new THREE.LineSegments(new THREE.EdgesGeometry(bG),new THREE.LineBasicMaterial({color:gGlow}));
+    beamE.position.set(gateX,gateY,gateZ);scene.add(beamE);S._prProps.push(beamE);
+    // vertical posts
+    [-1,1].forEach(s=>{
+      const pG=new THREE.BoxGeometry(0.5,6,0.5);
+      const post=new THREE.Mesh(pG,new THREE.MeshBasicMaterial({color:gColor}));
+      post.position.set(gateX+s*gateW/2,gateY-2.8,gateZ);scene.add(post);S._prProps.push(post);
+      const postE=new THREE.LineSegments(new THREE.EdgesGeometry(pG),new THREE.LineBasicMaterial({color:gGlow}));
+      postE.position.set(gateX+s*gateW/2,gateY-2.8,gateZ);scene.add(postE);S._prProps.push(postE);
+      // warning chevron on post
+      const cG=new THREE.BoxGeometry(0.6,0.25,0.25);
+      for(let ci=0;ci<3;ci++){const ch=new THREE.Mesh(cG,new THREE.MeshBasicMaterial({color:0xffee00}));ch.position.set(gateX+s*gateW/2,gateY-1+ci*0.6,gateZ+0.4);scene.add(ch);S._prProps.push(ch);}
+    });
+    // warning arrows on floor
+    const arG=new THREE.BoxGeometry(gateW*0.6,0.05,2.5);
+    const arM=new THREE.Mesh(arG,new THREE.MeshBasicMaterial({color:gColor,transparent:true,opacity:0.7}));
+    arM.position.set(gateX,-2.9,gateZ+6);scene.add(arM);S._prProps.push(arM);
+    // tag for collision
+    beam.userData.isLaserGate=true;beam.userData.gateW=gateW;beam.userData.gateX=gateX;
+    S._prJumpGateLastZ=gateZ;
+    if(!S._prJumpGates)S._prJumpGates=[];S._prJumpGates.push(beam);
+  }
   // v7.300: jump ramp (15% chance per segment)
   if(Math.random()<0.15){
     const rampX=curveX+(Math.random()-0.5)*w*0.5;
@@ -36288,23 +36413,39 @@ function _finishPodRace(){
   S._prPlayerFinishTime=S._prTime;
   try{sfx.stopPodRaceBGM&&sfx.stopPodRaceBGM();}catch(_){}// v7.325
   if(!S._testFromOptions){try{markStageCleared('podrace')}catch(_){}}
-  // checkered flag overlay
+  // v7.326: dramatic finish overlay with position-dependent message
+  const finalPos=S._prPos||1;
+  const posMsg=finalPos===1?'🏆 WINNER!':finalPos<=3?'🥈 P'+finalPos+' PODIUM!':'P'+finalPos+' FINISH!';
+  const posCol=finalPos===1?'#ffd700':finalPos<=3?'#ccddff':'#88ddff';
   const flag=document.createElement('div');flag.id='pr-flag-flash';
-  flag.style.cssText='position:fixed;inset:0;z-index:250;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center';
-  flag.innerHTML='<div style="font-size:64px;line-height:1">🏁</div>'
-    +'<div style="font-size:28px;color:#ffff00;letter-spacing:6px;text-shadow:0 0 20px #ffff00;margin-top:8px">FINISH!!</div>';
+  flag.style.cssText='position:fixed;inset:0;z-index:250;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(0,0,0,0.7) 0%,rgba(0,0,0,0) 70%)';
+  flag.innerHTML='<div style="font-size:72px;line-height:1;animation:pulse 0.4s ease-in-out infinite alternate">🏁</div>'
+    +'<div style="font-size:40px;font-weight:900;color:'+posCol+';letter-spacing:6px;text-shadow:0 0 30px '+posCol+',0 0 60px '+posCol+';margin-top:12px;font-family:monospace">'+posMsg+'</div>'
+    +'<div style="font-size:18px;color:#ffffff;letter-spacing:4px;margin-top:8px;opacity:0.7">TIME: '+(()=>{const t=S._prPlayerFinishTime||0;const m=Math.floor(t/60);const s=(t%60).toFixed(1);return m+"'"+s.padStart(4,'0');})()+'</div>';
   document.body.appendChild(flag);
-  setTimeout(()=>{try{flag.remove()}catch(_){}},2200);
-  try{screenFlash(0.8)}catch(_){}
-  try{playComm('hq','INCREDIBLE!! You finished the Boonta Eve Classic!!')}catch(_){}
-  try{sfx.playCrowdCheer&&sfx.playCrowdCheer(5);}catch(_){}// v7.297: big finish cheer
+  setTimeout(()=>{try{flag.remove()}catch(_){}},3000);
+  try{screenFlash(finalPos===1?1.0:0.8)}catch(_){}
+  try{playComm('hq',finalPos===1?'INCREDIBLE!! P1 VICTORY!! YOU ARE THE CHAMPION OF BOONTA EVE!!':'Crossing the line in P'+finalPos+'!! Great race!!')}catch(_){}
+  try{sfx.playCrowdCheer&&sfx.playCrowdCheer(finalPos===1?5:3.5);}catch(_){}// v7.297: big finish cheer
   // v7.307: SLAG waves checkered flag + money shower at finish
   try{
     if(S._prVIPFlag)S._prVIPFlag.visible=true;// reveal flag on SLAG's arm
     const cZ=S._prCamZ||C.CAM_Z;
-    for(let i=0;i<80;i++){// money/confetti burst
-      const mx=(Math.random()-.5)*100,mz=cZ-10-Math.random()*60;
-      spawnP(new THREE.Vector3(mx,3+Math.random()*12,mz),[0xffcc00,0xff4444,0x44ff88,0xffffff,0xff88ff,0x66ccff][i%6],10,0.4+Math.random()*.7,2.5+Math.random()*2.5,2.0);
+    for(let i=0;i<140;i++){// v7.326: bigger confetti/firework burst
+      const mx=(Math.random()-.5)*120,my=2+Math.random()*18,mz=cZ-10-Math.random()*80;
+      const col=[0xffcc00,0xff4444,0x44ff88,0xffffff,0xff88ff,0x66ccff,0xffaa00,0x00ffcc][i%8];
+      spawnP(new THREE.Vector3(mx,my,mz),col,8+Math.floor(Math.random()*8),0.5+Math.random()*.9,2.5+Math.random()*3.0,0.6+Math.random()*1.4);
+    }
+    // v7.326: winner-only firework rockets
+    if(finalPos===1){
+      for(let f=0;f<6;f++){
+        setTimeout(()=>{
+          try{
+            const fz=cZ-20-Math.random()*40,fx=(Math.random()-0.5)*60;
+            for(let p=0;p<25;p++)spawnP(new THREE.Vector3(fx+(Math.random()-0.5)*20,8+Math.random()*10,fz),Math.random()<0.5?0xffcc00:0xff4400,5,1.2,2.0,1.0);
+          }catch(_){}
+        },200+f*350);
+      }
     }
     // SLAG does faster flag waving (handled by vipRArm animation + flag visible)
     S._prSlagFlagWave=true;
@@ -37190,7 +37331,36 @@ function _updatePodRaceHUD(){
     setTimeout(()=>{try{posEl.classList.remove('pr-pos-overtake');}catch(_){}},700);
   }
   S._prPrevPos=newPos;
-  if(speedEl)speedEl.textContent=Math.floor((S._prSpeed||55)*2)+' km/h';// v7.297: x2 display
+  const dispSpd=Math.floor((S._prSpeed||55)*2);
+  if(speedEl){
+    speedEl.textContent=dispSpd+' km/h';
+    // colour red at max speed / nitro
+    const nitroOn=(S._prNitroT||0)>0;
+    speedEl.style.color=nitroOn?'#00ccff':dispSpd>260?'#ff3300':dispSpd>180?'#ff8800':'#ff8800';
+    speedEl.style.textShadow=nitroOn?'0 0 18px #00ccff,0 0 36px #0088ff':'0 0 8px #ff6600';
+  }
+  // v7.326: speed bar
+  const barFill=document.getElementById('pr-speed-bar-fill');
+  if(barFill){const pct=Math.min(100,((S._prSpeed||55)-30)/((S._prMaxSpeed||155)-30)*100);barFill.style.width=pct+'%';barFill.style.background=(S._prNitroT||0)>0?'linear-gradient(90deg,#0088ff,#00ffcc)':pct>80?'linear-gradient(90deg,#ff6600,#ff0000)':'linear-gradient(90deg,#ff6600,#ff2200)';}
+  // v7.326: gap to car ahead
+  const gapEl=document.getElementById('pr-gap-display');
+  if(gapEl){
+    const spd=S._prSpeed||55;
+    if(newPos===1){gapEl.textContent='P1 \u00b7 LEADER';gapEl.style.color='#ffd700';}
+    else{
+      const gap=S._prLeaderTotal?((S._prLeaderTotal||0)-(S._prPlayerTotal||0))/(spd*2||110):null;
+      gapEl.textContent=gap!=null?'GAP +'+gap.toFixed(1)+'s':'GAP: --';
+      gapEl.style.color=gap&&gap<1?'#ff4400':gap&&gap<3?'#ffaa00':'#7fd0ff';
+    }
+  }
+  // v7.326: jump indicator \u2014 blink when jump-gate is close ahead
+  try{
+    const ji=document.getElementById('pr-jump-ind');
+    if(ji){
+      const pod2=S._prPlayerPod;const gatesClose=S._prJumpGates&&S._prJumpGates.some(g=>Math.abs(g.position.z-pod2.position.z)<80&&g.position.z<pod2.position.z);
+      ji.style.display=gatesClose?'block':'none';
+    }
+  }catch(_){}
   if(hpEl)hpEl.textContent='HULL: '+'\u2588'.repeat(Math.max(0,S._prHP||0))+'\u2591'.repeat(Math.max(0,(S._prMaxHP||6)-(S._prHP||0)));
   // v7.288: item readiness \u2014 bright when READY, dim + countdown when on cooldown/active
   const _item=(id,active,cd,label,onCol)=>{
