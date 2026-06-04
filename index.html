@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.323</title>
+<title>COSMIC INVADERS v7.324</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -1450,7 +1450,8 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <!-- v7.298: camera view toggle button (mobile / mouse) — v7.299: larger tap target -->
   <div id="pr-cam-btn" onclick="try{togglePodCamMode()}catch(_){}" style="position:absolute;bottom:10px;right:12px;pointer-events:auto;cursor:pointer;font-size:14px;letter-spacing:1px;color:#7fd0ff;padding:10px 14px;min-width:80px;text-align:center;border:1px solid #2a5a7a;border-radius:8px;background:rgba(0,16,28,0.72);box-shadow:0 0 8px rgba(0,120,200,0.25)">🎥 PILOT [C]</div>
   <!-- v7.304: gyro steer button — shown only on touch devices -->
-  <div id="pr-gyro-btn" onclick="try{_togglePodGyro()}catch(_){}" style="display:none;position:absolute;bottom:10px;right:108px;pointer-events:auto;cursor:pointer;font-size:13px;letter-spacing:1px;color:#44ffcc;padding:10px 12px;min-width:72px;text-align:center;border:1px solid #336655;border-radius:8px;background:rgba(0,20,16,0.75);box-shadow:0 0 8px rgba(0,200,150,0.2)">📱 GYRO</div>
+  <!-- v7.324: moved to bottom-LEFT to avoid overlapping centre item row and PILOT btn on narrow screens -->
+  <div id="pr-gyro-btn" onclick="try{_togglePodGyro()}catch(_){}" style="display:none;position:absolute;bottom:10px;left:12px;pointer-events:auto;cursor:pointer;font-size:13px;letter-spacing:1px;color:#44ffcc;padding:10px 12px;min-width:72px;text-align:center;border:1px solid #336655;border-radius:8px;background:rgba(0,20,16,0.75);box-shadow:0 0 8px rgba(0,200,150,0.2)">📱 GYRO</div>
   <!-- v7.304: tilt indicator bar (visible in gyro mode) -->
   <div id="pr-gyro-bar" style="display:none;position:absolute;bottom:54px;left:50%;transform:translateX(-50%);pointer-events:none;text-align:center;">
     <div style="font-size:9px;color:#33ccaa;letter-spacing:3px;margin-bottom:5px;">TILT STEER</div>
