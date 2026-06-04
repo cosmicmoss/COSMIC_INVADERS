@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.319</title>
+<title>COSMIC INVADERS v7.320</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -35697,14 +35697,18 @@ function _buildRaceStadium(){
   // Orange sign banner
   const sign=mk(new THREE.BoxGeometry(64,4,.5),0xff6600,.85);sign.position.set(0,19.5,ARCHZ+2);add(sign);
   const signE=ml(new THREE.BoxGeometry(64,4,.5),0xffcc44);signE.position.copy(sign.position);add(signE);
-  // == VIP BOX (left side, elevated) — SLAG's throne ==
+  // == VIP BOX — SLAG's throne (sits on TOP of the start gate) ==
   try{
     const vip=new THREE.Group();
-    // Platform
-    wf(new THREE.BoxGeometry(20,4,16),0x8a5820,0xddaa44,0,2,0);
-    wf(new THREE.BoxGeometry(22,1.5,18),0xcc8822,0xffcc44,0,13,0);// canopy
+    // v7.320: platform + canopy must be CHILDREN of vip (were leaking to scene origin → brown block buried in the player at start)
+    const vAdd=(geo,fc,ec,px,py,pz)=>{const m=mk(geo,fc,1);const e=ml(geo,ec);[m,e].forEach(o=>{o.position.set(px||0,py||0,pz||0);vip.add(o);});return m;};
+    // Platform (throne base)
+    vAdd(new THREE.BoxGeometry(18,2.4,14),0x8a5820,0xddaa44,0,1.2,0);
+    vAdd(new THREE.BoxGeometry(20,1.2,16),0xcc8822,0xffcc44,0,9,0);// canopy roof
+    // Canopy support posts
+    [-1,1].forEach(sx=>{[-1,1].forEach(sz=>{vAdd(new THREE.BoxGeometry(.6,8,.6),0x9a7038,0xccaa55,sx*8.5,5,sz*6.5);});});
     // Drape strips (red)
-    [-1,0,1].forEach(fx=>{const d=mk(new THREE.BoxGeometry(.5,9,.4),0xaa2200,1);d.position.set(fx*7.5,7.5,8.5);vip.add(d);});
+    [-1,0,1].forEach(fx=>{const d=mk(new THREE.BoxGeometry(.5,6,.4),0xaa2200,1);d.position.set(fx*6.5,5.5,7.2);vip.add(d);});
     // SLAG body
     const sGrp=new THREE.Group();sGrp.name='vipSlagBody';
     const torso=mk(new THREE.SphereGeometry(2.6,8,6),0x2e1e08,1);torso.scale.set(1.35,.75,1);sGrp.add(torso);
@@ -35730,8 +35734,8 @@ function _buildRaceStadium(){
       sq.position.set(fc*FS-6*FS/2+FS/2,2.2+fr*FS,.1);flagGrp.add(sq);
     }}
     rAG.add(flagGrp);sGrp.add(rAG);
-    sGrp.position.set(0,4.5,.5);vip.add(sGrp);
-    vip.position.set(0,24,cZ-15);// v7.319: on top of the start gate, centered
+    sGrp.position.set(0,3.0,.5);vip.add(sGrp);
+    vip.position.set(0,21.5,cZ-15);// v7.320: platform rests on the gate crossbeam (top ~21.5)
     scene.add(vip);S._prStadiumObjs.push(vip);
     S._prVIPSlag=sGrp;S._prVIPFlag=flagGrp;
   }catch(_){}
@@ -36211,7 +36215,7 @@ function _updatePodRacePostRace(dt){
     if(pod){
       // Free-look camera: orbits around pod, user can drag to adjust yaw/pitch
       const orbitR=28, orbitH=10;
-      S._prWinYaw=(S._prWinYaw||Math.PI*0.35)+(_prWinDragDY||0)*0;// init angle to side
+      S._prWinYaw=(S._prWinYaw||Math.PI*0.35);// v7.320: drop undefined _prWinDragDY ref (was *0 anyway)
       const yaw=S._prWinYaw+(S._prWinYawDrag||0);
       const pitch=Math.max(-0.15,Math.min(0.55,(S._prWinPitch||0.22)+(S._prWinPitchDrag||0)));
       camera.position.x=pod.position.x+Math.cos(yaw)*orbitR;
