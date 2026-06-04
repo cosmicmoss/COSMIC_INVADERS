@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.318</title>
+<title>COSMIC INVADERS v7.319</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -35690,13 +35690,13 @@ function _buildRaceStadium(){
     wf(new THREE.BoxGeometry((TIERS-1)*TSTEP+14,TIERS*TH+5,2.5),0x9a7850,0xccaa66,
        side*(BX+(TIERS-1)*TSTEP+7),-3+(TIERS-1)*TH/2,cZ-65);
   });
-  // == START/FINISH ARCH == placed 200 units ahead so player drives through it at race start
-  const ARCHW=78,ARCHZ=cZ-200;
+  // v7.319: START/FINISH ARCH at the start line, widened to clear the track
+  const ARCHW=110,ARCHZ=cZ-15;
   wf(new THREE.BoxGeometry(ARCHW,3,4),0xddcc88,0xffee99,0,20,ARCHZ);// cross beam
-  [-1,1].forEach(s=>{wf(new THREE.BoxGeometry(3.5,24,4),0xccaa66,0xeedd88,s*ARCHW/2,8,ARCHZ);});// pillars
+  [-1,1].forEach(s=>{wf(new THREE.BoxGeometry(3.5,24,4),0xccaa66,0xeedd88,s*ARCHW/2,8,ARCHZ);});// pillars (±55, outside track)
   // Orange sign banner
-  const sign=mk(new THREE.BoxGeometry(44,4,.5),0xff6600,.85);sign.position.set(0,19.5,ARCHZ+2);add(sign);
-  const signE=ml(new THREE.BoxGeometry(44,4,.5),0xffcc44);signE.position.copy(sign.position);add(signE);
+  const sign=mk(new THREE.BoxGeometry(64,4,.5),0xff6600,.85);sign.position.set(0,19.5,ARCHZ+2);add(sign);
+  const signE=ml(new THREE.BoxGeometry(64,4,.5),0xffcc44);signE.position.copy(sign.position);add(signE);
   // == VIP BOX (left side, elevated) — SLAG's throne ==
   try{
     const vip=new THREE.Group();
@@ -35731,7 +35731,7 @@ function _buildRaceStadium(){
     }}
     rAG.add(flagGrp);sGrp.add(rAG);
     sGrp.position.set(0,4.5,.5);vip.add(sGrp);
-    vip.position.set(-76,14,cZ-32);
+    vip.position.set(0,24,cZ-15);// v7.319: on top of the start gate, centered
     scene.add(vip);S._prStadiumObjs.push(vip);
     S._prVIPSlag=sGrp;S._prVIPFlag=flagGrp;
   }catch(_){}
@@ -37184,15 +37184,17 @@ function _updatePodRaceMinimap(){
 function _startPodRaceIntro(){
   S._prIntroActive=true;
   S._prIntroIdx=0;
-  // v7.314: Show ALL pods on grid at once, camera pulls back for overview
+  S._prIntroShowPod=null;// v7.319: pod currently in showcase spot
+  // v7.319: close-up "showcase" framing — each racer comes to a spot right in front of camera
   try{
     if(S._prAI)S._prAI.forEach(ai=>{
       if(ai&&ai.pod){ai.pod.visible=true;ai.pod.rotation.y=0;}
     });
-    // Camera: wide grid overview from elevated front angle
-    const gridCZ=S._prCamZ-50;
-    camera.position.set(0,22,S._prCamZ+18);
-    camera.lookAt(0,1.5,gridCZ);
+    const cZ=S._prCamZ;
+    camera.position.set(7,5.5,cZ+5);
+    camera.lookAt(0,3.8,cZ-20);
+    camera.fov=58;camera.updateProjectionMatrix();
+    camera.up.set(0,1,0);
   }catch(_){}
   try{wfCineSubtitle('★ MEET THE RACERS ★','#ffdd00');}catch(_){}
   try{playComm('hq','8 pilots on the grid!! Let\'s meet the competition!!')}catch(_){}
@@ -37205,18 +37207,21 @@ function _showNextPodRacer(idx){
   if(!ai){_endPodRaceIntro();return;}
   const colHex='#'+ai.def.col.toString(16).padStart(6,'0');
 
-  // v7.314: restore previous pod to normal grid position
+  // v7.319: restore previous pod to its saved grid position
   if(idx>0){
     const prev=S._prAI[idx-1];
-    if(prev&&prev.pod){
-      prev.pod.position.y=1.5;
+    if(prev&&prev.pod&&prev._homePos){
+      prev.pod.position.set(prev._homePos.x,prev._homePos.y,prev._homePos.z);
       prev.pod.rotation.y=0;
     }
   }
-  // Highlight current pod: lift it up + angle toward camera
+  // v7.319: bring current pod to the close-up showcase spot (centered in front of camera)
   if(ai.pod){
-    ai.pod.position.y=5.0;
+    ai._homePos={x:ai.pod.position.x,y:ai.pod.position.y,z:ai.pod.position.z};
+    const cZ=S._prCamZ;
+    ai.pod.position.set(0,3.8,cZ-20);
     ai.pod.rotation.y=Math.PI*0.25;
+    S._prIntroShowPod=ai.pod;// turntable target
   }
 
   // Update name card
@@ -37245,17 +37250,18 @@ function _showNextPodRacer(idx){
   try{sfx._prRacerRev&&sfx._prRacerRev(ai.def.col);}catch(_){}
 
   setTimeout(()=>{
-    if(ai.pod){ai.pod.position.y=1.5;ai.pod.rotation.y=0;}
+    if(ai.pod&&ai._homePos){ai.pod.position.set(ai._homePos.x,ai._homePos.y,ai._homePos.z);ai.pod.rotation.y=0;}
+    if(S._prIntroShowPod===ai.pod)S._prIntroShowPod=null;
     try{const card=document.getElementById('pr-intro-card');if(card)card.style.opacity='0';}catch(_){}
     setTimeout(()=>_showNextPodRacer(idx+1),200);
   },1400);
 }
 function _showPlayerIntroCard(){
   if(!S._prIntroActive)return;
-  // restore last AI pod
-  try{const last=S._prAI[S._prAI.length-1];if(last&&last.pod){last.pod.position.y=1.5;last.pod.rotation.y=0;}}catch(_){}
-  // raise player pod for highlight
-  try{if(S._prPlayerPod){S._prPlayerPod.position.y=5.0;S._prPlayerPod.rotation.y=-Math.PI*0.25;}}catch(_){}
+  // v7.319: restore last AI pod to its saved grid position
+  try{const last=S._prAI[S._prAI.length-1];if(last&&last.pod&&last._homePos){last.pod.position.set(last._homePos.x,last._homePos.y,last._homePos.z);last.pod.rotation.y=0;}}catch(_){}
+  // v7.319: bring player pod to the showcase spot
+  try{if(S._prPlayerPod){S._prPlayerPod.visible=true;S._prPlayerPod.position.set(0,3.8,S._prCamZ-20);S._prPlayerPod.rotation.y=-Math.PI*0.25;S._prIntroShowPod=S._prPlayerPod;}}catch(_){}
   const callsign=S.callsign||'PILOT';
   try{
     const card=document.getElementById('pr-intro-card');
@@ -37287,17 +37293,17 @@ function _endPodRaceIntro(){
   S._prIntroActive=false;
   const card=document.getElementById('pr-intro-card');
   if(card){card.style.opacity='0';setTimeout(()=>{try{card.style.display='none';}catch(_){}},350);}
-  // v7.314: restore ALL pods to grid + player pod to ground
+  // v7.319: restore AI pods to saved grid pos (hidden until GO!), bring player to start line visible
   try{
-    if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod){ai.pod.position.y=1.5;ai.pod.rotation.y=0;ai.pod.visible=false;}});
-    if(S._prPlayerPod){S._prPlayerPod.position.y=1.5;S._prPlayerPod.rotation.y=0;}
-    // restore camera to grid view
-    try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
-    // v7.316: reset camera to proper chase position so player pod is visible during F1 lights
+    S._prIntroShowPod=null;
+    if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod){if(ai._homePos)ai.pod.position.set(ai._homePos.x,ai._homePos.y,ai._homePos.z);else ai.pod.position.y=1.5;ai.pod.rotation.y=0;ai.pod.visible=false;}});
+    if(S._prPlayerPod){S._prPlayerPod.position.set(0,1.5,S._prCamZ-8);S._prPlayerPod.rotation.y=0;S._prPlayerPod.visible=true;}
+    // v7.316/v7.319: chase camera framing so the player pod is clearly visible during F1 lights
     if(S._prPlayerPod&&S._prCamZ!=null){
       const cZ=S._prCamZ;
       camera.position.set(0,3.7,cZ);
       camera.lookAt(0,1.5,cZ-63);
+      camera.fov=72;camera.updateProjectionMatrix();
       camera.up.set(0,1,0);
     }
   }catch(_){}
@@ -37308,11 +37314,18 @@ function _endPodRaceIntro(){
   }
 }
 function _updatePodRaceIntroAnim(dt){
-  // During intro: gently rotate pods on grid
-  if(!S._prAI)return;
-  S._prAI.forEach(ai=>{
-    if(ai&&ai.pod)ai.pod.rotation.y+=dt*0.5;
-  });
+  // v7.319: spin only the pod in the showcase spot (turntable); grid pods stay still
+  if(S._prIntroShowPod){S._prIntroShowPod.rotation.y+=dt*0.9;}
+  // gentle SLAG wave on the gate during intro
+  try{
+    if(S._prVIPSlag){
+      const t=S._prIntroWaveT=(S._prIntroWaveT||0)+dt;
+      const lA=S._prVIPSlag.getObjectByName('vipLArm');
+      const rA=S._prVIPSlag.getObjectByName('vipRArm');
+      if(lA)lA.rotation.z=1.0+Math.sin(t*3.5)*0.8;
+      if(rA)rA.rotation.z=-1.0-Math.sin(t*3.5+1.0)*0.8;
+    }
+  }catch(_){}
 }
 function _startF1Lights(){
   const slEl=document.getElementById('pr-startlights');
