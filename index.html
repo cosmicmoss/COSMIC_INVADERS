@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.320</title>
+<title>COSMIC INVADERS v7.321</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34684,6 +34684,7 @@ function startPodRace(){
   S._prMaintDone=false;// coordination flag: F1 lights fire when BOTH done
   // Spawn initial track segments
   for(let i=0;i<25;i++) _spawnPodRaceSegment(camera.position.z-20-i*120, 0);
+  S._prFarZ=camera.position.z-20-24*120;// v7.321: farthest-spawned Z pointer for continuous track extension
   // v7.307: build stadium grandstands + SLAG VIP box
   try{_buildRaceStadium();}catch(_){}
   _showPodRaceHUD();
@@ -35341,11 +35342,15 @@ function updatePodRace(dt){
   S._prProps=S._prProps.filter(p=>{
     if(p.position.z>camera.position.z+50){scene.remove(p);return false;}return true;
   });
-  if(S._prWalls.length<15){
-    // v7.302: project future curveX so far-ahead walls land at the right position when they arrive
-    const _spawnD=180, _scrollNow=S._prSpeed*2;
-    const _futureX=S._prCurveX+(S._prCurveV||0)*(_spawnD/Math.max(80,_scrollNow))*0.62;
-    _spawnPodRaceSegment(camera.position.z-_spawnD, _futureX, S._prCurveV);
+  // v7.321: continuous track — keep extending the chain so walls always reach ~2600 units ahead
+  if(S._prFarZ==null)S._prFarZ=camera.position.z-2900;
+  S._prFarZ+=scrollSpd*dt;// far pointer scrolls with the world
+  let _farGuard=0;
+  while(S._prFarZ>camera.position.z-2600&&_farGuard<8){
+    const nz=S._prFarZ-120;
+    const _cx=S._prCurveX+(S._prCurveV||0)*((camera.position.z-nz)/Math.max(80,scrollSpd))*0.62;
+    _spawnPodRaceSegment(nz,_cx,S._prCurveV);
+    S._prFarZ=nz;_farGuard++;
   }
   S._prDistance+=scrollSpd*dt;
   if(S._prDistance>=S._prLapDist){
@@ -35807,8 +35812,7 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
   const edgeMat=wallEdgeMat;
   const segLen=120;
   const widthScale=(S&&S._prLap===1)?1.2:1.0;
-  const widths=[70,50,60,80];// v7.295: 2.5× wider track
-  const w=widths[type]*widthScale;
+  const w=84*widthScale;// v7.321: CONSTANT track width — walls/lines line up across segments (was random [70,50,60,80])
   // v7.297: curve angle applied to wall rotation — makes track look curved ahead
   const cAngle=Math.atan2(curveV, Math.max(55,(S&&S._prSpeed)||55))*0.80;// v7.303: stronger wall rotation for curve feel
   // solid+wire walls for maximum visibility
@@ -35822,14 +35826,25 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
   };
   makeWall(curveX-w/2-2,0,startZ-segLen/2);
   makeWall(curveX+w/2+2,0,startZ-segLen/2);
-  // v7.294: floor lane stripes (centre line + edge lines)
-  [-1,0,1].forEach(s=>{
-    const stripeX=curveX+s*(w/2*0.7);
-    const stripeCol=s===0?0xffffff:_crs.stripeCol;
-    const sg=new THREE.BoxGeometry(0.35,0.05,segLen*0.9);
-    const sm=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:stripeCol,transparent:true,opacity:s===0?0.45:0.55}));
-    sm.position.set(stripeX,-2.95,startZ-segLen/2);scene.add(sm);S._prProps.push(sm);
+  // v7.321: continuous course lines — bright edge lines at the track boundary + centre line
+  // edge lines: full-length, at the exact drivable edge (curveX±w/2), bright + glowing
+  [-1,1].forEach(side=>{
+    const ex=curveX+side*(w/2);
+    // base bright line flush with floor
+    const eg=new THREE.BoxGeometry(0.9,0.06,segLen);
+    const em=new THREE.Mesh(eg,new THREE.MeshBasicMaterial({color:_crs.stripeCol,transparent:true,opacity:0.9}));
+    em.position.set(ex,-2.93,startZ-segLen/2);scene.add(em);S._prProps.push(em);
+    // raised glow rail just above floor — visible even where walls have gaps
+    const rg=new THREE.BoxGeometry(0.5,0.5,segLen);
+    const rm=new THREE.Mesh(rg,new THREE.MeshBasicMaterial({color:_crs.capCol,transparent:true,opacity:0.85}));
+    rm.position.set(ex,-2.55,startZ-segLen/2);scene.add(rm);S._prProps.push(rm);
   });
+  // centre line: white dashed feel — slightly shorter for a dashed look
+  {
+    const cg=new THREE.BoxGeometry(0.35,0.05,segLen*0.7);
+    const cm=new THREE.Mesh(cg,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.5}));
+    cm.position.set(curveX,-2.94,startZ-segLen/2);scene.add(cm);S._prProps.push(cm);
+  }
   // v7.295fix: flat kerb markers only (no tall poles that look like racers)
   for(let pi=0;pi<3;pi++){
     const pz=startZ-20-pi*38;
