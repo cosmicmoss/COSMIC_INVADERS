@@ -35225,12 +35225,12 @@ function _buildRaceStadium(){
     wf(new THREE.BoxGeometry((TIERS-1)*TSTEP+14,TIERS*TH+5,2.5),0x9a7850,0xccaa66,
        side*(BX+(TIERS-1)*TSTEP+7),-3+(TIERS-1)*TH/2,cZ-65);
   });
-  // == START/FINISH ARCH ==
-  const ARCHW=78;
-  wf(new THREE.BoxGeometry(ARCHW,3,4),0xddcc88,0xffee99,0,20,cZ-12);// cross beam
-  [-1,1].forEach(s=>{wf(new THREE.BoxGeometry(3.5,24,4),0xccaa66,0xeedd88,s*ARCHW/2,8,cZ-12);});// pillars
+  // == START/FINISH ARCH == placed 200 units ahead so player drives through it at race start
+  const ARCHW=78,ARCHZ=cZ-200;
+  wf(new THREE.BoxGeometry(ARCHW,3,4),0xddcc88,0xffee99,0,20,ARCHZ);// cross beam
+  [-1,1].forEach(s=>{wf(new THREE.BoxGeometry(3.5,24,4),0xccaa66,0xeedd88,s*ARCHW/2,8,ARCHZ);});// pillars
   // Orange sign banner
-  const sign=mk(new THREE.BoxGeometry(44,4,.5),0xff6600,.85);sign.position.set(0,19.5,cZ-10);add(sign);
+  const sign=mk(new THREE.BoxGeometry(44,4,.5),0xff6600,.85);sign.position.set(0,19.5,ARCHZ+2);add(sign);
   const signE=ml(new THREE.BoxGeometry(44,4,.5),0xffcc44);signE.position.copy(sign.position);add(signE);
   // == VIP BOX (left side, elevated) — SLAG's throne ==
   try{
@@ -36665,19 +36665,42 @@ function _updatePodRaceMinimap(){
 function _startPodRaceIntro(){
   S._prIntroActive=true;
   S._prIntroIdx=0;
+  // v7.314: Show ALL pods on grid at once, camera pulls back for overview
+  try{
+    if(S._prAI)S._prAI.forEach(ai=>{
+      if(ai&&ai.pod){ai.pod.visible=true;ai.pod.rotation.y=0;}
+    });
+    // Camera: wide grid overview from elevated front angle
+    const gridCZ=S._prCamZ-50;
+    camera.position.set(0,22,S._prCamZ+18);
+    camera.lookAt(0,1.5,gridCZ);
+  }catch(_){}
   try{wfCineSubtitle('★ MEET THE RACERS ★','#ffdd00');}catch(_){}
   try{playComm('hq','8 pilots on the grid!! Let\'s meet the competition!!')}catch(_){}
-  // Short delay then show racer cards
-  setTimeout(()=>{if(S._prIntroActive)_showNextPodRacer(0);},800);
+  setTimeout(()=>{if(S._prIntroActive)_showNextPodRacer(0);},900);
 }
 function _showNextPodRacer(idx){
   if(!S._prIntroActive)return;
-  // After all 8 AIs, show player card then end
   if(idx>=S._prAI.length){_showPlayerIntroCard();return;}
   const ai=S._prAI[idx];
   if(!ai){_endPodRaceIntro();return;}
   const colHex='#'+ai.def.col.toString(16).padStart(6,'0');
-  // Update card elements
+
+  // v7.314: restore previous pod to normal grid position
+  if(idx>0){
+    const prev=S._prAI[idx-1];
+    if(prev&&prev.pod){
+      prev.pod.position.y=1.5;
+      prev.pod.rotation.y=0;
+    }
+  }
+  // Highlight current pod: lift it up + angle toward camera
+  if(ai.pod){
+    ai.pod.position.y=5.0;
+    ai.pod.rotation.y=Math.PI*0.25;
+  }
+
+  // Update name card
   try{
     const card=document.getElementById('pr-intro-card');
     const numEl=document.getElementById('pr-intro-num');
@@ -36688,40 +36711,32 @@ function _showNextPodRacer(idx){
     const spdBar=document.getElementById('pr-intro-spd-bar');
     const aggBar=document.getElementById('pr-intro-agg-bar');
     if(numEl)numEl.textContent='RACER #'+(idx+1)+' / 8';
-    if(barEl){barEl.style.background=colHex;barEl.style.boxShadow='0 0 12px '+colHex;}
+    if(barEl){barEl.style.background=colHex;barEl.style.boxShadow='0 0 16px '+colHex;}
     if(nameEl){nameEl.textContent=ai.def.name;nameEl.style.color=colHex;}
     if(titleEl)titleEl.textContent=ai.def.title||'';
     if(bioEl)bioEl.textContent=ai.def.bio||'';
-    // Speed/aggression bars (filled squares, 10 max)
     const spdFill=Math.round(ai.def.speed*8.5);
     const aggFill=Math.round(ai.def.agg*10);
     if(spdBar)spdBar.textContent='█'.repeat(Math.min(10,spdFill))+'░'.repeat(Math.max(0,10-spdFill));
     if(aggBar)aggBar.textContent='█'.repeat(Math.min(10,aggFill))+'░'.repeat(Math.max(0,10-aggFill));
-    if(card){card.style.display='block';card.style.transition='opacity 0.25s';card.style.opacity='0';
+    if(card){card.style.display='block';card.style.transition='opacity 0.2s';card.style.opacity='0';
       requestAnimationFrame(()=>requestAnimationFrame(()=>{try{card.style.opacity='1';}catch(_){}}));
     }
   }catch(_){}
-  // Pod sweeps past camera from right to left
-  ai.pod.visible=true;
-  ai.pod.position.set(50,1.5,camera.position.z+4);
-  ai.pod.rotation.y=-Math.PI*0.4;// angle toward camera
-  const sweepInterval=setInterval(()=>{
-    if(!S._prIntroActive){clearInterval(sweepInterval);return;}
-    ai.pod.position.x-=1.6;
-    ai.pod.rotation.y+=(0-(ai.pod.rotation.y))*0.04;
-  },16);
   try{sfx._prRacerRev&&sfx._prRacerRev(ai.def.col);}catch(_){}
+
   setTimeout(()=>{
-    clearInterval(sweepInterval);
-    ai.pod.visible=false;// hide until GO!
-    ai.pod.position.set(ai.def.gridX,1.5,camera.position.z-30-idx*5);
-    ai.pod.rotation.y=0;
+    if(ai.pod){ai.pod.position.y=1.5;ai.pod.rotation.y=0;}
     try{const card=document.getElementById('pr-intro-card');if(card)card.style.opacity='0';}catch(_){}
-    setTimeout(()=>_showNextPodRacer(idx+1),220);
-  },1350);
+    setTimeout(()=>_showNextPodRacer(idx+1),200);
+  },1400);
 }
 function _showPlayerIntroCard(){
   if(!S._prIntroActive)return;
+  // restore last AI pod
+  try{const last=S._prAI[S._prAI.length-1];if(last&&last.pod){last.pod.position.y=1.5;last.pod.rotation.y=0;}}catch(_){}
+  // raise player pod for highlight
+  try{if(S._prPlayerPod){S._prPlayerPod.position.y=5.0;S._prPlayerPod.rotation.y=-Math.PI*0.25;}}catch(_){}
   const callsign=S.callsign||'PILOT';
   try{
     const card=document.getElementById('pr-intro-card');
@@ -36753,12 +36768,18 @@ function _endPodRaceIntro(){
   S._prIntroActive=false;
   const card=document.getElementById('pr-intro-card');
   if(card){card.style.opacity='0';setTimeout(()=>{try{card.style.display='none';}catch(_){}},350);}
+  // v7.314: restore ALL pods to grid + player pod to ground
+  try{
+    if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod){ai.pod.position.y=1.5;ai.pod.rotation.y=0;ai.pod.visible=false;}});
+    if(S._prPlayerPod){S._prPlayerPod.position.y=1.5;S._prPlayerPod.rotation.y=0;}
+    // restore camera to grid view
+    try{camera.lookAt(0,1.5,camera.position.z-55);}catch(_){}
+  }catch(_){}
   // v7.313: fire F1 lights only when maintenance is also done
   if(S._prMaintDone){
     try{playComm('hq','All racers on the grid!! F1 sequence — STAND BY!!')}catch(_){}
     setTimeout(()=>{try{_startF1Lights();}catch(_){}},600);
   }
-  // else: maintenance will trigger F1 lights when it finishes
 }
 function _updatePodRaceIntroAnim(dt){
   // During intro: gently rotate pods on grid
@@ -36791,6 +36812,13 @@ function _startF1Lights(){
     S._prRaceStarted=true;
     // v7.294: reveal AI pods on GO
     if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod)ai.pod.visible=true;});
+    // v7.314: scroll stadium (arch+stands) away with the walls — no longer static
+    try{
+      if(S._prStadiumObjs&&S._prWalls){
+        S._prStadiumObjs.forEach(o=>{S._prWalls.push(o);});
+        S._prStadiumObjs=[];
+      }
+    }catch(_){}
     announce('LAP 1 / 3');
     // v7.288: control hint for the new sabotage items
     setTimeout(()=>{try{announce('SPACE=NITRO  ENTER=SMOKE  SHIFT=WRENCH')}catch(_){}},1400);
