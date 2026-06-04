@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.327</title>
+<title>COSMIC INVADERS v7.328</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -2805,6 +2805,51 @@ class SFX{
     if(this._crowdAmbSrc){try{this._crowdAmbSrc.stop();}catch(_){}this._crowdAmbSrc=null;}
     if(this._crowdAmbG){try{this._crowdAmbG.disconnect();}catch(_){}this._crowdAmbG=null;}
     if(this._crowdYellT){clearTimeout(this._crowdYellT);this._crowdYellT=null;}
+  }
+  // v7.328: Colosseum ARENA BGM — tense percussion + menacing bass drone
+  startColosseumBGM(){
+    if(!this.ctx)return;this.stopColosseumBGM();
+    try{
+      const ctx=this.ctx,dst=this.bgmG||this.g;
+      // deep drone bass
+      const bass=ctx.createOscillator();bass.type='sawtooth';bass.frequency.value=55;
+      const bassF=ctx.createBiquadFilter();bassF.type='lowpass';bassF.frequency.value=120;
+      const bassG=ctx.createGain();bassG.gain.value=0.18;
+      bass.connect(bassF);bassF.connect(bassG);bassG.connect(dst);bass.start();
+      // tense mid tone
+      const mid=ctx.createOscillator();mid.type='square';mid.frequency.value=110;
+      const midG=ctx.createGain();midG.gain.value=0;
+      mid.connect(midG);midG.connect(dst);mid.start();
+      this._coloMids={bass,bassG,mid,midG,step:0,timer:null};
+      const HITS=[1,0,0,1,0,1,0,0,1,0,0,1,0,0,1,0];// kick pattern
+      const MIDS=[0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0];// mid accent pattern
+      const self=this;
+      const tick=()=>{
+        if(!self._coloMids)return;
+        try{
+          const t=ctx.currentTime;const step=self._coloMids.step%16;
+          const cs=typeof colosseumState!=='undefined'?colosseumState:null;
+          const hpRatio=cs?Math.max(0.1,(cs.pilotHP||18)/(cs.pilotMaxHP||18)):1;
+          // kick
+          if(HITS[step]){bassG.gain.setValueAtTime(0.22+cs?._coloExcite*0.06||0,t);bassG.gain.exponentialRampToValueAtTime(0.04,t+0.22);}
+          // mid accent
+          if(MIDS[step]){mid.frequency.setValueAtTime(110+Math.random()*40,t);midG.gain.setValueAtTime(0.05,t);midG.gain.exponentialRampToValueAtTime(0.001,t+0.18);}
+          // bass pitch shifts lower at low HP for dread
+          bass.frequency.setValueAtTime(55*(hpRatio<0.3?0.75:1.0),t);
+          self._coloMids.step++;
+          const bpm=120+(cs&&cs._coloExcite||0)*15;
+          self._coloMids.timer=setTimeout(tick,60000/bpm/4);
+        }catch(_){self._coloMids&&(self._coloMids.timer=setTimeout(tick,125));}
+      };
+      this._coloMids.timer=setTimeout(tick,60);
+    }catch(_){}
+  }
+  stopColosseumBGM(){
+    const b=this._coloMids;if(!b)return;
+    clearTimeout(b.timer);
+    [b.bass,b.mid].forEach(o=>{if(o){try{o.stop();o.disconnect();}catch(_){}}});
+    [b.bassG,b.midG].forEach(g=>{if(g){try{g.disconnect();}catch(_){}}});
+    this._coloMids=null;
   }
   // v7.325: Pod Race BGM — Cyber Pod 500 melody ported + arranged (bass + harmony + tempo-sync)
   startPodRaceBGM(){
@@ -35332,14 +35377,27 @@ function updatePodRace(dt){
   if(nitroBtn&&(S._prNitroT||0)<=0&&S._prNitroCD<=0){
     S._prNitroT=3;S._prNitroCD=8;
     S._prTouchNitro=false;// consume the touch
-    try{wfCineSubtitle('★ NITRO! ★','#66ccff')}catch(_){}
+    try{wfCineSubtitle('⚡★ NITRO BOOST!! ★⚡','#00ccff')}catch(_){}
     try{sfx._prNitro&&sfx._prNitro()}catch(_){}
+    // v7.328: nitro activation burst
+    try{const pod=S._prPlayerPod;for(let i=0;i<16;i++)spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*6,(Math.random()-0.5)*2,i*1.5+2)),0x00aaff,3,1.4,0.6,0.5);}catch(_){}
+    try{S.shakeT=0.3;S.shakeI=2.0;}catch(_){}
+    try{screenFlash(0.35)}catch(_){}
   }
   const nitro=(S._prNitroT||0)>0;
   if(nitro){
     S._prNitroT=Math.max(0,S._prNitroT-dt);
     S._prSpeed=Math.min(S._prMaxSpeed*1.5,S._prSpeed+90*dt);
-    if(S._prPlayerPod)try{spawnP(new THREE.Vector3(S._prPlayerPod.position.x,S._prPlayerPod.position.y,S._prPlayerPod.position.z+2),0x99e0ff,2,1.2,0.4,0.5)}catch(_){}
+    // v7.328: dense blue plasma trail during nitro
+    if(S._prPlayerPod){
+      S._prNitroTrailT=(S._prNitroTrailT||0)+dt;
+      if(S._prNitroTrailT>0.025){
+        S._prNitroTrailT=0;
+        const pod=S._prPlayerPod;
+        try{spawnP(new THREE.Vector3(pod.position.x+(Math.random()-0.5)*2,pod.position.y+(Math.random()-0.5),pod.position.z+2+Math.random()*4),0x00ccff,4,1.3,0.6,0.55);}catch(_){}
+        try{spawnP(new THREE.Vector3(pod.position.x+(Math.random()-0.5)*3,pod.position.y-0.2,pod.position.z+4+Math.random()*6),0x0066ff,3,1.0,0.5,0.40);}catch(_){}
+      }
+    }
   }
   else if(S._prGyroActive){
     // v7.304: gyro mode — auto-accel unless touch-braking
