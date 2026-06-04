@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.331</title>
+<title>COSMIC INVADERS v7.332</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -36184,6 +36184,58 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
   };
   makeWall(curveX-w/2-2,0,startZ-segLen/2);
   makeWall(curveX+w/2+2,0,startZ-segLen/2);
+  // v7.332: per-segment wall decoration variation (4 styles cycle by Z position)
+  const decoStyle=Math.floor(Math.abs(startZ/120))%4;
+  [-1,1].forEach(side=>{
+    const wallX=curveX+side*(w/2+2);
+    // ── STYLE 0: SPIRE TOPS (triangular peaks every 15u) ──
+    if(decoStyle===0){
+      for(let s=0;s<8;s++){
+        const sz=startZ-10-s*15;
+        const sH=4+Math.random()*3;
+        const sG=new THREE.ConeGeometry(2.2,sH,4);
+        const sp=new THREE.Mesh(sG,new THREE.MeshBasicMaterial({color:_crs.capCol}));
+        sp.position.set(wallX,9+sH/2,sz);sp.rotation.y=cAngle+Math.PI*0.25;scene.add(sp);S._prWalls.push(sp);
+        const spE=new THREE.LineSegments(new THREE.EdgesGeometry(sG),new THREE.LineBasicMaterial({color:_crs.wallEdge}));
+        spE.position.copy(sp.position);spE.rotation.copy(sp.rotation);scene.add(spE);S._prWalls.push(spE);
+      }
+    }
+    // ── STYLE 1: GLOWING TUBES (cyan/magenta horizontal light strips) ──
+    else if(decoStyle===1){
+      for(let lv=0;lv<3;lv++){
+        const tubeY=2+lv*4;
+        const tubeColors=[0x00ddff,0xff44cc,0xffee22];
+        const tG=new THREE.CylinderGeometry(0.25,0.25,segLen,5);
+        const tube=new THREE.Mesh(tG,new THREE.MeshBasicMaterial({color:tubeColors[lv]}));
+        tube.rotation.x=Math.PI/2;tube.position.set(wallX-side*2.3,tubeY,startZ-segLen/2);
+        tube.rotation.y=cAngle;scene.add(tube);S._prWalls.push(tube);
+      }
+    }
+    // ── STYLE 2: ADVERTISING PANELS (3 large colored boards) ──
+    else if(decoStyle===2){
+      const adColors=[0xff2244,0x44ff88,0xffaa00,0x4488ff,0xff44ee];
+      for(let p=0;p<3;p++){
+        const pz=startZ-25-p*35;
+        const adG=new THREE.BoxGeometry(0.4,6,18);
+        const ad=new THREE.Mesh(adG,new THREE.MeshBasicMaterial({color:adColors[(Math.floor(pz)+p)%adColors.length]}));
+        ad.position.set(wallX-side*2.3,6,pz);ad.rotation.y=cAngle;scene.add(ad);S._prWalls.push(ad);
+        const adE=new THREE.LineSegments(new THREE.EdgesGeometry(adG),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.6}));
+        adE.position.copy(ad.position);adE.rotation.copy(ad.rotation);scene.add(adE);S._prWalls.push(adE);
+      }
+    }
+    // ── STYLE 3: SUPPORT BUTTRESSES (angled outward struts every 20u) ──
+    else {
+      for(let b=0;b<6;b++){
+        const bz=startZ-5-b*20;
+        const bG=new THREE.BoxGeometry(2.5,16,1.5);
+        const but=new THREE.Mesh(bG,new THREE.MeshBasicMaterial({color:_crs.wallFill}));
+        but.position.set(wallX+side*1.8,8,bz);but.rotation.y=cAngle;but.rotation.z=side*0.18;
+        scene.add(but);S._prWalls.push(but);
+        const butE=new THREE.LineSegments(new THREE.EdgesGeometry(bG),new THREE.LineBasicMaterial({color:_crs.wallEdge}));
+        butE.position.copy(but.position);butE.rotation.copy(but.rotation);scene.add(butE);S._prWalls.push(butE);
+      }
+    }
+  });
   // v7.321: continuous course lines — bright edge lines at the track boundary + centre line
   // edge lines: full-length, at the exact drivable edge (curveX±w/2), bright + glowing
   [-1,1].forEach(side=>{
@@ -36497,15 +36549,19 @@ function _checkPodRaceCollisions(){
   if(S._prHitCooldown>0)return;
   const pod=S._prPlayerPod;
   const px=pod.position.x,py=pod.position.y;
-  const trackHalfW=(S._prLap===1?1.2:1.0)*(40+S._prSpeed/22);// v7.295: scaled for 2.5× wider track
-  if(Math.abs(px-(S._prCurveX||0))>trackHalfW-1){
-    pod.position.x=(S._prCurveX||0)+Math.sign(px-(S._prCurveX||0))*(trackHalfW-2);
+  // v7.332: collision matches actual wall position — constant 42u half-width (track w=84) ×lap1 scale 1.2
+  // pod half-width ~3.5u → effective collision boundary at curveX ± (42 - 3.5) = ±38.5
+  // (was speed-dependent 40+spd/22, which left the pod either bouncing early at low speed
+  //  or clipping through walls at high speed)
+  const trackHalfW=(S._prLap===1?1.2:1.0)*42;// matches w/2 in _spawnPodRaceSegment
+  const podHalfW=3.5;
+  const wallInner=trackHalfW-podHalfW;// inner edge of wall accounting for pod size
+  if(Math.abs(px-(S._prCurveX||0))>wallInner){
+    pod.position.x=(S._prCurveX||0)+Math.sign(px-(S._prCurveX||0))*(wallInner-0.4);
     if(S._prSpeed>65&&!S._prCrashPhase){
-      // v7.299: HIGH-SPEED CRASH — pilot ejection + reboard time penalty
       try{_triggerPilotEjection();}catch(_){}
       return;
     }
-    // normal low-speed bounce
     S._prSpeed*=0.6;
     S._prHitCooldown=1.5;
     S._prHP=Math.max(0,S._prHP-1);
