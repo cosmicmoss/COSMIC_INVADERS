@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.317</title>
+<title>COSMIC INVADERS v7.318</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34770,116 +34770,357 @@ function makePodRacerPod(type,color,variant){
   }
   // --- per-monster unique pod bodies ---
   switch(type){
-    case 'tengu':{// Fan-turbine engines (5 blade slats + hub), beak-nose cockpit
+    case 'tengu':{// TENGU v7.317 — high-detail wind-turbine racer
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
-        for(let i=0;i<5;i++){const sl=wf(new THREE.BoxGeometry(0.1,1.8,0.09),col);sl.rotation.y=(i-2)*0.2;eng.add(sl);}
-        const hub=wf(new THREE.CylinderGeometry(0.38,0.38,0.25,8),col);eng.add(hub);
-        const exR=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.45,0.07,6,10)),mE(col));
-        exR.position.z=1.3;exR.rotation.x=Math.PI/2;eng.add(exR);
-        eng.rotation.set(Math.PI/2,0,0);eng.position.set(s*3.2,0.4,-1.5);g.add(eng);
+        // 8-blade fan (alternating long/short)
+        for(let i=0;i<8;i++){const long=i%2===0;const sl=wf(new THREE.BoxGeometry(0.07,long?2.0:1.4,0.06),col);sl.rotation.y=i/8*Math.PI*2;eng.add(sl);}
+        // center spinner cone + hub cylinder
+        const hub=wf(new THREE.CylinderGeometry(0.32,0.38,0.30,8),col);eng.add(hub);
+        const spinner=wf(new THREE.ConeGeometry(0.22,0.45,7),col);spinner.position.z=-0.38;eng.add(spinner);
+        // intake shroud (large outer torus)
+        const shroud=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.05,0.09,6,12)),mE(col));shroud.rotation.x=Math.PI/2;eng.add(shroud);
+        // inner guide ring
+        const guide=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.60,0.05,5,10)),mE(col));guide.rotation.x=Math.PI/2;eng.add(guide);
+        // 4 intake guide vanes (radial struts front)
+        for(let v=0;v<4;v++){const vn=wf(new THREE.BoxGeometry(0.04,0.42,0.06),col);vn.rotation.y=v/4*Math.PI*2;vn.position.z=-0.05;eng.add(vn);}
+        // exhaust nacelle housing cylinder
+        const hou=wf(new THREE.CylinderGeometry(1.10,0.98,0.18,10),col);hou.rotation.x=Math.PI/2;hou.position.z=0.06;eng.add(hou);
+        // 2 exhaust rings at rear
+        for(let r=0;r<2;r++){const exR=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.50-r*0.1,0.05,5,10)),mE(col));exR.position.z=1.25+r*0.22;exR.rotation.x=Math.PI/2;eng.add(exR);}
+        // cooling fin array (4 small fins on housing)
+        for(let f=0;f<4;f++){const fn=wf(new THREE.BoxGeometry(0.04,0.26,0.38),col);const fa=f/4*Math.PI*2;fn.position.set(Math.cos(fa)*1.10,Math.sin(fa)*1.10,0.06);fn.rotation.y=fa;eng.add(fn);}
+        eng.rotation.set(Math.PI/2,0,0);eng.position.set(s*3.4,0.35,-1.4);g.add(eng);
+        // engine mount strut
+        const st=wf(new THREE.BoxGeometry(0.12,0.55,0.14),col);st.position.set(s*1.8,0.1,0);g.add(st);
       });
-      g.add(wf(new THREE.BoxGeometry(1.0,1.0,2.0),col));// cockpit
-      const beak=wf(new THREE.CylinderGeometry(0.06,0.2,1.1,4),col);beak.rotation.x=Math.PI/2;beak.position.set(0,0.25,-1.4);g.add(beak);
-      const cn=wf(new THREE.SphereGeometry(0.48,6,5),col);cn.scale.set(0.8,0.6,1.0);cn.position.set(0,0.55,0);g.add(cn);
-      cab([[-0.4,0.1,0.8],[-1.8,-0.3,-0.2],[-3.2,0.2,-0.8]]);cab([[0.4,0.1,0.8],[1.8,-0.3,-0.2],[3.2,0.2,-0.8]]);
+      // main fuselage + raised cockpit spine
+      g.add(wf(new THREE.BoxGeometry(0.95,0.88,2.2),col));
+      g.add(wf(new THREE.BoxGeometry(0.55,0.28,1.8),col)).position.set(0,0.58,0.1);
+      // elongated nose pod
+      const nosePod=wf(new THREE.CylinderGeometry(0.12,0.28,1.4,5),col);nosePod.rotation.x=Math.PI/2;nosePod.position.set(0,0.20,-1.55);g.add(nosePod);
+      // beak tip probe
+      const beak=wf(new THREE.CylinderGeometry(0.03,0.08,0.75,4),col);beak.rotation.x=Math.PI/2;beak.position.set(0,0.22,-2.35);g.add(beak);
+      // canopy dome (layered: outer + inner frame)
+      const cn=wf(new THREE.SphereGeometry(0.46,7,5),col);cn.scale.set(0.78,0.58,1.05);cn.position.set(0,0.56,0.15);g.add(cn);
+      const cnIn=wf(new THREE.SphereGeometry(0.38,5,4),col);cnIn.scale.set(0.72,0.48,0.95);cnIn.position.set(0,0.52,0.15);g.add(cnIn);
+      // top dorsal fin
+      const dFin=wf(new THREE.BoxGeometry(0.06,0.52,0.90),col);dFin.position.set(0,0.98,0.38);g.add(dFin);
+      // side air intake scoops
+      [-1,1].forEach(s=>{const sc=wf(new THREE.BoxGeometry(0.14,0.22,0.48),col);sc.position.set(s*0.55,-0.12,-0.28);g.add(sc);});
+      // lateral winglets
+      [-1,1].forEach(s=>{const wl=wf(new THREE.BoxGeometry(0.72,0.06,0.52),col);wl.position.set(s*0.86,0.1,0.32);g.add(wl);});
+      // rear stabilizer
+      g.add(wf(new THREE.BoxGeometry(1.55,0.05,0.32),col)).position.set(0,-0.06,0.88);
+      // energy cables: 3-point each side with branch
+      cab([[-0.38,0.18,0.85],[-1.2,-0.15,0.05],[-2.0,-0.28,-0.35],[-3.4,0.2,-0.75]]);
+      cab([[0.38,0.18,0.85],[1.2,-0.15,0.05],[2.0,-0.28,-0.35],[3.4,0.2,-0.75]]);
+      cab([[-0.2,0.65,0.25],[-1.5,0.05,-0.15],[-3.4,0.25,-0.75]]);
       g.userData.halfW=3.5;break;}
-    case 'mantis':{// Sickle-slab engines, wedge cockpit
+    case 'mantis':{// MANTIS v7.317 — dual sickle-blade precision racer
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
-        eng.add(wf(new THREE.BoxGeometry(0.5,0.55,5.2),col));// barrel
-        const sk=wf(new THREE.BoxGeometry(0.1,1.6,0.08),col);sk.position.set(0,1.1,-0.7);sk.rotation.z=s*0.55;eng.add(sk);// sickle
-        const ir=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.55,0.08,6,10)),mE(col));
-        ir.position.z=-2.7;ir.rotation.x=Math.PI/2;eng.add(ir);
-        eng.position.set(s*3.4,0,-1.8);g.add(eng);
+        // main barrel with segmented armor rings
+        eng.add(wf(new THREE.BoxGeometry(0.52,0.58,5.4),col));
+        for(let r=0;r<5;r++){const ring=wf(new THREE.BoxGeometry(0.60,0.68,0.10),col);ring.position.z=-2.2+r*1.0;eng.add(ring);}
+        // primary sickle blade
+        const sk1=wf(new THREE.BoxGeometry(0.08,1.75,0.07),col);sk1.position.set(0,1.15,-0.6);sk1.rotation.z=s*0.55;eng.add(sk1);
+        // secondary sickle (shorter, cross-braced)
+        const sk2=wf(new THREE.BoxGeometry(0.06,1.1,0.06),col);sk2.position.set(s*0.12,0.88,-0.6);sk2.rotation.z=s*0.85;eng.add(sk2);
+        // blade edge sharpening ridge
+        const edge=wf(new THREE.BoxGeometry(0.04,0.06,1.6),col);edge.position.set(s*0.06,1.75,-0.8);eng.add(edge);
+        // front oval intake (2 concentric)
+        for(let oi=0;oi<2;oi++){const ir=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.52-oi*0.12,0.06,5,9)),mE(col));ir.position.z=-2.8;ir.rotation.x=Math.PI/2;eng.add(ir);}
+        // intake struts (4 cross spars)
+        for(let v=0;v<4;v++){const vn=wf(new THREE.BoxGeometry(0.04,0.38,0.05),col);vn.rotation.y=v/4*Math.PI*2;vn.position.z=-2.78;eng.add(vn);}
+        // rear exhaust collector box
+        const ex=wf(new THREE.BoxGeometry(0.60,0.62,0.28),col);ex.position.z=2.78;eng.add(ex);
+        // 3 exhaust port slots on collector
+        for(let ep=0;ep<3;ep++){const slot=wf(new THREE.BoxGeometry(0.10,0.14,0.10),col);slot.position.set((ep-1)*0.18,0,2.96);eng.add(slot);}
+        eng.position.set(s*3.5,0.05,-1.7);g.add(eng);
+        // engine mount arm
+        const mnt=wf(new THREE.BoxGeometry(0.14,0.10,0.60),col);mnt.position.set(s*1.8,-0.08,0.2);g.add(mnt);
       });
-      g.add(wf(new THREE.BoxGeometry(1.4,0.55,2.2),col));// flat cockpit
-      const tip=wf(new THREE.CylinderGeometry(0,0.65,0.9,4),col);tip.rotation.x=Math.PI/2;tip.position.set(0,0.05,-1.6);g.add(tip);
-      g.add(wf(new THREE.BoxGeometry(0.85,0.18,1.5),col)).position.set(0,0.42,0);// visor strip
-      cab([[-0.6,0,0.9],[-2.0,-0.2,-0.3],[-3.4,0,-0.8]]);cab([[0.6,0,0.9],[2.0,-0.2,-0.3],[3.4,0,-0.8]]);
+      // main cockpit wedge body
+      g.add(wf(new THREE.BoxGeometry(1.45,0.58,2.4),col));
+      // under-belly keel
+      g.add(wf(new THREE.BoxGeometry(0.55,0.22,2.2),col)).position.set(0,-0.38,0.1);
+      // wedge nose prong pair
+      [-1,1].forEach(s=>{const pr=wf(new THREE.CylinderGeometry(0.06,0.14,0.88,4),col);pr.rotation.x=Math.PI/2;pr.position.set(s*0.28,0.05,-1.65);g.add(pr);});
+      // compound-eye visor (3 facets)
+      for(let e=0;e<3;e++){const ev=wf(new THREE.BoxGeometry(0.32,0.18,0.06),col);ev.position.set((e-1)*0.34,0.38,-1.12);g.add(ev);}
+      // visor brow strip
+      g.add(wf(new THREE.BoxGeometry(1.10,0.14,1.6),col)).position.set(0,0.45,0.0);
+      // dorsal ridge (3 segments rising to rear)
+      for(let d=0;d<3;d++){const dr=wf(new THREE.BoxGeometry(0.10,0.18+d*0.12,0.50),col);dr.position.set(0,0.46+d*0.1,0.65-d*0.55);g.add(dr);}
+      // chin intake scoop
+      g.add(wf(new THREE.BoxGeometry(0.62,0.16,0.70),col)).position.set(0,-0.30,-0.9);
+      // rear tail fin
+      g.add(wf(new THREE.BoxGeometry(0.07,0.55,0.40),col)).position.set(0,0.62,1.05);
+      cab([[-0.55,0.05,1.0],[-1.4,-0.2,0.2],[-2.4,-0.28,-0.5],[-3.5,0.05,-0.8]]);
+      cab([[0.55,0.05,1.0],[1.4,-0.2,0.2],[2.4,-0.28,-0.5],[3.5,0.05,-0.8]]);
+      cab([[-0.3,0.48,0.5],[-1.8,-0.08,-0.3],[-3.5,0.1,-0.8]]);
       g.userData.halfW=3.5;break;}
-    case 'centipede':{// Triple stacked-tube engines, segmented cockpit
+    case 'centipede':{// CENTIPEDE v7.317 — armored triple-cylinder multi-segment racer
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
         for(let i=0;i<3;i++){
-          const t=wf(new THREE.CylinderGeometry(0.3,0.36,4.0,7),col);
-          t.rotation.z=Math.PI/2;t.position.y=(i-1)*0.68;eng.add(t);
-          const r=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.34,0.06,5,9)),mE(col));
-          r.rotation.x=Math.PI/2;r.position.set(0,(i-1)*0.68,0.9);eng.add(r);
+          // main tube with armor ridges
+          const t=wf(new THREE.CylinderGeometry(0.30,0.36,4.2,7),col);t.rotation.z=Math.PI/2;t.position.y=(i-1)*0.70;eng.add(t);
+          // 3 armor ring straps per tube
+          for(let ar=0;ar<3;ar++){const band=wf(new THREE.CylinderGeometry(0.38,0.38,0.10,7),col);band.rotation.z=Math.PI/2;band.position.set(-1.0+ar*0.95,(i-1)*0.70,0);eng.add(band);}
+          // 2 exhaust rings at rear
+          for(let r=0;r<2;r++){const ring=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.32-r*0.06,0.05,5,8)),mE(col));ring.rotation.x=Math.PI/2;ring.position.set(0,(i-1)*0.70,2.2+r*0.22);eng.add(ring);}
+          // intake cone at front
+          const ic=wf(new THREE.CylinderGeometry(0.06,0.28,0.38,6),col);ic.rotation.z=Math.PI/2;ic.position.set(-2.3,(i-1)*0.70,0);eng.add(ic);
         }
-        eng.position.set(s*3.8,0,-1.2);g.add(eng);
+        // inter-tube manifold connectors (2 H-braces)
+        for(let h=0;h<2;h++){const hb=wf(new THREE.BoxGeometry(0.08,1.48,0.12),col);hb.position.set(-0.8+h*1.6,0,0);eng.add(hb);}
+        // exhaust manifold box at rear
+        const exBox=wf(new THREE.BoxGeometry(0.22,1.58,0.30),col);exBox.position.z=2.25;eng.add(exBox);
+        // 3 nozzle cones on manifold
+        for(let n=0;n<3;n++){const nz=wf(new THREE.CylinderGeometry(0.06,0.14,0.28,5),col);nz.rotation.z=Math.PI/2;nz.position.set(0.34,(n-1)*0.48,2.28);eng.add(nz);}
+        eng.position.set(s*4.0,0,-1.1);g.add(eng);
+        // segment connector arm
+        const arm=wf(new THREE.BoxGeometry(0.18,0.12,0.72),col);arm.position.set(s*2.0,0.08,-0.2);g.add(arm);
       });
-      for(let i=0;i<3;i++){const seg=wf(new THREE.BoxGeometry(1.1-i*0.05,0.6,0.52),col);seg.position.set(0,0.1,0.55-i*0.6);g.add(seg);}
-      [-1,1].forEach(s=>{const m=wf(new THREE.BoxGeometry(0.12,0.38,0.12),col);m.position.set(s*0.45,-0.18,-1.1);g.add(m);});
-      cab([[-0.5,0.1,0.8],[-2.2,-0.4,-0.1],[-3.8,0,-0.5]]);cab([[0.5,0.1,0.8],[2.2,-0.4,-0.1],[3.8,0,-0.5]]);
+      // 5-segment articulated cockpit body (tapering)
+      for(let i=0;i<5;i++){const seg=wf(new THREE.BoxGeometry(1.15-i*0.10,0.58-i*0.04,0.48),col);seg.position.set(0,0.08,0.65-i*0.55);g.add(seg);}
+      // armored inter-segment plates
+      for(let i=0;i<4;i++){const pl=wf(new THREE.BoxGeometry(1.10-i*0.10,0.08,0.08),col);pl.position.set(0,0.35,-0.1-i*0.55);g.add(pl);}
+      // compound eye clusters (3 per side)
+      [-1,1].forEach(s=>{for(let e=0;e<3;e++){const ey=wf(new THREE.SphereGeometry(0.09,4,3),col);ey.position.set(s*0.52,0.28,-0.72+e*0.3);g.add(ey);}});
+      // chin mandible prongs
+      [-1,1].forEach(s=>{const mn=wf(new THREE.CylinderGeometry(0.04,0.08,0.62,4),col);mn.rotation.x=Math.PI/2;mn.position.set(s*0.32,-0.28,-1.55);g.add(mn);});
+      // dorsal ridge spines (5)
+      for(let sp=0;sp<5;sp++){const spine=wf(new THREE.ConeGeometry(0.05,0.28,4),col);spine.position.set(0,0.46+sp*0.03,0.62-sp*0.52);g.add(spine);}
+      // leg-mount nodes (4 per side)
+      [-1,1].forEach(s=>{for(let l=0;l<4;l++){const nd=wf(new THREE.BoxGeometry(0.10,0.18,0.10),col);nd.position.set(s*0.65,-0.25,0.45-l*0.50);g.add(nd);}});
+      cab([[-0.5,0.12,0.95],[-1.6,-0.30,0.15],[-2.8,-0.35,-0.4],[-4.0,0.05,-0.65]]);
+      cab([[0.5,0.12,0.95],[1.6,-0.30,0.15],[2.8,-0.35,-0.4],[4.0,0.05,-0.65]]);
+      cab([[0,0.45,0.6],[-2.2,-0.15,-0.2],[-4.0,0.1,-0.65]]);
       g.userData.halfW=4.0;break;}
-    case 'eel':{// Torpedo engines with electric fin, teardrop cockpit
+    case 'eel':{// EEL v7.317 — electric torpedo racer with ion-drive engines
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
-        eng.add(wf(new THREE.CylinderGeometry(0.55,0.22,5.6,9),col));
-        const fin=wf(new THREE.BoxGeometry(0.07,1.1,1.9),col);fin.position.set(0,0.75,-0.4);eng.add(fin);
-        const gl=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.26,0.07,6,8)),mE(0x00ffff));
-        gl.position.z=2.6;gl.rotation.x=Math.PI/2;eng.add(gl);
-        eng.rotation.set(Math.PI/2,-s*0.1,0);eng.position.set(s*3.0,0.3,-1.6);g.add(eng);
+        // main torpedo body — tapered cylinder
+        eng.add(wf(new THREE.CylinderGeometry(0.56,0.20,5.8,9),col));
+        // 4 segmentation rings along hull
+        for(let r=0;r<4;r++){const rg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.44-r*0.06,0.05,5,9)),mE(col));rg.rotation.x=Math.PI/2;rg.position.set(0,0,2.2-r*1.2);eng.add(rg);}
+        // primary dorsal fin (tall)
+        const fin1=wf(new THREE.BoxGeometry(0.06,1.15,2.0),col);fin1.position.set(0,0.72,-0.35);eng.add(fin1);
+        // secondary ventral fin (shorter)
+        const fin2=wf(new THREE.BoxGeometry(0.05,0.58,1.4),col);fin2.position.set(0,-0.62,-0.35);eng.add(fin2);
+        // side vortex generators (4 small angled fins)
+        for(let v=0;v<4;v++){const vg=wf(new THREE.BoxGeometry(0.24,0.04,0.28),col);vg.position.set(s*0.55,0,-1.8+v*1.1);vg.rotation.y=s*0.35;eng.add(vg);}
+        // front ion collector ring (cyan glow, large)
+        const gl1=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.32,0.07,6,9)),mE(0x00ffff));gl1.position.z=2.85;gl1.rotation.x=Math.PI/2;eng.add(gl1);
+        // inner ion ring
+        const gl2=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.18,0.05,5,8)),mE(0x00ffcc));gl2.position.z=2.85;gl2.rotation.x=Math.PI/2;eng.add(gl2);
+        // 4 radial ion struts to center
+        for(let rs=0;rs<4;rs++){const rv=wf(new THREE.BoxGeometry(0.03,0.26,0.04),col);rv.rotation.y=rs/4*Math.PI*2;rv.position.z=2.85;eng.add(rv);}
+        // rear tail nozzle cone
+        const nz=wf(new THREE.CylinderGeometry(0.14,0.22,0.42,7),col);nz.position.set(0,0,-3.2);nz.rotation.x=Math.PI/2;eng.add(nz);
+        eng.rotation.set(Math.PI/2,-s*0.08,0);eng.position.set(s*3.1,0.28,-1.55);g.add(eng);
+        // mount bracket
+        const br=wf(new THREE.BoxGeometry(0.12,0.44,0.14),col);br.position.set(s*1.6,-0.08,0.3);g.add(br);
       });
-      const cpM=new THREE.Mesh(new THREE.SphereGeometry(0.72,7,5),mF(0x002222));cpM.scale.set(0.9,0.75,1.4);g.add(cpM);
-      const cpW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.72,7,5)),mE(col));cpW.scale.set(0.9,0.75,1.4);g.add(cpW);
-      const sp=wf(new THREE.BoxGeometry(0.1,0.2,2.2),col);sp.position.y=0.72;g.add(sp);
-      cab([[-0.55,0.1,0.6],[-1.8,-0.2,-0.4],[-3.0,0.2,-0.9]]);cab([[0.55,0.1,0.6],[1.8,-0.2,-0.4],[3.0,0.2,-0.9]]);
+      // elongated teardrop cockpit (outer hull)
+      const cpM=new THREE.Mesh(new THREE.SphereGeometry(0.74,8,6),mF(0x001a1a));cpM.scale.set(0.88,0.72,1.45);g.add(cpM);
+      const cpW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.74,8,6)),mE(col));cpW.scale.set(0.88,0.72,1.45);g.add(cpW);
+      // ribbed internal structure (3 ribs visible)
+      for(let r=0;r<3;r++){const rb=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.48-r*0.08,0.03,4,8)),mE(col));rb.rotation.x=Math.PI/2;rb.position.z=0.35-r*0.55;g.add(rb);}
+      // electric spine ridge (double-layer)
+      g.add(wf(new THREE.BoxGeometry(0.10,0.24,2.4),col)).position.set(0,0.74,0.05);
+      g.add(wf(new THREE.BoxGeometry(0.06,0.14,2.0),col)).position.set(0,0.94,0.05);
+      // side gill slits (3 per side)
+      [-1,1].forEach(s=>{for(let g2=0;g2<3;g2++){const gl=wf(new THREE.BoxGeometry(0.05,0.22,0.12),col);gl.position.set(s*0.66,0.05,-0.4+g2*0.45);g.add(gl);}});
+      // rear stabilizer fin
+      g.add(wf(new THREE.BoxGeometry(0.06,0.40,0.32),col)).position.set(0,-0.35,0.95);
+      // tail tip spike
+      const tailTip=wf(new THREE.CylinderGeometry(0.02,0.08,0.55,4),col);tailTip.rotation.x=Math.PI/2;tailTip.position.set(0,0,1.05);g.add(tailTip);
+      cab([[-0.58,0.12,0.6],[-1.5,-0.18,-0.2],[-2.2,-0.28,-0.65],[-3.1,0.18,-1.0]]);
+      cab([[0.58,0.12,0.6],[1.5,-0.18,-0.2],[2.2,-0.28,-0.65],[3.1,0.18,-1.0]]);
+      cab([[0,0.88,0.1],[-1.6,0.05,-0.4],[-3.1,0.22,-1.0]]);
       g.userData.halfW=3.5;break;}
-    case 'predator':{// Armored box engines with top cannon, fortified cockpit
+    case 'predator':{// PREDATOR v7.317 — heavy armored hunter with twin cannon array
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
-        eng.add(wf(new THREE.BoxGeometry(1.0,0.9,5.2),col));
-        for(let i=0;i<3;i++){const pl=wf(new THREE.BoxGeometry(1.1,0.14,0.88),col);pl.position.set(0,0.55,-1.4+i*1.0);eng.add(pl);}
-        const can=new THREE.Group();can.add(wf(new THREE.CylinderGeometry(0.13,0.13,2.2,6),col));can.rotation.z=Math.PI/2;can.position.set(0,0.73,-0.2);eng.add(can);
-        eng.position.set(s*3.8,0.1,-1.5);g.add(eng);
+        // main armored engine block
+        eng.add(wf(new THREE.BoxGeometry(1.05,0.95,5.4),col));
+        // 5 armor side plates (more coverage)
+        for(let i=0;i<5;i++){const pl=wf(new THREE.BoxGeometry(1.18,0.12,0.82),col);pl.position.set(0,0.54,-1.8+i*0.88);eng.add(pl);}
+        // corner reinforcement straps
+        for(let c2=0;c2<3;c2++){const cr=wf(new THREE.BoxGeometry(0.12,0.98,0.10),col);cr.position.set(0,0,-1.6+c2*1.2);eng.add(cr);}
+        // top cannon rail + twin barrels
+        const rail=wf(new THREE.BoxGeometry(0.22,0.10,2.6),col);rail.position.set(0,0.56,-0.1);eng.add(rail);
+        for(let b=0;b<2;b++){const bar=wf(new THREE.CylinderGeometry(0.08,0.08,2.8,5),col);bar.rotation.z=Math.PI/2;bar.position.set(0,0.76,-0.1+(b-0.5)*0.20);eng.add(bar);}
+        // cannon muzzle brake
+        const mb=wf(new THREE.BoxGeometry(0.30,0.28,0.22),col);mb.position.set(0,0.76,-1.55);eng.add(mb);
+        // underbelly gun pod
+        const gpod=wf(new THREE.CylinderGeometry(0.12,0.16,1.4,5),col);gpod.rotation.z=Math.PI/2;gpod.position.set(0,-0.62,-0.4);eng.add(gpod);
+        // front armor grille (4 horizontal slots)
+        for(let sl=0;sl<4;sl++){const gs=wf(new THREE.BoxGeometry(0.88,0.08,0.06),col);gs.position.set(0,-0.25+sl*0.18,-2.75);eng.add(gs);}
+        // rear exhaust cluster (3 nozzles)
+        for(let n=0;n<3;n++){const nz=wf(new THREE.CylinderGeometry(0.10,0.16,0.36,5),col);nz.rotation.z=Math.PI/2;nz.position.set(0,(n-1)*0.28,2.85);eng.add(nz);}
+        eng.position.set(s*4.0,0.12,-1.5);g.add(eng);
+        // heavy mount bracket
+        const mb2=wf(new THREE.BoxGeometry(0.22,0.16,0.80),col);mb2.position.set(s*2.0,0.12,-0.1);g.add(mb2);
       });
-      g.add(wf(new THREE.BoxGeometry(1.3,0.9,2.0),col));
-      g.add(wf(new THREE.BoxGeometry(1.1,0.17,0.18),col)).position.set(0,0.46,-1.0);
-      const cn=wf(new THREE.SphereGeometry(0.5,6,4),col);cn.scale.set(0.85,0.55,1.0);cn.position.set(0,0.57,0);g.add(cn);
-      cab([[-0.55,0.2,0.8],[-2.2,-0.1,-0.2],[-3.8,0.2,-0.8]]);cab([[0.55,0.2,0.8],[2.2,-0.1,-0.2],[3.8,0.2,-0.8]]);
+      // fortified main cockpit block
+      g.add(wf(new THREE.BoxGeometry(1.35,0.95,2.2),col));
+      // angled stealth side panels
+      [-1,1].forEach(s=>{const sp=wf(new THREE.BoxGeometry(0.12,0.75,1.8),col);sp.position.set(s*0.76,0.06,0.1);g.add(sp);});
+      // forward targeting array (sensor bar + 3 nodes)
+      g.add(wf(new THREE.BoxGeometry(0.95,0.12,0.14),col)).position.set(0,0.56,-1.04);
+      for(let n=0;n<3;n++){const nd=wf(new THREE.SphereGeometry(0.07,4,3),col);nd.position.set((n-1)*0.30,0.58,-1.12);g.add(nd);}
+      // tactical top rail
+      g.add(wf(new THREE.BoxGeometry(0.18,0.22,1.85),col)).position.set(0,0.68,0.10);
+      // sensor dish (left)
+      const dish=wf(new THREE.CylinderGeometry(0.22,0.08,0.12,6),col);dish.position.set(-0.62,0.68,-0.35);g.add(dish);
+      // canopy visor (flat + dome crown)
+      g.add(wf(new THREE.BoxGeometry(1.05,0.14,0.20),col)).position.set(0,0.50,-1.02);
+      const cn=wf(new THREE.SphereGeometry(0.48,6,4),col);cn.scale.set(0.82,0.52,0.98);cn.position.set(0,0.60,0.1);g.add(cn);
+      cab([[-0.55,0.25,0.95],[-1.5,0.05,0.05],[-2.5,-0.20,-0.55],[-4.0,0.22,-0.95]]);
+      cab([[0.55,0.25,0.95],[1.5,0.05,0.05],[2.5,-0.20,-0.55],[4.0,0.22,-0.95]]);
+      cab([[0,0.72,0.35],[-2.0,-0.10,-0.35],[-4.0,0.25,-0.95]]);
       g.userData.halfW=4.0;break;}
-    case 'slag':{// Massive brick engines with 3-nozzle exhaust, brutal throne
+    case 'slag':{// SLAG v7.317 — war-machine throne racer, maximum aggression
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
-        eng.add(wf(new THREE.BoxGeometry(1.3,1.1,5.8),col));
-        const spk=wf(new THREE.ConeGeometry(0.28,1.0,4),col);spk.position.set(0,1.1,-0.4);eng.add(spk);
-        for(let j=0;j<3;j++){
-          const nz=wf(new THREE.CylinderGeometry(0.18,0.12,0.6,6),0xff3300);nz.rotation.z=Math.PI/2;nz.position.set(0,(j-1)*0.34,2.8);eng.add(nz);
+        // massive engine block with battle-scarred panels
+        eng.add(wf(new THREE.BoxGeometry(1.38,1.18,6.0),col));
+        // heavy armor bolt rows (top + side)
+        for(let b=0;b<6;b++){const bolt=wf(new THREE.CylinderGeometry(0.07,0.07,0.14,5),col);bolt.rotation.z=Math.PI/2;bolt.position.set(0,0.66,-2.4+b*0.88);eng.add(bolt);}
+        // spike cluster (5 spikes, varying height)
+        for(let sp=0;sp<5;sp++){const spk=wf(new THREE.ConeGeometry(0.10+sp*0.04,0.55+sp*0.18,4),col);spk.position.set((sp-2)*0.24,1.22,-0.6+sp*0.3);eng.add(spk);}
+        // ram prow wedge
+        const prow=wf(new THREE.BoxGeometry(1.30,1.12,0.55),col);prow.position.z=-3.2;eng.add(prow);
+        const prowTip=wf(new THREE.ConeGeometry(0.55,0.72,4),col);prowTip.rotation.x=-Math.PI/2;prowTip.position.z=-3.7;eng.add(prowTip);
+        // 5-nozzle exhaust bank
+        for(let n=0;n<5;n++){
+          const nz=wf(new THREE.CylinderGeometry(0.15,0.10,0.62,5),0xff3300);nz.rotation.z=Math.PI/2;
+          nz.position.set(0,-0.44+n*0.22,3.0);eng.add(nz);
         }
-        eng.position.set(s*4.1,0.1,-1.8);g.add(eng);
+        // exhaust heat shield
+        const hs=wf(new THREE.BoxGeometry(1.22,1.1,0.22),col);hs.position.z=3.15;eng.add(hs);
+        // side armor ridge
+        const ridge=wf(new THREE.BoxGeometry(0.12,1.18,5.4),col);ridge.position.set(s*0.77,0,0);eng.add(ridge);
+        eng.position.set(s*4.3,0.12,-1.8);g.add(eng);
+        // heavy chain link connector (3 box links)
+        for(let lk=0;lk<3;lk++){const link=wf(new THREE.BoxGeometry(0.18,0.22,0.18),col);link.position.set(s*(2.8-lk*0.5),0.1-lk*0.05,0.5-lk*0.5);g.add(link);}
       });
-      g.add(wf(new THREE.BoxGeometry(1.6,1.1,2.2),col));
-      g.add(wf(new THREE.BoxGeometry(1.5,1.8,0.2),col)).position.set(0,0.8,0.9);
-      cab([[-0.7,0.2,0.8],[-2.4,-0.3,0],[-4.1,0.1,-0.8]]);cab([[0.7,0.2,0.8],[2.4,-0.3,0],[4.1,0.1,-0.8]]);
+      // massive throne cockpit body
+      g.add(wf(new THREE.BoxGeometry(1.68,1.18,2.4),col));
+      // throne back (tall, imposing)
+      g.add(wf(new THREE.BoxGeometry(1.58,2.05,0.22),col)).position.set(0,0.95,1.05);
+      // throne armrests
+      [-1,1].forEach(s=>{g.add(wf(new THREE.BoxGeometry(0.22,0.18,0.85),col)).position.set(s*0.72,0.62,0.55);});
+      // throne headrest
+      g.add(wf(new THREE.BoxGeometry(0.68,0.42,0.18),col)).position.set(0,2.0,1.05);
+      // skull ornament on front
+      const sk=wf(new THREE.SphereGeometry(0.24,5,4),col);sk.scale.set(0.9,1.1,0.8);sk.position.set(0,0.62,-1.28);g.add(sk);
+      // chain decorations front
+      for(let lk=0;lk<4;lk++){const cl=wf(new THREE.BoxGeometry(0.12,0.16,0.12),col);cl.position.set((lk%2===0?-1:1)*0.28,0.36-lk*0.16,-1.28);g.add(cl);}
+      // spiked shoulder plates
+      [-1,1].forEach(s=>{
+        const sh=wf(new THREE.BoxGeometry(0.34,0.28,1.0),col);sh.position.set(s*0.98,0.72,0.20);g.add(sh);
+        const ss=wf(new THREE.ConeGeometry(0.10,0.42,4),col);ss.position.set(s*0.98,1.06,0.10);g.add(ss);
+      });
+      // battle damage panel lines
+      for(let d=0;d<4;d++){const dl=wf(new THREE.BoxGeometry(1.55,0.05,0.08),col);dl.position.set(0,0.60-d*0.28,0.0);g.add(dl);}
+      cab([[-0.72,0.28,0.95],[-2.0,-0.25,0.1],[-3.2,-0.30,-0.55],[-4.3,0.15,-0.95]]);
+      cab([[0.72,0.28,0.95],[2.0,-0.25,0.1],[3.2,-0.30,-0.55],[4.3,0.15,-0.95]]);
+      cab([[0,1.12,0.85],[-2.5,0.10,0.0],[-4.3,0.18,-0.95]]);
       g.userData.halfW=4.8;break;}
-    case 'queen':{// Swept tapered nacelles, crown sphere cockpit
+    case 'queen':{// QUEEN v7.317 — royal baroque nacelle racer with jeweled crown
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
-        eng.add(wf(new THREE.CylinderGeometry(0.28,0.7,5.6,8),col));
-        const fin=wf(new THREE.BoxGeometry(0.06,1.25,2.6),col);fin.position.set(0,0.85,0.5);fin.rotation.z=s*0.18;eng.add(fin);
-        const ir=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.72,0.08,6,10)),mE(col));
-        ir.position.z=-2.9;ir.rotation.x=Math.PI/2;eng.add(ir);
-        eng.rotation.set(Math.PI/2,0,0);eng.position.set(s*3.2,0.4,-1.8);g.add(eng);
+        // elegant swept nacelle body
+        eng.add(wf(new THREE.CylinderGeometry(0.26,0.72,5.8,9),col));
+        // 3-layer trailing fin array
+        for(let f=0;f<3;f++){const fn=wf(new THREE.BoxGeometry(0.05,0.82+f*0.22,1.8+f*0.3),col);fn.position.set(0,0.62+f*0.28,0.45);fn.rotation.z=s*(0.12+f*0.06);eng.add(fn);}
+        // baroque ornament trailing ribs (4)
+        for(let r=0;r<4;r++){const rb=wf(new THREE.BoxGeometry(0.04,0.14,0.22),col);rb.position.set(s*0.30,0.68+r*0.12,-0.8+r*0.45);eng.add(rb);}
+        // front intake: large + inner concentric rings
+        for(let ri=0;ri<3;ri++){const ir=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.70-ri*0.14,0.06,6,10)),mE(col));ir.position.z=-3.0;ir.rotation.x=Math.PI/2;eng.add(ir);}
+        // 4 intake radial struts
+        for(let v=0;v<4;v++){const vn=wf(new THREE.BoxGeometry(0.04,0.50,0.06),col);vn.rotation.y=v/4*Math.PI*2;vn.position.z=-2.98;eng.add(vn);}
+        // engine gem nodes (3 crystal emitters along hull)
+        for(let gm=0;gm<3;gm++){const gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.09),mF(0x280028));eng.add(gem);gem.position.set(s*0.38,-0.10,-1.2+gm*1.1);const gemW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.09)),mE(col));gemW.position.copy(gem.position);eng.add(gemW);}
+        // rear exhaust ring (double)
+        for(let ex=0;ex<2;ex++){const er=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.28-ex*0.08,0.05,5,9)),mE(col));er.position.set(0,0,3.0+ex*0.18);er.rotation.x=Math.PI/2;eng.add(er);}
+        eng.rotation.set(Math.PI/2,0,0);eng.position.set(s*3.3,0.42,-1.8);g.add(eng);
+        // slender mount strut
+        const st=wf(new THREE.CylinderGeometry(0.06,0.10,0.62,5),col);st.position.set(s*1.7,-0.05,-0.1);g.add(st);
       });
-      const cpM=new THREE.Mesh(new THREE.SphereGeometry(0.72,7,5),mF(0x150018));cpM.scale.set(0.85,0.8,1.2);g.add(cpM);
-      const cpW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.72,7,5)),mE(col));cpW.scale.set(0.85,0.8,1.2);g.add(cpW);
-      for(let i=0;i<3;i++){const sp=wf(new THREE.ConeGeometry(0.06,0.55,4),col);sp.position.set((i-1)*0.32,1.0+Math.abs(i-1)*0.28,0);g.add(sp);}
-      cab([[-0.55,0.1,0.55],[-1.9,-0.2,-0.45],[-3.2,0.2,-0.9]]);cab([[0.55,0.1,0.55],[1.9,-0.2,-0.45],[3.2,0.2,-0.9]]);
+      // crown sphere cockpit (outer + inner frame)
+      const cpM=new THREE.Mesh(new THREE.SphereGeometry(0.74,8,6),mF(0x0e0016));cpM.scale.set(0.84,0.82,1.22);g.add(cpM);
+      const cpW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.74,8,6)),mE(col));cpW.scale.set(0.84,0.82,1.22);g.add(cpW);
+      const cpIn=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.58,6,5)),mE(col));cpIn.scale.set(0.78,0.74,1.12);g.add(cpIn);
+      // elaborate crown — 5 spires of different heights
+      const spHeights=[0.78,0.55,1.05,0.55,0.78];const spX=[-0.52,-0.28,0,0.28,0.52];
+      for(let i=0;i<5;i++){const sp=wf(new THREE.ConeGeometry(0.055,spHeights[i],4),col);sp.position.set(spX[i],1.02+spHeights[i]*0.3,0.05);g.add(sp);}
+      // crown ring base connecting spires
+      const crRing=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.46,0.06,5,10)),mE(col));crRing.position.y=1.04;crRing.rotation.x=Math.PI/2;g.add(crRing);
+      // gem indicators on crown ring
+      for(let gm=0;gm<4;gm++){const gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.07),mF(0x280028));gem.position.set(Math.cos(gm/4*Math.PI*2)*0.46,1.04,Math.sin(gm/4*Math.PI*2)*0.46);g.add(gem);const gemW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.07)),mE(col));gemW.position.copy(gem.position);g.add(gemW);}
+      // royal crest at front
+      g.add(wf(new THREE.BoxGeometry(0.18,0.55,0.07),col)).position.set(0,0.62,-0.92);
+      // filigree frame around canopy (4 arching strips)
+      for(let f=0;f<4;f++){const fa=wf(new THREE.BoxGeometry(0.04,0.05,0.72),col);fa.rotation.y=f/4*Math.PI*2;fa.position.set(Math.cos(f/4*Math.PI*2)*0.76,0.38,Math.sin(f/4*Math.PI*2)*0.76);fa.rotation.y=f/4*Math.PI*2+Math.PI/2;g.add(fa);}
+      cab([[-0.52,0.18,0.60],[-1.5,-0.15,-0.2],[-2.4,-0.25,-0.72],[-3.3,0.22,-1.05]]);
+      cab([[0.52,0.18,0.60],[1.5,-0.15,-0.2],[2.4,-0.25,-0.72],[3.3,0.22,-1.05]]);
+      cab([[0,0.85,0.05],[-1.8,-0.05,-0.45],[-3.3,0.25,-1.05]]);
       g.userData.halfW=3.5;break;}
-    default:{// GORGON / KAIJU — crushing jaw engines, monster-head cockpit
+    default:{// GORGON v7.317 — kaiju god, monster-engine full-beast racer
       [-1,1].forEach(s=>{
         const eng=new THREE.Group();
-        eng.add(wf(new THREE.BoxGeometry(1.5,1.2,5.6),col));
-        for(let j=0;j<4;j++){const t=wf(new THREE.ConeGeometry(0.16,0.55,4),col);t.rotation.x=Math.PI;t.position.set((-1.5+j)*0.5,-0.84,-0.8+j*0.5);eng.add(t);}// teeth
-        for(let h=0;h<3;h++){const hn=wf(new THREE.ConeGeometry(0.14,0.72,4),col);hn.position.set(0,1.1,-1.4+h*0.8);eng.add(hn);}// dorsal horns
-        eng.position.set(s*4.2,0.1,-1.8);g.add(eng);
+        // massive monster engine block
+        eng.add(wf(new THREE.BoxGeometry(1.58,1.28,5.8),col));
+        // scale-plate armor panels (6 rows)
+        for(let sc=0;sc<6;sc++){const sp=wf(new THREE.BoxGeometry(1.52,0.16,0.72),col);sp.position.set(0,0.66,-2.2+sc*0.88);eng.add(sp);}
+        // lower fang row (6 fangs, lower jaw)
+        for(let j=0;j<6;j++){const t=wf(new THREE.ConeGeometry(0.12+j%2*0.05,0.62+j%2*0.18,4),col);t.rotation.x=Math.PI;t.position.set((-2.5+j)*0.45,-0.88,-0.6+j*0.32);eng.add(t);}
+        // upper fang row (4 fangs)
+        for(let j=0;j<4;j++){const t=wf(new THREE.ConeGeometry(0.10,0.45,4),col);t.rotation.x=0;t.position.set((-1.5+j)*0.45,0.88,-1.0+j*0.55);eng.add(t);}
+        // dorsal fin array (5 fins, graduated height)
+        for(let h=0;h<5;h++){const hn=wf(new THREE.ConeGeometry(0.10+h*0.02,0.55+h*0.18,4),col);hn.position.set(0,1.12,-2.0+h*0.65);eng.add(hn);}
+        // eye socket glows (2 per side, orange)
+        for(let ey=0;ey<2;ey++){const em=new THREE.Mesh(new THREE.SphereGeometry(0.12,5,4),new THREE.MeshBasicMaterial({color:0xff6600}));em.position.set(s*0.52,0.45+ey*0.22,-2.6+ey*0.5);eng.add(em);const emW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.12,5,4)),mE(0xff4400));emW.position.copy(em.position);eng.add(emW);}
+        // nostril slits
+        for(let n=0;n<2;n++){const ns=wf(new THREE.BoxGeometry(0.14,0.08,0.18),col);ns.position.set(s*0.30,-0.15,-3.0+n*0.24);eng.add(ns);}
+        // brow ridge
+        const brow=wf(new THREE.BoxGeometry(1.42,0.22,0.28),col);brow.position.set(0,0.78,-3.0);eng.add(brow);
+        eng.position.set(s*4.3,0.12,-1.8);g.add(eng);
+        // thick neck connector
+        const neck=wf(new THREE.BoxGeometry(0.32,0.28,0.90),col);neck.position.set(s*2.2,0.1,-0.2);g.add(neck);
       });
-      g.add(wf(new THREE.BoxGeometry(1.5,1.0,2.2),col));
-      const jaw=wf(new THREE.BoxGeometry(1.2,0.45,1.0),col);jaw.position.set(0,-0.28,-1.3);g.add(jaw);
-      [-1,1].forEach(s=>{const em=new THREE.Mesh(new THREE.SphereGeometry(0.15,5,4),new THREE.MeshBasicMaterial({color:0xff8800}));em.position.set(s*0.5,0.56,-0.8);g.add(em);});
-      cab([[-0.65,0.2,0.8],[-2.4,-0.2,0],[-4.2,0.1,-0.8]]);cab([[0.65,0.2,0.8],[2.4,-0.2,0],[4.2,0.1,-0.8]]);
+      // monster head cockpit — upper skull
+      g.add(wf(new THREE.BoxGeometry(1.55,1.08,2.4),col));
+      // brow armor overhang
+      g.add(wf(new THREE.BoxGeometry(1.62,0.28,0.38),col)).position.set(0,0.68,-1.18);
+      // lower jaw assembly
+      const jaw=wf(new THREE.BoxGeometry(1.28,0.52,1.1),col);jaw.position.set(0,-0.32,-1.25);g.add(jaw);
+      // lower jaw teeth (5)
+      for(let jt=0;jt<5;jt++){const jf=wf(new THREE.ConeGeometry(0.09,0.38,4),col);jf.rotation.x=Math.PI;jf.position.set((-2+jt)*0.32,-0.62,-1.5+jt*0.18);g.add(jf);}
+      // upper jaw teeth (4)
+      for(let jt=0;jt<4;jt++){const jf=wf(new THREE.ConeGeometry(0.10,0.42,4),col);jf.position.set((-1.5+jt)*0.38,0.54,-1.38+jt*0.12);g.add(jf);}
+      // large main eyes (orange, 2 per side)
+      [-1,1].forEach(s=>{
+        for(let ey=0;ey<2;ey++){
+          const em=new THREE.Mesh(new THREE.SphereGeometry(0.18-ey*0.05,6,4),new THREE.MeshBasicMaterial({color:ey===0?0xff8800:0xff4400}));
+          em.position.set(s*(0.54+ey*0.14),0.55-ey*0.16,-0.72+ey*0.25);g.add(em);
+          const emW=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.18-ey*0.05,6,4)),mE(0xff6600));emW.position.copy(em.position);g.add(emW);
+        }
+      });
+      // cranial horn cluster (3)
+      for(let h=0;h<3;h++){const ch=wf(new THREE.ConeGeometry(0.12,0.65,4),col);ch.position.set((h-1)*0.44,0.98,-0.25);g.add(ch);}
+      // rear crest spines
+      for(let cs=0;cs<4;cs++){const csp=wf(new THREE.ConeGeometry(0.07,0.42,4),col);csp.position.set(0,0.88,0.55+cs*0.38);g.add(csp);}
+      cab([[-0.65,0.28,0.95],[-1.8,-0.15,0.05],[-3.0,-0.25,-0.52],[-4.3,0.15,-1.0]]);
+      cab([[0.65,0.28,0.95],[1.8,-0.15,0.05],[3.0,-0.25,-0.52],[4.3,0.15,-1.0]]);
+      cab([[0,0.90,0.55],[-2.2,0.05,-0.25],[-4.3,0.18,-1.0]]);
       g.userData.halfW=4.5;break;}
   }
   // --- Monster rider: scaled-down colosseum fighter ---
