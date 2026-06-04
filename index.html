@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.329</title>
+<title>COSMIC INVADERS v7.330</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -37220,9 +37220,9 @@ function _triggerPilotEjection(){
   // v7.299b: lower arc so pilot hits ground sooner and starts rolling
   S._prCrashPilotVY=5;   // lower launch (hits ground in ~0.3s)
   S._prCrashPilotVZ=-22; // forward speed
-  // reset rotation to neutral upright so roll animation is clean
+  // v7.330: face direction of flight (-Z). Inner wrap=π, so outer=0 gives -Z facing.
   if(S._prCrashPilot){
-    try{S._prCrashPilot.rotation.set(0,Math.PI,0);}catch(_){}
+    try{S._prCrashPilot.rotation.set(0,0,0);}catch(_){}
   }
   try{wfCineSubtitle('💥 PILOT EJECTED! REBOARDING...','#ff7700');}catch(_){}
   if(S._prCamMode==='cockpit'){try{_setPodCamMode('chase');}catch(_){}}
@@ -37269,21 +37269,26 @@ function _updateCrashState(dt){
     }
     if(S._prCrashT>=1.4||Math.abs(S._prCrashPilotVZ||0)<1.2){
       S._prCrashPhase='crawling';S._prCrashT=0;
-      // 直立に戻してから「痛そうな」ベースポーズをセット
+      // v7.330: face TOWARD the pod (inner wrap=π → outer = atan2(-dx,-dz) for correct direction)
       if(pilot){
         try{
-          pilot.rotation.set(0,Math.PI,0);
-          // 腰を曲げ、片腕で腹部をかばう初期ポーズ
+          const _dx2=pod.position.x-pilot.position.x,_dz2=pod.position.z-pilot.position.z;
+          pilot.rotation.set(0,Math.atan2(-_dx2,-_dz2),0);
           const body=pilot.getObjectByName('body');
           const head=pilot.getObjectByName('head');
           const lA=pilot.getObjectByName('lArm'),rA=pilot.getObjectByName('rArm');
           const lF=pilot.getObjectByName('lArmFore'),rF=pilot.getObjectByName('rArmFore');
+          const lL=pilot.getObjectByName('lLeg'),rL=pilot.getObjectByName('rLeg');
+          const lLL=pilot.getObjectByName('lLegLower'),rLL=pilot.getObjectByName('rLegLower');
           if(body)body.rotation.set(0.55,0,0);// 前かがみ
-          if(head)head.rotation.set(-0.3,0,0);// うなだれ
-          if(lA){lA.rotation.set(0.4,0,0.8);}// 左腕で腹をかばう
-          if(lF){lF.rotation.set(0.6,0,0);}
-          if(rA){rA.rotation.set(0.1,0,-0.2);}// 右腕はバランス用
-          if(rF){rF.rotation.set(0.3,0,0);}
+          if(head)head.rotation.set(0.40,0,0);// 頭を前に垂れる（下向き・苦しそう）
+          if(lA){lA.rotation.set(-0.30,0,-0.55);}// 左腕で腹をかばう（腕を前に交差）
+          if(lF){lF.rotation.set(0.70,0,0);}// 肘を曲げて腹部保護
+          if(rA){rA.rotation.set(-0.10,0,0.18);}// 右腕はバランス（自然に下げる）
+          if(rF){rF.rotation.set(0.30,0,0);}// 肘わずかに曲げ
+          // 脚：立ち上がった自然なT-pose（足が地面に着く）
+          if(lL)lL.rotation.set(0,0,0);if(rL)rL.rotation.set(0,0,0);
+          if(lLL)lLL.rotation.set(0,0,0);if(rLL)rLL.rotation.set(0,0,0);
         }catch(_){}
       }
     }
@@ -37300,10 +37305,9 @@ function _updateCrashState(dt){
         const wt=S._prCrashT;
         // v7.311: raised floor clearance — keep pilot visibly above track surface
         pilot.position.y=0.65+Math.abs(Math.sin(wt*4.5))*0.22;
-        pilot.rotation.y=Math.atan2(dx,dz);
-        // 体全体のよろめき（左右揺れ）
-        pilot.rotation.z=Math.sin(wt*3.5)*0.09+Math.sin(wt*4.8)*0.06;
-        // v7.311: 走行ボーンアニメ — 腕X軸スイング(前後)＋足と逆位相で連動
+        // v7.330: atan2(-dx,-dz) so figure FACES the pod (inner wrap π means we negate dx/dz)
+        pilot.rotation.y=Math.atan2(-dx,-dz);
+        pilot.rotation.z=Math.sin(wt*3.5)*0.08+Math.sin(wt*4.8)*0.05;
         try{
           const body=pilot.getObjectByName('body');
           const head=pilot.getObjectByName('head');
@@ -37311,22 +37315,24 @@ function _updateCrashState(dt){
           const lF=pilot.getObjectByName('lArmFore'),rF=pilot.getObjectByName('rArmFore');
           const lL=pilot.getObjectByName('lLeg'),rL=pilot.getObjectByName('rLeg');
           const lLL=pilot.getObjectByName('lLegLower'),rLL=pilot.getObjectByName('rLegLower');
-          // 腰を前かがみ＋走行バウンス
+          // 体: 前かがみ走行
           if(body)body.rotation.x=0.48+Math.sin(wt*4.5)*0.06;
-          // 頭：ポッド方向を向きつつ上下バウンス
-          if(head)head.rotation.x=-0.20+Math.sin(wt*4.5)*0.18;
-          // 左腕：負傷してお腹をかばう固定ポーズ
-          if(lA){lA.rotation.x=0.32;lA.rotation.z=0.75;lA.rotation.y=0;}
-          if(lF){lF.rotation.x=0.55;}
-          // 右腕：X軸前後スイング（右足と逆位相＝走行の自然な腕振り）
-          if(rA){rA.rotation.x=Math.sin(wt*4.5+Math.PI)*0.52;rA.rotation.z=-0.12;rA.rotation.y=0;}
-          if(rF){rF.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI+0.6))*0.45+0.18;}
-          // 右足（負傷側）：小さいストローク
-          if(rL)rL.rotation.x=Math.sin(wt*4.5)*0.18;
-          if(rLL)rLL.rotation.x=Math.max(0,Math.sin(wt*4.5+0.6))*0.16;
+          // 頭: 前方やや下向き（0.18 = 前かがみで地面方向を向く。正値=前傾=正しい）
+          if(head){head.rotation.x=0.18+Math.sin(wt*4.5)*0.10;head.rotation.y=0;head.rotation.z=0;}
+          // 左腕: 怪我。体の前で腹を抱える（-X=前方へ、-Z=内向き）
+          if(lA){lA.rotation.x=-0.35;lA.rotation.z=-0.52;lA.rotation.y=0;}
+          if(lF){lF.rotation.x=0.65;lF.rotation.z=0;} // 肘を自然に曲げる
+          // 右腕: 前後スイング（左足と逆位相＝自然な歩行腕振り）
+          // 負の rotation.x = 腕が前方（-Z方向）に出る（inner wrap により前方=negative x）
+          if(rA){rA.rotation.x=-Math.sin(wt*4.5+Math.PI)*0.52;rA.rotation.z=0.10;rA.rotation.y=0;}
+          if(rF){rF.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI+0.7))*0.45+0.12;rF.rotation.z=0;}
+          // 右足（負傷側）：小さいストローク。負値=前方（straddleBikeRiderと同方向）
+          if(rL){rL.rotation.x=-Math.sin(wt*4.5)*0.20;rL.rotation.z=0;}
+          // 膝：shin は正値で膝が曲がる（自然な歩行。max(0,...)で一方向のみ）
+          if(rLL){rLL.rotation.x=Math.max(0,Math.sin(wt*4.5-0.5))*0.18;rLL.rotation.z=0;}
           // 左足（健側）：右足と逆位相で大きく補う
-          if(lL)lL.rotation.x=Math.sin(wt*4.5+Math.PI)*0.58;
-          if(lLL)lLL.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI+0.6))*0.54;
+          if(lL){lL.rotation.x=-Math.sin(wt*4.5+Math.PI)*0.58;lL.rotation.z=0;}
+          if(lLL){lLL.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI-0.5))*0.52;lLL.rotation.z=0;}
         }catch(_){}
       } else {
         S._prCrashPhase='reboarding';S._prCrashT=0;
