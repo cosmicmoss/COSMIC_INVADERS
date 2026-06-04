@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.322</title>
+<title>COSMIC INVADERS v7.323</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34709,6 +34709,42 @@ function startPodRace(){
   // _startF1Lights is called by _updateMaintenanceCinematic when complete
 }
 
+// v7.323: pod-race helmet (goggles + helmet shell) worn by every monster rider
+function _makePodRaceHelmet(){
+  const h=new THREE.Group();h.name='podHelmet';
+  const shellMat=new THREE.MeshBasicMaterial({color:0xe2e6ee});
+  const shellEdge=new THREE.LineBasicMaterial({color:0xffffff});
+  const darkMat=new THREE.MeshBasicMaterial({color:0x20242c});
+  const goggleMat=new THREE.MeshBasicMaterial({color:0x33ddff});
+  const goggleEdge=new THREE.LineBasicMaterial({color:0x8af2ff});
+  const strapMat=new THREE.MeshBasicMaterial({color:0x111114});
+  // helmet shell — top dome
+  const shellG=new THREE.SphereGeometry(0.38,9,6,0,Math.PI*2,0,Math.PI*0.6);
+  const shell=new THREE.Mesh(shellG,shellMat);shell.position.y=0.06;h.add(shell);
+  h.add(new THREE.LineSegments(new THREE.EdgesGeometry(shellG),shellEdge)).position.y=0.06;
+  // fuller back/side coverage
+  const backG=new THREE.SphereGeometry(0.35,9,6);
+  const back=new THREE.Mesh(backG,shellMat);back.position.set(0,-0.02,-0.06);back.scale.set(1,0.8,1);h.add(back);
+  // top crest fin (aerodynamic)
+  const finG=new THREE.BoxGeometry(0.05,0.18,0.34);
+  const fin=new THREE.Mesh(finG,darkMat);fin.position.set(0,0.34,-0.04);h.add(fin);
+  h.add(new THREE.LineSegments(new THREE.EdgesGeometry(finG),shellEdge)).position.set(0,0.34,-0.04);
+  // goggle strap band around the helmet
+  const bandG=new THREE.TorusGeometry(0.355,0.045,5,14);
+  const band=new THREE.Mesh(bandG,strapMat);band.position.set(0,0.07,0);band.rotation.x=Math.PI*0.5;h.add(band);
+  // two goggle lenses on the face (front = +Z)
+  [-0.15,0.15].forEach(x=>{
+    const lensG=new THREE.CylinderGeometry(0.13,0.13,0.06,9);
+    const lens=new THREE.Mesh(lensG,goggleMat);lens.rotation.x=Math.PI*0.5;lens.position.set(x,0.05,0.30);h.add(lens);
+    h.add(new THREE.LineSegments(new THREE.EdgesGeometry(lensG),goggleEdge)).position.set(x,0.05,0.30);
+    // lens rim
+    const rimG=new THREE.TorusGeometry(0.13,0.025,5,10);
+    const rim=new THREE.Mesh(rimG,strapMat);rim.position.set(x,0.05,0.32);h.add(rim);
+  });
+  // goggle bridge between lenses
+  const bridge=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.05,0.05),strapMat);bridge.position.set(0,0.05,0.33);h.add(bridge);
+  return h;
+}
 // v7.289: pod racers now come in THREE variants:
 //   'speeder' (player) — the forest tactical speeder bike (rider already onboard)
 //   'pod'     (AI x7)   — the classic twin-engine pod + a seated flight-suit pilot
@@ -35139,10 +35175,18 @@ function makePodRacerPod(type,color,variant){
     }else{
       rider=makeColosseumFighter({id:type,col:col,sz:0.38});
     }
+    // v7.323: every monster rider wears a pod-race helmet (goggles + helmet)
+    try{
+      const helmet=_makePodRaceHelmet();
+      const headGrp=rider.getObjectByName('head');
+      if(headGrp){helmet.position.set(0,0.12,0);headGrp.add(helmet);}
+      else{helmet.position.set(0,0.74,0);rider.add(helmet);}// slag blob has no named head group
+    }catch(_){}
     rider.position.set(0,0.58,-0.1);
     rider.rotation.y=Math.PI;
     rider.traverse(o=>{o.userData.preserveColor=true;});
     g.add(rider);
+    g.userData.rider=rider;// v7.323: ref for intro crowd-wave
   }catch(_){}
   g.userData.variant=type;
   return g;
@@ -37230,6 +37274,19 @@ function _aimIntroCamAtPod(pod,idx){
     S._prIntroLookTo=new THREE.Vector3(p.x,p.y+1.5,p.z+0.5);
   }catch(_){}
 }
+// v7.323: switch which monster rider is waving to the crowd (resets the previous one)
+function _setIntroWaveRider(rider){
+  try{
+    const prev=S._prIntroWaveRider;
+    if(prev&&prev!==rider){
+      const a=prev.getObjectByName&&prev.getObjectByName('rArm');
+      if(a){a.rotation.set(0,0,0);}
+      const af=prev.getObjectByName&&prev.getObjectByName('rArmFore');
+      if(af){af.rotation.set(0,0,0);}
+    }
+  }catch(_){}
+  S._prIntroWaveRider=rider||null;S._prIntroArmT=0;
+}
 function _showNextPodRacer(idx){
   if(!S._prIntroActive)return;
   if(idx>=S._prAI.length){_showPlayerIntroCard();return;}
@@ -37239,6 +37296,8 @@ function _showNextPodRacer(idx){
 
   // v7.322: cars stay parked — glide the camera to this pilot for a hero close-up
   if(ai.pod){_aimIntroCamAtPod(ai.pod,idx);}
+  // v7.323: this monster waves to the crowd during its intro
+  _setIntroWaveRider(ai.pod&&ai.pod.userData?ai.pod.userData.rider:null);
 
   // Update name card
   try{
@@ -37308,6 +37367,7 @@ function _endPodRaceIntro(){
   // v7.322: cars never moved during intro — just hide AI (revealed at GO!) and frame the player
   try{
     S._prIntroShowPod=null;
+    _setIntroWaveRider(null);// v7.323: stop & reset any waving arm
     if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod){ai.pod.rotation.y=0;ai.pod.visible=false;}});
     if(S._prPlayerPod){S._prPlayerPod.position.set(0,1.5,S._prCamZ-8);S._prPlayerPod.rotation.y=0;S._prPlayerPod.visible=true;}
     // v7.316/v7.319: chase camera framing so the player pod is clearly visible during F1 lights
@@ -37334,6 +37394,18 @@ function _updatePodRaceIntroAnim(dt){
       S._prIntroLookCur.lerp(S._prIntroLookTo,k);
       camera.up.set(0,1,0);
       camera.lookAt(S._prIntroLookCur);
+    }
+  }catch(_){}
+  // v7.323: the spotlighted monster raises its right arm and waves to the crowd
+  try{
+    const r=S._prIntroWaveRider;
+    if(r&&r.getObjectByName){
+      const t=S._prIntroArmT=(S._prIntroArmT||0)+dt;
+      const raise=Math.min(1,t*3.5);// quick raise
+      const a=r.getObjectByName('rArm');
+      if(a){a.rotation.x=-Math.PI*0.55*raise;a.rotation.z=(-0.4-Math.sin(t*10)*0.55)*raise;}
+      const af=r.getObjectByName('rArmFore');
+      if(af){af.rotation.x=-0.5*raise;af.rotation.z=Math.sin(t*10)*0.3*raise;}
     }
   }catch(_){}
   // gentle SLAG wave on the gate during intro
