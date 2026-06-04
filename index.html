@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.316</title>
+<title>COSMIC INVADERS v7.317</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -35764,6 +35764,14 @@ function _updatePodRaceAI(dt){
     ai.x+=(targetX-ai.x)*2*dt;
     ai.x+=(ai.vx||0)*dt;// v7.289: apply knockback velocity
     ai.vx=(ai.vx||0)*0.85;// decay
+    // v7.316: clamp AI X within track walls (same formula as player, slightly narrower)
+    {const _aiHW=(S._prLap===1?1.2:1.0)*(38+S._prSpeed/22);
+    const _aiMaxX=curveCenter+_aiHW-3,_aiMinX=curveCenter-_aiHW+3;
+    if(ai.x>_aiMaxX){ai.x=_aiMaxX;if((ai.vx||0)>0)ai.vx=-(ai.vx||0)*0.3;}
+    if(ai.x<_aiMinX){ai.x=_aiMinX;if((ai.vx||0)<0)ai.vx=-(ai.vx||0)*0.3;}
+    // also steer homeLane back to center if it drifted out
+    if((ai.homeLane||0)>_aiHW-5)ai.homeLane=_aiHW-5;
+    if((ai.homeLane||0)<-_aiHW+5)ai.homeLane=-_aiHW+5;}
     ai.pod.position.x=ai.x;
     ai.pod.position.y=1.5+Math.sin(ai.swerveT*3)*0.2;
     ai.pod.rotation.z=(targetX-ai.x)*0.05-S._prCurveV*0.004;
