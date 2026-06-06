@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.333</title>
+<title>COSMIC INVADERS v7.334</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34475,6 +34475,7 @@ function _podRaceReturnToTitle(){
   try{const ji=document.getElementById('pr-jump-ind');if(ji)ji.style.display='none';}catch(_){}
   S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
   S._prStadiumCrowd=[];S._prCrowdT=0;S._prCrowdExcite=0;// v7.329
+  S._prLane=0;// v7.334
   // v7.312/313
   S._prCheerT=35;S._prLastPos=9;S._prTrackLog=[];S._prMaintDone=false;
   S._prRaceStarted=false;S._prCamMode='chase';
@@ -34760,6 +34761,8 @@ function startPodRace(){
   S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
   // v7.329: stadium crowd animation state
   S._prCrowdT=0;S._prCrowdExcite=0;S._prStadiumCrowd=[];
+  // v7.334: auto-steering — lane offset from track centre (auto-decays toward 0 when no input)
+  S._prLane=0;
   // v7.284: intro state
   S._prIntroActive=true;S._prIntroIdx=0;
   try{if(starField)starField.visible=false;if(speedLines)speedLines.visible=false;}catch(_){}
@@ -35371,26 +35374,28 @@ function updatePodRace(dt){
   S._prCurveX+=S._prCurveV*dt;
   if(S._prCurveX>42){S._prCurveX=42;S._prCurveV=-Math.abs(S._prCurveV);}
   if(S._prCurveX<-42){S._prCurveX=-42;S._prCurveV=Math.abs(S._prCurveV);}
-  const accel=keys['KeyW']||keys['ArrowUp'];
-  const brake=keys['KeyS']||keys['ArrowDown'];
-  // v7.288: NITRO — keyboard Space OR gyro-mode touch-nitro
+  // v7.334: NITRO trigger (still manual via Space / mobile button)
   S._prNitroCD=Math.max(0,(S._prNitroCD||0)-dt);
   const nitroBtn=keys['Space']||(S._prGyroActive&&(S._prTouchNitro||false));
   if(nitroBtn&&(S._prNitroT||0)<=0&&S._prNitroCD<=0){
     S._prNitroT=3;S._prNitroCD=8;
-    S._prTouchNitro=false;// consume the touch
+    S._prTouchNitro=false;
     try{wfCineSubtitle('⚡★ NITRO BOOST!! ★⚡','#00ccff')}catch(_){}
     try{sfx._prNitro&&sfx._prNitro()}catch(_){}
-    // v7.328: nitro activation burst
     try{const pod=S._prPlayerPod;for(let i=0;i<16;i++)spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*6,(Math.random()-0.5)*2,i*1.5+2)),0x00aaff,3,1.4,0.6,0.5);}catch(_){}
     try{S.shakeT=0.3;S.shakeI=2.0;}catch(_){}
     try{screenFlash(0.35)}catch(_){}
   }
+  // v7.334: AUTO-ACCEL — speed converges to a curve-aware target every frame
+  // Sharper curve / hairpin → lower target speed (forces a natural slowdown)
+  const _cv=Math.abs(S._prCurveV||0);
+  const curveFactor=Math.max(0.55,1-_cv/45);// straight=1.0, sharp hairpin~0.55
+  const baseMax=S._prMaxSpeed||155;
+  const targetSpeed=baseMax*curveFactor;
   const nitro=(S._prNitroT||0)>0;
   if(nitro){
     S._prNitroT=Math.max(0,S._prNitroT-dt);
-    S._prSpeed=Math.min(S._prMaxSpeed*1.5,S._prSpeed+90*dt);
-    // v7.328: dense blue plasma trail during nitro
+    S._prSpeed=Math.min(baseMax*1.5,S._prSpeed+90*dt);
     if(S._prPlayerPod){
       S._prNitroTrailT=(S._prNitroTrailT||0)+dt;
       if(S._prNitroTrailT>0.025){
@@ -35400,15 +35405,14 @@ function updatePodRace(dt){
         try{spawnP(new THREE.Vector3(pod.position.x+(Math.random()-0.5)*3,pod.position.y-0.2,pod.position.z+4+Math.random()*6),0x0066ff,3,1.0,0.5,0.40);}catch(_){}
       }
     }
+  } else {
+    // auto-accelerate to target, ease down on curves
+    if(S._prSpeed<targetSpeed)S._prSpeed=Math.min(targetSpeed,S._prSpeed+44*dt);
+    else S._prSpeed=Math.max(targetSpeed,S._prSpeed-65*dt);// brake on curve entry
+    // hard floor: never drop below lap-paced min coast speed
+    const minCoast=55+(S._prLap-1)*15;
+    if(S._prSpeed<minCoast)S._prSpeed=Math.min(minCoast,S._prSpeed+25*dt);
   }
-  else if(S._prGyroActive){
-    // v7.304: gyro mode — auto-accel unless touch-braking
-    if(S._prTouchBrake){S._prSpeed=Math.max(20,S._prSpeed-60*dt);}
-    else{S._prSpeed=Math.min(S._prMaxSpeed,S._prSpeed+32*dt);}// gentle constant acceleration
-  }
-  else if(accel){S._prSpeed=Math.min(S._prMaxSpeed,S._prSpeed+40*dt);}
-  else if(brake){S._prSpeed=Math.max(20,S._prSpeed-60*dt);}
-  else{S._prSpeed=Math.max(S._prSpeed-10*dt,55+(S._prLap-1)*15);}
   // v7.288: SMOKE SCREEN (Enter) + WRENCH THROW (Shift) — cooldown-gated
   if(keys['Enter']&&(S._prSmokeCD||0)<=0){try{_emitPodSmoke()}catch(_){}}
   if((keys['ShiftLeft']||keys['ShiftRight'])&&(S._prWrenchCD||0)<=0){try{_fireWrench()}catch(_){}}
@@ -35416,23 +35420,35 @@ function updatePodRace(dt){
   const rightKey=keys['KeyD']||keys['ArrowRight'];
   const pod=S._prPlayerPod;
   const lateralSpd=22+S._prSpeed*0.06;
+  // v7.334: LANE-BASED STEERING — track an offset from the curve centre.
+  // No input → lane decays toward 0 (auto-centering brings player back to track centre).
+  // Pod world X = curveX + lane, so the player smoothly follows curves even off-track.
+  if(S._prLane==null)S._prLane=pod.position.x-(S._prCurveX||0);
+  let steered=false;
   if(S._prGyroActive){
-    // v7.304: GYRO STEERING — tilt phone to steer, dead-zone ±0.06
     const gSteer=S._prGyroSteer||0;
-    if(Math.abs(gSteer)>0.06) pod.position.x+=gSteer*lateralSpd*dt;
-    // Gyro directly drives visual swerve/lean
+    if(Math.abs(gSteer)>0.06){S._prLane+=gSteer*lateralSpd*dt;steered=true;}
     S._prSwerve=gSteer;
-    // Update tilt indicator dot position
     try{const dot=document.getElementById('pr-gyro-dot');if(dot)dot.style.left=(50+gSteer*43)+'%';}catch(_){}
   } else {
-    // v7.293: keyboard steering
-    if(leftKey) pod.position.x-=lateralSpd*dt;
-    else if(rightKey) pod.position.x+=lateralSpd*dt;
-    // v7.295: smooth swerve — gentler decay for silky steering
+    if(leftKey){S._prLane-=lateralSpd*dt;steered=true;}
+    else if(rightKey){S._prLane+=lateralSpd*dt;steered=true;}
     S._prSwerve=leftKey?Math.max(-1,S._prSwerve-3.5*dt):rightKey?Math.min(1,S._prSwerve+3.5*dt):S._prSwerve*Math.pow(0.15,dt);
   }
-  pod.position.x+=(S._prBounceVX||0)*dt;
+  // v7.334: auto-center when no steering input (faster decay on sharper curves)
+  if(!steered){
+    const centerSpd=0.55+Math.min(0.8,_cv/40);// curves pull stronger toward center
+    S._prLane*=Math.pow(1-centerSpd,dt);
+    if(Math.abs(S._prLane)<0.05)S._prLane=0;
+  }
+  S._prLane+=(S._prBounceVX||0)*dt;
   S._prBounceVX=(S._prBounceVX||0)*0.82;
+  // clamp lane within the track (acts as a soft inner-wall guard before crash collision)
+  const _trackHalf=(S._prLap===1?1.2:1.0)*42-3.5;
+  if(S._prLane>_trackHalf)S._prLane=_trackHalf;
+  if(S._prLane<-_trackHalf)S._prLane=-_trackHalf;
+  // apply: pod world X follows curve centre + lane offset
+  pod.position.x=(S._prCurveX||0)+S._prLane;
   S._prVertical*=0.9;
   // v7.325: J key triggers jump (one-shot consume)
   if(keys['KeyJ']&&!S._prJumping&&(S._prJumpY||0)<0.1){S._prJumpTrig=true;keys['KeyJ']=false;}
@@ -37932,7 +37948,7 @@ function _startF1Lights(){
     }catch(_){}
     announce('LAP 1 / 3');
     // v7.288: control hint for the new sabotage items
-    setTimeout(()=>{try{announce('SPACE=NITRO  ENTER=SMOKE  SHIFT=WRENCH')}catch(_){}},1400);
+    setTimeout(()=>{try{announce('←/→ STEER · AUTO-ACCEL · SPACE=NITRO  ENTER=SMOKE  SHIFT=WRENCH')}catch(_){}},1400);
     setTimeout(()=>{
       const slEl=document.getElementById('pr-startlights');
       if(slEl)slEl.style.display='none';
