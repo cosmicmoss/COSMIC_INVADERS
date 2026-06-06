@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.332</title>
+<title>COSMIC INVADERS v7.333</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34918,27 +34918,26 @@ function makePodRacerPod(type,color,variant){
     try{const doc=bike.getObjectByName('bikeDoctor');if(doc&&doc.parent)doc.parent.remove(doc);}catch(_){}
     bike.scale.setScalar(2.4);bike.rotation.y=Math.PI;bike.position.y=-0.5;
     g.add(bike);g.userData.halfW=3.5;g.userData.variant='speeder';
-    // v7.306: fix pilot seated position + steering arm pose
-    // Root cause: bike.rotation.y=π + pilot.rotation.y=π = net 0° in world.
-    // straddleBikeRider uses -armReach which was correct for pilot facing -Z, but
-    // with net rotation=0 the arms get sent toward the camera instead of the track.
-    // Fix: positive arm.rotation.x sends arms toward -Z (track) with net rotation=0.
+    // v7.333: fix pilot arm pose — arms now match leg convention (negative = forward)
+    // The v7.306 fix made arms positive but legs are negative; this contradiction sent
+    // arms BACKWARD (look like hands clasped behind the back). straddleBikeRider and the
+    // working leg pose both use: negative rotation.x = forward (toward handlebars).
     try{
       const _pr=bike.getObjectByName('forestPilotFigure');
       if(_pr){
-        // v7.309: Y=0.18 places pilot feet exactly at bike floor/footpeg level (world Y≈1.43).
-        // At 0.16 (v7.306), feet were 0.05 below the bike floor — clip through chassis.
-        // Hips remain ≈0.81 above seat top, keeping seated posture intact.
         _pr.position.set(0, 0.18, 0.40);
-        // Arms: +rotation.x sends hand toward -Z (track direction) ✓
         const _fa=(nm,rx,rz,frx)=>{
           const a=_pr.getObjectByName(nm);if(!a)return;
           a.rotation.x=rx;a.rotation.z=rz;a.rotation.y=0;
           const f=_pr.getObjectByName(nm+'Fore');
           if(f&&frx!==undefined)f.rotation.x=frx;
         };
-        _fa('lArm', 0.80, +0.16, -0.40);// forward-reach + outward spread + elbow-grip bend
-        _fa('rArm', 0.80, -0.16, -0.40);
+        // Arms: negative upper = reach forward; positive forearm = bend elbow down to grip
+        // (same convention as legs: thigh=-1.45 forward, shin=+1.35 drops to peg)
+        // Z rotation tilts arm inward to reach handlebar grip; signs verified via transform chain
+        // (wrap π + pilot outer π + bike π = 3π = π net, so lArm anatomical-left ends up world +X side)
+        _fa('lArm', -1.10, +0.16, +0.60);// forward reach + inward to grip + elbow bend
+        _fa('rArm', -1.10, -0.16, +0.60);
         // Legs: straddle (thigh forward-horizontal, shin drops to footpeg)
         const _fl=(nm,rz)=>{
           const l=_pr.getObjectByName(nm);if(!l)return;
