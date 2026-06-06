@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.335</title>
+<title>COSMIC INVADERS v7.336</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34476,6 +34476,7 @@ function _podRaceReturnToTitle(){
   S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
   S._prStadiumCrowd=[];S._prCrowdT=0;S._prCrowdExcite=0;// v7.329
   S._prLane=0;// v7.334
+  S._prBikeJets=null;// v7.336
   // v7.312/313
   S._prCheerT=35;S._prLastPos=9;S._prTrackLog=[];S._prMaintDone=false;
   S._prRaceStarted=false;S._prCamMode='chase';
@@ -34784,6 +34785,9 @@ function startPodRace(){
   S._prPlayerPod=makePodRacerPod('player',null,'speeder');// v7.289: player rides the forest speeder bike
   S._prPlayerPod.position.set(0,1.5,camera.position.z-8);
   scene.add(S._prPlayerPod);
+  // v7.336: collect bike jet refs for speed-aware animation
+  S._prBikeJets=[];
+  try{S._prPlayerPod.traverse(o=>{const n=o.name;if(n==='jetFlame'||n==='jetNozzle'||n==='jetCore'||n==='jetOuter'||n==='jetGlow')S._prBikeJets.push(o);});}catch(_){}
   S._prCamZ=camera.position.z;// v7.298: fixed camera-z anchor for chase/cockpit view toggle
   S._prCamMode='chase';// v7.298: default chase view
   try{const _ck=document.getElementById('pr-cockpit');if(_ck)_ck.style.display='none';}catch(_){}
@@ -35667,7 +35671,7 @@ function updatePodRace(dt){
       });
     }
   }catch(_){}
-  // v7.326: engine wake trail particles (speed > 90)
+  // v7.326: engine wake trail particles (speed > 90) — v7.336: blue-white wake (was orange)
   try{
     const pod=S._prPlayerPod;
     if(pod&&S._prSpeed>90){
@@ -35676,9 +35680,46 @@ function updatePodRace(dt){
       if(S._prTrailT>=rate){
         S._prTrailT=0;
         const nitroOn=(S._prNitroT||0)>0;
-        const tCol=nitroOn?0x44aaff:0xff6622;
+        // v7.336: blue-white plasma trail (was orange when not in nitro)
+        const tCol=nitroOn?0xccddff:0x6699ff;
         const offset=new THREE.Vector3((Math.random()-0.5)*3,Math.random()*1.0-0.2,4+Math.random()*3);
         spawnP(pod.position.clone().add(offset),tCol,2,0.55,0.55,0.45);
+      }
+    }
+  }catch(_){}
+  // v7.336: bike jet exhaust — only flares when moving. Intensity = speed (smooth threshold at 25→95)
+  try{
+    if(S._prBikeJets&&S._prBikeJets.length){
+      const sp=S._prSpeed||0;
+      const intensity=Math.max(0,Math.min(1,(sp-25)/70));// 0 below 25, 1 above 95
+      const nitroOn=(S._prNitroT||0)>0;
+      const t=S._prTime||0;
+      // crackling flicker — varies per-mesh via phase offset
+      const flicker=(p)=>1+Math.sin(t*60+p)*0.10+Math.sin(t*97+p*1.4)*0.05;
+      for(let i=0;i<S._prBikeJets.length;i++){
+        const m=S._prBikeJets[i];if(!m||!m.material)continue;
+        if(intensity<0.02){
+          if(m.visible)m.visible=false;
+          continue;
+        }
+        if(!m.visible)m.visible=true;
+        const ud=m.userData||{};
+        const maxOp=ud._jetMaxOp||0.9;
+        const baseScZ=ud._jetBaseScZ||1;
+        m.material.opacity=maxOp*intensity*flicker(i*0.7);
+        // longer flames at higher speed; flame & outer cones get the biggest stretch
+        const isFlame=(m.name==='jetFlame'||m.name==='jetOuter');
+        const stretch=isFlame?(0.4+intensity*0.8)*flicker(i*0.5):(0.6+intensity*0.45);
+        m.scale.z=baseScZ*stretch;
+        // nitro override: shift toward pure white-blue
+        if(nitroOn&&m.material.color)m.material.color.setHex(m.name==='jetFlame'||m.name==='jetGlow'?0xddeeff:0x99bbff);
+        else if(m.material.color){
+          // restore base palette
+          if(m.name==='jetFlame')m.material.color.setHex(0x6699ff);
+          else if(m.name==='jetCore'||m.name==='jetNozzle')m.material.color.setHex(0xddeeff);
+          else if(m.name==='jetOuter')m.material.color.setHex(0x3366cc);
+          else if(m.name==='jetGlow')m.material.color.setHex(0xaaccff);
+        }
       }
     }
   }catch(_){}
@@ -41148,23 +41189,25 @@ function makeSpeederBike(withRider,options){
   [-1,1].forEach(side=>{
     solid(new THREE.CylinderGeometry(.07,.06,.18,7),fAcc,eAcc,[side*.5,.78,1.0],[0,0,Math.PI/2]);
   });
-  // === TWIN JET EXHAUSTS — keep as luminous line-based glow ===
-  const mJet    =new THREE.LineBasicMaterial({color:0x22aaff,transparent:true,opacity:.9});
-  const mJetCore=new THREE.LineBasicMaterial({color:0xaaeeff,transparent:true,opacity:.95});
-  const mJetOuter=new THREE.LineBasicMaterial({color:0x0055cc,transparent:true,opacity:.7});
+  // === TWIN JET EXHAUSTS — v7.336: blue-white plasma flames; per-mesh materials so opacity can be animated independently per pod ===
+  // (was a single shared material — pod-race-only animation now mutates each material safely)
+  const _mkJet     =()=>new THREE.LineBasicMaterial({color:0x6699ff,transparent:true,opacity:0});// flame body — soft blue
+  const _mkJetCore =()=>new THREE.LineBasicMaterial({color:0xddeeff,transparent:true,opacity:0});// core — near-white
+  const _mkJetOuter=()=>new THREE.LineBasicMaterial({color:0x3366cc,transparent:true,opacity:0});// outer envelope
+  if(!g.userData.bikeJets)g.userData.bikeJets=[];
   [-.28,.28].forEach(xOff=>{
-    // solid nozzle housing
+    // solid nozzle housing (always visible — the metal nozzle stays put)
     solid(new THREE.CylinderGeometry(.20,.16,.42,8),fBodyDk,eBodyDk,[xOff,.22,-1.85],[Math.PI/2,0,0]);
-    const nozMouth=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.16,.03,5,10)),mJetCore);
-    nozMouth.position.set(xOff,.22,-2.0);nozMouth.name='jetNozzle';g.add(nozMouth);
-    const jet=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.18,1.6,8)),mJet);
-    jet.rotation.x=Math.PI/2;jet.position.set(xOff,.22,-2.75);jet.name='jetFlame';g.add(jet);
-    const jetCore=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.09,.9,6)),mJetCore);
-    jetCore.rotation.x=Math.PI/2;jetCore.position.set(xOff,.22,-2.35);g.add(jetCore);
-    const jetOuter=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.28,2.0,6)),mJetOuter);
-    jetOuter.rotation.x=Math.PI/2;jetOuter.position.set(xOff,.22,-3.0);g.add(jetOuter);
-    const glowDisk=new THREE.Mesh(new THREE.CircleGeometry(.18,10),new THREE.MeshBasicMaterial({color:0x44ccff,transparent:true,opacity:.5,side:THREE.DoubleSide}));
-    glowDisk.rotation.x=Math.PI/2;glowDisk.position.set(xOff,.22,-2.02);g.add(glowDisk);
+    const nozMouth=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.TorusGeometry(.16,.03,5,10)),_mkJetCore());
+    nozMouth.position.set(xOff,.22,-2.0);nozMouth.name='jetNozzle';nozMouth.userData._jetMaxOp=0.95;nozMouth.userData._jetBaseScZ=1;g.add(nozMouth);g.userData.bikeJets.push(nozMouth);
+    const jet=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.18,1.6,8)),_mkJet());
+    jet.rotation.x=Math.PI/2;jet.position.set(xOff,.22,-2.75);jet.name='jetFlame';jet.userData._jetMaxOp=0.9;jet.userData._jetBaseScZ=1;g.add(jet);g.userData.bikeJets.push(jet);
+    const jetCore=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.09,.9,6)),_mkJetCore());
+    jetCore.rotation.x=Math.PI/2;jetCore.position.set(xOff,.22,-2.35);jetCore.name='jetCore';jetCore.userData._jetMaxOp=0.95;jetCore.userData._jetBaseScZ=1;g.add(jetCore);g.userData.bikeJets.push(jetCore);
+    const jetOuter=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ConeGeometry(.28,2.0,6)),_mkJetOuter());
+    jetOuter.rotation.x=Math.PI/2;jetOuter.position.set(xOff,.22,-3.0);jetOuter.name='jetOuter';jetOuter.userData._jetMaxOp=0.7;jetOuter.userData._jetBaseScZ=1;g.add(jetOuter);g.userData.bikeJets.push(jetOuter);
+    const glowDisk=new THREE.Mesh(new THREE.CircleGeometry(.18,10),new THREE.MeshBasicMaterial({color:0xaaccff,transparent:true,opacity:0,side:THREE.DoubleSide}));
+    glowDisk.rotation.x=Math.PI/2;glowDisk.position.set(xOff,.22,-2.02);glowDisk.name='jetGlow';glowDisk.userData._jetMaxOp=0.6;glowDisk.userData._jetBaseScZ=1;g.add(glowDisk);g.userData.bikeJets.push(glowDisk);
   });
   // === REPULSOR DISKS — keep as glow rings ===
   [[-.55,1.2],[.55,1.2],[-.55,-1.2],[.55,-1.2]].forEach(p=>{
