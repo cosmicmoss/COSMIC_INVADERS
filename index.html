@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.334</title>
+<title>COSMIC INVADERS v7.335</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -35450,8 +35450,8 @@ function updatePodRace(dt){
   // apply: pod world X follows curve centre + lane offset
   pod.position.x=(S._prCurveX||0)+S._prLane;
   S._prVertical*=0.9;
-  // v7.325: J key triggers jump (one-shot consume)
-  if(keys['KeyJ']&&!S._prJumping&&(S._prJumpY||0)<0.1){S._prJumpTrig=true;keys['KeyJ']=false;}
+  // v7.325/v7.335: J key triggers jump (one-shot consume) — disabled in post-race
+  if(keys['KeyJ']&&!S._prPostRace&&!S._prFinished&&!S._prJumping&&(S._prJumpY||0)<0.1){S._prJumpTrig=true;keys['KeyJ']=false;}
   // v7.325: parabolic jump physics (init vel 12 u/s, gravity 30 u/s²) — peak ≈2.4u, air ≈0.8s
   if(S._prJumpTrig&&!S._prJumping&&(S._prJumpY||0)<0.1){
     S._prJumping=true;S._prJumpTrig=false;S._prJumpVel=12;
@@ -36684,7 +36684,8 @@ function _finishPodRace(){
   }catch(_){}
   S._prPostRace=true;
   S._prPostRaceSpeed=Math.max(60,S._prSpeed*0.55);
-  try{const ph=document.getElementById('pr-hud');if(ph)ph.style.opacity='0.45';}catch(_){}
+  // v7.335: HIDE HUD entirely so the dimmed POS doesn't contradict the results panel
+  try{const ph=document.getElementById('pr-hud');if(ph)ph.style.display='none';}catch(_){}
   // v7.298/v7.299: leave cockpit view for overhead post-race camera, clear fog + crash state
   try{S._prCamMode='chase';const ck=document.getElementById('pr-cockpit');if(ck)ck.style.display='none';if(S._prPlayerPod)S._prPlayerPod.visible=true;}catch(_){}
   try{const sf=document.getElementById('pr-smoke-fog');if(sf)sf.style.display='none';}catch(_){}
@@ -36697,6 +36698,16 @@ function _finishPodRace(){
   clearTimeout(S._prEventLabelTimer);
   try{const el=document.getElementById('pr-event-label');if(el)el.style.opacity='0';}catch(_){}
   try{const tf=document.getElementById('pr-tunnel-fog');if(tf)tf.style.opacity='0';}catch(_){}
+  // v7.335: full overlay cleanup at finish (was bleeding through to results screen)
+  try{const sl=document.getElementById('pr-speed-streak');if(sl){sl.style.display='none';sl.style.opacity='0';}}catch(_){}
+  try{const eg=document.getElementById('pr-edge-glow');if(eg){eg.style.display='none';eg.style.opacity='0';}}catch(_){}
+  try{const ji=document.getElementById('pr-jump-ind');if(ji)ji.style.display='none';}catch(_){}
+  try{const hc=document.getElementById('pr-horiz-cursor');if(hc){hc.style.display='none';hc.style.opacity='0';}}catch(_){}
+  // dismiss any in-flight cine subtitle (e.g. "🚀 JUMP!" lingering from final-second jump)
+  try{const cs=document.getElementById('wf-cine-sub');if(cs){cs.style.opacity='0';cs.style.animation='none';}}catch(_){}
+  try{const wa=document.getElementById('wave-announce');if(wa){wa.style.display='none';}}catch(_){}
+  // reset jump state so no late JUMP! subtitle / particles fire during post-race
+  S._prJumpY=0;S._prJumpVel=0;S._prJumping=false;S._prJumpTrig=false;
 }
 function _onAIFinish(ai){
   if(!S._prPostRace)return;
@@ -37532,7 +37543,7 @@ function _updatePodCockpit(){
   }
 }
 function _showPodRaceHUD(){
-  const e=document.getElementById('pr-hud');if(e)e.style.display='block';
+  const e=document.getElementById('pr-hud');if(e){e.style.display='block';e.style.opacity='1';}// v7.335: reset opacity in case it was dimmed by an earlier finish
 }
 function _updatePodRaceHUD(){
   const lapEl=document.getElementById('pr-lap');
