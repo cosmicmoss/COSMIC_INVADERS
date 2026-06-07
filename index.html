@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.338</title>
+<title>COSMIC INVADERS v7.339</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -13516,7 +13516,12 @@ function updateEnemies(dt){
       S._waveGapT=null;
       const waveInCycle=((S.wave-1)%C.FORT_WAVES)+1;
       if(waveInCycle>=C.FORT_WAVES){startFortressApproachCine()}// v7.35: cinema masks startFortress() freeze
-      else{S.wave++;spawnWave(S.wave)}
+      else{
+        // v7.339: one wave before the fortress, spawn it as a distant backdrop + wingmen
+        // so the lead-up reads as a formation flight toward a growing fortress (combat continues).
+        if(waveInCycle===C.FORT_WAVES-1 && !S._fortBackdropActive){try{_spawnFortressBackdrop()}catch(_){}}
+        S.wave++;spawnWave(S.wave);
+      }
     }
   } else {
     S._waveGapT=null; // reset timer whenever enemies are present
@@ -14290,11 +14295,44 @@ function cleanupBossResidue(){
   }catch(_){}
 }
 
+// v7.339: spawn the fortress as a distant backdrop DURING combat (the final wave),
+// so the player flies toward it in formation while still fighting — then the takeover
+// cinema only needs the short "dive into the trench" segment.
+function _spawnFortressBackdrop(){
+  if(S._fortBackdropActive)return;// guard double-spawn
+  S._fortBackdropActive=true;
+  try{
+    if(megaFortMesh){try{scene.remove(megaFortMesh)}catch(_){}}
+    megaFortMesh=makeMegaFortress();
+    megaFortMesh.position.set(0,16,-720);// very far ahead
+    megaFortMesh.rotation.x=.2;megaFortMesh.rotation.y=.3;
+    megaFortMesh.scale.setScalar(1.8);
+    scene.add(megaFortMesh);
+  }catch(_){}
+  // formation wingmen fly alongside toward the fortress
+  try{_spawnFormationAllies();}catch(_){}
+  try{wfCineSubtitle(_L('🛰 FORTRESS AHEAD — FORM UP!','🛰 前方に要塞 — 編隊を組め！'),'#88ccff');}catch(_){}
+  try{playComm('hq',_L('Fortress on the horizon — hold formation, we go in together!','要塞を確認！編隊を維持、共に突入する！'))}catch(_){}
+}
+function _updateFortressBackdrop(dt){
+  if(!S._fortBackdropActive||!megaFortMesh)return;
+  // drift slowly closer (−720 → −440) while combat continues
+  const targetZ=-440;
+  megaFortMesh.position.z+=(targetZ-megaFortMesh.position.z)*0.25*dt;
+  megaFortMesh.rotation.y+=dt*0.05;
+  try{
+    const coreSpin=megaFortMesh.getObjectByName('coreSpin');if(coreSpin)coreSpin.rotation.y+=dt*0.15;
+    const reactor=megaFortMesh.getObjectByName('reactor');if(reactor){reactor.rotation.x+=dt*0.8;reactor.rotation.y+=dt*0.5}
+  }catch(_){}
+}
+
 function startFortressApproachCine(){
   // v7.254: guard — prevent double-call if already in fortress phases
   if(S.phase==='FORTRESS_APPROACH'||S.phase==='FORTRESS')return;
   S.phase='FORTRESS_APPROACH';
-  S._fortApproachT=0;
+  // v7.339: if the backdrop already showed the long approach, skip the formation/orbit/underside
+  // phases and start the cinema at the conduit dive (≈7.5s) → much less combat-stop dead time.
+  S._fortApproachT=(S._fortBackdropActive)?7.5:0;
   // v7.249: extended 15s cinematic with 6 phases
   S._fortApproachInited=false;
   S._fortApproachSub1=false;S._fortApproachSub2=false;S._fortApproachSub3=false;
@@ -14507,6 +14545,7 @@ function updateFortressApproachCine(dt){
 }
 
 function endFortressApproachCine(){
+  S._fortBackdropActive=false;// v7.339: backdrop handed over to FORTRESS gameplay
   // v7.249: Cleanup formation ships
   try{
     if(S._fortCineShips){S._fortCineShips.forEach(m=>{try{scene.remove(m)}catch(_){}});S._fortCineShips=[];}
@@ -16791,8 +16830,9 @@ function triggerCoreDeath(){
   try{
     if(!S._testFromOptions && typeof selectedStage!=='undefined' && selectedStage && typeof markStageCleared==='function'){
       markStageCleared(selectedStage.id);
-      // v7.251: set ending flag when space stage is cleared (final story stage)
-      if(selectedStage.id==='space')S._triggerEnding=true;
+      // v7.339 FIX: ending only after the LAST main stage (ice) AND all main stages cleared.
+      // Was 'space' (the FIRST stage) — caused the ending to fire after stage 1.
+      if(selectedStage.id==='ice' && (typeof _allMainStagesCleared!=='function'||_allMainStagesCleared()))S._triggerEnding=true;
     }
   }catch(e){}
   S.coreAlive=false;
@@ -47216,6 +47256,7 @@ function actualStartGame(){
   S.nextBonus=C.BONUS_THR;S.invTimer=0;S.gameTime=0;S.fortTimer=0;S.coreHP=0;S.coreAlive=false;
   S.shakeT=0;S.cycle=0;S.heat=0;S.overheated=false;S.napalmAmmo=C.NAPALM_START;S.returnTimer=0;S.dockTimer=0;S.dockPhase=0;
   S._hyperspaceActive=false;// v7.247: hyperspace jump state reset
+  S._fortBackdropActive=false;// v7.339: fortress-backdrop guard reset each combat start
   S._waveGapT=null;// v7.199: inter-wave delay timer
   S.hasCrystalLaser=false;S.ruinsPhase=0;S.ruinsTrapsCleared=0;// v6.69: reset ruins mission on new game
   // v7.208: restore flamethrower upgrade from saved campaign progress (persists across runs)
@@ -47403,7 +47444,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
       // otherwise updateEnemies' "enemies empty → auto-spawn next wave" logic re-spawns Stage-1 Wave-1
       // grunts on the track. Run ONLY particles (nitro/wrench/smoke sparks) + comms + the pod-race loop.
       if(selectedStage&&selectedStage.id==='podrace'){updateParticles(dt);updateComms(dt);try{updatePodRace(dt)}catch(e){console.error('podrace:',e)}break;}
-      updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateComms(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();updateTargetPractice(dt);try{updateBossShrapnel(dt)}catch(_){}break;
+      updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateComms(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();updateTargetPractice(dt);try{updateBossShrapnel(dt)}catch(_){}try{_updateFortressBackdrop(dt)}catch(_){}try{_updateFormationAllies(dt)}catch(_){}break;
     case 'BONUS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateBonus(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();try{updateBossShrapnel(dt)}catch(_){}break;
     case 'FORTRESS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateFortress(dt);updateRadar();updateBossHP();try{updateEscortRetreat(dt)}catch(e){};try{_updatePursuitFighters(dt)}catch(e){};try{_updateFormationAllies(dt)}catch(e){}break;
     case 'FORTRESS_APPROACH':try{updateFortressApproachCine(dt)}catch(e){console.error('fortress approach:',e);S.phase='FORTRESS'}break;
