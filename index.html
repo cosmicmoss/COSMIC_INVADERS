@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.341</title>
+<title>COSMIC INVADERS v7.342</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -47406,6 +47406,11 @@ function updateAutoQuality(){
 // triggerBonus / endBonus / startFortress / startRuinsHyperWarpReturn / startFortressApproach
 // Cine / triggerModificationCutscene / startCrystalLaserTargetPractice — they run BEFORE
 // the new phase spawns its own state, so they're race-safe.
+// v7.342: per-updater fault isolation. If one updater throws every frame it must NOT block the
+// rest of the combat loop (esp. updateEnemies = wave progression) — otherwise the game appears
+// frozen / "stuck at wave N". Each call is isolated; the cause is logged once for diagnosis.
+const _tickErr={};
+function _tick(fn,dt){try{fn(dt);}catch(e){const k=fn.name||'anon';if(!_tickErr[k]){_tickErr[k]=1;try{console.error('loop updater "'+k+'" threw (isolated):',e);}catch(_){}}}}
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);
   updateAutoQuality();
   switch(S.phase){
@@ -47416,9 +47421,10 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
       // otherwise updateEnemies' "enemies empty → auto-spawn next wave" logic re-spawns Stage-1 Wave-1
       // grunts on the track. Run ONLY particles (nitro/wrench/smoke sparks) + comms + the pod-race loop.
       if(selectedStage&&selectedStage.id==='podrace'){updateParticles(dt);updateComms(dt);try{updatePodRace(dt)}catch(e){console.error('podrace:',e)}break;}
-      updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateComms(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();updateTargetPractice(dt);try{updateBossShrapnel(dt)}catch(_){}try{_updateFortressBackdrop(dt)}catch(_){}try{_updateFormationAllies(dt)}catch(_){}break;
+      // v7.342: fault-isolated so one throwing updater can't freeze wave progression
+      _tick(updatePlayer,dt);_tick(updateEnemies,dt);_tick(updateBeams,dt);_tick(updateParticles,dt);_tick(checkCollisions,dt);_tick(updateComms,dt);_tick(updateRadar,dt);_tick(updateReinforcements,dt);_tick(updateMegaBossProjectiles,dt);_tick(updateFireDragons,dt);_tick(updateBossHP,dt);_tick(updateTargetPractice,dt);_tick(updateBossShrapnel,dt);_tick(_updateFortressBackdrop,dt);_tick(_updateFormationAllies,dt);break;
     case 'BONUS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateBonus(dt);updateRadar();updateReinforcements(dt);updateMegaBossProjectiles(dt);updateFireDragons(dt);updateBossHP();try{updateBossShrapnel(dt)}catch(_){}break;
-    case 'FORTRESS':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateFortress(dt);updateRadar();updateBossHP();try{updateEscortRetreat(dt)}catch(e){};try{_updatePursuitFighters(dt)}catch(e){};try{_updateFormationAllies(dt)}catch(e){}break;
+    case 'FORTRESS':S.gameTime+=dt;_tick(updatePlayer,dt);_tick(updateEnemies,dt);_tick(updateBeams,dt);_tick(updateParticles,dt);_tick(checkCollisions,dt);_tick(updateFortress,dt);_tick(updateRadar,dt);_tick(updateBossHP,dt);_tick(updateEscortRetreat,dt);_tick(_updatePursuitFighters,dt);_tick(_updateFormationAllies,dt);break;
     case 'FORTRESS_APPROACH':try{updateFortressApproachCine(dt)}catch(e){console.error('fortress approach:',e);S.phase='FORTRESS'}break;
     case 'RETURN':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();updateReturn(dt);updateComms(dt);updateRadar();if(S._hyperspaceActive)updateHangarTunnelRush(dt);break;
     case 'REPLAY':updateReplay(dt);break;
