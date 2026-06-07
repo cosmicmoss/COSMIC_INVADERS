@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.336</title>
+<title>COSMIC INVADERS v7.337</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -35439,14 +35439,21 @@ function updatePodRace(dt){
     else if(rightKey){S._prLane+=lateralSpd*dt;steered=true;}
     S._prSwerve=leftKey?Math.max(-1,S._prSwerve-3.5*dt):rightKey?Math.min(1,S._prSwerve+3.5*dt):S._prSwerve*Math.pow(0.15,dt);
   }
-  // v7.334: auto-center when no steering input (faster decay on sharper curves)
+  // v7.334/v7.337: auto-center when no steering input (faster decay on sharper curves)
+  // v7.337 BUGFIX: use exp() instead of pow(1-centerSpd,dt). The old form went NaN on
+  // hairpins where centerSpd>1 (negative base ^ fractional exp = NaN), corrupting
+  // S._prLane → pod.position.x → camera, blanking the 3D scene mid-race.
   if(!steered){
     const centerSpd=0.55+Math.min(0.8,_cv/40);// curves pull stronger toward center
-    S._prLane*=Math.pow(1-centerSpd,dt);
+    S._prLane*=Math.exp(-centerSpd*dt);// always positive, never NaN
     if(Math.abs(S._prLane)<0.05)S._prLane=0;
   }
   S._prLane+=(S._prBounceVX||0)*dt;
   S._prBounceVX=(S._prBounceVX||0)*0.82;
+  // v7.337: NaN safety net — if anything in the chain leaks NaN, snap back to centre
+  if(!Number.isFinite(S._prLane))S._prLane=0;
+  if(!Number.isFinite(S._prCurveX))S._prCurveX=0;
+  if(!Number.isFinite(S._prCurveV))S._prCurveV=0;
   // clamp lane within the track (acts as a soft inner-wall guard before crash collision)
   const _trackHalf=(S._prLap===1?1.2:1.0)*42-3.5;
   if(S._prLane>_trackHalf)S._prLane=_trackHalf;
@@ -35826,6 +35833,11 @@ function updatePodRace(dt){
     // v7.302: lookAt 55 units ahead (was 22) + strong curve lead → road visibly curves at horizon
     const lookAheadX=pod.position.x+(S._prCurveX||0)*0.52+(S._prCurveV||0)*1.85;
     camera.lookAt(lookAheadX, pod.position.y-0.4, pod.position.z-55);
+  }
+  // v7.337: emergency NaN recovery — if camera went bad somehow, snap back to anchor
+  if(!Number.isFinite(camera.position.x)||!Number.isFinite(camera.position.y)||!Number.isFinite(camera.position.z)){
+    const cZ=S._prCamZ!=null?S._prCamZ:C.CAM_Z;
+    camera.position.set(0,3.7,cZ);camera.up.set(0,1,0);camera.lookAt(0,1.5,cZ-63);
   }
   // v7.302: speed streak overlay — conic radial lines pulse at 90km/h+
   try{
