@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.337</title>
+<title>COSMIC INVADERS v7.338</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -628,6 +628,8 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 
 /* v7.327: title screen animations */
 @keyframes titleVerPulse{0%,100%{opacity:1;text-shadow:0 0 10px #0ff,0 0 20px #0ff}50%{opacity:0.6;text-shadow:0 0 20px #0ff,0 0 40px #0ff,0 0 60px rgba(0,255,255,0.4)}}
+/* v7.338: pod-race turn indicator pulse */
+@keyframes turnPulse{0%{transform:translateX(-50%) scale(1);opacity:0.85}100%{transform:translateX(-50%) scale(1.12);opacity:1}}
 @keyframes subtitleDrift{0%{letter-spacing:4px;opacity:0.8}100%{letter-spacing:6px;opacity:1}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 /* Bonus */
@@ -1446,10 +1448,15 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
   <!-- v7.326: JUMP indicator -->
   <div id="pr-jump-ind" style="display:none;position:absolute;bottom:70px;left:50%;transform:translateX(-50%);font-size:16px;color:#aaccff;letter-spacing:3px;text-shadow:0 0 12px #aaccff;pointer-events:none;">▲ JUMP [J]</div>
-  <!-- v7.312: course overview minimap — canvas with live curve visualization -->
-  <div id="pr-map" style="position:absolute;top:58px;right:12px;width:132px;height:104px;border:1px solid #2a5a7a;border-radius:8px;background:rgba(0,16,28,0.55);box-shadow:0 0 10px rgba(0,120,200,0.25);">
-    <canvas id="pr-map-canvas" width="132" height="84" style="position:absolute;top:0;left:0;border-radius:8px 8px 0 0;"></canvas>
-    <div id="pr-map-gap" style="position:absolute;bottom:2px;left:0;width:100%;text-align:center;font-size:11px;letter-spacing:1px;color:#7fd0ff;">P1/9 ・ LEADER</div>
+  <!-- v7.338: enlarged + redrawn minimap (was 132×104, now 180×220) -->
+  <div id="pr-map" style="position:absolute;top:58px;right:12px;width:180px;height:220px;border:1px solid #3a78aa;border-radius:8px;background:rgba(0,16,28,0.62);box-shadow:0 0 12px rgba(0,150,220,0.35);">
+    <canvas id="pr-map-canvas" width="180" height="200" style="position:absolute;top:0;left:0;border-radius:8px 8px 0 0;"></canvas>
+    <div id="pr-map-gap" style="position:absolute;bottom:2px;left:0;width:100%;text-align:center;font-size:12px;letter-spacing:1px;color:#7fd0ff;">P1/9 ・ LEADER</div>
+  </div>
+  <!-- v7.338: big turn indicator at top of screen — shows direction + sharpness during curves -->
+  <div id="pr-turn-indicator" style="display:none;position:absolute;top:88px;left:50%;transform:translateX(-50%);pointer-events:none;text-align:center;font-family:monospace;font-weight:900;letter-spacing:6px;text-shadow:0 0 18px currentColor,0 0 36px currentColor;animation:turnPulse 0.6s ease-in-out infinite alternate;">
+    <div id="pr-turn-arrow" style="font-size:42px;line-height:1;">◀</div>
+    <div id="pr-turn-label" style="font-size:14px;margin-top:2px;opacity:0.85;">TURN LEFT</div>
   </div>
   <!-- v7.288: item readiness row (nitro / smoke / wrench) -->
   <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:14px;font-size:13px;letter-spacing:1px;">
@@ -34473,6 +34480,7 @@ function _podRaceReturnToTitle(){
   // v7.326/v7.327 new overlay cleanup
   try{const eg=document.getElementById('pr-edge-glow');if(eg){eg.style.opacity='0';eg.style.display='none';}}catch(_){}
   try{const ji=document.getElementById('pr-jump-ind');if(ji)ji.style.display='none';}catch(_){}
+  try{const ti=document.getElementById('pr-turn-indicator');if(ti)ti.style.display='none';}catch(_){}// v7.338
   S._prJumpGates=[];S._prJumpGateLastZ=null;S._prTrailT=0;
   S._prStadiumCrowd=[];S._prCrowdT=0;S._prCrowdExcite=0;// v7.329
   S._prLane=0;// v7.334
@@ -36755,6 +36763,7 @@ function _finishPodRace(){
   try{const sl=document.getElementById('pr-speed-streak');if(sl){sl.style.display='none';sl.style.opacity='0';}}catch(_){}
   try{const eg=document.getElementById('pr-edge-glow');if(eg){eg.style.display='none';eg.style.opacity='0';}}catch(_){}
   try{const ji=document.getElementById('pr-jump-ind');if(ji)ji.style.display='none';}catch(_){}
+  try{const ti=document.getElementById('pr-turn-indicator');if(ti)ti.style.display='none';}catch(_){}// v7.338
   try{const hc=document.getElementById('pr-horiz-cursor');if(hc){hc.style.display='none';hc.style.opacity='0';}}catch(_){}
   // dismiss any in-flight cine subtitle (e.g. "🚀 JUMP!" lingering from final-second jump)
   try{const cs=document.getElementById('wf-cine-sub');if(cs){cs.style.opacity='0';cs.style.animation='none';}}catch(_){}
@@ -37679,30 +37688,29 @@ function _updatePodRaceHUD(){
 function _updatePodRaceMinimap(){
   const canvas=document.getElementById('pr-map-canvas');if(!canvas)return;
   const ctx=canvas.getContext('2d');
-  const W=132,H=84;
+  // v7.338: enlarged from 132\u00d784 to 180\u00d7200 \u2014 more track ahead, clearer curves
+  const W=180,H=200;
   ctx.clearRect(0,0,W,H);
-
   const lapDist=S._prLapDist||4400;
   const _pTD=((S._prLap||1)-1)*lapDist+(S._prDistance||0);
-  // strip geometry: 1 pixel = 6 race distance units; player at Y=58
-  const SCALE=6; // units per pixel
-  const playerY=58;
-
-  // --- background ---
-  ctx.fillStyle='#050e18';ctx.fillRect(0,0,W,H);
-
-  // --- build path of track strip from curve log ---
-  // Each log entry has {d, x, v}. We map distance to Y (ahead=smaller Y) and
-  // curveX to X offset (max \u00b142 units \u2192 max \u00b136px from center W/2).
-  const logLen=(S._prTrackLog||[]).length;
-  const MAXCX=42,MAXXPX=36;
+  // player sits 75% down the canvas so most of the strip shows what's AHEAD
+  const SCALE=7; // units per pixel \u2014 shows \u22481050 units ahead + 350 behind
+  const playerY=150;
+  // --- background gradient ---
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#020812');bg.addColorStop(1,'#071224');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // distance markers (every 500u behind player)
+  ctx.strokeStyle='#ffffff15';ctx.lineWidth=1;
+  for(let m=-1000;m<=2000;m+=500){
+    const my=playerY-m/SCALE;if(my<0||my>H)continue;
+    ctx.beginPath();ctx.moveTo(0,my);ctx.lineTo(W,my);ctx.stroke();
+  }
+  const MAXCX=42,MAXXPX=60;// expanded horizontal range (was 36)
   const CX=W/2;
-
-  // Interpolate curveX at any distance from log
   function curveXAt(dist){
     const log=S._prTrackLog||[];
     if(!log.length)return S._prCurveX||0;
-    // find surrounding entries
     for(let i=log.length-1;i>=0;i--){
       if(log[i].d<=dist){
         if(i===log.length-1)return log[i].x;
@@ -37712,78 +37720,93 @@ function _updatePodRaceMinimap(){
     }
     return log[0].x;
   }
-
-  // Draw track strip as a filled path
-  const STRIP=11; // half-width of track strip in px
-  ctx.beginPath();
-  let first=true;
-  // draw top edge (left side of strip)
+  // sample track centre at every row
+  const STRIP=15;// half-width of track strip in px (was 11)
+  const samples=[];
   for(let py=0;py<=H;py+=2){
     const distAtPy=_pTD+(playerY-py)*SCALE;
     const cx_val=distAtPy>_pTD?(curveXAt(distAtPy)||0):(S._prCurveX||0)+(S._prCurveV||0)*(playerY-py)*0.004;
-    const px=CX+(cx_val/MAXCX)*MAXXPX;
-    if(first){ctx.moveTo(px-STRIP,py);first=false;}else ctx.lineTo(px-STRIP,py);
+    samples.push({py,cx_val,px:CX+(cx_val/MAXCX)*MAXXPX});
   }
-  // draw bottom edge (right side of strip, reversed)
-  for(let py=H;py>=0;py-=2){
-    const distAtPy=_pTD+(playerY-py)*SCALE;
-    const cx_val=distAtPy>_pTD?(curveXAt(distAtPy)||0):(S._prCurveX||0)+(S._prCurveV||0)*(playerY-py)*0.004;
-    const px=CX+(cx_val/MAXCX)*MAXXPX;
-    ctx.lineTo(px+STRIP,py);
-  }
+  // --- track strip fill (brighter) ---
+  ctx.beginPath();
+  samples.forEach((s,i)=>{i===0?ctx.moveTo(s.px-STRIP,s.py):ctx.lineTo(s.px-STRIP,s.py);});
+  for(let i=samples.length-1;i>=0;i--)ctx.lineTo(samples[i].px+STRIP,samples[i].py);
   ctx.closePath();
-  ctx.fillStyle='#112233';ctx.fill();
-
-  // track center line (dashed)
-  ctx.setLineDash([4,5]);ctx.strokeStyle='#ffffff28';ctx.lineWidth=1;
-  ctx.beginPath();first=true;
-  for(let py=0;py<=H;py+=3){
-    const distAtPy=_pTD+(playerY-py)*SCALE;
-    const cx_val=distAtPy>_pTD?(curveXAt(distAtPy)||0):(S._prCurveX||0)+(S._prCurveV||0)*(playerY-py)*0.004;
-    const px=CX+(cx_val/MAXCX)*MAXXPX;
-    if(first){ctx.moveTo(px,py);first=false;}else ctx.lineTo(px,py);
-  }
-  ctx.stroke();ctx.setLineDash([]);
-
-  // current curve direction arrow (top-right corner)
-  const cv=S._prCurveV||0;
-  if(Math.abs(cv)>8){
-    ctx.fillStyle=cv<0?'#ff6622':'#22aaff';
-    ctx.font='bold 11px monospace';
-    ctx.fillText(cv<0?'\u25c0 L':'R \u25b6',cv<0?2:W-38,12);
-  }
-
+  // brighter track surface
+  const tgrad=ctx.createLinearGradient(0,0,0,H);
+  tgrad.addColorStop(0,'#1a3556');tgrad.addColorStop(0.6,'#22466e');tgrad.addColorStop(1,'#1a2a40');
+  ctx.fillStyle=tgrad;ctx.fill();
+  // --- bright track edges (left + right) ---
+  ctx.lineWidth=2;
+  // left edge \u2014 cyan
+  ctx.strokeStyle='#66ffee';
+  ctx.beginPath();samples.forEach((s,i)=>{i===0?ctx.moveTo(s.px-STRIP,s.py):ctx.lineTo(s.px-STRIP,s.py);});ctx.stroke();
+  // right edge \u2014 yellow
+  ctx.strokeStyle='#ffdd44';
+  ctx.beginPath();samples.forEach((s,i)=>{i===0?ctx.moveTo(s.px+STRIP,s.py):ctx.lineTo(s.px+STRIP,s.py);});ctx.stroke();
+  // dashed centre line (brighter)
+  ctx.setLineDash([5,6]);ctx.strokeStyle='#ffffff55';ctx.lineWidth=1.2;
+  ctx.beginPath();samples.forEach((s,i)=>{i===0?ctx.moveTo(s.px,s.py):ctx.lineTo(s.px,s.py);});ctx.stroke();
+  ctx.setLineDash([]);
   // --- AI dots ---
   if(S._prAI)S._prAI.forEach(ai=>{
     if(ai.eliminated)return;
     const dDiff=(ai.raceDist||0)-_pTD;
     const dotY=playerY-dDiff/SCALE;
-    if(dotY<-4||dotY>H+4)return;
+    if(dotY<-6||dotY>H+6)return;
     const col=(ai.def&&ai.def.col)||0x999999;
     const r=(col>>16)&0xff,g=(col>>8)&0xff,b=col&0xff;
-    // lateral X matches AI's actual X position
     const distAtDot=_pTD+dDiff;
     const cx_val=distAtDot>_pTD?(curveXAt(distAtDot)||0):(S._prCurveX||0);
     const dotX=CX+(cx_val/MAXCX)*MAXXPX+((ai.x||0)-(cx_val))*0.18;
     ctx.fillStyle=`rgb(${r},${g},${b})`;
-    ctx.beginPath();ctx.arc(Math.max(4,Math.min(W-4,dotX)),Math.max(3,Math.min(H-3,dotY)),3.5,0,Math.PI*2);ctx.fill();
-    // glow
-    ctx.shadowColor=`rgb(${r},${g},${b})`;ctx.shadowBlur=5;ctx.fill();ctx.shadowBlur=0;
+    ctx.shadowColor=`rgb(${r},${g},${b})`;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(Math.max(5,Math.min(W-5,dotX)),Math.max(4,Math.min(H-4,dotY)),4,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
   });
-
-  // --- player dot (yellow, larger) ---
+  // --- player dot (bigger, brighter) ---
   const curCurveX=S._prCurveX||0;
-  const playerX=CX+(curCurveX/MAXCX)*MAXXPX;
+  const curLane=S._prLane||0;
+  const playerX=CX+((curCurveX+curLane)/MAXCX)*MAXXPX;
   ctx.fillStyle='#ffdd00';
-  ctx.beginPath();ctx.arc(playerX,playerY,5.5,0,Math.PI*2);
-  ctx.shadowColor='#ffdd00';ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0;
-  // player triangle (direction indicator)
+  ctx.shadowColor='#ffdd00';ctx.shadowBlur=14;
+  ctx.beginPath();ctx.arc(playerX,playerY,7,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  // player direction triangle
   ctx.fillStyle='#ffffff';
-  ctx.beginPath();ctx.moveTo(playerX,playerY-8);ctx.lineTo(playerX-3,playerY-3);ctx.lineTo(playerX+3,playerY-3);ctx.closePath();ctx.fill();
-
+  ctx.beginPath();ctx.moveTo(playerX,playerY-11);ctx.lineTo(playerX-4,playerY-4);ctx.lineTo(playerX+4,playerY-4);ctx.closePath();ctx.fill();
   // lap indicator (top-left)
-  ctx.fillStyle='#ffffff88';ctx.font='bold 9px monospace';
-  ctx.fillText('LAP '+(S._prLap||1)+'/3',3,10);
+  ctx.fillStyle='#ffffff';ctx.font='bold 11px monospace';
+  ctx.fillText('LAP '+(S._prLap||1)+'/3',5,14);
+  // big curve direction chevron on map
+  const cv=S._prCurveV||0;
+  if(Math.abs(cv)>8){
+    ctx.fillStyle=cv<0?'#ff7733':'#33aaff';
+    ctx.font='bold 18px monospace';
+    ctx.fillText(cv<0?'\u25c0':'\u25b6',cv<0?6:W-22,32);
+  }
+  // v7.338: in-game big TURN indicator (HTML overlay)
+  try{
+    const ti=document.getElementById('pr-turn-indicator');
+    if(ti){
+      const cv2=S._prCurveV||0;const ab=Math.abs(cv2);
+      if(ab>10&&!S._prPostRace){
+        ti.style.display='block';
+        const isLeft=cv2<0;
+        const sharp=ab>20;
+        const colHex=sharp?(isLeft?'#ff4422':'#ff8822'):(isLeft?'#ffaa44':'#44aaff');
+        ti.style.color=colHex;
+        const arrow=document.getElementById('pr-turn-arrow');
+        const label=document.getElementById('pr-turn-label');
+        if(arrow)arrow.textContent=isLeft?'\u25c0':'\u25b6';
+        if(label)label.textContent=(sharp?'SHARP ':'')+(isLeft?'TURN LEFT':'TURN RIGHT');
+        ti.style.fontSize=sharp?'1':'';// pulse stronger if sharp via animation duration handled via opacity
+      } else {
+        ti.style.display='none';
+      }
+    }
+  }catch(_){}
 
   // --- gap to leader text ---
   const gapEl=document.getElementById('pr-map-gap');
