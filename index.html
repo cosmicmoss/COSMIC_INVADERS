@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.340</title>
+<title>COSMIC INVADERS v7.341</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -2500,7 +2500,7 @@ class SFX{
       if(!this._windGain||!this.ctx)return;
       const t=this.ctx.currentTime;
       const sf=Math.min(1,Math.max(0,speed/155));
-      const cf=Math.abs(curveV||0)/28;
+      const cf=Math.abs(curveV||0)/42;// v7.341: normalized to new curve-vel max
       this._windGain.gain.setTargetAtTime(sf*0.13+cf*0.04,t,0.25);
       this._windLPF.frequency.setTargetAtTime(500+sf*2800,t,0.4);
     }catch(_){}
@@ -34715,8 +34715,8 @@ const PR_COURSES=[
 ];
 // v7.310: course diversity events — triggered every 15-25s after race start+10s
 const PR_EVENTS=[
-  {type:'scurve', label:'S-CURVE!',           color:'#ffee44', weight:3, duration:9,  params:{phases:[22,-22,0],phaseDur:3}},
-  {type:'hairpin',label:'HAIRPIN!',           color:'#ff6644', weight:2, duration:6,  params:{durMin:5,durMax:7,strength:26}},
+  {type:'scurve', label:'S-CURVE!',           color:'#ffee44', weight:3, duration:9,  params:{phases:[34,-34,0],phaseDur:3}},// v7.341: ±34 (wider track)
+  {type:'hairpin',label:'HAIRPIN!',           color:'#ff6644', weight:2, duration:6,  params:{durMin:5,durMax:7,strength:40}},// v7.341: 40 (wider track)
   {type:'updown', label:'HILL!',              color:'#66ff88', weight:3, duration:8,  params:{peakVertical:0.5,riseDur:4,fallDur:4}},
   {type:'tunnel', label:'TUNNEL!',            color:'#88ccff', weight:2, duration:7,  params:{fogDark:0.022,ceilY:14,ceilH:2}},
   {type:'river',  label:'🌊 RIVER CROSSING!', color:'#33ddff', weight:3, duration:7,  params:{speedMul:0.88,splashRate:0.06}},// v7.316
@@ -34782,7 +34782,7 @@ function startPodRace(){
   S._prSwerve=0;S._prVertical=0;
   S._prLateralV=0;// v7.291: lateral velocity for inertial steering
   S._prWobbleT=0;S._prWobbleSign=1;// v7.291: collision wobble
-  S._prDistance=0;S._prLapDist=4400;// v7.297: 2x course length (scroll speed also 2x)
+  S._prDistance=0;S._prLapDist=8000;// v7.341: ~2x longer lap (was 4400)
   S._prWalls=[];S._prProps=[];S._prAI=[];
   S._prHitCooldown=0;S._prRaceStarted=false;
   S._prEngineT=0;
@@ -35418,13 +35418,13 @@ function updatePodRace(dt){
   if(!S._prEventActive||S._prEventType==='updown'||S._prEventType==='tunnel'||S._prEventType==='river'){
     S._prCurveT-=dt;
     if(S._prCurveT<=0){
-      S._prCurveV=(Math.random()-0.5)*56; // -28 to +28 units/s
-      S._prCurveT=3+Math.random()*5;
+      S._prCurveV=(Math.random()-0.5)*84; // v7.341: stronger curves (-42 to +42 units/s)
+      S._prCurveT=2.5+Math.random()*3.5;  // v7.341: more frequent direction changes (2.5-6s)
     }
   }
   S._prCurveX+=S._prCurveV*dt;
-  if(S._prCurveX>42){S._prCurveX=42;S._prCurveV=-Math.abs(S._prCurveV);}
-  if(S._prCurveX<-42){S._prCurveX=-42;S._prCurveV=Math.abs(S._prCurveV);}
+  if(S._prCurveX>64){S._prCurveX=64;S._prCurveV=-Math.abs(S._prCurveV);}// v7.341: ±64 swing (wider track)
+  if(S._prCurveX<-64){S._prCurveX=-64;S._prCurveV=Math.abs(S._prCurveV);}
   // v7.334: NITRO trigger (still manual via Space / mobile button)
   S._prNitroCD=Math.max(0,(S._prNitroCD||0)-dt);
   const nitroBtn=keys['Space']||(S._prGyroActive&&(S._prTouchNitro||false));
@@ -35440,7 +35440,7 @@ function updatePodRace(dt){
   // v7.334: AUTO-ACCEL — speed converges to a curve-aware target every frame
   // Sharper curve / hairpin → lower target speed (forces a natural slowdown)
   const _cv=Math.abs(S._prCurveV||0);
-  const curveFactor=Math.max(0.55,1-_cv/45);// straight=1.0, sharp hairpin~0.55
+  const curveFactor=Math.max(0.55,1-_cv/60);// v7.341: threshold 45→60 for new stronger curve speeds
   const baseMax=S._prMaxSpeed||155;
   const targetSpeed=baseMax*curveFactor;
   const nitro=(S._prNitroT||0)>0;
@@ -35502,7 +35502,7 @@ function updatePodRace(dt){
   if(!Number.isFinite(S._prCurveX))S._prCurveX=0;
   if(!Number.isFinite(S._prCurveV))S._prCurveV=0;
   // clamp lane within the track (acts as a soft inner-wall guard before crash collision)
-  const _trackHalf=(S._prLap===1?1.2:1.0)*42-3.5;
+  const _trackHalf=(S._prLap===1?1.2:1.0)*80-3.5;// v7.341: ±80 half-width (track 2x wider)
   if(S._prLane>_trackHalf)S._prLane=_trackHalf;
   if(S._prLane<-_trackHalf)S._prLane=-_trackHalf;
   // apply: pod world X follows curve centre + lane offset
@@ -35602,7 +35602,7 @@ function updatePodRace(dt){
     if(scene.fog&&scene.fog.density!==undefined){
       const _fc=_currentPRCourse();
       const _sfog=Math.max(0,(S._prSpeed-75)/180)*0.008;
-      const _cfog=Math.abs(S._prCurveV||0)/28*0.004;
+      const _cfog=Math.abs(S._prCurveV||0)/42*0.004;// v7.341: normalized to new curve-vel max
       scene.fog.density=_fc.fogD+_sfog+_cfog;
     }
   }catch(_){}}
@@ -36273,7 +36273,7 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
   curveX=curveX||0;curveV=curveV||0;
   // v7.312: log curve data for minimap
   if(!S._prTrackLog)S._prTrackLog=[];
-  S._prTrackLog.push({d:((S._prLap||1)-1)*(S._prLapDist||4400)+(S._prDistance||0),x:curveX,v:curveV||0});
+  S._prTrackLog.push({d:((S._prLap||1)-1)*(S._prLapDist||8000)+(S._prDistance||0),x:curveX,v:curveV||0});
   if(S._prTrackLog.length>50)S._prTrackLog.shift();
   const type=Math.floor(Math.random()*4);
   // v7.294: brighter walls — solid fill + bright edge line. v7.296: per-course theming.
@@ -36285,7 +36285,7 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
   const edgeMat=wallEdgeMat;
   const segLen=120;
   const widthScale=(S&&S._prLap===1)?1.2:1.0;
-  const w=84*widthScale;// v7.321: CONSTANT track width — walls/lines line up across segments (was random [70,50,60,80])
+  const w=160*widthScale;// v7.341: ~2x wider track (was 84) for stronger race feel + room to overtake
   // v7.297: curve angle applied to wall rotation — makes track look curved ahead
   const cAngle=Math.atan2(curveV, Math.max(55,(S&&S._prSpeed)||55))*0.80;// v7.303: stronger wall rotation for curve feel
   // solid+wire walls for maximum visibility
@@ -36517,7 +36517,7 @@ function _spawnPodRaceSegment(startZ, curveX, curveV){
 function _updatePodRaceAI(dt){
   const curveCenter=S._prCurveX||0;
   // v7.312: player total dist computed once per frame
-  const _pTD=((S._prLap||1)-1)*(S._prLapDist||4400)+(S._prDistance||0);
+  const _pTD=((S._prLap||1)-1)*(S._prLapDist||8000)+(S._prDistance||0);
   const _pPod=S._prPlayerPod;
   S._prAI.forEach((ai,idx)=>{
     // v7.292: post-wrench spin + smoke trail (even after eliminated)
@@ -36556,7 +36556,7 @@ function _updatePodRaceAI(dt){
     const aiSpd=(S._prSpeed||55)*2*ai.speed*rbFactor*spdWave*slowF*fightBoost;
     ai.raceDist=(ai.raceDist||0)+aiSpd*dt;
     // v7.297: AI finish detection
-    if(!ai.finished&&ai.raceDist>=(S._prLapDist||4400)*3){
+    if(!ai.finished&&ai.raceDist>=(S._prLapDist||8000)*3){
       ai.finished=true;ai.finishTime=S._prTime;
       try{sfx.playCrowdCheer&&sfx.playCrowdCheer(1.5)}catch(_){}
       try{_onAIFinish(ai);}catch(_){}
@@ -36601,7 +36601,7 @@ function _updatePodRaceAI(dt){
     ai.x+=(ai.vx||0)*dt;// v7.289: apply knockback velocity
     ai.vx=(ai.vx||0)*0.85;// decay
     // v7.316: clamp AI X within track walls (same formula as player, slightly narrower)
-    {const _aiHW=(S._prLap===1?1.2:1.0)*(38+S._prSpeed/22);
+    {const _aiHW=(S._prLap===1?1.2:1.0)*(76+S._prSpeed/22);// v7.341: base 38→76 (track 2x wider)
     const _aiMaxX=curveCenter+_aiHW-3,_aiMinX=curveCenter-_aiHW+3;
     if(ai.x>_aiMaxX){ai.x=_aiMaxX;if((ai.vx||0)>0)ai.vx=-(ai.vx||0)*0.3;}
     if(ai.x<_aiMinX){ai.x=_aiMinX;if((ai.vx||0)<0)ai.vx=-(ai.vx||0)*0.3;}
@@ -36664,11 +36664,9 @@ function _checkPodRaceCollisions(){
   if(S._prHitCooldown>0)return;
   const pod=S._prPlayerPod;
   const px=pod.position.x,py=pod.position.y;
-  // v7.332: collision matches actual wall position — constant 42u half-width (track w=84) ×lap1 scale 1.2
-  // pod half-width ~3.5u → effective collision boundary at curveX ± (42 - 3.5) = ±38.5
-  // (was speed-dependent 40+spd/22, which left the pod either bouncing early at low speed
-  //  or clipping through walls at high speed)
-  const trackHalfW=(S._prLap===1?1.2:1.0)*42;// matches w/2 in _spawnPodRaceSegment
+  // v7.341: collision matches actual wall position — constant 80u half-width (track w=160) ×lap1 scale 1.2
+  // pod half-width ~3.5u → effective collision boundary at curveX ± (80 - 3.5) = ±76.5
+  const trackHalfW=(S._prLap===1?1.2:1.0)*80;// matches w/2 in _spawnPodRaceSegment
   const podHalfW=3.5;
   const wallInner=trackHalfW-podHalfW;// inner edge of wall accounting for pod size
   if(Math.abs(px-(S._prCurveX||0))>wallInner){
@@ -37705,7 +37703,7 @@ function _updatePodRaceMinimap(){
   // v7.338: enlarged from 132\u00d784 to 180\u00d7200 \u2014 more track ahead, clearer curves
   const W=180,H=200;
   ctx.clearRect(0,0,W,H);
-  const lapDist=S._prLapDist||4400;
+  const lapDist=S._prLapDist||8000;
   const _pTD=((S._prLap||1)-1)*lapDist+(S._prDistance||0);
   // player sits 75% down the canvas so most of the strip shows what's AHEAD
   const SCALE=7; // units per pixel \u2014 shows \u22481050 units ahead + 350 behind
@@ -37720,7 +37718,7 @@ function _updatePodRaceMinimap(){
     const my=playerY-m/SCALE;if(my<0||my>H)continue;
     ctx.beginPath();ctx.moveTo(0,my);ctx.lineTo(W,my);ctx.stroke();
   }
-  const MAXCX=42,MAXXPX=60;// expanded horizontal range (was 36)
+  const MAXCX=80,MAXXPX=60;// v7.341: half-width 80 (track 2x wider)
   const CX=W/2;
   function curveXAt(dist){
     const log=S._prTrackLog||[];
