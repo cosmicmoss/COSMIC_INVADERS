@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.339</title>
+<title>COSMIC INVADERS v7.340</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -34987,12 +34987,11 @@ function makePodRacerPod(type,color,variant){
           const f=_pr.getObjectByName(nm+'Fore');
           if(f&&frx!==undefined)f.rotation.x=frx;
         };
-        // Arms: negative upper = reach forward; positive forearm = bend elbow down to grip
-        // (same convention as legs: thigh=-1.45 forward, shin=+1.35 drops to peg)
-        // Z rotation tilts arm inward to reach handlebar grip; signs verified via transform chain
-        // (wrap π + pilot outer π + bike π = 3π = π net, so lArm anatomical-left ends up world +X side)
-        _fa('lArm', -1.10, +0.16, +0.60);// forward reach + inward to grip + elbow bend
-        _fa('rArm', -1.10, -0.16, +0.60);
+        // v7.340: elbow was bending BACKWARD (positive forearm). The proven run animation
+        // (animateForestPilotWalk) uses NEGATIVE forearm rotation for a natural forward bend.
+        // Upper arm reaches forward (-1.10); forearm now bends forward-down to the grip (-0.70).
+        _fa('lArm', -1.10, +0.16, -0.70);// forward reach + inward to grip + natural elbow bend
+        _fa('rArm', -1.10, -0.16, -0.70);
         // Legs: straddle (thigh forward-horizontal, shin drops to footpeg)
         const _fl=(nm,rz)=>{
           const l=_pr.getObjectByName(nm);if(!l)return;
@@ -37498,42 +37497,17 @@ function _updateCrashState(dt){
       const dz=pod.position.z-pilot.position.z;
       const dist=Math.hypot(dx,dz);
       if(dist>0.6){
-        const spd=7;// v7.299c: 痛くてゆっくり（13→7）
+        const spd=9;// run back to the pod
         pilot.position.x+=(dx/dist)*spd*dt;
         pilot.position.z+=(dz/dist)*spd*dt;
-        // よろめきながら歩く
         const wt=S._prCrashT;
-        // v7.311: raised floor clearance — keep pilot visibly above track surface
-        pilot.position.y=0.65+Math.abs(Math.sin(wt*4.5))*0.22;
+        // gentle vertical bob synced to the run cadence
+        pilot.position.y=0.65+Math.abs(Math.sin(wt*8))*0.12;
         // v7.330: atan2(-dx,-dz) so figure FACES the pod (inner wrap π means we negate dx/dz)
         pilot.rotation.y=Math.atan2(-dx,-dz);
-        pilot.rotation.z=Math.sin(wt*3.5)*0.08+Math.sin(wt*4.8)*0.05;
-        try{
-          const body=pilot.getObjectByName('body');
-          const head=pilot.getObjectByName('head');
-          const lA=pilot.getObjectByName('lArm'),rA=pilot.getObjectByName('rArm');
-          const lF=pilot.getObjectByName('lArmFore'),rF=pilot.getObjectByName('rArmFore');
-          const lL=pilot.getObjectByName('lLeg'),rL=pilot.getObjectByName('rLeg');
-          const lLL=pilot.getObjectByName('lLegLower'),rLL=pilot.getObjectByName('rLegLower');
-          // 体: 前かがみ走行
-          if(body)body.rotation.x=0.48+Math.sin(wt*4.5)*0.06;
-          // 頭: 前方やや下向き（0.18 = 前かがみで地面方向を向く。正値=前傾=正しい）
-          if(head){head.rotation.x=0.18+Math.sin(wt*4.5)*0.10;head.rotation.y=0;head.rotation.z=0;}
-          // 左腕: 怪我。体の前で腹を抱える（-X=前方へ、-Z=内向き）
-          if(lA){lA.rotation.x=-0.35;lA.rotation.z=-0.52;lA.rotation.y=0;}
-          if(lF){lF.rotation.x=0.65;lF.rotation.z=0;} // 肘を自然に曲げる
-          // 右腕: 前後スイング（左足と逆位相＝自然な歩行腕振り）
-          // 負の rotation.x = 腕が前方（-Z方向）に出る（inner wrap により前方=negative x）
-          if(rA){rA.rotation.x=-Math.sin(wt*4.5+Math.PI)*0.52;rA.rotation.z=0.10;rA.rotation.y=0;}
-          if(rF){rF.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI+0.7))*0.45+0.12;rF.rotation.z=0;}
-          // 右足（負傷側）：小さいストローク。負値=前方（straddleBikeRiderと同方向）
-          if(rL){rL.rotation.x=-Math.sin(wt*4.5)*0.20;rL.rotation.z=0;}
-          // 膝：shin は正値で膝が曲がる（自然な歩行。max(0,...)で一方向のみ）
-          if(rLL){rLL.rotation.x=Math.max(0,Math.sin(wt*4.5-0.5))*0.18;rLL.rotation.z=0;}
-          // 左足（健側）：右足と逆位相で大きく補う
-          if(lL){lL.rotation.x=-Math.sin(wt*4.5+Math.PI)*0.58;lL.rotation.z=0;}
-          if(lLL){lLL.rotation.x=Math.max(0,Math.sin(wt*4.5+Math.PI-0.5))*0.52;lLL.rotation.z=0;}
-        }catch(_){}
+        pilot.rotation.z=0;
+        // v7.340: reuse the proven station-return run animation (animateForestPilotWalk)
+        try{animateForestPilotWalk(pilot,true,dt,1.1);}catch(_){}
       } else {
         S._prCrashPhase='reboarding';S._prCrashT=0;
       }
