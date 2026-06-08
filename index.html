@@ -34504,6 +34504,8 @@ function _podRaceReturnToTitle(){
   S._prCoursePreviewActive=false;S._prCoursePreviewT=0;
   try{const gb=document.getElementById('pr-gyro-btn');if(gb)gb.style.display='none';}catch(_){}
   try{camera.fov=75;camera.updateProjectionMatrix();}catch(_){}
+  // v7.345: cockpit interior cleanup
+  try{if(S._prCockpitInterior){camera.remove(S._prCockpitInterior);S._prCockpitInterior=null;}}catch(_){}
   // v7.299: crash cleanup
   if(S._prCrashPilot){try{scene.remove(S._prCrashPilot);}catch(_){}S._prCrashPilot=null;}
   S._prCrashPhase=null;S._prCrashT=0;S._prAISmokeZones=[];S._prSmokeFogT=0;
@@ -35904,6 +35906,35 @@ function updatePodRace(dt){
     // v7.302: cockpit looks 70 units ahead (was 40) with strong curve lead → horizon shows road curve
     const lookCurveX=pod.position.x+(S._prCurveX||0)*0.6+(S._prCurveV||0)*2.2;
     camera.lookAt(lookCurveX, pod.position.y+0.1, pod.position.z-70);
+    // v7.345: animate cockpit interior — handlebar tilt + forearm push/pull + speed vibration
+    try{
+      const _ci=S._prCockpitInterior;
+      if(_ci&&_ci.visible){
+        const t=S._prEngineT;const swerve=S._prSwerve||0;
+        const cV=S._prCurveV||0;const sA=Math.min(1,(S._prSpeed||55)/120);
+        const nitro=(S._prNitroT||0)>0;
+        // whole interior: subtle tilt with steering + speed vibration
+        _ci.rotation.z=-swerve*0.032-cV*0.0005;
+        _ci.position.y=Math.sin(t*8.2)*sA*0.004+(nitro?-0.01:0);
+        _ci.position.x=Math.sin(t*7.1)*sA*0.002;
+        // handlebar: push down slightly on sharp swerve (grip tightens)
+        if(_ci.userData.hbar)_ci.userData.hbar.position.y=-0.72-Math.abs(swerve)*0.018;
+        // forearms: outer arm pushes forward, inner arm pulls back (counter-steer force)
+        if(_ci.userData.faL){
+          _ci.userData.faL.position.z=-0.98+swerve*0.055;// right turn→left arm pushes
+          _ci.userData.faL.rotation.x=-0.38-swerve*0.04;
+        }
+        if(_ci.userData.faR){
+          _ci.userData.faR.position.z=-0.98-swerve*0.055;// right turn→right arm pulls
+          _ci.userData.faR.rotation.x=-0.38+swerve*0.04;
+        }
+        // nose: dips slightly on downhill / jumps
+        if(_ci.userData.nose){
+          _ci.userData.nose.position.y=(S._prJumping)? -0.04:0;
+          _ci.userData.nose.rotation.x=(S._prJumping)? -0.08:0;
+        }
+      }
+    }catch(_){}
   } else {
     // v7.302: camera X slightly leads curve so horizon appears to swing — not just lookAt twist
     const _curveLead=(S._prCurveV||0)*0.018;
@@ -37682,6 +37713,15 @@ function _setPodCamMode(mode){
   if(ck)ck.style.display=cockpit?'block':'none';
   // hide own pod in cockpit so it does not block the view
   try{if(S._prPlayerPod)S._prPlayerPod.visible=!cockpit;}catch(_){}
+  // v7.345: cockpit interior — build on first entry, show/hide on toggle
+  try{
+    if(cockpit){
+      if(!S._prCockpitInterior)_buildCockpitInterior();
+      if(S._prCockpitInterior)S._prCockpitInterior.visible=true;
+    } else {
+      if(S._prCockpitInterior)S._prCockpitInterior.visible=false;
+    }
+  }catch(_){}
   // build the 12 RPM segments once
   if(cockpit){
     const rpm=document.getElementById('pr-ck-rpm');
@@ -37701,6 +37741,89 @@ function _setPodCamMode(mode){
       g.gain.setValueAtTime(0.12,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
       o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.13);}
   }catch(_){}
+}
+// v7.345: ★ COCKPIT INTERIOR — 3D wireframe arms/handlebar/nose/cowlings parented to camera
+// Everything is in camera-local space so it follows the view automatically.
+// scene.add(camera) is already called at init — camera children render in view space.
+function _buildCockpitInterior(){
+  if(S._prCockpitInterior){try{camera.remove(S._prCockpitInterior);}catch(_){}S._prCockpitInterior=null;}
+  const g=new THREE.Group();g.name='prCockpitInt';
+  const col=0xffcc00;// player speeder gold
+  const colD=0xcc9900;// darker accent
+  const mE=c=>new THREE.LineBasicMaterial({color:c});
+  const mF=(c,op)=>new THREE.MeshBasicMaterial({color:c,opacity:op||0.09,transparent:true,depthWrite:false});
+  const wf=(geo,c,op)=>{const gr=new THREE.Group();gr.add(new THREE.Mesh(geo,mF(c,op)));gr.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),mE(c)));return gr;};
+
+  // ── HANDLEBAR ──
+  const hbar=wf(new THREE.BoxGeometry(0.88,0.044,0.058),col);
+  hbar.position.set(0,-0.72,-1.26);
+  g.add(hbar);g.userData.hbar=hbar;
+
+  // Grip cylinders (knuckle area each hand)
+  [-1,1].forEach(s=>{
+    const gr=wf(new THREE.CylinderGeometry(0.040,0.040,0.15,8),col,0.18);
+    gr.rotation.z=Math.PI/2;gr.position.set(s*0.38,-0.72,-1.26);g.add(gr);
+  });
+
+  // ── FOREARMS ── extend from grips toward lower screen edges
+  const faL=new THREE.Group(),faR=new THREE.Group();
+  [-1,1].forEach((s,i)=>{
+    const fa=i===0?faL:faR;
+    // main forearm box (tapered: wide at elbow, slim at wrist)
+    const arm=wf(new THREE.BoxGeometry(0.092,0.125,0.62),col,0.15);
+    arm.position.set(0,0,0);fa.add(arm);
+    // wrist detail ring
+    const wr=wf(new THREE.CylinderGeometry(0.055,0.062,0.06,6),col,0.20);
+    wr.rotation.z=Math.PI/2;wr.position.set(0,0,-0.28);fa.add(wr);
+    // position & tilt the whole forearm group
+    fa.position.set(s*0.52,-0.88,-0.98);
+    fa.rotation.z=s*0.17;fa.rotation.x=-0.38;
+    g.add(fa);
+    // centerline wire from grip to elbow
+    const pts=[new THREE.Vector3(s*0.38,-0.72,-1.26),new THREE.Vector3(s*0.72,-1.06,-0.66)];
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mE(col)));
+  });
+  g.userData.faL=faL;g.userData.faR=faR;
+
+  // ── MACHINE NOSE (bike front cowl — bottom center) ──
+  const noseG=new THREE.Group();g.add(noseG);g.userData.nose=noseG;
+  // main cowl body
+  noseG.add(Object.assign(wf(new THREE.BoxGeometry(0.34,0.11,0.74),col,0.17),{position:new THREE.Vector3(0,-0.76,-1.62)}));
+  // taper: narrow center spine
+  noseG.add(Object.assign(wf(new THREE.BoxGeometry(0.14,0.08,0.95),colD,0.14),{position:new THREE.Vector3(0,-0.78,-1.70)}));
+  // nose tip cone
+  const tip=wf(new THREE.ConeGeometry(0.10,0.44,5),col,0.10);
+  tip.rotation.x=-Math.PI/2;tip.position.set(0,-0.74,-2.10);noseG.add(tip);
+  // side intake scoops
+  [-1,1].forEach(s=>{
+    const sc=wf(new THREE.BoxGeometry(0.18,0.065,0.52),col,0.13);
+    sc.position.set(s*0.28,-0.79,-1.60);sc.rotation.z=s*(-0.09);noseG.add(sc);
+  });
+
+  // ── SIDE COWLINGS — visible at left/right screen edges ──
+  [-1,1].forEach(s=>{
+    // main panel
+    const pan=wf(new THREE.BoxGeometry(0.68,0.22,0.82),col,0.13);
+    pan.position.set(s*1.28,-0.72,-1.26);pan.rotation.z=s*(-0.11);g.add(pan);
+    // outer strut line reaching to screen edge
+    const pts=[
+      new THREE.Vector3(s*0.96,-0.64,-1.10),
+      new THREE.Vector3(s*1.72,-0.52,-1.08),
+      new THREE.Vector3(s*2.18,-0.68,-1.32),
+      new THREE.Vector3(s*1.96,-0.90,-1.55)
+    ];
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mE(col)));
+    // diagonal structural rib
+    const rib=[new THREE.Vector3(s*1.08,-0.55,-1.06),new THREE.Vector3(s*1.88,-0.85,-1.44)];
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(rib),mE(colD)));
+    // inner fender edge
+    const fe=wf(new THREE.BoxGeometry(0.05,0.12,0.80),colD,0.10);
+    fe.position.set(s*0.97,-0.72,-1.22);g.add(fe);
+  });
+
+  g.visible=false;
+  camera.add(g);
+  S._prCockpitInterior=g;
 }
 function _updatePodCockpit(){
   if(S._prCamMode!=='cockpit')return;
