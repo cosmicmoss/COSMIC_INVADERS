@@ -37956,24 +37956,22 @@ function _updatePodRaceMinimap(){
   }
   const MAXCX=80,MAXXPX=60;// v7.341: half-width 80 (track 2x wider)
   const CX=W/2;
-  function curveXAt(dist){
-    const log=S._prTrackLog||[];
-    if(!log.length)return S._prCurveX||0;
-    for(let i=log.length-1;i>=0;i--){
-      if(log[i].d<=dist){
-        if(i===log.length-1)return log[i].x;
-        const t=(dist-log[i].d)/(log[i+1].d-log[i].d);
-        return log[i].x+(log[i+1].x-log[i].x)*t;
-      }
-    }
-    return log[0].x;
-  }
+  // v7.346: PHYSICS PREDICTION — replace broken log-lookup with continuous extrapolation.
+  // Root cause of 90° angle bug: _prTrackLog stored player's race-dist at spawn time, not
+  // segment distance, so curveXAt() was interpolating unrelated points → straight lines
+  // that joined at sharp angles. Fix: use current curve state (curveX + curveV) to predict
+  // ahead/behind smoothly. scrollSpd converts world-units to time so velocity is correct.
+  const scrollSpd=Math.max(80,(S._prSpeed||55)*2);
   // sample track centre at every row
-  const STRIP=15;// half-width of track strip in px (was 11)
+  const STRIP=15;// half-width of track strip in px
   const samples=[];
   for(let py=0;py<=H;py+=2){
-    const distAtPy=_pTD+(playerY-py)*SCALE;
-    const cx_val=distAtPy>_pTD?(curveXAt(distAtPy)||0):(S._prCurveX||0)+(S._prCurveV||0)*(playerY-py)*0.004;
+    const distFromPlayer=(playerY-py)*SCALE;// positive=ahead, negative=behind
+    const timeOffset=distFromPlayer/scrollSpd;// seconds from now (+ = future, - = past)
+    // Linear extrapolation: where will (or was) the curve centre at this time offset?
+    // Clamped to ±64 (track walls). No random jumps → always smooth.
+    let cx_val=(S._prCurveX||0)+(S._prCurveV||0)*timeOffset;
+    if(cx_val>64)cx_val=64;if(cx_val<-64)cx_val=-64;
     samples.push({py,cx_val,px:CX+(cx_val/MAXCX)*MAXXPX});
   }
   // --- track strip fill (brighter) ---
@@ -38005,8 +38003,10 @@ function _updatePodRaceMinimap(){
     if(dotY<-6||dotY>H+6)return;
     const col=(ai.def&&ai.def.col)||0x999999;
     const r=(col>>16)&0xff,g=(col>>8)&0xff,b=col&0xff;
-    const distAtDot=_pTD+dDiff;
-    const cx_val=distAtDot>_pTD?(curveXAt(distAtDot)||0):(S._prCurveX||0);
+    // v7.346: use physics prediction for AI dot X (consistent with track rendering)
+    const timeAtDot=dDiff/scrollSpd;
+    let cx_val=(S._prCurveX||0)+(S._prCurveV||0)*timeAtDot;
+    if(cx_val>64)cx_val=64;if(cx_val<-64)cx_val=-64;
     const dotX=CX+(cx_val/MAXCX)*MAXXPX+((ai.x||0)-(cx_val))*0.18;
     ctx.fillStyle=`rgb(${r},${g},${b})`;
     ctx.shadowColor=`rgb(${r},${g},${b})`;ctx.shadowBlur=8;
