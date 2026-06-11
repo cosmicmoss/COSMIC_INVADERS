@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.346</title>
+<title>COSMIC INVADERS v7.348</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -626,6 +626,41 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
 @keyframes coloUnlockPulse{0%,100%{box-shadow:0 0 22px rgba(255,170,0,0.5),inset 0 0 12px rgba(255,170,0,0.08)}
   50%{box-shadow:0 0 38px rgba(255,200,0,0.9),inset 0 0 20px rgba(255,200,0,0.18);border-color:#ffd040}}
 
+/* v7.348: MECH ARENA HUD */
+#mf-hud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:120;font-family:'Courier New',monospace;display:none}
+#mf-hud.active{display:block}
+#mf-top-bar{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:92%;max-width:680px;display:flex;align-items:center;gap:12px}
+#mf-p1-block,#mf-e2-block{flex:1;display:flex;flex-direction:column;gap:4px}
+#mf-p1-label{color:#44aaff;font-size:11px;letter-spacing:2px;text-shadow:0 0 8px #44aaff}
+#mf-e2-label{color:#ff4444;font-size:11px;letter-spacing:2px;text-align:right;text-shadow:0 0 8px #ff4444}
+#mf-p1-hp-track,#mf-e2-hp-track{width:100%;height:14px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.2);border-radius:3px;overflow:hidden}
+#mf-p1-bar{height:100%;background:linear-gradient(90deg,#1155ff,#44aaff);width:100%;transition:width 0.15s;border-radius:2px}
+#mf-e2-bar{height:100%;background:linear-gradient(90deg,#ff4444,#ff8844);width:100%;transition:width 0.15s;border-radius:2px;margin-left:auto}
+#mf-center{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:110px}
+#mf-round-disp{color:#fff;font-size:11px;letter-spacing:1px;text-align:center;opacity:0.8}
+#mf-timer-disp{color:#ffdd44;font-size:18px;font-weight:bold;text-shadow:0 0 10px #ffdd44;text-align:center}
+#mf-wins{display:flex;gap:8px;align-items:center}
+.mf-win-pip{width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,0.4)}
+.mf-win-pip.p1{background:#44aaff;box-shadow:0 0 6px #44aaff}
+.mf-win-pip.e2{background:#ff4444;box-shadow:0 0 6px #ff4444}
+.mf-win-pip.empty{background:transparent}
+#mf-announce{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:42px;font-weight:bold;letter-spacing:6px;text-shadow:0 0 30px #fff,0 0 60px rgba(255,255,255,0.5);text-align:center;pointer-events:none;display:none}
+#mf-announce.show{display:block}
+#mf-subtitle{position:absolute;top:calc(50% + 50px);left:50%;transform:translateX(-50%);color:#88ddff;font-size:14px;letter-spacing:3px;text-shadow:0 0 12px #88ddff;pointer-events:none;display:none}
+#mf-subtitle.show{display:block}
+#mf-btns{position:fixed;bottom:0;left:0;width:100%;pointer-events:none;z-index:121;display:none}
+#mf-btns.active{display:flex;justify-content:space-between;align-items:flex-end;padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+#mf-move-btns{display:flex;gap:6px}
+#mf-attack-btns{display:flex;gap:5px;flex-direction:row;align-items:flex-end}
+.mf-btn{pointer-events:auto;width:62px;height:62px;border-radius:10px;border:2px solid rgba(255,255,255,0.4);background:rgba(0,0,0,0.55);color:#fff;font-size:11px;letter-spacing:1px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Courier New',monospace;-webkit-tap-highlight-color:rgba(255,255,255,0.3);touch-action:manipulation;user-select:none;gap:2px}
+.mf-btn-icon{font-size:22px}
+.mf-btn.mf-move{border-color:rgba(100,200,255,0.5);background:rgba(0,20,40,0.6)}
+.mf-btn.mf-punch{border-color:rgba(255,200,0,0.5);background:rgba(40,30,0,0.6)}
+.mf-btn.mf-kick{border-color:rgba(255,100,0,0.5);background:rgba(40,15,0,0.6)}
+.mf-btn.mf-beam{border-color:rgba(0,200,255,0.5);background:rgba(0,20,40,0.6)}
+.mf-btn.mf-heavy{border-color:rgba(255,50,50,0.5);background:rgba(40,0,0,0.6)}
+.mf-btn.mf-block{border-color:rgba(150,150,255,0.5);background:rgba(20,20,50,0.6);width:52px;height:52px}
+.mf-btn:active{transform:scale(0.9);filter:brightness(1.4)}
 /* v7.327: title screen animations */
 @keyframes titleVerPulse{0%,100%{opacity:1;text-shadow:0 0 10px #0ff,0 0 20px #0ff}50%{opacity:0.6;text-shadow:0 0 20px #0ff,0 0 40px #0ff,0 0 60px rgba(0,255,255,0.4)}}
 /* v7.338: pod-race turn indicator pulse */
@@ -776,7 +811,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.346 - LOADED
+  COSMIC INVADERS v7.348 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -797,7 +832,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
 </noscript>
 <!-- IMMEDIATE minimal JS test - if this doesn't run, JS is blocked -->
-<script>document.getElementById('version-banner').textContent='v7.346 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
+<script>document.getElementById('version-banner').textContent='v7.348 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
 <div id="container">
   <div id="crt"></div>
     <!-- v7.187: ice escape cockpit interior view -->
@@ -1119,7 +1154,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.346</span></h1>
+    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.348</span></h1>
     <!-- v7.327: tagline with neon effect -->
     <div class="subtitle" style="text-shadow:0 0 12px rgba(0,200,255,0.8);letter-spacing:5px;animation:subtitleDrift 3s ease-in-out infinite alternate">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
@@ -1168,6 +1203,12 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
         🏆 POD GRAND PRIX
       </button>
       <div style="font-size:9px;color:#3399bb;letter-spacing:2px;margin-top:5px">4-COURSE CHAMPIONSHIP — ICE / DESERT / LAVA / CITY</div>
+      <!-- v7.348: MECH ARENA -->
+      <button type="button" id="btn-mech-arena" onclick="startMechArena()"
+        style="margin-top:14px;font-size:16px;color:#88ddff;padding:16px 42px;border:2px solid #88ddff;cursor:pointer;letter-spacing:3px;background:rgba(0,20,40,0.75);border-radius:6px;font-family:inherit;min-height:60px;min-width:280px;box-shadow:0 0 22px rgba(136,221,255,0.5),inset 0 0 12px rgba(136,221,255,0.08);-webkit-tap-highlight-color:rgba(136,221,255,0.5);touch-action:manipulation;-webkit-appearance:none;font-weight:bold;animation:coloUnlockPulse 2.2s ease-in-out infinite">
+        🤖 MECH ARENA
+      </button>
+      <div style="font-size:9px;color:#336688;letter-spacing:2px;margin-top:5px">3D MOBILE SUIT FIGHTING — BEAT THE LADDER</div>
     </div>
     <div class="controls">
       ARROWS/WASD - MANEUVER&ensp;|&ensp;SPACE - FIRE&ensp;|&ensp;[E] - NAPALM<br>
@@ -33369,17 +33410,20 @@ function _updateColoFighter(f,dt){
   }
   const pp=cs.pilotPos;const dx=pp.x-f.pos.x,dz=pp.z-f.pos.z;
   const dist=Math.hypot(dx,dz);const spd=f.def.speed*dt;
+  // v7.347: improved walk — deeper knee/elbow bends, stronger body, head tracks pilot
   const _walk=(wt)=>{const la=f.lArm,ra=f.rArm,ll=f.lLeg,rl=f.rLeg;
-    if(la)la.rotation.x=Math.sin(wt)*.52;if(ra)ra.rotation.x=-Math.sin(wt)*.52;
-    if(ll)ll.rotation.x=-Math.sin(wt)*.55;if(rl)rl.rotation.x=Math.sin(wt)*.55;
-    // v7.316: deeper elbow/knee bends — elbow bends opposite to upper arm swing
-    if(f.lArmFore)f.lArmFore.rotation.x=Math.max(0,-Math.sin(wt)*.42+.2);
-    if(f.rArmFore)f.rArmFore.rotation.x=Math.max(0,Math.sin(wt)*.42+.2);
-    if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,Math.sin(wt+.65)*.48);
-    if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,Math.sin(wt-.65)*.48);
-    // body bob + lean
+    if(la)la.rotation.x=Math.sin(wt)*.60;if(ra)ra.rotation.x=-Math.sin(wt)*.60;
+    if(ll)ll.rotation.x=-Math.sin(wt)*.62;if(rl)rl.rotation.x=Math.sin(wt)*.62;
+    // v7.347: 2x deeper elbow/knee bends for dramatic stride
+    if(f.lArmFore)f.lArmFore.rotation.x=Math.max(0,-Math.sin(wt)*.68+.18);
+    if(f.rArmFore)f.rArmFore.rotation.x=Math.max(0,Math.sin(wt)*.68+.18);
+    if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,Math.sin(wt+.65)*.90);
+    if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,Math.sin(wt-.65)*.90);
+    // v7.347: stronger body bob + forward lean
     const bd=f.mesh.getObjectByName('body');
-    if(bd){bd.rotation.z=Math.sin(wt*2)*.04;bd.rotation.x=Math.abs(Math.sin(wt))*.03;}
+    if(bd){bd.rotation.z=Math.sin(wt*2)*.07;bd.rotation.x=0.06+Math.abs(Math.sin(wt))*.05;}
+    // v7.347: head tracks pilot while walking
+    if(f.head){const ht=Math.atan2(dx,dz);const ly=ht-f.angle;f.head.rotation.y+=(Math.max(-.6,Math.min(.6,ly))-f.head.rotation.y)*Math.min(1,5*dt);}
     // v7.266: kaiju tail accent during walk
     if(f.def.id==='kaiju'){for(let ti=0;ti<5;ti++){const ts=f.mesh.getObjectByName('tail'+(ti+1));if(ts)ts.rotation.y=Math.sin(wt*1.2-ti*.55)*(0.1+ti*.04);}}
   };
@@ -33427,46 +33471,92 @@ function _updateColoFighter(f,dt){
       f.pos.x=pp.x+Math.cos(ca)*cr;f.pos.z=pp.z+Math.sin(ca)*cr;
       f.angle=Math.atan2(-(pp.x-f.pos.x),-(pp.z-f.pos.z));
       f.mesh.position.copy(f.pos);f.mesh.rotation.y=f.angle;break;}
+    // v7.347: ATTACK — 2-hit combo (jab + cross)
     case 'ATTACK':{
       // v7.250: monster attack voice — fires once per attack
       if(f.stateT<.05&&!f._roaredThisAttack){f._roaredThisAttack=true;try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}}
-      if(f.stateT<.4){f.mesh.rotation.x=Math.min(f.stateT/.4*.28,.28);}
-      else if(f.stateT<.75){
-        f.mesh.rotation.x=0;
-        if(!f._hitThisAttack&&f.attackCD<=0){f._hitThisAttack=true;
+      const AT_JAB=0.5,AT_CROSS=1.0,AT_END=1.3;
+      const t=f.stateT;
+      // Phase 0-0.2s: wind-back (right arm draws back, body twists right)
+      if(t<0.2){
+        const sp=t/0.2;
+        if(f.rArm){f.rArm.rotation.x=-0.9*sp;}
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.z=-0.15*sp;
+        f.mesh.rotation.x=0.18*sp;
+      }
+      // Phase 0.2-0.5s: JAB right — first hit
+      else if(t<AT_JAB){
+        const sp=(t-0.2)/0.3;
+        if(f.rArm){f.rArm.rotation.x=-0.9+1.3*sp*2;f.rArm.rotation.z=0;}
+        if(f.rArmFore)f.rArmFore.rotation.x=0.6*sp;
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.z=-0.15*(1-sp);
+        f.mesh.rotation.x=0.18*(1-sp*0.5);
+        // JAB hit check
+        if(!f._hit1ThisAtk&&sp>0.5){f._hit1ThisAtk=true;
           if(dist<f.def.sz*2.2+1.2&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
-            cs.pilotHP=Math.max(0,cs.pilotHP-1);cs.pilotInvT=1.2;
-            try{screenFlash(.55)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
-            updateColosseumHUD();
-            if(cs.pilotHP<=0){endColosseum(false);return;}
+            cs.pilotHP=Math.max(0,cs.pilotHP-1);cs.pilotInvT=0.9;
+            try{screenFlash(.4)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
+            updateColosseumHUD();if(cs.pilotHP<=0){endColosseum(false);return;}
             cs.pilotState='STAGGER';cs.pilotActionT=0;
-            // v7.327: crowd goes wild on player taking damage
-            cs._coloExcite=Math.min(2.5,(cs._coloExcite||0)+0.9);cs._coloHitFlash=0.4;cs._coloHitFlashCol=0xff2200;
-            // v7.250: eel uses charge system — actual zap fires via _eelCharging flag in updateColosseum
-            if(f.def.id==='eel'&&!cs._eelCharging&&!cs._eelChargeFired){
-              cs._eelCharging=true;cs._eelChargeT=3.0;cs._eelChargeFired=true;cs._eelCrackCD=0;// v7.261: 1.0→3.0s charge
-              cs._eelFighter=f;
-              try{wfCineSubtitle(_L('⚡ CHARGING UP...','⚡ チャージ中...'),'#00ffff')}catch(_){}
-            } else if(f.def.id!=='eel'){
-              // non-eel: no extra effect
-            }
+            cs._coloExcite=Math.min(2.5,(cs._coloExcite||0)+0.7);cs._coloHitFlash=0.3;cs._coloHitFlashCol=0xff2200;
+            if(f.def.id==='eel'&&!cs._eelCharging&&!cs._eelChargeFired){cs._eelCharging=true;cs._eelChargeT=3.0;cs._eelChargeFired=true;cs._eelCrackCD=0;cs._eelFighter=f;try{wfCineSubtitle(_L('⚡ CHARGING UP...','⚡ チャージ中...'),'#00ffff')}catch(_){}}
           }
         }
-      } else if(f.stateT>.9){
-        f._hitThisAttack=false;f._roaredThisAttack=false;
+      }
+      // Phase 0.5-0.65s: brief reset between hits
+      else if(t<0.65){
+        if(f.rArm)f.rArm.rotation.x=Math.max(-0.2,f.rArm.rotation.x-3*dt);
+        if(f.rArmFore)f.rArmFore.rotation.x=Math.max(0,f.rArmFore.rotation.x-3*dt);
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.z=0;
+      }
+      // Phase 0.65-1.0s: CROSS left — second hit
+      else if(t<AT_CROSS){
+        const sp=(t-0.65)/0.35;
+        if(f.lArm){f.lArm.rotation.x=-0.7+1.4*sp;}
+        if(f.lArmFore)f.lArmFore.rotation.x=0.8*sp;
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.z=0.12*sp;
+        // CROSS hit check
+        if(!f._hit2ThisAtk&&sp>0.6){f._hit2ThisAtk=true;
+          if(dist<f.def.sz*2.2+1.4&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
+            cs.pilotHP=Math.max(0,cs.pilotHP-1);cs.pilotInvT=1.1;
+            try{screenFlash(.5)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
+            updateColosseumHUD();if(cs.pilotHP<=0){endColosseum(false);return;}
+            cs.pilotState='STAGGER';cs.pilotActionT=0;
+            cs._coloExcite=Math.min(2.5,(cs._coloExcite||0)+0.9);cs._coloHitFlash=0.4;cs._coloHitFlashCol=0xff2200;
+          }
+        }
+      }
+      // Phase 1.0-1.3s: return to idle
+      else if(t>AT_END){
+        f._hit1ThisAtk=false;f._hit2ThisAtk=false;f._roaredThisAttack=false;
+        if(f.lArm){f.lArm.rotation.x=0;f.lArmFore&&(f.lArmFore.rotation.x=0);}
+        if(f.rArm){f.rArm.rotation.x=0;f.rArmFore&&(f.rArmFore.rotation.x=0);}
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.z=0;
+        f.mesh.rotation.x=0;
         f.attackCD=f.def.style==='slug'?2.0:f.def.style==='charger'?1.2:.8;
         f.state='IDLE';f.stateT=0;
-        if(f.def.id==='eel')cs._eelChargeFired=false; // allow next charge
+        if(f.def.id==='eel')cs._eelChargeFired=false;
       }
-      const ra=f.rArm;if(ra)ra.rotation.x=-Math.sin(f.stateT*Math.PI/.9)*.8;
-      const la=f.lArm;if(la)la.rotation.x=Math.sin(f.stateT*Math.PI/.9+Math.PI*.4)*.32;
-      const raf=f.rArmFore;if(raf)raf.rotation.x=Math.max(0,Math.sin(f.stateT*Math.PI/.9+.35)*.65);
       break;}
+    // v7.347: STAGGER — dramatic backward reel, arms flung wide, head snap
     case 'STAGGER':{
-      if(f.stateT>.6){f.state='IDLE';f.stateT=0;const bd2=f.mesh.getObjectByName('body');if(bd2)bd2.rotation.x=0;if(f.lArm)f.lArm.rotation.x=0;if(f.rArm)f.rArm.rotation.x=0;}
-      const h=f.head;if(h)h.rotation.x=Math.sin(f.stateT*35)*.12;
-      const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=.30*(1-f.stateT/.6);
-      if(f.lArm)f.lArm.rotation.x=.55*(1-f.stateT/.6);if(f.rArm)f.rArm.rotation.x=.55*(1-f.stateT/.6);
+      const ST_DUR=0.7;
+      if(f.stateT>ST_DUR){
+        f.state='IDLE';f.stateT=0;
+        const bd2=f.mesh.getObjectByName('body');if(bd2){bd2.rotation.x=0;bd2.rotation.z=0;}
+        if(f.lArm){f.lArm.rotation.x=0;f.lArm.rotation.z=0;}
+        if(f.rArm){f.rArm.rotation.x=0;f.rArm.rotation.z=0;}
+        if(f.head){f.head.rotation.x=0;f.head.rotation.z=0;}
+      }
+      const sp=Math.min(1,f.stateT/ST_DUR);
+      // v7.347: body reels backward then slowly rights
+      const bd=f.mesh.getObjectByName('body');
+      if(bd){bd.rotation.x=-0.45*(1-sp);bd.rotation.z=Math.sin(f.stateT*22)*.06;}
+      // v7.347: arms flung up and wide
+      if(f.lArm){f.lArm.rotation.x=-1.9*(1-sp);f.lArm.rotation.z=1.2*(1-sp);}
+      if(f.rArm){f.rArm.rotation.x=-1.9*(1-sp);f.rArm.rotation.z=-1.2*(1-sp);}
+      // v7.347: head snaps and wobbles
+      const h=f.head;if(h){h.rotation.x=Math.sin(f.stateT*35)*.18;h.rotation.z=Math.sin(f.stateT*18)*.12*(1-sp);}
       break;}
     case 'DOWN':{f.mesh.rotation.x=Math.min(f.stateT/1.8*Math.PI*.5,Math.PI*.5);break;}
     case 'GRAPPLED':{
@@ -33651,24 +33741,30 @@ function _updateColoFighter(f,dt){
       }
       break;}
 
-    // v7.316: SLAM — both arms raise then crash down
+    // v7.347: SLAM — big wind-back then power slam with dust
     case 'SLAM':{
-      const SL_RAISE=0.4,SL_SMASH=0.9,SL_END=1.5;
+      const SL_RAISE=0.5,SL_SMASH=0.9,SL_END=1.4;
       if(f.stateT<SL_RAISE){
+        // v7.347: much bigger wind-back — arms swept fully behind, body arches back
         const sp=f.stateT/SL_RAISE;
-        if(f.lArm){f.lArm.rotation.x=-Math.PI*sp*.85;f.lArm.rotation.z=.25*sp;}
-        if(f.rArm){f.rArm.rotation.x=-Math.PI*sp*.85;f.rArm.rotation.z=-.25*sp;}
-        if(f.lArmFore)f.lArmFore.rotation.x=-sp*.4;if(f.rArmFore)f.rArmFore.rotation.x=-sp*.4;
-        f.mesh.rotation.x=-sp*.18;
+        if(f.lArm){f.lArm.rotation.x=-2.4*sp;f.lArm.rotation.z=1.0*sp;}
+        if(f.rArm){f.rArm.rotation.x=-2.4*sp;f.rArm.rotation.z=-1.0*sp;}
+        if(f.lArmFore)f.lArmFore.rotation.x=-sp*.5;if(f.rArmFore)f.rArmFore.rotation.x=-sp*.5;
+        f.mesh.rotation.x=-0.28*sp;
         if(f.stateT<.05){try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}try{announce('BODY SLAM!!')}catch(_){}}
       }else if(f.stateT<SL_SMASH){
         const sp=(f.stateT-SL_RAISE)/(SL_SMASH-SL_RAISE);
-        if(f.lArm){f.lArm.rotation.x=-Math.PI*.85+Math.PI*1.1*sp;f.lArm.rotation.z=.25*(1-sp);}
-        if(f.rArm){f.rArm.rotation.x=-Math.PI*.85+Math.PI*1.1*sp;f.rArm.rotation.z=-.25*(1-sp);}
-        if(f.lArmFore)f.lArmFore.rotation.x=-0.4+sp*.9;if(f.rArmFore)f.rArmFore.rotation.x=-0.4+sp*.9;
-        f.mesh.rotation.x=sp*.35;
-        if(!f._hitThisAttack&&sp>.5&&sp<.78){
+        // v7.347: arms crash forward and down, body lunges
+        if(f.lArm){f.lArm.rotation.x=-2.4+4.2*sp;f.lArm.rotation.z=1.0*(1-sp);}
+        if(f.rArm){f.rArm.rotation.x=-2.4+4.2*sp;f.rArm.rotation.z=-1.0*(1-sp);}
+        if(f.lArmFore)f.lArmFore.rotation.x=-0.5+1.4*sp;if(f.rArmFore)f.rArmFore.rotation.x=-0.5+1.4*sp;
+        f.mesh.rotation.x=-0.28+0.93*sp;
+        if(!f._hitThisAttack&&sp>.5&&sp<.82){
           f._hitThisAttack=true;
+          // dust on slam
+          try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(0,.1,0)),22)}catch(_){}
+          try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(1.5,0,1.0)),12)}catch(_){}
+          try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(-1.5,0,-1.0)),12)}catch(_){}
           if(dist<f.def.sz*2.4+1.5&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
             cs.pilotHP=Math.max(0,cs.pilotHP-3);cs.pilotInvT=1.4;
             try{screenFlash(.75)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
@@ -33691,28 +33787,34 @@ function _updateColoFighter(f,dt){
         }
       }
       break;}
-    // v7.316: DROPKICK — leap + both feet kick forward
+    // v7.347: DROPKICK — deeper crouch → dramatic high leap → both feet fully extended
     case 'DROPKICK':{
-      const DK_PREP=0.3,DK_HIT=0.82,DK_END=1.4;
+      const DK_PREP=0.3,DK_FLY=0.65,DK_LAND=1.0,DK_END=1.4;
       if(f.stateT<DK_PREP){
+        // v7.347: deeper coil — knees pulled far back
         const sp=f.stateT/DK_PREP;
-        if(f.lLeg)f.lLeg.rotation.x=-sp*.7;if(f.rLeg)f.rLeg.rotation.x=-sp*.7;
-        if(f.lLegLower)f.lLegLower.rotation.x=sp*.5;if(f.rLegLower)f.rLegLower.rotation.x=sp*.5;
-        if(f.lArm){f.lArm.rotation.x=sp*.4;f.lArm.rotation.z=.22;}if(f.rArm){f.rArm.rotation.x=sp*.4;f.rArm.rotation.z=-.22;}
+        if(f.lLeg)f.lLeg.rotation.x=-0.95*sp;if(f.rLeg)f.rLeg.rotation.x=-0.95*sp;
+        if(f.lLegLower)f.lLegLower.rotation.x=0.6*sp;if(f.rLegLower)f.rLegLower.rotation.x=0.6*sp;
+        if(f.lArm){f.lArm.rotation.x=sp*.5;f.lArm.rotation.z=.28;}if(f.rArm){f.rArm.rotation.x=sp*.5;f.rArm.rotation.z=-.28;}
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=-0.3*sp;
         if(f.stateT<.05){
           try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}
           try{announce('DROPKICK!!')}catch(_){}try{wfCineSubtitle('🦵 DROPKICK!!','#ff9900');}catch(_){}
           f._dkDir={x:dx/(dist||1),z:dz/(dist||1)};
+          try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(0,.1,0)),8)}catch(_){}
         }
-      }else if(f.stateT<DK_HIT){
-        const sp=(f.stateT-DK_PREP)/(DK_HIT-DK_PREP);
-        if(f._dkDir){f.pos.x+=f._dkDir.x*f.def.speed*dt*3.2;f.pos.z+=f._dkDir.z*f.def.speed*dt*3.2;}
-        f.mesh.position.copy(f.pos);f.mesh.position.y=1.5+Math.sin(sp*Math.PI)*2.0;
-        if(f.lLeg)f.lLeg.rotation.x=-.7+sp*1.3;if(f.rLeg)f.rLeg.rotation.x=-.7+sp*1.3;
-        if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,.5-sp*.5);if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,.5-sp*.5);
-        if(f.lArm){f.lArm.rotation.x=.4+sp*.4;f.lArm.rotation.z=.22;}if(f.rArm){f.rArm.rotation.x=.4+sp*.4;f.rArm.rotation.z=-.22;}
-        f.mesh.rotation.x=-sp*.28;
-        if(!f._hitThisAttack&&sp>.52){
+      }else if(f.stateT<DK_FLY){
+        // v7.347: fly — high arc + body forward lean + legs fully extended
+        const sp=(f.stateT-DK_PREP)/(DK_FLY-DK_PREP);
+        if(f._dkDir){f.pos.x+=f._dkDir.x*f.def.speed*dt*3.8;f.pos.z+=f._dkDir.z*f.def.speed*dt*3.8;}
+        f.mesh.position.copy(f.pos);f.mesh.position.y=1.5+Math.sin(sp*Math.PI)*2.8;
+        // Legs fully stretch forward
+        if(f.lLeg)f.lLeg.rotation.x=-0.95+1.5*sp*2;if(f.rLeg)f.rLeg.rotation.x=-0.95+1.5*sp*2;
+        if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,.6-sp*1.2);if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,.6-sp*1.2);
+        if(f.lArm){f.lArm.rotation.x=.5+sp*.5;f.lArm.rotation.z=.28;}if(f.rArm){f.rArm.rotation.x=.5+sp*.5;f.rArm.rotation.z=-.28;}
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=-0.3+0.8*sp;
+        f.mesh.rotation.x=-sp*.32;
+        if(!f._hitThisAttack&&sp>.5){
           f._hitThisAttack=true;
           const dk_d=Math.hypot(f.pos.x-cs.pilotPos.x,f.pos.z-cs.pilotPos.z);
           if(dk_d<f.def.sz*2.0+1.8&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'){
@@ -33721,19 +33823,30 @@ function _updateColoFighter(f,dt){
             updateColosseumHUD();if(cs.pilotHP<=0){endColosseum(false);return;}
             cs.pilotState='STAGGER';cs.pilotActionT=0;
             const kbA=Math.atan2(cs.pilotPos.x-f.pos.x,cs.pilotPos.z-f.pos.z);
-            const kbPx=cs.pilotPos.x+Math.sin(kbA)*3.8,kbPz=cs.pilotPos.z+Math.cos(kbA)*3.8;
+            const kbPx=cs.pilotPos.x+Math.sin(kbA)*4.2,kbPz=cs.pilotPos.z+Math.cos(kbA)*4.2;
             const kbD=Math.hypot(kbPx,kbPz);
             cs.pilotPos.x=kbD>cs.ringR-.5?Math.sin(kbA)*(cs.ringR-.5):kbPx;
             cs.pilotPos.z=kbD>cs.ringR-.5?Math.cos(kbA)*(cs.ringR-.5):kbPz;
+            try{wfCineSubtitle('🦵 DROPKICK!!','#ff9900');}catch(_){}
           }
         }
+      }else if(f.stateT<DK_LAND){
+        // Landing approach — descend
+        if(f.mesh.position.y>1.5)f.mesh.position.y=Math.max(1.5,f.mesh.position.y-8*dt);
+        const sp=(f.stateT-DK_FLY)/(DK_LAND-DK_FLY);
+        if(f.lLeg)f.lLeg.rotation.x=Math.max(-0.2,.6-sp*0.8);if(f.rLeg)f.rLeg.rotation.x=Math.max(-0.2,.6-sp*0.8);
+        if(f.lLegLower)f.lLegLower.rotation.x=0.45*sp;// knee bends on absorb
+        if(f.rLegLower)f.rLegLower.rotation.x=0.45*sp;
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=0.5-0.5*sp;
+        if(!f._dkLanded&&sp>0.8){f._dkLanded=true;try{_spawnDustPuff(f.pos.clone().add(new THREE.Vector3(0,.1,0)),16)}catch(_){}}
       }else{
         if(f.mesh.position.y>1.5)f.mesh.position.y=Math.max(1.5,f.mesh.position.y-6*dt);
-        const sp=(f.stateT-DK_HIT)/(DK_END-DK_HIT);
-        if(f.lLeg)f.lLeg.rotation.x=Math.max(0,.6-sp*.6);if(f.rLeg)f.rLeg.rotation.x=Math.max(0,.6-sp*.6);
-        if(f.lLegLower)f.lLegLower.rotation.x=0;if(f.rLegLower)f.rLegLower.rotation.x=0;
+        const sp=(f.stateT-DK_LAND)/(DK_END-DK_LAND);
+        if(f.lLeg)f.lLeg.rotation.x=Math.max(0,.2-sp*.2);if(f.rLeg)f.rLeg.rotation.x=Math.max(0,.2-sp*.2);
+        if(f.lLegLower)f.lLegLower.rotation.x=Math.max(0,.45-sp*.45);if(f.rLegLower)f.rLegLower.rotation.x=Math.max(0,.45-sp*.45);
         if(f.lArm){f.lArm.rotation.x=0;f.lArm.rotation.z=0;}if(f.rArm){f.rArm.rotation.x=0;f.rArm.rotation.z=0;}
-        if(f.stateT>DK_END){f.mesh.position.y=1.5;f.mesh.rotation.x=0;f._hitThisAttack=false;f.attackCD=f.def.style==='slug'?2.0:1.2;f.state='IDLE';f.stateT=0;}
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=0;
+        if(f.stateT>DK_END){f.mesh.position.y=1.5;f.mesh.rotation.x=0;f._hitThisAttack=false;f._dkLanded=false;f.attackCD=f.def.style==='slug'?2.0:1.2;f.state='IDLE';f.stateT=0;}
       }
       break;}
     // v7.316: TAUNT — spread arms wide, jeer at player, then go berserk
@@ -33750,6 +33863,62 @@ function _updateColoFighter(f,dt){
         if(f.lArm){f.lArm.rotation.z=0;f.lArm.rotation.x=0;}if(f.rArm){f.rArm.rotation.z=0;f.rArm.rotation.x=0;}
         if(f.head)f.head.rotation.x=0;f.mesh.rotation.z=0;
         f.attackCD=0;f.state='APPROACH';f.stateT=0;
+      }
+      break;}
+    // v7.347: BLOCK — arms cross in front, crouch, absorbs 60% damage
+    case 'BLOCK':{
+      if(f.stateT<.15){
+        const sp=f.stateT/.15;
+        if(f.lArm){f.lArm.rotation.x=-1.85*sp;f.lArm.rotation.z=0.28*sp;}
+        if(f.rArm){f.rArm.rotation.x=-1.85*sp;f.rArm.rotation.z=-0.28*sp;}
+        if(f.lArmFore)f.lArmFore.rotation.x=0.6*sp;if(f.rArmFore)f.rArmFore.rotation.x=0.6*sp;
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=0.18*sp;
+        if(f.head)f.head.rotation.x=-0.12*sp;
+      }
+      if(f.stateT>0.8){
+        if(f.lArm){f.lArm.rotation.x=0;f.lArm.rotation.z=0;}
+        if(f.rArm){f.rArm.rotation.x=0;f.rArm.rotation.z=0;}
+        if(f.lArmFore)f.lArmFore.rotation.x=0;if(f.rArmFore)f.rArmFore.rotation.x=0;
+        const bd=f.mesh.getObjectByName('body');if(bd)bd.rotation.x=0;
+        if(f.head)f.head.rotation.x=0;
+        // after BLOCK, counter window — charge at player
+        f.attackCD=0;f.state='APPROACH';f.stateT=0;f._blockCounterWindow=0.4;
+      }
+      break;}
+    // v7.347: UPPERCUT — fast rising punch, 2.2 damage
+    case 'UPPERCUT':{
+      const UC_END=0.8;
+      if(f.stateT<.25){
+        const sp=f.stateT/.25;
+        if(f.rArm){f.rArm.rotation.x=0.6*sp;f.rArm.rotation.z=-0.4*sp;}
+        const bd=f.mesh.getObjectByName('body');if(bd){bd.rotation.z=-0.2*sp;bd.rotation.x=0.1*sp;}
+        if(f.stateT<.05){try{sfx.monsterRoar&&sfx.monsterRoar(f.def.id)}catch(_){}}
+      }else if(f.stateT<.55){
+        const sp=(f.stateT-.25)/.30;
+        if(f.rArm){f.rArm.rotation.x=0.6-2.6*sp;f.rArm.rotation.z=-0.4+0.6*sp;}
+        if(f.rArmFore)f.rArmFore.rotation.x=0.7*Math.sin(sp*Math.PI);
+        const bd=f.mesh.getObjectByName('body');if(bd){bd.rotation.z=-0.2+0.3*sp;bd.rotation.x=0.1+0.25*sp;}
+        if(!f._hitThisAttack&&sp>0.45){f._hitThisAttack=true;
+          if(dist<f.def.sz*1.8+1.0&&cs.pilotInvT<=0&&cs.pilotState!=='GIANTSWING'&&cs.pilotState!=='FRANKENSTEINER'){
+            cs.pilotHP=Math.max(0,cs.pilotHP-2);cs.pilotInvT=1.1;
+            try{screenFlash(.55)}catch(_){}try{sfx.damage&&sfx.damage()}catch(_){}
+            updateColosseumHUD();if(cs.pilotHP<=0){endColosseum(false);return;}
+            cs.pilotState='STAGGER';cs.pilotActionT=0;
+            cs._coloExcite=Math.min(2.5,(cs._coloExcite||0)+0.8);
+            try{wfCineSubtitle('👊 UPPERCUT!!','#ffcc00');}catch(_){}
+          }
+        }
+      }else{
+        const sp=(f.stateT-.55)/(UC_END-.55);
+        if(f.rArm){f.rArm.rotation.x=Math.max(0,f.rArm.rotation.x-4*dt);f.rArm.rotation.z=Math.max(0,f.rArm.rotation.z-2*dt);}
+        if(f.rArmFore)f.rArmFore.rotation.x=Math.max(0,f.rArmFore.rotation.x-3*dt);
+        const bd=f.mesh.getObjectByName('body');if(bd){bd.rotation.z*=(1-4*dt);bd.rotation.x*=(1-4*dt);}
+      }
+      if(f.stateT>UC_END){
+        if(f.rArm){f.rArm.rotation.x=0;f.rArm.rotation.z=0;}
+        if(f.rArmFore)f.rArmFore.rotation.x=0;
+        const bd=f.mesh.getObjectByName('body');if(bd){bd.rotation.z=0;bd.rotation.x=0;}
+        f._hitThisAttack=false;f.attackCD=f.def.style==='slug'?1.8:0.9;f.state='IDLE';f.stateT=0;
       }
       break;}
     case 'ELIMINATED':break;
@@ -33769,13 +33938,22 @@ function _updateColoFighter(f,dt){
       f.state='ROLLING';f.stateT=0;f._rollHitCD=0;f._rollDirX=0;f._rollDirZ=0;f._rollWindupPuff=false;f._rollBrakePuff=false;f._rollDustT=0;
     }
   }
-  // v7.316: non-slug fighters — SLAM / DROPKICK / TAUNT chance
+  // v7.347: non-slug fighters — SLAM / DROPKICK / TAUNT / BLOCK / UPPERCUT chance
   if(f.def.style!=='slug'&&f.state==='IDLE'&&f.stateT>1.2&&f.attackCD<=0&&dist<14){
     const r=Math.random();
-    const lowHP=(cs.pilotHP/(cs.pilotMaxHP||18))<0.5;
+    const pilotHPRatio=cs.pilotHP/(cs.pilotMaxHP||18);
+    const lowHP=pilotHPRatio<0.5;
+    const fHPRatio=f.hp/(f.def.maxHP||4);
+    // TAUNT at low player HP (once per threshold)
     if(lowHP&&r<0.12&&!f._tauntDoneThisHP){f._tauntDoneThisHP=true;f.state='TAUNT';f.stateT=0;}
-    else if(r<0.30&&dist<f.def.sz*3.5+2.5){f.state='SLAM';f.stateT=0;f._hitThisAttack=false;}
-    else if(r<0.52&&dist>f.def.sz*2+1){f.state='DROPKICK';f.stateT=0;f._hitThisAttack=false;f._dkDir=null;}
+    // BLOCK: defensive when player just attacked (pilotActionT < 0.5 = fresh attack)
+    else if(r<0.18&&fHPRatio<0.6&&cs.pilotState==='CHOP'){f.state='BLOCK';f.stateT=0;}
+    // UPPERCUT: fast close-range punch
+    else if(r<0.38&&dist<f.def.sz*2.0+1.2){f.state='UPPERCUT';f.stateT=0;f._hitThisAttack=false;}
+    // SLAM
+    else if(r<0.56&&dist<f.def.sz*3.5+2.5){f.state='SLAM';f.stateT=0;f._hitThisAttack=false;}
+    // DROPKICK
+    else if(r<0.72&&dist>f.def.sz*2+1){f.state='DROPKICK';f.stateT=0;f._hitThisAttack=false;f._dkDir=null;f._dkLanded=false;}
   }
   if(f._tauntDoneThisHP&&cs.pilotHP>(cs.pilotMaxHP||18)*.55)f._tauntDoneThisHP=false;
 }
@@ -34761,6 +34939,609 @@ function _prAwardPoints(sorted){
     ch.names[id]=r.name;ch._col=ch._col||{};ch._col[id]=r.col;
   });
 }
+// ╔══════════════════════════════════════════════════════╗
+// ║  v7.348: MECH ARENA — 3D Mobile Suit Fighting Game  ║
+// ╚══════════════════════════════════════════════════════╝
+const MECHA_DEFS=[
+  {id:'cyclops', name:'CYCLOPS',  col:0x44aaff,col2:0x2266aa,  speed:5.5,  aggr:0.65, blockChance:0.18, beamChance:0.22, hp:80,  style:'balanced', desc:'ONE-EYED GUARDIAN'},
+  {id:'viper',   name:'VIPER',    col:0x22ff88,col2:0x117744,  speed:8.0,  aggr:0.78, blockChance:0.28, beamChance:0.15, hp:75,  style:'agile',    desc:'SERPENT STRIKER'},
+  {id:'goliath', name:'GOLIATH',  col:0xff8822,col2:0xaa4400,  speed:3.5,  aggr:0.55, blockChance:0.12, beamChance:0.08, hp:120, style:'heavy',    desc:'IRON MOUNTAIN'},
+  {id:'phantom', name:'PHANTOM',  col:0xcc44ff,col2:0x882299,  speed:6.0,  aggr:0.50, blockChance:0.22, beamChance:0.55, hp:70,  style:'ranged',   desc:'VOID SPECTER'},
+  {id:'omega',   name:'Ω-MECH',   col:0xff2244,col2:0x991122,  speed:6.5,  aggr:0.90, blockChance:0.35, beamChance:0.35, hp:100, style:'boss',     desc:'FINAL ARBITER'},
+];
+let mechArenaScene=null, mechArenaState=null;
+
+function makeMechFighter(def){
+  const g=new THREE.Group();g.name='mechFighter_'+def.id;
+  const c=def.col, c2=def.col2;
+  const wf=(geo,col)=>{const m=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:col}));return m;};
+  const mf=(geo,col)=>{const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col,wireframe:true}));return m;};
+  // Helper: add child to group
+  const addTo=(parent,child,x,y,z)=>{child.position.set(x||0,y||0,z||0);parent.add(child);return child;};
+  // ── Torso ──
+  const torso=new THREE.Group();torso.name='torso';torso.position.set(0,2.2,0);
+  addTo(torso,wf(new THREE.BoxGeometry(1.6,1.4,1.2),c),0,0,0);
+  // cockpit hatch
+  addTo(torso,wf(new THREE.BoxGeometry(0.5,0.4,0.15),c2),0,0.2,0.6);
+  // shoulder pads
+  [-1,1].forEach(sx=>{
+    const sh=wf(new THREE.BoxGeometry(0.5,0.4,0.6),c2);sh.position.set(sx*1.0,0.4,0);torso.add(sh);});
+  g.add(torso);
+  // ── Head ──
+  const head=new THREE.Group();head.name='head';head.position.set(0,3.5,0);
+  // different head shapes per mech
+  const headBox=new THREE.BoxGeometry(0.9,0.85,0.8);
+  const hb=wf(headBox,c);hb.name='headBox';head.add(hb);
+  // visor/eye
+  if(def.id==='cyclops'){
+    // big single monoeye
+    const eye=wf(new THREE.SphereGeometry(0.22,8,6),0xffffff);eye.position.set(0,0,0.45);head.add(eye);
+    const eyeG=mf(new THREE.SphereGeometry(0.16,8,6),0xffffff);eyeG.position.set(0,0,0.46);eyeG.material.opacity=0.8;head.add(eyeG);
+  } else {
+    const visor=wf(new THREE.BoxGeometry(0.6,0.18,0.05),def.id==='omega'?0xff4444:0x00ccff);visor.position.set(0,0.12,0.42);head.add(visor);
+    // dual eye dots
+    [-0.2,0.2].forEach(ex=>{const e=mf(new THREE.SphereGeometry(0.06,6,4),0x00ffff);e.position.set(ex,-0.05,0.42);head.add(e);});
+  }
+  // antenna(s)
+  if(def.id==='omega'||def.id==='phantom'){
+    const ant=wf(new THREE.CylinderGeometry(0.02,0.02,0.5,6),c);ant.position.set(0,0.65,0);ant.rotation.z=def.id==='phantom'?0.3:0;head.add(ant);
+  }
+  g.add(head);
+  // ── Left/Right Arms ──
+  ['l','r'].forEach(side=>{
+    const sx=side==='l'?-1:1;
+    const armG=new THREE.Group();armG.name=side+'Arm';armG.position.set(sx*1.15,2.5,0);
+    // upper arm
+    const ua=wf(new THREE.CylinderGeometry(0.22,0.20,0.85,8),c);ua.position.set(0,-0.38,0);armG.add(ua);
+    // shoulder cap
+    const sc=wf(new THREE.SphereGeometry(0.28,8,6),c2);armG.add(sc);
+    armG.rotation.x=0.1;
+    // forearm
+    const foreG=new THREE.Group();foreG.name=side+'Fore';foreG.position.set(0,-0.9,0);
+    const fa=wf(new THREE.BoxGeometry(0.36,0.80,0.32),c);fa.position.set(0,-0.35,0);foreG.add(fa);
+    // hand/fist
+    const handBox=def.id==='goliath'?new THREE.BoxGeometry(0.38,0.32,0.38):new THREE.BoxGeometry(0.30,0.28,0.30);
+    const hnd=wf(handBox,c2);hnd.position.set(0,-0.80,0);foreG.add(hnd);
+    // weapon on right forearm for omega and goliath
+    if(side==='r'&&(def.id==='omega'||def.id==='goliath')){
+      const wpn=wf(new THREE.BoxGeometry(0.18,0.5,0.22),0xffaa00);wpn.position.set(0,-0.9,0.2);foreG.add(wpn);
+    }
+    // beam emitter on left for phantom
+    if(side==='l'&&def.id==='phantom'){
+      const em=wf(new THREE.CylinderGeometry(0.1,0.12,0.4,8),0xcc44ff);em.position.set(0,-0.85,0.18);em.rotation.x=Math.PI/2;foreG.add(em);
+    }
+    armG.add(foreG);
+    g.add(armG);
+  });
+  // ── Waist / Skirt ──
+  const waist=new THREE.Group();waist.name='waist';waist.position.set(0,1.3,0);
+  addTo(waist,wf(new THREE.BoxGeometry(1.2,0.6,0.9),c),0,0,0);
+  // front skirt plate
+  addTo(waist,wf(new THREE.BoxGeometry(0.6,0.5,0.12),c2),0,-0.35,0.4);
+  [-1,1].forEach(sx=>{addTo(waist,wf(new THREE.BoxGeometry(0.4,0.45,0.12),c2),sx*0.55,-0.3,0.3);});
+  g.add(waist);
+  // ── Legs ──
+  ['l','r'].forEach(side=>{
+    const sx=side==='l'?-1:1;
+    const legG=new THREE.Group();legG.name=side+'Leg';legG.position.set(sx*0.45,1.0,0);
+    // thigh
+    const th=wf(new THREE.BoxGeometry(0.42,0.85,0.42),c);th.position.set(0,-0.38,0);legG.add(th);
+    // knee cap
+    const kn=wf(new THREE.SphereGeometry(0.24,8,6),c2);kn.position.set(0,-0.82,0.1);legG.add(kn);
+    // lower leg
+    const lowerG=new THREE.Group();lowerG.name=side+'Lower';lowerG.position.set(0,-0.9,0);
+    // shin — flared style
+    const sh=wf(new THREE.CylinderGeometry(0.28,0.42,0.90,8),c);sh.position.set(0,-0.42,0);lowerG.add(sh);
+    // shin armor panel
+    const sap=wf(new THREE.BoxGeometry(0.30,0.5,0.20),c2);sap.position.set(0,-0.4,0.3);lowerG.add(sap);
+    // foot/boot
+    const footG=new THREE.Group();footG.name=side+'Foot';footG.position.set(0,-0.6,0.08);
+    addTo(footG,wf(new THREE.BoxGeometry(0.48,0.22,0.70),c),0,0,0.1);
+    // booster thruster
+    addTo(footG,wf(new THREE.CylinderGeometry(0.12,0.16,0.22,8),c2),0,0,-0.38);
+    lowerG.add(footG);
+    legG.add(lowerG);
+    g.add(legG);
+  });
+  // ── Backpack ──
+  const bp=new THREE.Group();bp.name='backpack';bp.position.set(0,2.6,-0.7);
+  addTo(bp,wf(new THREE.BoxGeometry(1.0,0.9,0.45),c),0,0,0);
+  // twin thrusters
+  [-0.3,0.3].forEach(tx=>{const nt=wf(new THREE.CylinderGeometry(0.16,0.20,0.5,8),c2);nt.position.set(tx,-0.1,-0.3);nt.rotation.x=Math.PI/2;bp.add(nt);});
+  g.add(bp);
+  // Store joint refs
+  g.userData.joints={
+    head,torso,
+    lArm:g.getObjectByName('lArm'),rArm:g.getObjectByName('rArm'),
+    lFore:g.getObjectByName('lFore'),rFore:g.getObjectByName('rFore'),
+    waist,
+    lLeg:g.getObjectByName('lLeg'),rLeg:g.getObjectByName('rLeg'),
+    lLower:g.getObjectByName('lLower'),rLower:g.getObjectByName('rLower'),
+  };
+  g.userData.def=def;
+  return g;
+}
+
+function _buildMechArenaScene(){
+  const ag=new THREE.Group();ag.name='mechArenaScene';
+  // Hexagonal platform tiles
+  const platMat=new THREE.LineBasicMaterial({color:0x2244aa});
+  const edgeMat=new THREE.LineBasicMaterial({color:0x44aaff});
+  // Floor — large flat plane with grid lines
+  for(let i=-10;i<=10;i+=2){
+    const hLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-10,0,i),new THREE.Vector3(10,0,i)]),new THREE.LineBasicMaterial({color:i===0?0x4466cc:0x112244}));
+    ag.add(hLine);
+    const vLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i,0,-10),new THREE.Vector3(i,0,10)]),new THREE.LineBasicMaterial({color:i===0?0x4466cc:0x112244}));
+    ag.add(vLine);
+  }
+  // Arena boundary ring (hexagon)
+  const hexPts=[];for(let a=0;a<=Math.PI*2;a+=Math.PI/3){hexPts.push(new THREE.Vector3(Math.sin(a)*10,0,Math.cos(a)*10));}hexPts.push(hexPts[0].clone());
+  ag.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(hexPts),edgeMat));
+  // Glow rails (elevated edge)
+  const railPts=[];for(let a=0;a<=Math.PI*2;a+=Math.PI/3){railPts.push(new THREE.Vector3(Math.sin(a)*10,0.15,Math.cos(a)*10));}railPts.push(railPts[0].clone());
+  ag.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(railPts),new THREE.LineBasicMaterial({color:0x88ccff})));
+  // Corner pillars
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3;
+    const px=Math.sin(a)*10,pz=Math.cos(a)*10;
+    const pillar=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.12,0.12,6,6)),new THREE.LineBasicMaterial({color:0x66aaff}));
+    pillar.position.set(px,3,pz);ag.add(pillar);
+    // pillar top glow cap
+    const cap=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.25,6,6)),new THREE.LineBasicMaterial({color:0x88ddff}));
+    cap.position.set(px,6.1,pz);ag.add(cap);
+  }
+  // Space skybox effect — distant planet silhouettes
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4,r=28,y=-2+Math.random()*6;
+    const struct=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3+Math.random()*4,6+Math.random()*8,0.5)),new THREE.LineBasicMaterial({color:0x112233}));
+    struct.position.set(Math.sin(a)*r,y,Math.cos(a)*r);struct.rotation.y=a;ag.add(struct);
+  }
+  return ag;
+}
+
+function _updateMechFighterAnim(mesh, state, stateT, isFacing1, dt){
+  if(!mesh||!mesh.userData.joints)return;
+  const j=mesh.userData.joints;
+  const t=stateT;
+  const _lerp=(a,b,f)=>a+(b-a)*Math.min(1,f*dt*12);
+  switch(state){
+    case 'IDLE':{
+      // gentle idle sway
+      if(j.torso)j.torso.rotation.z=Math.sin(t*1.8)*0.04;
+      if(j.head)j.head.rotation.y=Math.sin(t*0.9)*0.08;
+      if(j.lArm){j.lArm.rotation.x=Math.sin(t*1.2)*0.08;}
+      if(j.rArm){j.rArm.rotation.x=-Math.sin(t*1.2)*0.08;}
+      break;}
+    case 'WALK_FWD':case 'WALK_BACK':{
+      const dir=state==='WALK_FWD'?1:-1;
+      const wt=t*5.5;
+      if(j.lArm)j.lArm.rotation.x=Math.sin(wt)*0.50*dir;
+      if(j.rArm)j.rArm.rotation.x=-Math.sin(wt)*0.50*dir;
+      if(j.lLeg)j.lLeg.rotation.x=-Math.sin(wt)*0.55*dir;
+      if(j.rLeg)j.rLeg.rotation.x=Math.sin(wt)*0.55*dir;
+      if(j.lLower)j.lLower.rotation.x=Math.max(0,Math.sin(wt+.65)*.70);
+      if(j.rLower)j.rLower.rotation.x=Math.max(0,Math.sin(wt-.65)*.70);
+      if(j.torso)j.torso.rotation.z=Math.sin(wt*2)*0.04;
+      break;}
+    case 'PUNCH':{
+      if(t<0.15){const sp=t/0.15;if(j.rArm)j.rArm.rotation.x=-0.8*sp;if(j.torso)j.torso.rotation.z=-0.1*sp;}
+      else if(t<0.42){const sp=(t-0.15)/0.27;if(j.rArm)j.rArm.rotation.x=-0.8+1.9*sp;if(j.rFore)j.rFore.rotation.x=0.5*sp;if(j.torso)j.torso.rotation.z=-0.1+0.2*sp;}
+      else{if(j.rArm){j.rArm.rotation.x*=0.7;}if(j.rFore){j.rFore.rotation.x*=0.7;}if(j.torso)j.torso.rotation.z*=0.7;}
+      break;}
+    case 'KICK':{
+      if(t<0.2){const sp=t/0.2;if(j.rLeg)j.rLeg.rotation.x=-0.7*sp;if(j.rLower)j.rLower.rotation.x=0.5*sp;}
+      else if(t<0.52){const sp=(t-0.2)/0.32;if(j.rLeg)j.rLeg.rotation.x=-0.7+1.9*sp;if(j.rLower)j.rLower.rotation.x=Math.max(0,0.5-sp*.5);if(j.torso)j.torso.rotation.x=0.2*sp;}
+      else{if(j.rLeg)j.rLeg.rotation.x*=0.75;if(j.rLower)j.rLower.rotation.x*=0.75;if(j.torso)j.torso.rotation.x*=0.75;}
+      break;}
+    case 'BEAM':{
+      if(t<0.2){const sp=t/0.2;if(j.lArm)j.lArm.rotation.x=-0.6*sp;if(j.torso)j.torso.rotation.z=0.15*sp;}
+      else if(t<0.5){if(j.lFore)j.lFore.rotation.x=-0.3;if(j.lArm)j.lArm.rotation.x=-0.6;}
+      else{if(j.lArm)j.lArm.rotation.x*=0.8;if(j.lFore)j.lFore.rotation.x*=0.8;if(j.torso)j.torso.rotation.z*=0.8;}
+      break;}
+    case 'HEAVY':{
+      if(t<0.4){const sp=t/0.4;if(j.lArm)j.lArm.rotation.x=-2.0*sp;if(j.rArm)j.rArm.rotation.x=-2.0*sp;if(j.torso)j.torso.rotation.x=-0.25*sp;}
+      else if(t<0.8){const sp=(t-0.4)/0.4;if(j.lArm)j.lArm.rotation.x=-2.0+3.8*sp;if(j.rArm)j.rArm.rotation.x=-2.0+3.8*sp;if(j.lFore)j.lFore.rotation.x=0.8*sp;if(j.rFore)j.rFore.rotation.x=0.8*sp;if(j.torso)j.torso.rotation.x=-0.25+0.65*sp;}
+      else{if(j.lArm)j.lArm.rotation.x*=0.75;if(j.rArm)j.rArm.rotation.x*=0.75;if(j.lFore)j.lFore.rotation.x*=0.75;if(j.rFore)j.rFore.rotation.x*=0.75;if(j.torso)j.torso.rotation.x*=0.75;}
+      break;}
+    case 'BLOCK':{
+      const sp=Math.min(1,t/0.15);
+      if(j.lArm){j.lArm.rotation.x=-1.7*sp;j.lArm.rotation.z=0.3*sp;}
+      if(j.rArm){j.rArm.rotation.x=-1.7*sp;j.rArm.rotation.z=-0.3*sp;}
+      if(j.lFore)j.lFore.rotation.x=0.5*sp;if(j.rFore)j.rFore.rotation.x=0.5*sp;
+      if(j.torso)j.torso.rotation.x=0.2*sp;
+      break;}
+    case 'HIT_REACT':{
+      const sp=Math.min(1,t/0.2);
+      if(j.torso){j.torso.rotation.x=-0.35*(1-sp);j.torso.rotation.z=Math.sin(t*30)*0.12*(1-sp);}
+      if(j.lArm){j.lArm.rotation.x=-1.4*(1-sp);j.lArm.rotation.z=0.8*(1-sp);}
+      if(j.rArm){j.rArm.rotation.x=-1.4*(1-sp);j.rArm.rotation.z=-0.8*(1-sp);}
+      if(j.head)j.head.rotation.z=Math.sin(t*28)*0.2*(1-sp);
+      break;}
+    case 'KO':{
+      // fall backward
+      const fall=Math.min(Math.PI*0.5,t*1.8);
+      mesh.rotation.x=fall;
+      if(j.lArm){j.lArm.rotation.x=-1.6;j.lArm.rotation.z=1.0;}
+      if(j.rArm){j.rArm.rotation.x=-1.6;j.rArm.rotation.z=-1.0;}
+      if(j.head)j.head.rotation.x=-0.5;
+      break;}
+    default:break;
+  }
+}
+
+function _updateMechArenaAI(ms, dt){
+  const def=ms.enemyMesh&&ms.enemyMesh.userData.def;
+  if(!def||ms.eState==='KO'||ms.eState==='HIT_REACT')return;
+  ms.eStateCD=Math.max(0,(ms.eStateCD||0)-dt);
+  if(ms.eState!=='IDLE')return;
+  if(ms.eStateCD>0)return;
+  const dist=Math.abs(ms.eX-ms.pX);
+  const r=Math.random();
+  const adj=def.style==='heavy'?0.7:def.style==='agile'?1.3:1.0;
+  // If far, walk forward
+  if(dist>6){ms.eState='WALK_FWD';ms.eStateCD=0;}
+  else if(dist>3.5){
+    // Medium range: beam or approach
+    if(r<def.beamChance){ms.eState='BEAM';ms.eStateCD=0.85;}
+    else{ms.eState='WALK_FWD';ms.eStateCD=0;}
+  } else {
+    // Close range: attack mix
+    if(r<def.blockChance&&(ms._playerLastAtk||0)<0.5){ms.eState='BLOCK';ms.eStateCD=0.8;}
+    else if(r<0.38*adj){ms.eState='PUNCH';ms.eStateCD=0.52;}
+    else if(r<0.58*adj){ms.eState='KICK';ms.eStateCD=0.72;}
+    else if(r<0.72*adj){ms.eState='HEAVY';ms.eStateCD=1.25;}
+    else if(r<0.82){ms.eState='BEAM';ms.eStateCD=0.85;}
+    else{ms.eState='IDLE';ms.eStateCD=0.3+Math.random()*0.4;}
+  }
+}
+
+function _mfDealDamage(ms, toPlayer, dmg, stagger){
+  // BLOCK reduces damage
+  if(toPlayer&&ms.pState==='BLOCK'){dmg=Math.round(dmg*0.4);ms._pCounterWindow=0.3;}
+  if(!toPlayer&&ms.eState==='BLOCK'){dmg=Math.round(dmg*0.4);ms._eCounterWindow=0.3;}
+  if(toPlayer){
+    ms.pHP=Math.max(0,ms.pHP-dmg);
+    ms.pState='HIT_REACT';ms.pStateT=0;ms._pCounterWindow=0;
+    if(stagger)ms.pState='STAGGER_LONG';
+    try{screenFlash(.4);}catch(_){}try{sfx.damage&&sfx.damage();}catch(_){}
+  }else{
+    ms.eHP=Math.max(0,ms.eHP-dmg);
+    ms.eState='HIT_REACT';ms.eStateT=0;ms._eCounterWindow=0;
+    try{sfx.damage&&sfx.damage();}catch(_){}
+  }
+  _updateMechArenaHUD(ms);
+}
+
+function _checkMechHit(ms, isPlayerAttacking){
+  const atkX=isPlayerAttacking?ms.pX:ms.eX;
+  const defX=isPlayerAttacking?ms.eX:ms.pX;
+  const dist=Math.abs(atkX-defX);
+  const atkState=isPlayerAttacking?ms.pState:ms.eState;
+  const atkT=isPlayerAttacking?ms.pStateT:ms.eStateT;
+  const defState=isPlayerAttacking?ms.eState:ms.pState;
+  let range=0,dmg=0,hitFlag=isPlayerAttacking?'_pHitDone':'_eHitDone';
+  if(atkState==='PUNCH'){range=3.5;dmg=12;}
+  else if(atkState==='KICK'){range=2.5;dmg=18;}
+  else if(atkState==='BEAM'){range=14;dmg=8;}
+  else if(atkState==='HEAVY'){range=2.0;dmg=28;}
+  else return;
+  // Hit window: around peak of attack animation
+  const hitWindowStart=atkState==='PUNCH'?0.2:atkState==='KICK'?0.22:atkState==='BEAM'?0.2:0.42;
+  const hitWindowEnd=hitWindowStart+0.18;
+  if(atkT<hitWindowStart||atkT>hitWindowEnd)return;
+  if(ms[hitFlag])return;
+  if(dist>range)return;
+  ms[hitFlag]=true;
+  // counter bonus
+  const counterBonus=isPlayerAttacking?(ms._pCounterWindow||0)>0:((ms._eCounterWindow||0)>0);
+  if(counterBonus)dmg=Math.round(dmg*1.5);
+  // BEAM projectile effect
+  if(atkState==='BEAM'){
+    const fromMesh=isPlayerAttacking?ms.playerMech:ms.enemyMech;
+    if(fromMesh&&mechArenaScene){
+      try{
+        const bVec=new THREE.Vector3(isPlayerAttacking?1:-1,0,0);
+        const bPos=fromMesh.position.clone().add(new THREE.Vector3(0,2.2,0));
+        spawnP(bPos,isPlayerAttacking?0x44aaff:def.col,12,0.8,0.35);
+        spawnP(bPos.clone().add(bVec.multiplyScalar(dist*0.5)),isPlayerAttacking?0x44aaff:0xff4444,8,0.6,0.25);
+      }catch(_){}
+    }
+  }
+  _mfDealDamage(ms,!isPlayerAttacking,dmg,atkState==='HEAVY');
+}
+
+function _updateMechArenaHUD(ms){
+  try{
+    const ph=document.getElementById('mf-p1-bar');if(ph)ph.style.width=Math.max(0,(ms.pHP/ms.pMaxHP)*100)+'%';
+    const eh=document.getElementById('mf-e2-bar');if(eh)eh.style.width=Math.max(0,(ms.eHP/ms.eMaxHP)*100)+'%';
+    const en=document.getElementById('mf-e-name');if(en&&ms.enemyMesh)en.textContent=ms.enemyMesh.userData.def.name;
+    const rnd=document.getElementById('mf-round-txt');if(rnd)rnd.textContent='ROUND '+ms.round;
+    const win=document.getElementById('mf-wins-p');if(win)win.textContent='●'.repeat(ms.pRoundsWon)+'○'.repeat(Math.max(0,2-ms.pRoundsWon));
+    const ew=document.getElementById('mf-wins-e');if(ew)ew.textContent='○'.repeat(Math.max(0,2-ms.eRoundsWon))+'●'.repeat(ms.eRoundsWon);
+  }catch(_){}
+}
+
+function _mfAnnounce(txt,col,dur){
+  try{
+    const el=document.getElementById('mf-announce');if(!el)return;
+    el.textContent=txt;el.style.color=col||'#ffffff';el.style.opacity='1';
+    el.style.fontSize='48px';el.style.textShadow='0 0 24px '+col;
+    clearTimeout(el._mfTimer);
+    el._mfTimer=setTimeout(()=>{if(el)el.style.opacity='0';},dur||1800);
+  }catch(_){}
+}
+
+function startMechArena(){
+  try{
+    cleanupBossResidue();
+    const ts=document.getElementById('title-screen');if(ts)ts.style.display='none';
+    if(mechArenaScene){scene.remove(mechArenaScene);mechArenaScene=null;}
+    mechArenaScene=_buildMechArenaScene();scene.add(mechArenaScene);
+    scene.background=new THREE.Color(0x000011);
+    scene.fog=new THREE.FogExp2(0x000022,0.022);
+    camera.position.set(0,12,20);camera.lookAt(0,2,0);camera.fov=70;camera.updateProjectionMatrix();
+    // Show HUD
+    let hud=document.getElementById('mf-hud');
+    if(!hud){
+      hud=document.createElement('div');hud.id='mf-hud';hud.innerHTML=`
+<div id="mf-top-bar">
+  <div id="mf-p1-side">
+    <span id="mf-p1-label">PLAYER</span>
+    <div id="mf-p1-hp-track"><div id="mf-p1-bar"></div></div>
+    <span id="mf-wins-p">○○</span>
+  </div>
+  <div id="mf-center">
+    <div id="mf-round-txt">ROUND 1</div>
+    <div id="mf-timer-txt">30</div>
+  </div>
+  <div id="mf-e2-side">
+    <span id="mf-wins-e">○○</span>
+    <div id="mf-e2-hp-track"><div id="mf-e2-bar"></div></div>
+    <span id="mf-e-name">CYCLOPS</span>
+  </div>
+</div>
+<div id="mf-announce"></div>
+<div id="mf-btns">
+  <div id="mf-move-btns">
+    <button class="mf-btn" ontouchstart="S._mfKeys=S._mfKeys||{};S._mfKeys.left=true" ontouchend="S._mfKeys.left=false">◀</button>
+    <button class="mf-btn" ontouchstart="S._mfKeys=S._mfKeys||{};S._mfKeys.right=true" ontouchend="S._mfKeys.right=false">▶</button>
+  </div>
+  <div id="mf-atk-btns">
+    <button class="mf-btn mf-punch" ontouchstart="S._mfInput='PUNCH'" ontouchend="">PUNCH</button>
+    <button class="mf-btn mf-kick"  ontouchstart="S._mfInput='KICK'"  ontouchend="">KICK</button>
+    <button class="mf-btn mf-beam"  ontouchstart="S._mfInput='BEAM'"  ontouchend="">BEAM</button>
+    <button class="mf-btn mf-heavy" ontouchstart="S._mfInput='HEAVY'" ontouchend="">HEAVY</button>
+    <button class="mf-btn mf-block" ontouchstart="S._mfKeys=S._mfKeys||{};S._mfKeys.block=true" ontouchend="S._mfKeys.block=false">BLOCK</button>
+  </div>
+</div>`;
+      document.body.appendChild(hud);
+    }
+    hud.style.display='flex';
+    S.phase='MECH_ARENA';
+    // Init state
+    const def=MECHA_DEFS[0];
+    mechArenaState={
+      phase:'INTRO',phaseT:0,
+      round:1,roundsToWin:2,ladder:0,
+      timer:30,
+      pHP:100,pMaxHP:100,pRoundsWon:0,
+      pX:-5,pZ:0,pFacing:1,
+      pState:'IDLE',pStateT:0,pBlocking:false,
+      eHP:def.hp,eMaxHP:def.hp,eRoundsWon:0,
+      eX:5,eZ:0,
+      eState:'IDLE',eStateT:0,eStateCD:1.5,
+      playerMech:null,enemyMech:null,arenaGroup:mechArenaScene,
+      _pHitDone:false,_eHitDone:false,
+      _pCounterWindow:0,_eCounterWindow:0,
+      _playerLastAtk:99,
+    };
+    // Build mechs
+    const pDef={id:'player',name:'PLAYER',col:0x00ccff,col2:0x0088aa,speed:6,aggr:1,blockChance:0,beamChance:0,hp:100,style:'balanced',desc:'YOU'};
+    const pm=makeMechFighter(pDef);pm.position.set(-5,0,0);pm.rotation.y=Math.PI/2;scene.add(pm);
+    mechArenaState.playerMech=pm;
+    const em=makeMechFighter(def);em.position.set(5,0,0);em.rotation.y=-Math.PI/2;scene.add(em);
+    mechArenaState.enemyMech=em;
+    _updateMechArenaHUD(mechArenaState);
+    S._mfKeys={};S._mfInput=null;
+    // Key bindings
+    S._mfKeydownFn=function(e){
+      if(!S._mfKeys)S._mfKeys={};
+      if(e.code==='ArrowLeft'||e.code==='KeyA')S._mfKeys.left=true;
+      if(e.code==='ArrowRight'||e.code==='KeyD')S._mfKeys.right=true;
+      if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyB')S._mfKeys.block=true;
+      if(e.code==='KeyJ'||e.code==='KeyZ'){S._mfInput='PUNCH';}
+      if(e.code==='KeyK'||e.code==='KeyX'){S._mfInput='KICK';}
+      if(e.code==='KeyL'||e.code==='KeyC'){S._mfInput='BEAM';}
+      if(e.code==='KeyU'||e.code==='KeyV'){S._mfInput='HEAVY';}
+    };
+    S._mfKeyupFn=function(e){
+      if(!S._mfKeys)return;
+      if(e.code==='ArrowLeft'||e.code==='KeyA')S._mfKeys.left=false;
+      if(e.code==='ArrowRight'||e.code==='KeyD')S._mfKeys.right=false;
+      if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyB')S._mfKeys.block=false;
+    };
+    window.addEventListener('keydown',S._mfKeydownFn);
+    window.addEventListener('keyup',S._mfKeyupFn);
+    _mfAnnounce('🤖 MECH ARENA 🤖','#44aaff',2200);
+    setTimeout(()=>{
+      if(mechArenaState)_mfStartRound(mechArenaState);
+    },2000);
+  }catch(e){console.error('startMechArena:',e);}
+}
+
+function _mfStartRound(ms){
+  ms.phase='ROUND_START';ms.phaseT=0;
+  ms.pHP=ms.pMaxHP;ms.eHP=ms.eMaxHP;
+  ms.pState='IDLE';ms.pStateT=0;ms.eState='IDLE';ms.eStateT=0;ms.eStateCD=1.5;
+  ms.timer=30;ms._pHitDone=false;ms._eHitDone=false;
+  if(ms.playerMech){ms.playerMech.position.set(-5,0,0);ms.playerMech.rotation.y=Math.PI/2;}
+  if(ms.enemyMech){ms.enemyMech.position.set(5,0,0);ms.enemyMech.rotation.y=-Math.PI/2;}
+  ms.pX=-5;ms.eX=5;
+  _updateMechArenaHUD(ms);
+  _mfAnnounce('ROUND '+ms.round,'#ffcc00',1600);
+  setTimeout(()=>{
+    if(!mechArenaState)return;
+    _mfAnnounce('FIGHT!','#ff4444',1200);
+    mechArenaState.phase='FIGHT';
+  },1800);
+}
+
+function _mfNextEnemy(ms){
+  ms.ladder++;
+  if(ms.ladder>=MECHA_DEFS.length){
+    // Victory — all enemies beaten
+    _mfAnnounce('🏆 MECH ARENA CHAMPION! 🏆','#ffcc00',4000);
+    ms.phase='LADDER_END';
+    setTimeout(()=>{endMechArena(true);},4500);
+    return;
+  }
+  const newDef=MECHA_DEFS[ms.ladder];
+  ms.eMaxHP=newDef.hp;ms.eRoundsWon=0;ms.round=1;ms.pRoundsWon=0;
+  // Swap enemy mesh
+  if(ms.enemyMesh){scene.remove(ms.enemyMesh);ms.enemyMesh=null;}
+  const em=makeMechFighter(newDef);em.position.set(5,0,0);em.rotation.y=-Math.PI/2;scene.add(em);
+  ms.enemyMesh=em;
+  _updateMechArenaHUD(ms);
+  _mfAnnounce('VS '+newDef.name,'#ff8844',2000);
+  setTimeout(()=>{if(mechArenaState)_mfStartRound(mechArenaState);},2200);
+}
+
+function updateMechArena(dt){
+  const ms=mechArenaState;if(!ms)return;
+  ms.phaseT+=dt;
+  if(ms.phase==='INTRO'||ms.phase==='ROUND_START'||ms.phase==='LADDER_END')return;
+  if(ms.phase==='KO'||ms.phase==='ROUND_END'){
+    // Animate KO state for a moment
+    if(ms.playerMech&&ms.pState==='KO')_updateMechFighterAnim(ms.playerMech,ms.pState,ms.phaseT,true,dt);
+    if(ms.enemyMesh&&ms.eState==='KO')_updateMechFighterAnim(ms.enemyMesh,ms.eState,ms.phaseT,false,dt);
+    return;
+  }
+  if(ms.phase!=='FIGHT')return;
+  // Timer
+  ms.timer-=dt;
+  try{const tt=document.getElementById('mf-timer-txt');if(tt)tt.textContent=Math.max(0,Math.ceil(ms.timer));}catch(_){}
+  // Counter windows decay
+  if(ms._pCounterWindow>0)ms._pCounterWindow-=dt;
+  if(ms._eCounterWindow>0)ms._eCounterWindow-=dt;
+  ms._playerLastAtk=(ms._playerLastAtk||99)+dt;
+  // ── Camera follows fight midpoint ──
+  const midX=(ms.pX+ms.eX)/2;
+  camera.position.x+=(midX*0.4-camera.position.x)*dt*2.2;
+  camera.position.y=11+Math.abs(ms.eX-ms.pX)*0.1;
+  camera.lookAt(midX,2,0);
+  // ── Player input ──
+  const mfK=S._mfKeys||{};
+  const pIdle=ms.pState==='IDLE'||ms.pState==='WALK_FWD'||ms.pState==='WALK_BACK';
+  // Attack input
+  if(pIdle&&S._mfInput){
+    ms._playerLastAtk=0;
+    ms.pState=S._mfInput;ms.pStateT=0;ms._pHitDone=false;
+    S._mfInput=null;
+  }
+  // Block
+  ms.pBlocking=mfK.block&&pIdle;
+  if(ms.pBlocking&&ms.pState!=='BLOCK'){ms.pState='BLOCK';ms.pStateT=0;}
+  if(!mfK.block&&ms.pState==='BLOCK'){ms.pState='IDLE';ms.pStateT=0;}
+  // Movement (only when idle/walking)
+  const moveStates=['IDLE','WALK_FWD','WALK_BACK'];
+  if(moveStates.includes(ms.pState)&&!ms.pBlocking){
+    const moveSpd=6.0*dt;
+    if(mfK.left){ms.pX-=moveSpd;ms.pState='WALK_BACK';}
+    else if(mfK.right){ms.pX+=moveSpd;ms.pState='WALK_FWD';}
+    else if(ms.pState!=='IDLE'){ms.pState='IDLE';}
+  }
+  // Arena bounds and min distance
+  ms.pX=Math.max(-9,Math.min(9,ms.pX));
+  const minGap=1.8;
+  if(ms.pX>ms.eX-minGap)ms.pX=ms.eX-minGap;
+  if(ms.pX<ms.eX+minGap&&ms.pX>ms.eX-minGap)ms.pX=ms.eX-minGap;
+  // Player facing
+  ms.pFacing=ms.pX<ms.eX?1:-1;
+  if(ms.playerMech){
+    ms.playerMech.position.x=ms.pX;
+    ms.playerMech.rotation.y=ms.pFacing>0?Math.PI/2:-Math.PI/2;
+  }
+  // ── Player state tick ──
+  ms.pStateT+=dt;
+  const pAttacks=['PUNCH','KICK','BEAM','HEAVY'];
+  if(pAttacks.includes(ms.pState)){
+    _checkMechHit(ms,true);
+    const dur={PUNCH:0.52,KICK:0.72,BEAM:0.85,HEAVY:1.25}[ms.pState]||0.6;
+    if(ms.pStateT>dur){ms.pState='IDLE';ms.pStateT=0;ms._pHitDone=false;}
+  }
+  if(ms.pState==='HIT_REACT'&&ms.pStateT>0.45){ms.pState='IDLE';ms.pStateT=0;}
+  if(ms.playerMech)_updateMechFighterAnim(ms.playerMech,ms.pState,ms.pStateT,true,dt);
+  // ── Enemy AI ──
+  ms.eStateT+=dt;
+  _updateMechArenaAI(ms,dt);
+  const eMoveStates=['IDLE','WALK_FWD','WALK_BACK'];
+  if(eMoveStates.includes(ms.eState)&&ms.eState==='WALK_FWD'){
+    const eSpd=(ms.enemyMesh&&ms.enemyMesh.userData.def?ms.enemyMesh.userData.def.speed:5)*dt;
+    const dir=ms.pX<ms.eX?-1:1;
+    ms.eX+=dir*eSpd;
+  }
+  ms.eX=Math.max(-9,Math.min(9,ms.eX));
+  if(ms.eX<ms.pX+minGap)ms.eX=ms.pX+minGap;
+  if(ms.enemyMesh){
+    ms.enemyMesh.position.x=ms.eX;
+    ms.enemyMesh.rotation.y=ms.eX>ms.pX?-Math.PI/2:Math.PI/2;
+  }
+  if(pAttacks.includes(ms.eState)){
+    _checkMechHit(ms,false);
+    const eDur={PUNCH:0.52,KICK:0.72,BEAM:0.85,HEAVY:1.25}[ms.eState]||0.6;
+    if(ms.eStateT>eDur){ms.eState='IDLE';ms.eStateT=0;ms._eHitDone=false;}
+  }
+  if(ms.eState==='HIT_REACT'&&ms.eStateT>0.45){ms.eState='IDLE';ms.eStateT=0;}
+  if(ms.enemyMesh)_updateMechFighterAnim(ms.enemyMesh,ms.eState,ms.eStateT,false,dt);
+  // ── KO / Timeout checks ──
+  const pKO=ms.pHP<=0,eKO=ms.eHP<=0,timeout=ms.timer<=0;
+  if(pKO||eKO||timeout){
+    ms.phase='ROUND_END';ms.phaseT=0;
+    const pWon=(eKO)||(timeout&&ms.pHP>=ms.eHP);
+    if(pWon){ms.pRoundsWon++;_mfAnnounce('YOU WIN!','#44ffaa',2200);}
+    else{ms.eRoundsWon++;_mfAnnounce('OPPONENT WINS','#ff4444',2200);}
+    if(pKO){ms.pState='KO';if(ms.playerMech){ms.playerMech.rotation.x=Math.PI*0.45;}}
+    if(eKO){ms.eState='KO';try{sfx.playCrowdCheer&&sfx.playCrowdCheer(3);}catch(_){}try{_spawnDustPuff&&_spawnDustPuff(ms.enemyMesh?ms.enemyMesh.position.clone().add(new THREE.Vector3(0,.5,0)):new THREE.Vector3(5,.5,0),18);}catch(_){}}
+    _updateMechArenaHUD(ms);
+    setTimeout(()=>{
+      if(!mechArenaState)return;
+      const mst=mechArenaState;
+      if(mst.pRoundsWon>=mst.roundsToWin){
+        // Player won this enemy
+        _mfNextEnemy(mst);
+      } else if(mst.eRoundsWon>=mst.roundsToWin){
+        // Player lost — game over
+        _mfAnnounce('DEFEATED...','#ff2244',2500);
+        setTimeout(()=>{endMechArena(false);},2800);
+      } else {
+        // Next round
+        mst.round++;
+        _mfStartRound(mst);
+      }
+    },2500);
+  }
+}
+
+function endMechArena(won){
+  try{
+    if(S._mfKeydownFn){window.removeEventListener('keydown',S._mfKeydownFn);S._mfKeydownFn=null;}
+    if(S._mfKeyupFn){window.removeEventListener('keyup',S._mfKeyupFn);S._mfKeyupFn=null;}
+    const ms=mechArenaState;
+    if(ms){
+      if(ms.playerMech){scene.remove(ms.playerMech);ms.playerMech=null;}
+      if(ms.enemyMesh){scene.remove(ms.enemyMesh);ms.enemyMesh=null;}
+    }
+    if(mechArenaScene){scene.remove(mechArenaScene);mechArenaScene=null;}
+    mechArenaState=null;
+    scene.fog=null;scene.background=null;
+    try{cleanupBossResidue();}catch(_){}
+    const hud=document.getElementById('mf-hud');if(hud)hud.style.display='none';
+    S.phase='TITLE';
+    const ts=document.getElementById('title-screen');if(ts)ts.style.display='flex';
+    try{updateTitleUnlocks();}catch(_){}
+  }catch(e){console.error('endMechArena:',e);}
+}
+// ── END MECH ARENA ───────────────────────────────────────────────────
 function startPodRace(){
   S.phase='PLAYING';
   cleanupBossResidue();
@@ -47669,6 +48450,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
     case 'EJECTING':updateEject(dt);updateParticles(dt);break;
     case 'CONTINUE':updateContinueScene(dt);updateParticles(dt);break;
     case 'COLOSSEUM':S.gameTime+=dt;try{updateColosseum(dt)}catch(e){console.error('colosseum:',e)}updateParticles(dt);break;
+    case 'MECH_ARENA':S.gameTime+=dt;try{updateMechArena(dt)}catch(e){console.error('mech_arena:',e)}updateParticles(dt);break;
     case 'ARMADA':S.gameTime+=dt;updatePlayer(dt);updateEnemies(dt);updateBeams(dt);updateParticles(dt);checkCollisions();try{updateArmada(dt)}catch(e){console.error('armada:',e)}updateComms(dt);updateRadar();try{_updateFormationAllies(dt)}catch(e){}break;
     case 'FOREST':S.gameTime+=dt;try{updateForestOnFoot(dt)}catch(e){console.error('forest:',e)}updateParticles(dt);break;
     case 'FIRE_ONFOOT':S.gameTime+=dt;try{updateFirePlanetOnFoot(dt)}catch(e){console.error('fire-onfoot:',e)}updateParticles(dt);break;
