@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.350</title>
+<title>COSMIC INVADERS v7.351</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -811,7 +811,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.350 - LOADED
+  COSMIC INVADERS v7.351 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -832,7 +832,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
 </noscript>
 <!-- IMMEDIATE minimal JS test - if this doesn't run, JS is blocked -->
-<script>document.getElementById('version-banner').textContent='v7.350 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
+<script>document.getElementById('version-banner').textContent='v7.351 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
 <div id="container">
   <div id="crt"></div>
     <!-- v7.187: ice escape cockpit interior view -->
@@ -1154,7 +1154,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.350</span></h1>
+    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.351</span></h1>
     <!-- v7.327: tagline with neon effect -->
     <div class="subtitle" style="text-shadow:0 0 12px rgba(0,200,255,0.8);letter-spacing:5px;animation:subtitleDrift 3s ease-in-out infinite alternate">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
@@ -8214,30 +8214,47 @@ function makeForestTacticalPilot(){
     grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeMat));
     return grp;
   }
-  // === HEAD / HELMET ===
+  // === HEAD / HELMET === v7.351: ★ MANDALORIAN-STYLE — beskar dome + T-visor + rangefinder
   const head=new THREE.Group();head.name='head';
-  // Skull-hugging tactical helmet
-  const helmetTop=_fw(new THREE.BoxGeometry(.58,.45,.55),mHelmet);
-  helmetTop.position.y=.15;head.add(helmetTop);
-  // Lower helmet (jaw guard)
-  const helmetJaw=_fw(new THREE.BoxGeometry(.5,.2,.45),mHelmet);
-  helmetJaw.position.y=-.18;head.add(helmetJaw);
-  // Visor (full-face orange HUD)
-  const visor=_fw(new THREE.BoxGeometry(.55,.2,.06),mVisor);
-  visor.position.set(0,.05,.28);head.add(visor);
-  // Side ear pieces / comm
+  // dedicated beskar-silver materials (helmet only — body keeps camo palette)
+  const mBeskar=new THREE.LineBasicMaterial({color:0xaebfcc,transparent:true,opacity:1});
+  const mBeskarDk=new THREE.LineBasicMaterial({color:0x7a8a99,transparent:true,opacity:.95});
+  const mTVisor=new THREE.LineBasicMaterial({color:0x2a3d52,transparent:true,opacity:.95});
+  const _hfw=(geo,edgeMat,fillCol)=>{const grp=new THREE.Group();
+    grp.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:fillCol,depthWrite:true})));
+    grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeMat));return grp;};
+  // rounded beskar dome (crown)
+  const dome=_hfw(new THREE.SphereGeometry(.33,10,6,0,Math.PI*2,0,Math.PI*.52),mBeskar,0x3a444f);
+  dome.position.y=.16;head.add(dome);
+  // helmet shell — slightly flared cylinder down to the jawline
+  const shell=_hfw(new THREE.CylinderGeometry(.325,.35,.46,10),mBeskar,0x3a444f);
+  shell.position.y=-.04;head.add(shell);
+  // ★ T-VISOR: horizontal eye band + vertical center slot (black, faint blue edge)
+  const visorH=_hfw(new THREE.BoxGeometry(.46,.13,.06),mTVisor,0x04070c);
+  visorH.position.set(0,.09,.31);visorH.name='visor';head.add(visorH);
+  const visorV=_hfw(new THREE.BoxGeometry(.13,.32,.06),mTVisor,0x04070c);
+  visorV.position.set(0,-.10,.315);head.add(visorV);
+  // cheek flares — angled plates sweeping down from the eye band
   [-1,1].forEach(sx=>{
-    const ear=_fw(new THREE.BoxGeometry(.08,.2,.18),mArmor);
-    ear.position.set(sx*.3,.1,0);head.add(ear);
+    const cheek=_hfw(new THREE.BoxGeometry(.09,.30,.28),mBeskarDk,0x333d47);
+    cheek.position.set(sx*.245,-.10,.17);cheek.rotation.y=sx*.24;head.add(cheek);
   });
-  // Top antenna
-  const ant=_fw(new THREE.CylinderGeometry(.02,.03,.4,4),mDark);
-  ant.position.set(-.15,.45,-.05);head.add(ant);
-  const antTip=_fw(new THREE.OctahedronGeometry(.05),mAccent);
-  antTip.position.set(-.15,.65,-.05);head.add(antTip);
-  // Chin strap detail
-  const strap=_fw(new THREE.TorusGeometry(.28,.03,4,8,Math.PI),mDark);
-  strap.position.set(0,-.15,.05);strap.rotation.x=Math.PI*.5;head.add(strap);
+  // chin guard below the vertical slot
+  const chin=_hfw(new THREE.BoxGeometry(.30,.12,.10),mBeskarDk,0x333d47);
+  chin.position.set(0,-.245,.24);head.add(chin);
+  // ear caps (flat discs both sides)
+  [-1,1].forEach(sx=>{
+    const ear=_hfw(new THREE.CylinderGeometry(.11,.11,.05,8),mBeskarDk,0x333d47);
+    ear.position.set(sx*.34,.02,.02);ear.rotation.z=Math.PI*.5;head.add(ear);
+  });
+  // ★ RANGEFINDER: stalk rising from the right ear cap + sensor tip (classic silhouette)
+  const rfStalk=_hfw(new THREE.CylinderGeometry(.022,.022,.36,4),mDark,0x141a10);
+  rfStalk.position.set(.37,.30,.02);rfStalk.rotation.z=-.18;head.add(rfStalk);
+  const rfTip=_hfw(new THREE.BoxGeometry(.12,.06,.07),mAccent,0x2c2a10);
+  rfTip.position.set(.405,.48,.02);head.add(rfTip);
+  // dome crest stripe (front-to-back accent line, subtle)
+  const crest=_hfw(new THREE.BoxGeometry(.04,.025,.42),mBeskarDk,0x333d47);
+  crest.position.set(0,.44,-.02);head.add(crest);
   head.position.y=2.9;g.add(head);
   // === NECK ===
   const neck=_fw(new THREE.CylinderGeometry(.15,.18,.3,5),mDark);
