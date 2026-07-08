@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.349</title>
+<title>COSMIC INVADERS v7.350</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -811,7 +811,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.349 - LOADED
+  COSMIC INVADERS v7.350 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -832,7 +832,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
 </noscript>
 <!-- IMMEDIATE minimal JS test - if this doesn't run, JS is blocked -->
-<script>document.getElementById('version-banner').textContent='v7.349 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
+<script>document.getElementById('version-banner').textContent='v7.350 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
 <div id="container">
   <div id="crt"></div>
     <!-- v7.187: ice escape cockpit interior view -->
@@ -1154,7 +1154,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.349</span></h1>
+    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.350</span></h1>
     <!-- v7.327: tagline with neon effect -->
     <div class="subtitle" style="text-shadow:0 0 12px rgba(0,200,255,0.8);letter-spacing:5px;animation:subtitleDrift 3s ease-in-out infinite alternate">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
@@ -1481,11 +1481,23 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
     <div id="pr-lap" style="font-size:22px;font-weight:bold;color:#ffcc00;letter-spacing:4px;">LAP 1 / 3</div>
     <div id="pr-hp" style="font-size:13px;color:#44ff88;letter-spacing:1px;margin-top:4px;text-shadow:0 0 6px #00ff66;">HULL: ██████████████████</div>
   </div>
-  <!-- v7.326: speed + gap display -->
+  <!-- v7.350: gap display (top-right, above minimap) -->
   <div style="position:absolute;top:8px;right:12px;text-align:right;">
-    <div id="pr-speed" style="font-size:18px;color:#ff8800;letter-spacing:2px;text-shadow:0 0 8px #ff6600;">55 km/h</div>
-    <div id="pr-speed-bar" style="margin-top:3px;width:90px;height:5px;background:rgba(80,20,0,0.5);border-radius:3px;overflow:hidden;margin-left:auto;"><div id="pr-speed-bar-fill" style="height:100%;width:30%;background:linear-gradient(90deg,#ff6600,#ff2200);border-radius:3px;transition:width 0.1s;"></div></div>
-    <div id="pr-gap-display" style="font-size:11px;color:#7fd0ff;letter-spacing:1px;margin-top:4px;">GAP: --</div>
+    <div id="pr-gap-display" style="font-size:12px;color:#7fd0ff;letter-spacing:1px;">GAP: --</div>
+  </div>
+  <!-- v7.350: ★ arc speedometer + drift gauge (bottom-right, above cam button) -->
+  <div id="pr-speedo" style="position:absolute;bottom:62px;right:10px;text-align:center;background:rgba(0,6,18,0.62);border:1px solid #224466;border-radius:12px;padding:6px 12px 5px;box-shadow:0 0 14px rgba(30,100,200,0.25);">
+    <svg width="126" height="82" viewBox="0 0 100 66">
+      <path d="M10,60 A40,40 0 1,1 90,60" fill="none" stroke="#11293d" stroke-width="7"/>
+      <path id="pr-sp-arc" d="M10,60 A40,40 0 1,1 90,60" fill="none" stroke="#ff8a33" stroke-width="3.4" stroke-dasharray="0 999" stroke-linecap="round"/>
+      <g id="pr-sp-needle" transform="rotate(-120 50 55)"><line x1="50" y1="55" x2="50" y2="17" stroke="#ff4444" stroke-width="2.4"/></g>
+      <circle cx="50" cy="55" r="4" fill="#ff8844" stroke="#1a0a00" stroke-width="1"/>
+    </svg>
+    <div style="margin-top:-8px;"><span id="pr-speed" style="font-size:23px;font-weight:900;color:#ffb066;line-height:1;text-shadow:0 0 10px rgba(255,140,40,0.5)">0</span><span style="font-size:9px;color:#5d7fa0;letter-spacing:1px;"> KM/H</span></div>
+    <div style="margin-top:4px;width:106px;height:7px;background:rgba(0,0,0,0.5);border:1px solid #223344;border-radius:4px;overflow:hidden;margin-left:auto;margin-right:auto;">
+      <div id="pr-drift-fill" style="height:100%;width:0%;background:#44aaff;transition:width .08s;"></div>
+    </div>
+    <div id="pr-drift-label" style="font-size:8px;color:#556677;letter-spacing:2px;margin-top:1px;">DRIFT [S+←→]</div>
   </div>
   <!-- v7.326: JUMP indicator -->
   <div id="pr-jump-ind" style="display:none;position:absolute;bottom:70px;left:50%;transform:translateX(-50%);font-size:16px;color:#aaccff;letter-spacing:3px;text-shadow:0 0 12px #aaccff;pointer-events:none;">▲ JUMP [J]</div>
@@ -36349,41 +36361,79 @@ function updatePodRace(dt){
   const leftKey=keys['KeyA']||keys['ArrowLeft'];
   const rightKey=keys['KeyD']||keys['ArrowRight'];
   const pod=S._prPlayerPod;
-  const lateralSpd=22+S._prSpeed*0.06;
-  // v7.334: LANE-BASED STEERING — track an offset from the curve centre.
-  // No input → lane decays toward 0 (auto-centering brings player back to track centre).
-  // Pod world X = curveX + lane, so the player smoothly follows curves even off-track.
+  // v7.350: ★ INERTIA + GRIP STEERING MODEL — full rewrite
+  // Lateral VELOCITY (not position) responds to input; drag decays it. No auto-centering:
+  // the pod goes where you point it and stays there, like a real racer.
   if(S._prLane==null)S._prLane=pod.position.x-(S._prCurveX||0);
-  let steered=false;
+  const brakeKey=keys['KeyS']||keys['ArrowDown']||S._prTouchBrake;
+  // raw steering input -1..1
+  let steerIn=0;
   if(S._prGyroActive){
     const gSteer=S._prGyroSteer||0;
-    if(Math.abs(gSteer)>0.06){S._prLane+=gSteer*lateralSpd*dt;steered=true;}
-    S._prSwerve=gSteer;
+    if(Math.abs(gSteer)>0.06)steerIn=gSteer;
     try{const dot=document.getElementById('pr-gyro-dot');if(dot)dot.style.left=(50+gSteer*43)+'%';}catch(_){}
   } else {
-    if(leftKey){S._prLane-=lateralSpd*dt;steered=true;}
-    else if(rightKey){S._prLane+=lateralSpd*dt;steered=true;}
-    S._prSwerve=leftKey?Math.max(-1,S._prSwerve-3.5*dt):rightKey?Math.min(1,S._prSwerve+3.5*dt):S._prSwerve*Math.pow(0.15,dt);
+    steerIn=leftKey?-1:rightKey?1:0;
   }
-  // v7.334/v7.337: auto-center when no steering input (faster decay on sharper curves)
-  // v7.337 BUGFIX: use exp() instead of pow(1-centerSpd,dt). The old form went NaN on
-  // hairpins where centerSpd>1 (negative base ^ fractional exp = NaN), corrupting
-  // S._prLane → pod.position.x → camera, blanking the 3D scene mid-race.
-  if(!steered){
-    const centerSpd=0.55+Math.min(0.8,_cv/40);// curves pull stronger toward center
-    S._prLane*=Math.exp(-centerSpd*dt);// always positive, never NaN
-    if(Math.abs(S._prLane)<0.05)S._prLane=0;
+  // smoothed steer (fast attack, fast release — responsive but not twitchy)
+  S._prSteer=(S._prSteer||0)+(steerIn-(S._prSteer||0))*Math.min(1,12*dt);
+  // ── DRIFT SYSTEM (Mario-Kart style): brake+steer at speed → drift; hold to charge
+  //    spark tiers (blue→orange→purple); release brake for a mini-turbo by tier.
+  if(!S._prDrift&&brakeKey&&Math.abs(steerIn)>0.5&&S._prSpeed>85&&!S._prJumping&&S._prRaceStarted){
+    S._prDrift=true;S._prDriftT=0;S._prDriftDir=steerIn>0?1:-1;
+    try{sfx.damage&&null}catch(_){}
+    try{spawnP(pod.position.clone().add(new THREE.Vector3(-S._prDriftDir*1.5,-0.6,2)),0xffffff,6,0.8,0.4,0.35)}catch(_){}
   }
-  S._prLane+=(S._prBounceVX||0)*dt;
+  if(S._prDrift){
+    S._prDriftT+=dt;
+    const tier=S._prDriftT>2.4?3:S._prDriftT>1.3?2:S._prDriftT>0.6?1:0;
+    S._prDriftTier=tier;
+    // drifting: strong lateral slide in drift direction, counter-steer modulates 55-145%
+    const mod=1+S._prSteer*S._prDriftDir*0.45;
+    S._prLatV=(S._prLatV||0)+S._prDriftDir*(40+S._prSpeed*0.10)*mod*dt;
+    S._prSpeed=Math.max(72,S._prSpeed-13*dt);// mild speed bleed while sliding
+    // spark FX by tier
+    S._prDriftFxT=(S._prDriftFxT||0)+dt;
+    if(S._prDriftFxT>0.05){S._prDriftFxT=0;
+      const col=tier>=3?0xff44ff:tier>=2?0xffaa22:0x44aaff;
+      try{spawnP(pod.position.clone().add(new THREE.Vector3(-S._prDriftDir*(1.2+Math.random()),-0.7,1.5+Math.random()*2)),col,3,0.9,0.35,0.3)}catch(_){}
+      if(tier>=2)try{spawnP(pod.position.clone().add(new THREE.Vector3(-S._prDriftDir*2,-0.5,3+Math.random()*2)),col,2,1.2,0.4,0.35)}catch(_){}
+    }
+    // exit drift: brake released (turbo!) or speed collapsed or jump
+    if(!brakeKey||S._prSpeed<=72||S._prJumping){
+      if(!brakeKey&&tier>0){
+        const burst=[0,26,46,72][tier];
+        S._prSpeed=Math.min((S._prMaxSpeed||155)*1.55,S._prSpeed+burst);
+        try{wfCineSubtitle(tier>=3?'🔥🔥 ULTRA TURBO!!':tier>=2?'🔥 SUPER TURBO!':'⚡ MINI TURBO!',tier>=3?'#ff44ff':tier>=2?'#ffaa22':'#44aaff')}catch(_){}
+        try{sfx._prNitro&&sfx._prNitro()}catch(_){}
+        try{screenFlash(0.2+tier*0.1)}catch(_){}
+        try{for(let bi=0;bi<8+tier*4;bi++)spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*3,Math.random(),2+bi*0.8)),tier>=3?0xff44ff:tier>=2?0xffaa22:0x44aaff,3,1.4,0.5,0.45)}catch(_){}
+      }
+      S._prDrift=false;S._prDriftT=0;S._prDriftTier=0;
+    }
+  } else {
+    // ── NORMAL STEERING: velocity-based with speed-scaled grip
+    const grip=1-Math.min(0.40,S._prSpeed/420);// grip loosens slightly at speed
+    S._prLatV=(S._prLatV||0)+S._prSteer*(34+S._prSpeed*0.10)*grip*dt;
+    // brake: real deceleration (not just curve auto-slow)
+    if(brakeKey&&S._prRaceStarted)S._prSpeed=Math.max(48,S._prSpeed-88*dt);
+  }
+  // lateral drag: velocity decays — momentum carries through, then settles
+  S._prLatV*=Math.exp(-(S._prDrift?1.4:2.4)*dt);
+  if(!Number.isFinite(S._prLatV))S._prLatV=0;
+  S._prLane+=S._prLatV*dt+(S._prBounceVX||0)*dt;
   S._prBounceVX=(S._prBounceVX||0)*0.82;
+  // swerve drives pod roll visuals — from lateral velocity + drift exaggeration
+  const _swTarget=Math.max(-1,Math.min(1,(S._prLatV||0)/22))+(S._prDrift?S._prDriftDir*0.55:0);
+  S._prSwerve=(S._prSwerve||0)+(Math.max(-1.4,Math.min(1.4,_swTarget))-(S._prSwerve||0))*Math.min(1,7*dt);
   // v7.337: NaN safety net — if anything in the chain leaks NaN, snap back to centre
   if(!Number.isFinite(S._prLane))S._prLane=0;
   if(!Number.isFinite(S._prCurveX))S._prCurveX=0;
   if(!Number.isFinite(S._prCurveV))S._prCurveV=0;
-  // clamp lane within the track (acts as a soft inner-wall guard before crash collision)
+  // clamp lane within the track; hitting the edge kills lateral velocity (wall scrub)
   const _trackHalf=(S._prLap===1?1.2:1.0)*80-3.5;// v7.341: ±80 half-width (track 2x wider)
-  if(S._prLane>_trackHalf)S._prLane=_trackHalf;
-  if(S._prLane<-_trackHalf)S._prLane=-_trackHalf;
+  if(S._prLane>_trackHalf){S._prLane=_trackHalf;if((S._prLatV||0)>0)S._prLatV*=-0.25;}
+  if(S._prLane<-_trackHalf){S._prLane=-_trackHalf;if((S._prLatV||0)<0)S._prLatV*=-0.25;}
   // apply: pod world X follows curve centre + lane offset
   pod.position.x=(S._prCurveX||0)+S._prLane;
   S._prVertical*=0.9;
@@ -36847,25 +36897,38 @@ function updatePodRace(dt){
       }
     }catch(_){}
   } else {
-    // v7.302: camera X slightly leads curve so horizon appears to swing — not just lookAt twist
+    // v7.350: ★ DYNAMIC CHASE CAMERA — full rewrite
+    // * lags behind steering (pod visibly moves within frame) then catches up
+    // * swings outward on drift for a drama angle
+    // * drops low + FOV widens with speed; nitro/turbo kicks FOV further
     const _curveLead=(S._prCurveV||0)*0.018;
-    camera.position.x+=(pod.position.x+_curveLead-camera.position.x)*8*dt;
+    const _driftSwing=S._prDrift?-S._prDriftDir*2.6:0;// camera hangs outside the drift
+    const _steerLead=(S._prSwerve||0)*1.4;// camera leads into steering direction
+    const _camXLerp=S._prDrift?3.5:6;// slower catch-up during drift = pod slides across frame
+    camera.position.x+=(pod.position.x+_curveLead+_steerLead+_driftSwing-camera.position.x)*_camXLerp*dt;
     // v7.302: camera rises on strong curves — see over the bank like a real cockpit
     const _curveRise=Math.abs(S._prCurveV||0)*0.048;
-    // v7.325: faster Y follow when jumping or on hills (Cyber Pod 500 port)
+    // v7.350: camera crouches at speed — road rushes closer (2.4 → 1.65 at max)
+    const _camH=2.4-speedRatio*0.75+((S._prNitroT||0)>0?-0.15:0);
     const _yLerp=((S._prJumping||(S._prJumpY||0)>0.1)||Math.abs(S._prVertical||0)>0.15)?8:4;
-    camera.position.y+=(pod.position.y+2.2+camBob+_curveRise-camera.position.y)*_yLerp*dt;
+    camera.position.y+=(pod.position.y+_camH+camBob+_curveRise-camera.position.y)*_yLerp*dt;
     camera.position.z=_anchorZ;
-    // v7.302: wider FOV at high speed for horizon depth
-    camera.fov=Math.max(64,80+speedRatio*16);
+    // v7.350: FOV — base 76, +22 with speed, +9 nitro kick, +6 during drift; smooth lerp
+    const _fovT=Math.min(104,76+speedRatio*22+((S._prNitroT||0)>0?9:0)+(S._prDrift?6:0));
+    camera.fov+=(_fovT-camera.fov)*Math.min(1,5*dt);
+    if(!Number.isFinite(camera.fov))camera.fov=80;
     camera.updateProjectionMatrix();
     if(S._prSpeed>110){
-      camera.position.y+=(Math.random()-0.5)*0.04;
-      camera.position.x+=(Math.random()-0.5)*0.015;
+      camera.position.y+=(Math.random()-0.5)*0.045;
+      camera.position.x+=(Math.random()-0.5)*0.018;
     }
-    camera.up.set(Math.sin(S._prBankSmooth),Math.cos(S._prBankSmooth),0);
-    // v7.302: lookAt 55 units ahead (was 22) + strong curve lead → road visibly curves at horizon
-    const lookAheadX=pod.position.x+(S._prCurveX||0)*0.52+(S._prCurveV||0)*1.85;
+    // v7.350: bank = curve bank + drift lean + steering roll — the horizon tips into corners
+    const _driftLean=S._prDrift?S._prDriftDir*0.085:0;
+    const _steerRoll=(S._prSwerve||0)*0.045;
+    const _bankTotal=S._prBankSmooth+_driftLean+_steerRoll;
+    camera.up.set(Math.sin(_bankTotal),Math.cos(_bankTotal),0);
+    // v7.302: lookAt 55 units ahead + strong curve lead → road visibly curves at horizon
+    const lookAheadX=pod.position.x+(S._prCurveX||0)*0.52+(S._prCurveV||0)*1.85+(S._prDrift?S._prDriftDir*6:0);
     camera.lookAt(lookAheadX, pod.position.y-0.4, pod.position.z-55);
   }
   // v7.337: emergency NaN recovery — if camera went bad somehow, snap back to anchor
@@ -38798,15 +38861,41 @@ function _updatePodRaceHUD(){
   S._prPrevPos=newPos;
   const dispSpd=Math.floor((S._prSpeed||55)*2);
   if(speedEl){
-    speedEl.textContent=dispSpd+' km/h';
+    speedEl.textContent=dispSpd;
     // colour red at max speed / nitro
     const nitroOn=(S._prNitroT||0)>0;
-    speedEl.style.color=nitroOn?'#00ccff':dispSpd>260?'#ff3300':dispSpd>180?'#ff8800':'#ff8800';
-    speedEl.style.textShadow=nitroOn?'0 0 18px #00ccff,0 0 36px #0088ff':'0 0 8px #ff6600';
+    speedEl.style.color=nitroOn?'#00ccff':dispSpd>260?'#ff5533':'#ffb066';
+    speedEl.style.textShadow=nitroOn?'0 0 18px #00ccff,0 0 36px #0088ff':'0 0 10px rgba(255,140,40,0.5)';
   }
-  // v7.326: speed bar
-  const barFill=document.getElementById('pr-speed-bar-fill');
-  if(barFill){const pct=Math.min(100,((S._prSpeed||55)-30)/((S._prMaxSpeed||155)-30)*100);barFill.style.width=pct+'%';barFill.style.background=(S._prNitroT||0)>0?'linear-gradient(90deg,#0088ff,#00ffcc)':pct>80?'linear-gradient(90deg,#ff6600,#ff0000)':'linear-gradient(90deg,#ff6600,#ff2200)';}
+  // v7.350: arc speedometer needle + arc sweep (240° from -120°)
+  try{
+    const ratio=Math.max(0,Math.min(1,((S._prSpeed||55)-30)/((S._prMaxSpeed||155)*1.5-30)));
+    const needle=document.getElementById('pr-sp-needle');
+    if(needle)needle.setAttribute('transform','rotate('+(-120+ratio*240)+' 50 55)');
+    const arc=document.getElementById('pr-sp-arc');
+    if(arc){
+      arc.setAttribute('stroke-dasharray',(ratio*167.6)+' 999');
+      arc.setAttribute('stroke',(S._prNitroT||0)>0?'#00ccff':ratio>0.8?'#ff4433':'#ff8a33');
+    }
+  }catch(_){}
+  // v7.350: drift gauge — fills through spark tiers (blue→orange→purple)
+  try{
+    const df=document.getElementById('pr-drift-fill');
+    const dl=document.getElementById('pr-drift-label');
+    if(df){
+      if(S._prDrift){
+        const t=S._prDriftT||0;
+        const pct=Math.min(100,t/2.4*100);
+        const tier=S._prDriftTier||0;
+        df.style.width=pct+'%';
+        df.style.background=tier>=3?'#ff44ff':tier>=2?'#ffaa22':'#44aaff';
+        if(dl){dl.textContent=tier>=3?'ULTRA READY!!':tier>=2?'SUPER READY!':tier>=1?'TURBO READY':'DRIFTING…';dl.style.color=tier>=3?'#ff88ff':tier>=2?'#ffcc66':tier>=1?'#88ccff':'#8899aa';}
+      } else {
+        df.style.width='0%';
+        if(dl){dl.textContent='DRIFT [S+←→]';dl.style.color='#556677';}
+      }
+    }
+  }catch(_){}
   // v7.326: gap to car ahead
   const gapEl=document.getElementById('pr-gap-display');
   if(gapEl){
@@ -39203,7 +39292,8 @@ function _startF1Lights(){
     }catch(_){}
     announce('LAP 1 / 3');
     // v7.288: control hint for the new sabotage items
-    setTimeout(()=>{try{announce('←/→ STEER · AUTO-ACCEL · SPACE=NITRO  ENTER=SMOKE  SHIFT=WRENCH')}catch(_){}},1400);
+    setTimeout(()=>{try{announce('←/→ STEER · S=BRAKE/DRIFT · SPACE=NITRO · ENTER=SMOKE · SHIFT=WRENCH')}catch(_){}},1400);
+    setTimeout(()=>{try{wfCineSubtitle('💡 S+←→ でドリフト → 離してターボ!','#88ccff')}catch(_){}},3200);
     setTimeout(()=>{
       const slEl=document.getElementById('pr-startlights');
       if(slEl)slEl.style.display='none';
