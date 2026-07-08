@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>COSMIC INVADERS v7.348</title>
+<title>COSMIC INVADERS v7.349</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;height:100dvh;overflow:hidden}
@@ -811,7 +811,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   padding:8px;background:rgba(20,20,0,0.9);border-bottom:2px solid #ff0;
   color:#ff0;font-size:13px;text-align:center;letter-spacing:3px;
   font-family:Courier New,monospace;font-weight:bold;pointer-events:none">
-  COSMIC INVADERS v7.348 - LOADED
+  COSMIC INVADERS v7.349 - LOADED
 </div>
 <style>
   /* Auto-hide banner once game reaches TITLE or beyond */
@@ -832,7 +832,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   </div>
 </noscript>
 <!-- IMMEDIATE minimal JS test - if this doesn't run, JS is blocked -->
-<script>document.getElementById('version-banner').textContent='v7.348 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
+<script>document.getElementById('version-banner').textContent='v7.349 JS ON - loading...';document.getElementById('version-banner').style.color='#0ff';document.getElementById('version-banner').style.borderBottomColor='#0ff';</script>
 <div id="container">
   <div id="crt"></div>
     <!-- v7.187: ice escape cockpit interior view -->
@@ -1154,7 +1154,7 @@ body.boss-active #mini-radar{top:calc(90px + env(safe-area-inset-top,0px))}
   <div id="title-screen">
     <div id="hangar-status">HANGAR BAY 07<br>CATAPULT STATUS: READY<br>PRESSURE: NOMINAL</div>
     <div id="hangar-status2">FLEET COMMAND ONLINE<br>WEAPONS: LOADED<br>FUEL: 100%</div>
-    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.348</span></h1>
+    <h1 style="position:relative;text-shadow:0 0 30px #0ff,0 0 60px rgba(0,255,255,0.4)">COSMIC<br>INVADERS<span id="title-version" style="position:absolute;top:-6px;right:-28px;font-size:12px;color:#0ff;letter-spacing:2px;text-shadow:0 0 10px #0ff,0 0 20px #0ff;animation:titleVerPulse 1.8s ease-in-out infinite">v7.349</span></h1>
     <!-- v7.327: tagline with neon effect -->
     <div class="subtitle" style="text-shadow:0 0 12px rgba(0,200,255,0.8);letter-spacing:5px;animation:subtitleDrift 3s ease-in-out infinite alternate">&#9654; CATAPULT BAY - LAUNCH PREP &#9664;</div>
     <div class="callsign-box" id="step-callsign">
@@ -14320,6 +14320,11 @@ function cleanupBossResidue(){
       if(S._prProps&&S._prProps.length){
         S._prProps.forEach(p=>{try{scene.remove(p)}catch(_){}});
         S._prProps=[];
+      }
+      // v7.349: boost pad cleanup
+      if(S._prBoostPads&&S._prBoostPads.length){
+        S._prBoostPads.forEach(g=>{try{scene.remove(g)}catch(_){}});
+        S._prBoostPads=[];
       }
       if(S._prAI&&S._prAI.length){
         S._prAI.forEach(ai=>{try{if(ai&&ai.pod)scene.remove(ai.pod)}catch(_){}});// v7.287: AI uses .pod not .mesh
@@ -32888,7 +32893,7 @@ function _colosseumHitDetect(){
   const cs=colosseumState;if(!cs||!cs.hitboxActive)return;
   // v7.249: use held weapon stats if available
   const hw=cs._heldWeapon;
-  const dmg=hw?hw.dmg:2.0;
+  const dmg=(hw?hw.dmg:2.0)*((cs._superT||0)>0?2:1);// v7.349: SUPER MODE doubles damage
   const arc=hw?hw.arc:Math.PI*.34;
   const hitR=hw?hw.range:2.2;
   const isAoe=hw&&hw.aoe;
@@ -32966,6 +32971,15 @@ function _coloDropWeapon(w){
 function _coloKnockOrDown(f,dx,dz,pushDist){
   // Shared: push fighter, check ring-out or HP=0
   const cs=colosseumState;if(!cs)return;
+  // v7.349: COMBO COUNTER — every player hit chains; resets when pilot takes damage or 3s pass
+  cs._combo=(cs._combo||0)+1;cs._comboT=3.0;
+  if(cs._combo>=2){
+    try{wfCineSubtitle('🔥 '+cs._combo+' COMBO!','#ffaa00')}catch(_){}
+    try{if(cs._combo>=3)sfx.playCrowdCheer&&sfx.playCrowdCheer(Math.min(5,1.5+cs._combo*0.5))}catch(_){}
+  }
+  // v7.349: HYPE gain per hit (combo scales it); full bar triggers SUPER MODE in updateColosseum
+  cs._hype=Math.min(100,(cs._hype||0)+10+Math.min(20,cs._combo*3));
+  cs._coloExcite=Math.min(2.5,(cs._coloExcite||0)+0.3);
   // v7.247: Trigger dramatic hit-zoom
   try{if(cs)cs._hitCam={t:0,dur:.65,pos:f.pos.clone().add(new THREE.Vector3(0,.8,0))};}catch(_){}
   if(pushDist>0){
@@ -32982,6 +32996,17 @@ function _coloKnockOrDown(f,dx,dz,pushDist){
     f.hp=0;f.state='DOWN';f.stateT=0;
     try{spawnMegaExplosion(f.pos.clone().add(new THREE.Vector3(0,1,0)),.22)}catch(_){}
     try{sfx.bigExplosion&&sfx.bigExplosion()}catch(_){}
+    // v7.349: FINISHER — KO landed with a 3+ combo (or in SUPER MODE) = dramatic celebration
+    if((cs._combo||0)>=3||(cs._superT||0)>0){
+      try{wfCineSubtitle('💀 FINISHER!! 💀','#ff2244')}catch(_){}
+      try{screenFlash(0.9)}catch(_){}
+      try{sfx.playCrowdCheer&&sfx.playCrowdCheer(6)}catch(_){}
+      cs._hype=Math.min(100,(cs._hype||0)+30);
+      cs._coloExcite=2.5;
+      cs._hitCam={t:0,dur:1.4,pos:f.pos.clone().add(new THREE.Vector3(0,.8,0))};// longer cinematic zoom
+      // confetti ring burst
+      try{for(let ci=0;ci<28;ci++)spawnP(f.pos.clone().add(new THREE.Vector3((Math.random()-0.5)*4,1+Math.random()*3,(Math.random()-0.5)*4)),[0xff4400,0xffee00,0x00ff99,0x4499ff,0xff44cc][ci%5],3,0.9,2.0,0.7)}catch(_){}
+    }
     announce(_L(f.def.ring+' IS DOWN!',f.def.ring+' ダウン！'));
     try{sfx.playCrowdCheer(2.5)}catch(_){}
     setTimeout(()=>{try{if(colosseumState){f.state='ELIMINATED';f.pos.set(0,-50,0);f.mesh.position.copy(f.pos);updateColosseumHUD();}}catch(_){}},1800);
@@ -34206,6 +34231,54 @@ function _endColoIntro(){
 function updateColosseum(dt){
   const cs=colosseumState;if(!cs||!cs.active)return;
   cs.t+=dt;if(cs.pilotInvT>0)cs.pilotInvT-=dt;
+  // v7.349: COMBO decay + reset on pilot damage
+  if((cs._comboT||0)>0){cs._comboT-=dt;if(cs._comboT<=0)cs._combo=0;}
+  if(cs._lastPilotHP===undefined)cs._lastPilotHP=cs.pilotHP;
+  if(cs.pilotHP<cs._lastPilotHP){
+    if((cs._combo||0)>=2){try{wfCineSubtitle(_L('COMBO BROKEN!','コンボ切れ！'),'#888888')}catch(_){}}
+    cs._combo=0;cs._comboT=0;
+    cs._hype=Math.max(0,(cs._hype||0)-15);// getting hit drains hype
+  }
+  cs._lastPilotHP=cs.pilotHP;
+  // v7.349: SUPER MODE — hype bar full → 8s of double damage + golden aura
+  if((cs._hype||0)>=100&&(cs._superT||0)<=0){
+    cs._superT=8;cs._hype=0;
+    try{wfCineSubtitle('💪★ SUPER MODE!! ★💪','#ffdd00')}catch(_){}
+    announce(_L('SUPER MODE!!','スーパーモード！！'));
+    try{screenFlash(0.7)}catch(_){}
+    try{sfx.playCrowdCheer&&sfx.playCrowdCheer(6)}catch(_){}
+    S.shakeT=0.5;S.shakeI=1.5;
+  }
+  if((cs._superT||0)>0){
+    cs._superT-=dt;
+    // golden aura particles around pilot
+    cs._superFxT=(cs._superFxT||0)+dt;
+    if(cs._superFxT>0.09){cs._superFxT=0;
+      try{spawnP(cs.pilotPos.clone().add(new THREE.Vector3((Math.random()-0.5)*1.4,0.3+Math.random()*1.6,(Math.random()-0.5)*1.4)),0xffdd00,2,0.5,0.7,0.4)}catch(_){}
+    }
+    if(cs._superT<=0){try{wfCineSubtitle(_L('super mode end','スーパーモード終了'),'#997700')}catch(_){}}
+  }
+  // v7.349: HYPE/COMBO HUD (lazy-created floating bar, updates only on change)
+  try{
+    let hd=document.getElementById('colo-hype-hud');
+    if(!hd){
+      hd=document.createElement('div');hd.id='colo-hype-hud';
+      hd.style.cssText='position:fixed;top:64px;right:12px;z-index:130;font-family:monospace;text-align:right;pointer-events:none;';
+      hd.innerHTML='<div id="colo-combo-txt" style="font-size:20px;font-weight:bold;color:#ffaa00;text-shadow:0 0 8px #ff6600;margin-bottom:4px"></div>'+
+        '<div style="width:130px;height:10px;background:rgba(0,0,0,.55);border:1px solid #ffdd00;border-radius:3px;overflow:hidden;margin-left:auto">'+
+        '<div id="colo-hype-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#ff8800,#ffdd00);transition:width .15s"></div></div>'+
+        '<div style="font-size:9px;color:#ffdd88;letter-spacing:1px">HYPE</div>';
+      document.body.appendChild(hd);
+    }
+    const _hv=Math.round(cs._hype||0),_cv=cs._combo||0,_sv=(cs._superT||0)>0;
+    if(cs._hudHv!==_hv||cs._hudCv!==_cv||cs._hudSv!==_sv){
+      cs._hudHv=_hv;cs._hudCv=_cv;cs._hudSv=_sv;
+      const bar=document.getElementById('colo-hype-bar');
+      if(bar){bar.style.width=_hv+'%';bar.style.background=_sv?'linear-gradient(90deg,#ffdd00,#ffffff)':'linear-gradient(90deg,#ff8800,#ffdd00)';}
+      const ct=document.getElementById('colo-combo-txt');
+      if(ct)ct.textContent=_sv?'💪SUPER!':(_cv>=2?_cv+' COMBO':'');
+    }
+  }catch(_){}
   // v7.261: Crowd animation — bob + sway.  v7.288 PERF: only animate 1/3 of the
   // figures each frame (round-robin) — sin calls drop to ~1/3 with no visible change.
   cs._crowdT=(cs._crowdT||0)+dt;
@@ -34477,7 +34550,7 @@ function updateColosseum(dt){
             try{wfCineSubtitle('🏆 FINISHED!! SLAG REBORN DEFEATED!!','#ffdd00');}catch(_){}
           }
         } else {
-          f.hp=Math.max(0,f.hp-damage);
+          f.hp=Math.max(0,f.hp-damage*((cs._superT||0)>0?2:1));// v7.349: super mode 2x
         }
         f.state='DOWN';f.stateT=0;
         f.mesh.rotation.x=0;
@@ -34547,7 +34620,7 @@ function updateColosseum(dt){
       try{const sh=_GRAPPLE_SHOUTS[Math.floor(Math.random()*_GRAPPLE_SHOUTS.length)];playComm('pilot',sh);}catch(_){}
           try{sfx.crowdOoh&&sfx.crowdOoh();}catch(_){} // v7.279: crowd roar on technique
       if(f&&f.state!=='ELIMINATED'&&f.state!=='DOWN'){
-        f.hp=Math.max(0,f.hp-3.5);
+        f.hp=Math.max(0,f.hp-3.5*((cs._superT||0)>0?2:1));// v7.349: super mode 2x
         const dx=f.pos.x-cs.pilotPos.x,dz=f.pos.z-cs.pilotPos.z;
         try{screenFlash(.5)}catch(_){}
         try{spawnMegaExplosion(f.pos.clone().add(new THREE.Vector3(0,1.2,0)),.25)}catch(_){}
@@ -34723,6 +34796,7 @@ function endColosseum(won){
   cs.active=false;
   try{const h=document.getElementById('colosseum-hud');if(h)h.remove();const c=document.getElementById('colo-controls');if(c)c.remove();}catch(_){}
   try{const f3=document.getElementById('touch-frank');if(f3)f3.style.display='none';}catch(_){}
+  try{const hy=document.getElementById('colo-hype-hud');if(hy)hy.remove();}catch(_){}// v7.349
   if(won){
     try{sfx.playCrowdCheer(5)}catch(_){}
     announce(_L('VICTORY! FREEDOM!','勝利！自由だ！'));
@@ -36247,6 +36321,28 @@ function updatePodRace(dt){
     const minCoast=55+(S._prLap-1)*15;
     if(S._prSpeed<minCoast)S._prSpeed=Math.min(minCoast,S._prSpeed+25*dt);
   }
+  // v7.349: SLIPSTREAM — tuck in close behind an AI pod for a draft speed bonus
+  try{
+    let _draft=false;
+    const _dp=S._prPlayerPod;
+    if(_dp&&S._prRaceStarted&&!S._prFinished){
+      for(const ai of S._prAI){
+        if(ai.eliminated||ai.finished||!ai.pod||!ai.pod.visible)continue;
+        const dzs=_dp.position.z-ai.pod.position.z;// positive = AI is ahead
+        const dxs=Math.abs(_dp.position.x-ai.x);
+        if(dzs>4&&dzs<28&&dxs<7){_draft=true;break;}
+      }
+    }
+    if(_draft){
+      S._prDraftT=(S._prDraftT||0)+dt;
+      S._prSpeed=Math.min((S._prMaxSpeed||155)*1.35,S._prSpeed+36*dt);
+      if(S._prDraftT>0.45&&!S._prDraftMsg){S._prDraftMsg=true;try{wfCineSubtitle('🌀 SLIPSTREAM!','#88ffee')}catch(_){}try{sfx.playCrowdCheer&&sfx.playCrowdCheer(1.2)}catch(_){}}
+      S._prDraftFxT=(S._prDraftFxT||0)+dt;
+      if(S._prDraftFxT>0.07){S._prDraftFxT=0;
+        spawnP(new THREE.Vector3(_dp.position.x+(Math.random()-0.5)*3.5,_dp.position.y+0.4+Math.random()*1.2,_dp.position.z-2-Math.random()*3),0x88ffee,2,1.7,0.4,0.3);
+      }
+    } else if((S._prDraftT||0)>0){S._prDraftT=0;S._prDraftMsg=false;}
+  }catch(_){}
   // v7.288: SMOKE SCREEN (Enter) + WRENCH THROW (Shift) — cooldown-gated
   if(keys['Enter']&&(S._prSmokeCD||0)<=0){try{_emitPodSmoke()}catch(_){}}
   if((keys['ShiftLeft']||keys['ShiftRight'])&&(S._prWrenchCD||0)<=0){try{_fireWrench()}catch(_){}}
@@ -36526,6 +36622,40 @@ function updatePodRace(dt){
   }
   // v7.300: jump ramp check
   try{_checkJumpRamps();}catch(_){}
+  // v7.349: BOOST PADS — glowing cyan chevrons on the track; drive over one for a speed burst
+  try{
+    if(!S._prBoostPads)S._prBoostPads=[];
+    S._prBoostPadT=(S._prBoostPadT===undefined?7:S._prBoostPadT)-dt;
+    if(S._prBoostPadT<=0&&S._prRaceStarted&&!S._prFinished&&S._prBoostPads.length<4){
+      S._prBoostPadT=6+Math.random()*5;
+      const _lane=(S._prCurveX||0)+(Math.random()-0.5)*70;
+      const _padG=new THREE.Group();
+      for(let ci=0;ci<3;ci++){
+        const ch=new THREE.Mesh(new THREE.PlaneGeometry(5.5,2.4),new THREE.MeshBasicMaterial({color:0x00ffcc,transparent:true,opacity:0.75,side:THREE.DoubleSide}));
+        ch.rotation.x=-Math.PI/2;ch.position.set(0,0.05+ci*0.002,-ci*2.8);_padG.add(ch);
+      }
+      _padG.position.set(_lane,-2.85,camera.position.z-300);
+      _padG.userData._isBoostPad=true;
+      scene.add(_padG);S._prBoostPads.push(_padG);
+    }
+    const _bp=S._prPlayerPod;
+    S._prBoostPads=S._prBoostPads.filter(g=>{
+      g.position.z+=scrollSpd*dt;
+      const _pt=S._prTime||0;
+      g.children.forEach((c,ci)=>{if(c.material)c.material.opacity=0.35+0.45*Math.abs(Math.sin(_pt*6-ci*0.9));});
+      if(_bp&&(S._prJumpY||0)<1.5&&Math.abs(g.position.z-_bp.position.z)<5&&Math.abs(g.position.x-_bp.position.x)<4.5){
+        S._prSpeed=Math.min((S._prMaxSpeed||155)*1.5,S._prSpeed+55);
+        try{wfCineSubtitle('⚡ BOOST PAD!','#00ffcc')}catch(_){}
+        try{sfx._prNitro&&sfx._prNitro()}catch(_){}
+        try{spawnP(_bp.position.clone(),0x00ffcc,16,1.4,0.6,0.5)}catch(_){}
+        try{screenFlash(0.3)}catch(_){}
+        S.shakeT=0.2;S.shakeI=1.0;
+        scene.remove(g);return false;
+      }
+      if(g.position.z>camera.position.z+20){scene.remove(g);return false;}
+      return true;
+    });
+  }catch(_){}
   // v7.326: laser gate collision check — hit = crash; jump clears it
   try{
     if(S._prJumpGates&&S._prJumpGates.length){
@@ -39052,6 +39182,15 @@ function _startF1Lights(){
     try{sfx.playCrowdCheer&&sfx.playCrowdCheer(4);}catch(_){}// v7.312: big GO! cheer
     S._prRaceStarted=true;
     S._prCrowdExcite=2.5;// v7.329: crowd goes wild at race start
+    // v7.349: PERFECT START — holding Space (or touch-nitro) at GO! grants a free launch boost
+    if(keys['Space']||S._prTouchNitro){
+      S._prSpeed=(S._prSpeed||55)+70;S._prNitroT=2.0;S._prTouchNitro=false;
+      try{wfCineSubtitle('🚀 PERFECT START!!','#ffee00')}catch(_){}
+      try{sfx._prNitro&&sfx._prNitro()}catch(_){}
+      try{screenFlash(0.5)}catch(_){}
+      S._prCrowdExcite=3.0;
+      try{const pod=S._prPlayerPod;if(pod)for(let bi=0;bi<12;bi++)spawnP(pod.position.clone().add(new THREE.Vector3((Math.random()-0.5)*4,Math.random()*2,3+bi)),0xffee00,3,1.3,0.6,0.5);}catch(_){}
+    }
     // v7.294: reveal AI pods on GO
     if(S._prAI)S._prAI.forEach(ai=>{if(ai&&ai.pod)ai.pod.visible=true;});
     if(S._prPlayerPod)S._prPlayerPod.visible=true;// v7.316: ensure player pod visible at GO!
